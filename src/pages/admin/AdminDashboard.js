@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import AdminFrame from './AdminFrame';
 import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
@@ -41,7 +40,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <AdminFrame>
+    <>
       <h2 className="text-xl font-semibold mb-4">Admin Dashboard</h2>
       <p className="text-gray-600 mb-8">Use this form to create new customer accounts.</p>
 
@@ -111,6 +110,6 @@ export default function AdminDashboard() {
           {loading ? 'Creating...' : 'Create User'}
         </button>
       </form>
-    </AdminFrame>
+    </>
   );
 }

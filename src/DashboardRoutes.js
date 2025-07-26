@@ -54,8 +54,6 @@ const DashboardRoutes = () => {
         <Route path="/feedbackfeed" element={<DashboardFrame><FeedbackFeed /></DashboardFrame>} />
         <Route path="/settings/billing" element={<DashboardFrame><BillingPage /></DashboardFrame>} />
 
-        {/* 🔐 Admin Route */}
-        <Route path="/admin" element={<AdminFrame><AdminDashboard /></AdminFrame>} />
       </Routes>
     </VenueProvider>
   );
