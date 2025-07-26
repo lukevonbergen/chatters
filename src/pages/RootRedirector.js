@@ -2,6 +2,7 @@ import { useUser } from '@supabase/auth-helpers-react';
 import { useEffect, useState } from 'react';
 import DashboardPage from './Dashboard';
 import AdminDashboard from './admin/AdminDashboard';
+import DashboardFrame from './DashboardFrame';
 
 export default function RootRedirector() {
   const user = useUser();
@@ -15,5 +16,13 @@ export default function RootRedirector() {
 
   const isAdmin = user?.email?.endsWith('@getchatters.com');
 
-  return isAdmin ? <AdminDashboard /> : <DashboardPage />;
+  return isAdmin ? (
+    <DashboardFrame>
+      <AdminDashboard />
+    </DashboardFrame>
+  ) : (
+    <DashboardFrame>
+      <DashboardPage />
+    </DashboardFrame>
+  );
 }

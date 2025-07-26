@@ -38,7 +38,7 @@ const DashboardRoutes = () => {
         <Route path="/set-password" element={<SetPasswordPage />} />
 
         {/* 🧭 Dashboard Pages (wrapped in DashboardFrame) */}
-        <Route path="/" element={<DashboardFrame><RootRedirector /></DashboardFrame>} />
+        <Route path="/" element={<RootRedirector />} />
         <Route path="/questions" element={<DashboardFrame><ManageQuestions /></DashboardFrame>} />
         <Route path="/floorplan" element={<DashboardFrame><Floorplan /></DashboardFrame>} />
         <Route path="/tablefeedback" element={<DashboardFrame><TablesDashboard /></DashboardFrame>} />
