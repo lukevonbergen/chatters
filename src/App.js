@@ -28,9 +28,6 @@ useEffect(() => {
     <Router>
       <ModalProvider>
         <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-        <Sentry.ErrorBoundary fallback={<p>Something went wrong!</p>} showDialog>
-          {isDashboardDomain ? <DashboardRoutes /> : <MarketingRoutes />}
-        </Sentry.ErrorBoundary>
         <Analytics />
         <SpeedInsights />
       </ModalProvider>
