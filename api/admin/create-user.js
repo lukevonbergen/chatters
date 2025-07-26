@@ -22,11 +22,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 1: Create user in Supabase Auth
+    // 1. Create the Supabase Auth user
     console.log('🔐 Creating Supabase Auth user...');
-    const { data: userData, error: authError } = await supabase.auth.admin.createUser({
+    const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
-      email_confirm: false,
       user_metadata: {
         firstName,
         lastName,
@@ -34,19 +33,28 @@ export default async function handler(req, res) {
       },
     });
 
-    if (authError) {
-      console.error('❌ Supabase Auth creation error:', authError);
-      throw authError;
+    if (createError) {
+      console.error('❌ Auth user creation failed:', createError);
+      throw createError;
     }
 
     const userId = userData.user.id;
     console.log('✅ Supabase user created:', userId);
 
-    // Step 2: Insert venue row
-    console.log('🏠 Inserting venue record...');
+    // 2. Send the invite email (required for password setup)
+    console.log('📨 Sending invite email...');
+    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
+    if (inviteError) {
+      console.error('❌ Invite email failed:', inviteError);
+      throw inviteError;
+    }
+    console.log('✅ Invite email sent');
+
+    // 3. Insert into venues table
+    console.log('🏠 Inserting venue...');
     const { error: venueError } = await supabase.from('venues').insert([
       {
-        id: userId, // optional, aligns auth user to venue
+        id: userId,
         name: venueName,
         email,
         first_name: firstName,
@@ -57,15 +65,15 @@ export default async function handler(req, res) {
     ]);
 
     if (venueError) {
-      console.error('❌ Venue insert error:', venueError);
+      console.error('❌ Venue insert failed:', venueError);
       throw venueError;
     }
 
     console.log('✅ Venue inserted successfully');
 
-    res.status(200).json({ success: true, userId });
+    return res.status(200).json({ success: true, userId });
   } catch (err) {
     console.error('🔥 Unexpected error in admin/create-user:', err);
-    res.status(500).json({ error: err.message || 'Unexpected server error' });
+    return res.status(500).json({ error: err.message || 'Unexpected server error' });
   }
 }
