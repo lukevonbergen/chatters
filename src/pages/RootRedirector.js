@@ -1,4 +1,5 @@
 import { useUser } from '@supabase/auth-helpers-react';
+import { useSession } from '@supabase/auth-helpers-react';
 import { useEffect, useState } from 'react';
 import DashboardPage from './Dashboard';
 import AdminDashboard from './admin/AdminDashboard';
