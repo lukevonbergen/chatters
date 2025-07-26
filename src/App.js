@@ -26,7 +26,16 @@ function App() {
       setIsDashboardDomain(window.location.hostname.startsWith('my.'));
 
       const hash = window.location.hash;
-      if (hash.includes('type=invite')) {
+
+      // ✅ Redirect password reset links
+      if (hash.includes('type=recovery') && !window.location.pathname.includes('/reset-password')) {
+        const redirectUrl = `/reset-password${hash}`;
+        window.location.replace(redirectUrl);
+        return;
+      }
+
+      // ✅ Redirect invite links
+      if (hash.includes('type=invite') && !window.location.pathname.includes('/set-password')) {
         const redirectUrl = `/set-password${hash}`;
         window.history.replaceState(null, '', redirectUrl);
       }
