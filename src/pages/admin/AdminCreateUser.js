@@ -1,56 +1,135 @@
+import { useState, useEffect } from 'react';
 import { useUser } from '@supabase/auth-helpers-react';
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const AdminCreateUser = () => {
+export default function AdminCreateUser() {
   const user = useUser();
   const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [venueName, setVenueName] = useState('');
+  const [trialEndsAt, setTrialEndsAt] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return d.toISOString().slice(0, 10);
+  });
+
   const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     if (!user.email.endsWith('@getchatters.com')) {
-      navigate('/'); // or 404 or redirect elsewhere
+      navigate('/'); // or custom 403 page
     }
   }, [user]);
 
-  const handleSubmit = async () => {
-    setStatus('Creating...');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus('');
+
+    const payload = {
+      email,
+      firstName,
+      lastName,
+      venueName,
+      trialEndsAt,
+    };
+
     const res = await fetch('/api/admin/create-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify(payload),
     });
 
     const result = await res.json();
     if (res.ok) {
-      setStatus('✅ User created and invite sent!');
+      setStatus('✅ User created and invite sent.');
       setEmail('');
+      setFirstName('');
+      setLastName('');
+      setVenueName('');
     } else {
-      setStatus(`❌ Error: ${result.error}`);
+      setStatus(`❌ ${result.error}`);
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Create New User</h1>
-      <input
-        type="email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        placeholder="newuser@example.com"
-        className="border px-3 py-2 rounded w-full max-w-md mb-2"
-      />
-      <button
-        onClick={handleSubmit}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        Create User
-      </button>
-      {status && <p className="mt-2 text-sm">{status}</p>}
+    <div className="p-6 max-w-2xl mx-auto bg-white rounded-xl shadow space-y-6">
+      <h2 className="text-xl font-semibold">Admin: Create New Venue User</h2>
+
+      {status && <div className="text-sm text-gray-700">{status}</div>}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">First Name</label>
+            <input
+              type="text"
+              className="w-full border rounded px-3 py-2"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Last Name</label>
+            <input
+              type="text"
+              className="w-full border rounded px-3 py-2"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Venue Name</label>
+          <input
+            type="text"
+            className="w-full border rounded px-3 py-2"
+            value={venueName}
+            onChange={(e) => setVenueName(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">User Email</label>
+          <input
+            type="email"
+            className="w-full border rounded px-3 py-2"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Trial End Date</label>
+          <input
+            type="date"
+            className="w-full border rounded px-3 py-2"
+            value={trialEndsAt}
+            onChange={(e) => setTrialEndsAt(e.target.value)}
+          />
+          <small className="text-xs text-gray-500">Defaults to 14 days from today</small>
+        </div>
+
+        <button
+          type="submit"
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          disabled={loading}
+        >
+          {loading ? 'Creating...' : 'Create User'}
+        </button>
+      </form>
     </div>
   );
-};
-
-export default AdminCreateUser;
+}
