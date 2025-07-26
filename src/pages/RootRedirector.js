@@ -1,26 +1,19 @@
-import { useUser } from '@supabase/auth-helpers-react';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useEffect, useState } from 'react';
+import { useSessionContext } from '@supabase/auth-helpers-react';
 import DashboardPage from './Dashboard';
 import AdminDashboard from './admin/AdminDashboard';
 import DashboardFrame from './DashboardFrame';
 import AdminFrame from './admin/AdminFrame';
 
 export default function RootRedirector() {
-const session = useSession();
-const user = session?.user;
-  const [ready, setReady] = useState(false);
+  const { session, isLoading } = useSessionContext(); // this waits for auth to fully load
+  const user = session?.user;
 
-  useEffect(() => {
-    if (user !== undefined) setReady(true);
-  }, [user]);
-
-  if (!ready) return <div className="p-4">Loading...</div>;
+  if (isLoading) return <div className="p-4">Loading...</div>;
 
   const isAdmin = user?.email?.endsWith('@getchatters.com');
 
   console.log('Current user:', user?.email);
-    console.log('Is admin:', isAdmin);
+  console.log('Is admin:', isAdmin);
 
   return isAdmin ? (
     <AdminFrame>
