@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import DashboardPage from './Dashboard';
 import AdminDashboard from './admin/AdminDashboard';
 import DashboardFrame from './DashboardFrame';
+import AdminFrame from './admin/AdminFrame';
 
 export default function RootRedirector() {
 const session = useSession();
@@ -22,9 +23,9 @@ const user = session?.user;
     console.log('Is admin:', isAdmin);
 
   return isAdmin ? (
-    <DashboardFrame>
+    <AdminFrame>
       <AdminDashboard />
-    </DashboardFrame>
+    </AdminFrame>
   ) : (
     <DashboardFrame>
       <DashboardPage />

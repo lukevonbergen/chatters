@@ -1,36 +1,116 @@
-import { useUser } from '@supabase/auth-helpers-react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useState } from 'react';
+import AdminFrame from './AdminFrame';
+import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
-  const user = useUser();
-  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+    venueName: '',
+    trialEndsAt: '',
+  });
 
-  useEffect(() => {
-    if (user === null) return; // still loading
-    if (!user?.email?.endsWith('@getchatters.com')) {
-      navigate('/'); // redirect if not a Chatters admin
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Unknown error');
+
+      toast.success('User created and invite sent!');
+      setFormData({ email: '', firstName: '', lastName: '', venueName: '', trialEndsAt: '' });
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
     }
-  }, [user, navigate]);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto bg-white shadow rounded-xl p-8">
-        <h1 className="text-2xl font-bold mb-6">🛠️ Chatters Admin Dashboard</h1>
+    <AdminFrame>
+      <h2 className="text-xl font-semibold mb-4">Admin Dashboard</h2>
+      <p className="text-gray-600 mb-8">Use this form to create new customer accounts.</p>
 
-        <div className="space-y-4">
-          <Link
-            to="/admin/create-user"
-            className="block border p-4 rounded-lg hover:bg-gray-100 transition"
-          >
-            <h2 className="text-lg font-medium">➕ Create New User</h2>
-            <p className="text-sm text-gray-600">Manually onboard a new venue and send an invite email.</p>
-          </Link>
-
-          {/* Future admin tools can go here */}
-          {/* <Link to="/admin/impersonate" className="...">Impersonate User</Link> */}
+      <form onSubmit={handleSubmit} className="max-w-md space-y-4">
+        <div>
+          <label className="block text-sm font-medium">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            required
+            onChange={handleChange}
+            className="mt-1 w-full border rounded px-3 py-2"
+          />
         </div>
-      </div>
-    </div>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium">First Name</label>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              required
+              onChange={handleChange}
+              className="mt-1 w-full border rounded px-3 py-2"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium">Last Name</label>
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              required
+              onChange={handleChange}
+              className="mt-1 w-full border rounded px-3 py-2"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Venue Name</label>
+          <input
+            type="text"
+            name="venueName"
+            value={formData.venueName}
+            required
+            onChange={handleChange}
+            className="mt-1 w-full border rounded px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Trial Ends At</label>
+          <input
+            type="date"
+            name="trialEndsAt"
+            value={formData.trialEndsAt}
+            required
+            onChange={handleChange}
+            className="mt-1 w-full border rounded px-3 py-2"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          {loading ? 'Creating...' : 'Create User'}
+        </button>
+      </form>
+    </AdminFrame>
   );
 }
