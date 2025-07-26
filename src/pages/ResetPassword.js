@@ -15,16 +15,28 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const handleRecovery = async () => {
-      const { error } = await supabase.auth.getSessionFromUrl();
-      if (error) {
-        setError('The reset link is invalid or has expired.');
-        setTimeout(() => navigate('/forgot-password'), 3000);
-        return;
-      }
+      console.log('[ResetPassword] Running handleRecovery');
+      console.log('[ResetPassword] URL hash:', window.location.hash);
 
-      window.history.replaceState({}, document.title, window.location.pathname); // Optional: clean up hash
-      setSessionReady(true);
-      setIsLoading(false);
+      try {
+        const { data, error } = await supabase.auth.getSessionFromUrl();
+
+        if (error) {
+          console.error('[ResetPassword] Supabase session error:', error.message);
+          setError('The reset link is invalid or has expired.');
+          setTimeout(() => navigate('/forgot-password'), 3000);
+          return;
+        }
+
+        console.log('[ResetPassword] Session established:', data);
+        window.history.replaceState({}, document.title, window.location.pathname); // Optional: clean up hash
+        setSessionReady(true);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('[ResetPassword] Unexpected error:', err);
+        setError('Something went wrong while verifying your session.');
+        setTimeout(() => navigate('/forgot-password'), 3000);
+      }
     };
 
     handleRecovery();
@@ -32,23 +44,32 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('[ResetPassword] Submit triggered');
+
     setError('');
     setMessage('');
     setIsLoading(true);
 
     if (password !== confirmPassword) {
+      console.warn('[ResetPassword] Passwords do not match');
       setError('Passwords do not match.');
       setIsLoading(false);
       return;
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw new Error(error.message);
+      const { data, error } = await supabase.auth.updateUser({ password });
 
+      if (error) {
+        console.error('[ResetPassword] Password update error:', error.message);
+        throw new Error(error.message);
+      }
+
+      console.log('[ResetPassword] Password updated:', data);
       setMessage('Password successfully reset! Redirecting...');
       setTimeout(() => navigate('/signin'), 2000);
     } catch (err) {
+      console.error('[ResetPassword] Unexpected error:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
