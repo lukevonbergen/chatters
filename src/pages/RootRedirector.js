@@ -5,7 +5,8 @@ import AdminDashboard from './admin/AdminDashboard';
 import DashboardFrame from './DashboardFrame';
 
 export default function RootRedirector() {
-  const user = useUser();
+const session = useSession();
+const user = session?.user;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -15,6 +16,9 @@ export default function RootRedirector() {
   if (!ready) return <div className="p-4">Loading...</div>;
 
   const isAdmin = user?.email?.endsWith('@getchatters.com');
+
+  console.log('Current user:', user?.email);
+    console.log('Is admin:', isAdmin);
 
   return isAdmin ? (
     <DashboardFrame>
