@@ -18,6 +18,7 @@ import SignInPage from './pages/SignIn';
 import SignUpPage from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import SetPasswordPage from './pages/set-password';
 
 import { VenueProvider } from './context/VenueContext';
 import DashboardFrame from './pages/DashboardFrame';
@@ -33,6 +34,7 @@ const DashboardRoutes = () => {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/set-password" element={<SetPasswordPage />} />
 
         {/* 🧭 Dashboard Pages (wrapped in DashboardFrame) */}
         <Route path="/" element={<DashboardFrame><DashboardPage /></DashboardFrame>} />
