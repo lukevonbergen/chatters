@@ -12,6 +12,7 @@ import Settings_Staff from './pages/settings_staff';
 import StaffLeaderboard from './pages/Staff_Leaderboard';
 import BillingPage from './pages/Billing';
 import FeedbackFeed from './pages/FeedbackFeed';
+import AdminCreateUser from './pages/admin/AdminCreateUser';
 
 import SignInPage from './pages/SignIn';
 import SignUpPage from './pages/SignUp';
@@ -45,6 +46,9 @@ const DashboardRoutes = () => {
         <Route path="/staff/leaderboard" element={<DashboardFrame><StaffLeaderboard /></DashboardFrame>} />
         <Route path="/feedbackfeed" element={<DashboardFrame><FeedbackFeed /></DashboardFrame>} />
         <Route path="/settings/billing" element={<DashboardFrame><BillingPage /></DashboardFrame>} />
+
+        {/* Admin Pages (only accessable through a getchatters email) */}
+        <Route path="/admin/create-user" element={<DashboardFrame><AdminCreateUser /></DashboardFrame>}/>
       </Routes>
     </VenueProvider>
   );

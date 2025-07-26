@@ -32,7 +32,7 @@ const SignInPage = () => {
         {/* Logo or Back */}
         <div className="absolute top-4 left-4">
           <Link
-            href={`${process.env.NEXT_PUBLIC_BASE_URL}`}
+            href="https://getchatters.com"
             className="text-sm text-gray-500 hover:text-gray-800 flex items-center transition-colors"
           >
             <ArrowRight className="h-4 w-4 rotate-180 mr-1" />
