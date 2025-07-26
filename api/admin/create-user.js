@@ -1,5 +1,3 @@
-// File: /api/admin/create-user.js
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -8,18 +6,24 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
+  console.log('🔁 [API] Admin Create User called');
+
   if (req.method !== 'POST') {
+    console.warn('🚫 Invalid method:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { email, firstName, lastName, venueName, trialEndsAt } = req.body;
+  console.log('📦 Incoming body:', { email, firstName, lastName, venueName, trialEndsAt });
 
   if (!email || !firstName || !lastName || !venueName || !trialEndsAt) {
+    console.warn('❗ Missing required fields');
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
-    // 1. Create the user in Supabase Auth
+    // Step 1: Create user in Supabase Auth
+    console.log('🔐 Creating Supabase Auth user...');
     const { data: userData, error: authError } = await supabase.auth.admin.createUser({
       email,
       email_confirm: false,
@@ -30,14 +34,19 @@ export default async function handler(req, res) {
       },
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      console.error('❌ Supabase Auth creation error:', authError);
+      throw authError;
+    }
 
     const userId = userData.user.id;
+    console.log('✅ Supabase user created:', userId);
 
-    // 2. Create venue row
+    // Step 2: Insert venue row
+    console.log('🏠 Inserting venue record...');
     const { error: venueError } = await supabase.from('venues').insert([
       {
-        id: userId, // optional, only if you want 1-to-1 link
+        id: userId, // optional, aligns auth user to venue
         name: venueName,
         email,
         first_name: firstName,
@@ -47,11 +56,16 @@ export default async function handler(req, res) {
       },
     ]);
 
-    if (venueError) throw venueError;
+    if (venueError) {
+      console.error('❌ Venue insert error:', venueError);
+      throw venueError;
+    }
+
+    console.log('✅ Venue inserted successfully');
 
     res.status(200).json({ success: true, userId });
   } catch (err) {
-    console.error('Error creating user:', err);
-    res.status(500).json({ error: err.message });
+    console.error('🔥 Unexpected error in admin/create-user:', err);
+    res.status(500).json({ error: err.message || 'Unexpected server error' });
   }
 }

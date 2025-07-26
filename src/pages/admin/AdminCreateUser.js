@@ -27,37 +27,44 @@ export default function AdminCreateUser() {
   }, [user]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setStatus('');
+  e.preventDefault();
+  setLoading(true);
+  setStatus('');
 
-    const payload = {
-      email,
-      firstName,
-      lastName,
-      venueName,
-      trialEndsAt,
-    };
-
+  try {
     const res = await fetch('/api/admin/create-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        email,
+        firstName,
+        lastName,
+        venueName,
+        trialEndsAt,
+      }),
     });
 
-    const result = await res.json();
-    if (res.ok) {
-      setStatus('✅ User created and invite sent.');
-      setEmail('');
-      setFirstName('');
-      setLastName('');
-      setVenueName('');
-    } else {
-      setStatus(`❌ ${result.error}`);
+    let result;
+    try {
+      result = await res.json();
+    } catch {
+      throw new Error('A server error occurred. Please try again.');
     }
 
+    if (!res.ok) throw new Error(result.error || 'Unknown error');
+
+    setStatus('✅ User created and invite sent.');
+    setEmail('');
+    setFirstName('');
+    setLastName('');
+    setVenueName('');
+  } catch (err) {
+    setStatus(`❌ ${err.message}`);
+  } finally {
     setLoading(false);
-  };
+  }
+};
+
 
   return (
     <div className="p-6 max-w-2xl mx-auto bg-white rounded-xl shadow space-y-6">
