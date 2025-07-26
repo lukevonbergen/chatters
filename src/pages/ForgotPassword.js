@@ -18,16 +18,13 @@ const ForgotPassword = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://www.getchatters.com/reset-password',
+        redirectTo: 'https://my.getchatters.com/reset-password',
       });
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       setMessage('Password reset link sent to your email. Check your inbox!');
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -36,7 +33,6 @@ const ForgotPassword = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-green-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        {/* Back to Homepage Link */}
         <div className="mb-4">
           <button
             onClick={() => navigate('/')}
@@ -47,7 +43,6 @@ const ForgotPassword = () => {
           </button>
         </div>
 
-        {/* White Box */}
         <div className="bg-white rounded-3xl shadow-xl p-8">
           <div className="text-center">
             <div className="mb-8 inline-flex items-center space-x-2 bg-white/50 px-4 py-1 rounded-full border border-emerald-100">
@@ -55,28 +50,15 @@ const ForgotPassword = () => {
               <span className="text-sm text-gray-600">Forgot your password?</span>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Reset Password</h2>
-            <p className="text-gray-600 mb-8">
-              Enter your email address, and we'll send you a link to reset your password.
-            </p>
+            <p className="text-gray-600 mb-8">Enter your email address, and we'll send you a link to reset your password.</p>
           </div>
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
-          {message && (
-            <div className="mb-6 p-4 bg-green-50 text-green-600 rounded-lg text-sm">
-              {message}
-            </div>
-          )}
+          {error && <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
+          {message && <div className="mb-6 p-4 bg-green-50 text-green-600 rounded-lg text-sm">{message}</div>}
 
           <form onSubmit={handleResetPassword} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 type="email"
                 id="email"
@@ -93,14 +75,7 @@ const ForgotPassword = () => {
               disabled={isLoading}
               className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
             >
-              {isLoading ? (
-                <span>Sending...</span>
-              ) : (
-                <>
-                  <span>Send Reset Link</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
+              {isLoading ? <span>Sending...</span> : (<><span>Send Reset Link</span><ArrowRight className="h-4 w-4" /></>)}
             </button>
           </form>
         </div>
