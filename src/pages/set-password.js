@@ -48,7 +48,7 @@ const SetPasswordPage = () => {
     if (error) {
       setStatus(`Error: ${error.message}`);
     } else {
-      setStatus('✅ Password updated! Redirecting...');
+      setStatus('Password updated! Redirecting...');
       setTimeout(() => navigate('/'), 1500);
     }
   };
