@@ -18,19 +18,37 @@ const DashboardPage = () => {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (!user) {
         navigate('/signin');
         return;
       }
 
-      const { data: venue } = await supabase
-        .from('venues')
-        .select('id')
+      // Step 1: Fetch user record to get account_id
+      const { data: userRecord, error: userError } = await supabase
+        .from('users')
+        .select('account_id')
         .eq('email', user.email)
         .single();
 
-      if (!venue) return;
+      if (!userRecord?.account_id) {
+        navigate('/signin');
+        return;
+      }
+
+      // Step 2: Fetch the first venue under the same account
+      const { data: venue, error: venueError } = await supabase
+        .from('venues')
+        .select('id')
+        .eq('account_id', userRecord.account_id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (!venue?.id) {
+        navigate('/settings'); // fallback
+        return;
+      }
 
       setVenueId(venue.id);
       await loadQuestionsMap(venue.id);
@@ -46,17 +64,18 @@ const DashboardPage = () => {
       .eq('venue_id', venueId);
 
     const map = {};
-    questions?.forEach(q => { map[q.id] = q.question });
+    questions?.forEach(q => {
+      map[q.id] = q.question;
+    });
     setQuestionsMap(map);
   };
 
   return (
     <PageContainer>
-      {/* Page Title */}
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Overview</h1>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Left: Feedback + Filters in a card */}
+        {/* Left column: feedback feed */}
         <div className="flex-1">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -80,7 +99,6 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            {/* Feedback Tabs Component */}
             <FeedbackTabs
               venueId={venueId}
               questionsMap={questionsMap}
@@ -90,7 +108,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Right: Report Tiles */}
+        {/* Right column: metrics */}
         <div className="w-full lg:w-80 space-y-4">
           <SessionsActionedTile venueId={venueId} />
           <UnresolvedAlertsTile venueId={venueId} />
@@ -98,7 +116,6 @@ const DashboardPage = () => {
         </div>
       </div>
     </PageContainer>
-
   );
 };
 
