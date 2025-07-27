@@ -2,88 +2,89 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 
 const VenueContext = createContext();
-
 export const useVenue = () => useContext(VenueContext);
 
 export const VenueProvider = ({ children }) => {
-  const [venueName, setVenueName] = useState('');
   const [venueId, setVenueId] = useState('');
+  const [venueName, setVenueName] = useState('');
+  const [allVenues, setAllVenues] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    const fetchVenue = async () => {
-      try {
-        const { data: auth, error: authError } = await supabase.auth.getUser();
-        const user = auth?.user;
+    const init = async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth?.user;
+      if (!user) return;
 
-        if (!user) {
-          console.warn('⚠️ No user signed in');
-          setLoading(false);
-          return;
-        }
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('id, role, account_id')
+        .eq('id', user.id)
+        .single();
 
-        const email = user.email;
+      if (!userRow) return;
 
-        // Step 1: Get user role + account
-        const { data: userRow, error: userError } = await supabase
-          .from('users')
-          .select('account_id, role')
-          .eq('email', email)
-          .single();
+      setUserRole(userRow.role);
 
-        if (userError || !userRow) {
-          console.error('❌ Failed to fetch user/account_id:', userError);
-          setLoading(false);
-          return;
-        }
-
-        if (userRow.role === 'admin') {
-          console.log('✅ Admin user logged in — skipping venue context');
-          setLoading(false);
-          return;
-        }
-
-        const accountId = userRow.account_id;
-        if (!accountId) {
-          console.warn('🚫 No account_id found for user');
-          setLoading(false);
-          return;
-        }
-
-        // Step 2: Get the first venue under that account
-        const { data: venueList, error: venueError } = await supabase
+      if (userRow.role === 'master') {
+        // Fetch all venues under this account
+        const { data: venues } = await supabase
           .from('venues')
           .select('id, name')
-          .eq('account_id', accountId)
-          .limit(1);
+          .eq('account_id', userRow.account_id)
+          .order('created_at', { ascending: true });
 
-        if (venueError) {
-          console.error('❌ Error fetching venue:', venueError);
-          setLoading(false);
-          return;
+        setAllVenues(venues || []);
+
+        const cachedId = localStorage.getItem('chatters_currentVenueId');
+        const validCached = venues?.find((v) => v.id === cachedId);
+
+        const selected = validCached ? validCached : venues?.[0];
+        if (selected) {
+          setVenueId(selected.id);
+          setVenueName(selected.name);
+          localStorage.setItem('chatters_currentVenueId', selected.id);
         }
+      } else {
+        // Manager/staff access: fetch venue from staff
+        const { data: staff } = await supabase
+          .from('staff')
+          .select('venue_id, venues(name)')
+          .eq('user_id', user.id)
+          .single();
 
-        if (!venueList || venueList.length === 0) {
-          console.warn('🚫 No venue found for account');
-          setLoading(false);
-          return;
+        if (staff?.venue_id) {
+          setVenueId(staff.venue_id);
+          setVenueName(staff.venues?.name || '');
         }
-
-        const venue = venueList[0];
-        setVenueName(venue.name);
-        setVenueId(venue.id);
-        setLoading(false);
-      } catch (err) {
-        console.error('⚠️ Unexpected error in VenueContext:', err);
-        setLoading(false);
       }
+
+      setLoading(false);
     };
 
-    fetchVenue();
+    init();
   }, []);
 
+  const setCurrentVenue = (id) => {
+    const found = allVenues.find((v) => v.id === id);
+    if (!found) return;
+    setVenueId(found.id);
+    setVenueName(found.name);
+    localStorage.setItem('chatters_currentVenueId', found.id);
+  };
+
   return (
-    <VenueContext.Provider value={{ venueName, venueId, loading }}>
+    <VenueContext.Provider
+      value={{
+        venueId,
+        venueName,
+        loading,
+        allVenues,
+        userRole,
+        setCurrentVenue,
+      }}
+    >
       {children}
     </VenueContext.Provider>
   );

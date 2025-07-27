@@ -7,56 +7,20 @@ import SessionsActionedTile from '../components/reports/today_TotalSessionsTile'
 import UnresolvedAlertsTile from '../components/reports/UnresolvedAlertsTile';
 import AvgSatisfactionTile from '../components/reports/AvgSatisfactionTile';
 import usePageTitle from '../hooks/usePageTitle';
+import { useVenue } from '../context/VenueContext';
 
 const DashboardPage = () => {
   usePageTitle('Overview');
-  const [venueId, setVenueId] = useState(null);
+  const { venueId } = useVenue();
   const [questionsMap, setQuestionsMap] = useState({});
   const [sortOrder, setSortOrder] = useState('desc');
   const [tableFilter, setTableFilter] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/signin');
-        return;
-      }
-
-      // Step 1: Get user account_id
-      const { data: userRecord, error: userError } = await supabase
-        .from('users')
-        .select('account_id')
-        .eq('email', user.email)
-        .single();
-
-      if (!userRecord?.account_id) {
-        navigate('/signin');
-        return;
-      }
-
-      // Step 2: Get first venue for that account
-      const { data: venues, error: venueError } = await supabase
-        .from('venues')
-        .select('id')
-        .eq('account_id', userRecord.account_id)
-        .order('created_at', { ascending: true })
-        .limit(1);
-
-      const venue = venues?.[0];
-
-      if (!venue?.id) {
-        navigate('/settings'); // fallback
-        return;
-      }
-
-      setVenueId(venue.id);
-      await loadQuestionsMap(venue.id);
-    };
-
-    init();
-  }, [navigate]);
+    if (!venueId) return;
+    loadQuestionsMap(venueId);
+  }, [venueId]);
 
   const loadQuestionsMap = async (venueId) => {
     const { data: questions } = await supabase
@@ -70,6 +34,8 @@ const DashboardPage = () => {
     });
     setQuestionsMap(map);
   };
+
+  if (!venueId) return null;
 
   return (
     <PageContainer>

@@ -1,3 +1,4 @@
+// Updated DashboardFrame.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -15,7 +16,13 @@ import { useVenue } from '../context/VenueContext';
 const DashboardFrame = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { venueName, venueId } = useVenue();
+  const {
+    venueName,
+    venueId,
+    setCurrentVenue,
+    allVenues,
+    userRole,
+  } = useVenue();
 
   const [copied, setCopied] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -35,7 +42,7 @@ const DashboardFrame = ({ children }) => {
 
       const { data: user } = await supabase
         .from('users')
-        .select('email, role, account_id, venue_id')
+        .select('email, role, account_id, venue_id, first_name, last_name')
         .eq('email', email)
         .single();
 
@@ -108,9 +115,7 @@ const DashboardFrame = ({ children }) => {
     );
   };
 
-  if (!userInfo) {
-    return null; // Loading state
-  }
+  if (!userInfo) return null;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -122,16 +127,23 @@ const DashboardFrame = ({ children }) => {
         </div>
       )}
 
-      {/* Top Bar */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-            <img
-              src="https://www.getchatters.com/img/Logo.svg"
-              alt="Chatters Logo"
-              className="h-7 w-auto"
-            />
-            <span className="text-sm text-gray-500">{venueName || 'Loading venue...'}</span>
+            <img src="https://www.getchatters.com/img/Logo.svg" alt="Chatters Logo" className="h-7 w-auto" />
+            {userInfo.role === 'master' ? (
+              <select
+                value={venueId}
+                onChange={(e) => setCurrentVenue(e.target.value)}
+                className="text-sm text-gray-600 border border-gray-300 rounded px-2 py-1"
+              >
+                {allVenues.map((v) => (
+                  <option key={v.id} value={v.id}>{v.name}</option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-sm text-gray-500">{venueName || 'Loading venue...'}</span>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <div className="text-xs text-gray-500 flex items-center gap-1">
@@ -146,19 +158,8 @@ const DashboardFrame = ({ children }) => {
                 className="flex items-center text-xs text-gray-500 hover:text-gray-700 transition"
                 title="Copy Venue ID"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8l6 6v8a2 2 0 01-2 2h-2"
-                  />
+                <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8l6 6v8a2 2 0 01-2 2h-2" />
                 </svg>
                 {copied ? 'Copied!' : 'Copy Venue ID'}
               </button>
@@ -176,16 +177,10 @@ const DashboardFrame = ({ children }) => {
                     <div className="font-medium">{userInfo.first_name} {userInfo.last_name}</div>
                     <div className="text-xs text-gray-500">{userInfo.email}</div>
                   </div>
-                  <Link
-                    to="/settings"
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
+                  <Link to="/settings" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     Account Settings
                   </Link>
-                  <button
-                    onClick={() => setIsLogoutModalOpen(true)}
-                    className="text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
+                  <button onClick={() => setIsLogoutModalOpen(true)} className="text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                     Sign Out
                   </button>
                 </div>
@@ -195,7 +190,6 @@ const DashboardFrame = ({ children }) => {
         </div>
       </div>
 
-      {/* Navigation Bar */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap gap-4 items-center">
           <NavLink to="/" icon={LayoutDashboard}>Overview</NavLink>
@@ -211,28 +205,20 @@ const DashboardFrame = ({ children }) => {
         </div>
       </div>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {children}
       </main>
 
-      {/* Logout Modal */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Confirm Logout</h2>
             <p className="text-gray-600 mb-6">Are you sure you want to sign out?</p>
             <div className="flex justify-end gap-4">
-              <button
-                onClick={() => setIsLogoutModalOpen(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200"
-              >
+              <button onClick={() => setIsLogoutModalOpen(false)} className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
                 Cancel
               </button>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200"
-              >
+              <button onClick={handleLogout} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
                 Sign Out
               </button>
             </div>
