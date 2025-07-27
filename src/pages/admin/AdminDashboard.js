@@ -9,6 +9,7 @@ export default function AdminDashboard() {
     lastName: '',
     phone: '',
     accountPhone: '',
+    companyName: '',
     trialEndsAt: '',
     venues: [
       {
@@ -169,6 +170,17 @@ export default function AdminDashboard() {
             className="w-full border rounded px-3 py-2"
           />
         </div>
+        <div>
+        <label className="block text-sm font-medium">Company Name</label>
+        <input
+          type="text"
+          name="companyName"
+          required
+          value={formData.companyName}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2"
+        />
+      </div>
         <div>
           <label className="block text-sm font-medium">User Phone Number</label>
           <input
