@@ -26,7 +26,7 @@ import RequireMasterUser from './components/RequireMasterUser';
 import AdminFrame from './pages/admin/AdminFrame';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
-import LocationsPage from './pages/LocationsPage';
+import LocationsPage from './pages/Locations';
 
 const DashboardRoutes = () => {
   return (
