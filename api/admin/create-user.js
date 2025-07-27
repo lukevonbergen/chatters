@@ -38,10 +38,16 @@ export default async function handler(req, res) {
     const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
     if (inviteError) throw inviteError;
 
-    // 3. Create an Account (Org)
+    // 3. Create an Account (Org) with trial date
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
-      .insert([{ name: `${venueName} Org` }])
+      .insert([
+        {
+          name: `${venueName} Org`,
+          trial_ends_at: new Date(trialEndsAt),
+          is_paid: false,
+        },
+      ])
       .select()
       .single();
 
@@ -58,7 +64,6 @@ export default async function handler(req, res) {
           first_name: firstName,
           last_name: lastName,
           is_paid: false,
-          trial_ends_at: new Date(trialEndsAt),
           account_id: accountId,
         },
       ])

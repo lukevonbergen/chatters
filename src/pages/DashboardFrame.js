@@ -19,44 +19,62 @@ const DashboardFrame = ({ children }) => {
   const { venueName, venueId } = useVenue();
 
   const [copied, setCopied] = useState(false);
-
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [userInfo, setUserInfo] = useState({ first_name: '', last_name: '', email: '' });
+  const [userInfo, setUserInfo] = useState({ first_name: '', last_name: '', email: '', role: '', is_paid: false, trial_ends_at: '' });
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-  const fetchUserInfo = async () => {
-    const { data: userData, error: authError } = await supabase.auth.getUser();
-    const email = userData?.user?.email;
+    const fetchUserInfo = async () => {
+      const { data: userData, error: authError } = await supabase.auth.getUser();
+      const email = userData?.user?.email;
 
-    if (!email) {
-      navigate('/signin');
-      return;
-    }
+      if (!email) {
+        navigate('/signin');
+        return;
+      }
 
-    const { data: venue, error } = await supabase
-      .from('venues')
-      .select('first_name, last_name, email, is_paid, trial_ends_at')
-      .eq('email', email)
-      .single();
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('email, role, account_id, venue_id')
+        .eq('email', email)
+        .single();
 
-    if (venue) {
-      setUserInfo(venue);
+      if (!user) {
+        navigate('/signin');
+        return;
+      }
+
+      const { data: account, error: accountError } = await supabase
+        .from('accounts')
+        .select('trial_ends_at, is_paid')
+        .eq('id', user.account_id)
+        .single();
+
+      if (!account) {
+        navigate('/signin');
+        return;
+      }
+
+      setUserInfo({
+        email: user.email,
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        role: user.role,
+        is_paid: account.is_paid,
+        trial_ends_at: account.trial_ends_at,
+      });
 
       const trialExpired =
-        !venue.is_paid && new Date() > new Date(venue.trial_ends_at);
+        !account.is_paid && new Date() > new Date(account.trial_ends_at);
 
       if (trialExpired && location.pathname !== '/settings/billing') {
         navigate('/settings/billing');
       }
-    } else {
-      navigate('/signin');
-    }
-  };
+    };
 
-  fetchUserInfo();
-}, []);
+    fetchUserInfo();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -74,32 +92,32 @@ const DashboardFrame = ({ children }) => {
   };
 
   const NavLink = ({ to, children, icon: Icon }) => {
-  const isExactMatch = location.pathname === to;
-  const isNestedMatch = to !== '/' && location.pathname.startsWith(to);
-  const isActive = isExactMatch || isNestedMatch;
+    const isExactMatch = location.pathname === to;
+    const isNestedMatch = to !== '/' && location.pathname.startsWith(to);
+    const isActive = isExactMatch || isNestedMatch;
 
-  return (
-    <Link
-      to={to}
-      className={`flex items-center gap-2 text-sm px-3 py-2 rounded transition-all duration-200 ${
-        isActive ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'
-      }`}
-    >
-      {Icon && <Icon className="w-5 h-5" />}
-      {children}
-    </Link>
-  );
-};
-
+    return (
+      <Link
+        to={to}
+        className={`flex items-center gap-2 text-sm px-3 py-2 rounded transition-all duration-200 ${
+          isActive ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'
+        }`}
+      >
+        {Icon && <Icon className="w-5 h-5" />}
+        {children}
+      </Link>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
       {!userInfo.is_paid && new Date() <= new Date(userInfo.trial_ends_at) && (
-      <div className="bg-yellow-100 text-yellow-800 p-3 text-sm text-center">
-        You're on a free trial. You have {Math.ceil((new Date(userInfo.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24))} day(s) left. 
-        <a href="/settings/billing" className="underline ml-1">Upgrade now</a>
-      </div>
-)}
+        <div className="bg-yellow-100 text-yellow-800 p-3 text-sm text-center">
+          You're on a free trial. You have {Math.ceil((new Date(userInfo.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24))} day(s) left. 
+          <a href="/settings/billing" className="underline ml-1">Upgrade now</a>
+        </div>
+      )}
+
       {/* Top Bar */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -112,35 +130,35 @@ const DashboardFrame = ({ children }) => {
             <span className="text-sm text-gray-500">{venueName || 'Loading venue...'}</span>
           </div>
           <div className="flex items-center gap-4">
-          <div className="text-xs text-gray-500 flex items-center gap-1">
-            <button
-              onClick={() => {
-                if (!venueId) return;
-                navigator.clipboard.writeText(venueId);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              }}
-              disabled={!venueId}
-              className="flex items-center text-xs text-gray-500 hover:text-gray-700 transition"
-              title="Copy Venue ID"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+            <div className="text-xs text-gray-500 flex items-center gap-1">
+              <button
+                onClick={() => {
+                  if (!venueId) return;
+                  navigator.clipboard.writeText(venueId);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                disabled={!venueId}
+                className="flex items-center text-xs text-gray-500 hover:text-gray-700 transition"
+                title="Copy Venue ID"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8l6 6v8a2 2 0 01-2 2h-2"
-                />
-              </svg>
-              {copied ? 'Copied!' : 'Copy Venue ID'}
-            </button>
-          </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8l6 6v8a2 2 0 01-2 2h-2"
+                  />
+                </svg>
+                {copied ? 'Copied!' : 'Copy Venue ID'}
+              </button>
+            </div>
             <div className="relative" ref={dropdownRef}>
               <img
                 src={`https://ui-avatars.com/api/?name=${userInfo.first_name || 'User'}`}
@@ -183,6 +201,9 @@ const DashboardFrame = ({ children }) => {
           <NavLink to="/templates" icon={QrCode}>QR Templates</NavLink>
           <NavLink to="/staff" icon={User}>Staff</NavLink>
           <NavLink to="/settings" icon={Settings}>Settings</NavLink>
+          {userInfo?.role === 'master' && (
+            <NavLink to="/locations" icon={Map}>Locations</NavLink>
+          )}
         </div>
       </div>
 
