@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { supabase } from '../../utils/supabase';
 
 export default function AdminDashboard() {
   const [formData, setFormData] = useState({
