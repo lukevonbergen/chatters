@@ -15,15 +15,32 @@ export const VenueProvider = ({ children }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('venues')
-        .select('id, name')
+      // Step 1: Get account_id from users table
+      const { data: userRecord, error: userError } = await supabase
+        .from('users')
+        .select('account_id')
         .eq('email', user.email)
         .single();
 
-      if (!error && data) {
-        setVenueName(data.name);
-        setVenueId(data.id);
+      if (!userRecord?.account_id) {
+        console.warn('No account_id found for user');
+        return;
+      }
+
+      // Step 2: Get the first venue for that account
+      const { data: venue, error: venueError } = await supabase
+        .from('venues')
+        .select('id, name')
+        .eq('account_id', userRecord.account_id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (venue) {
+        setVenueName(venue.name);
+        setVenueId(venue.id);
+      } else {
+        console.warn('No venue found for account');
       }
 
       setLoading(false);
