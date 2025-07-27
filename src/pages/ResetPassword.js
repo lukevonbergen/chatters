@@ -1,80 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { supabase } from '../utils/supabase';
-
-console.log('Test getSessionFromUrl:', typeof supabase.auth.getSessionFromUrl);
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 const ResetPassword = () => {
+  const { session, isLoading } = useSessionContext();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [sessionReady, setSessionReady] = useState(false);
+  const [formReady, setFormReady] = useState(false);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleRecovery = async () => {
-      console.log('[ResetPassword] Running handleRecovery');
-      console.log('[ResetPassword] URL hash:', window.location.hash);
-
-      try {
-        const { data, error } = await supabase.auth.getSessionFromUrl();
-
-        if (error) {
-          console.error('[ResetPassword] Supabase session error:', error.message);
-          setError('The reset link is invalid or has expired.');
-          setTimeout(() => navigate('/forgot-password'), 3000);
-          return;
-        }
-
-        console.log('[ResetPassword] Session established:', data);
-        window.history.replaceState({}, document.title, window.location.pathname); // Optional: clean up hash
-        setSessionReady(true);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('[ResetPassword] Unexpected error:', err);
-        setError('Something went wrong while verifying your session.');
-        setTimeout(() => navigate('/forgot-password'), 3000);
-      }
-    };
-
-    handleRecovery();
-  }, [navigate]);
+    if (!isLoading && session && window.location.hash.includes('type=recovery')) {
+      setFormReady(true);
+    } else if (!isLoading && !session) {
+      setError('Invalid or expired reset link.');
+      setTimeout(() => navigate('/forgot-password'), 3000);
+    }
+  }, [isLoading, session, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('[ResetPassword] Submit triggered');
-
     setError('');
     setMessage('');
-    setIsLoading(true);
 
     if (password !== confirmPassword) {
-      console.warn('[ResetPassword] Passwords do not match');
       setError('Passwords do not match.');
-      setIsLoading(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase.auth.updateUser({ password });
+      const { error } = await session.user.update({ password });
 
       if (error) {
         console.error('[ResetPassword] Password update error:', error.message);
-        throw new Error(error.message);
+        setError('Failed to reset password. Please try again.');
+      } else {
+        setMessage('Password successfully reset! Redirecting...');
+        setTimeout(() => navigate('/signin'), 2000);
       }
-
-      console.log('[ResetPassword] Password updated:', data);
-      setMessage('Password successfully reset! Redirecting...');
-      setTimeout(() => navigate('/signin'), 2000);
     } catch (err) {
       console.error('[ResetPassword] Unexpected error:', err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+      setError('Something went wrong. Please try again.');
     }
   };
 
@@ -104,7 +74,7 @@ const ResetPassword = () => {
           {error && <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
           {message && <div className="mb-6 p-4 bg-green-50 text-green-600 rounded-lg text-sm">{message}</div>}
 
-          {sessionReady && (
+          {formReady && (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
