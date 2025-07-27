@@ -35,7 +35,7 @@ const DashboardFrame = ({ children }) => {
 
       const { data: user } = await supabase
         .from('users')
-        .select('email, role, account_id, venue_id, first_name, last_name')
+        .select('email, role, account_id, venue_id')
         .eq('email', email)
         .single();
 
