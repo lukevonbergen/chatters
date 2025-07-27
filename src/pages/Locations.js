@@ -8,28 +8,31 @@ export default function LocationsPage() {
   const [newVenueEmail, setNewVenueEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [accountId, setAccountId] = useState(null);
-
+  const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchVenues = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const userEmail = userData?.user?.email;
-
-      const { data: user } = await supabase
-        .from('users')
-        .select('account_id')
-        .eq('email', userEmail)
-        .single();
-
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth?.user;
       if (!user) return;
 
-      setAccountId(user.account_id);
+      setUserId(user.id);
+
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('account_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!userRow) return;
+
+      setAccountId(userRow.account_id);
 
       const { data: venuesData } = await supabase
         .from('venues')
         .select('*')
-        .eq('account_id', user.account_id)
+        .eq('account_id', userRow.account_id)
         .order('created_at', { ascending: false });
 
       setVenues(venuesData || []);
@@ -40,31 +43,58 @@ export default function LocationsPage() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!newVenueName || !accountId) return;
+    if (!newVenueName || !accountId || !userId) return;
 
     setLoading(true);
 
-    const { error } = await supabase.from('venues').insert([
+    const { data: venueData, error: venueError } = await supabase
+      .from('venues')
+      .insert([
+        {
+          name: newVenueName,
+          email: newVenueEmail || null,
+          account_id: accountId,
+          logo: null,
+          address: {},
+          primary_color: '#000000',
+          secondary_color: '#ffffff',
+          tripadvisor_link: '',
+          google_review_link: '',
+        },
+      ])
+      .select()
+      .single();
+
+    if (venueError || !venueData) {
+      console.error('Venue creation error:', venueError);
+      setLoading(false);
+      return;
+    }
+
+    const { error: staffError } = await supabase.from('staff').insert([
       {
-        name: newVenueName,
-        email: newVenueEmail || null,
-        account_id: accountId,
-        is_paid: false,
+        first_name: 'Unnamed',
+        last_name: 'Manager',
+        user_id: userId,
+        venue_id: venueData.id,
+        role: 'manager',
       },
     ]);
 
-    if (!error) {
-      setNewVenueName('');
-      setNewVenueEmail('');
-      const { data: updatedVenues } = await supabase
-        .from('venues')
-        .select('*')
-        .eq('account_id', accountId)
-        .order('created_at', { ascending: false });
-
-      setVenues(updatedVenues || []);
+    if (staffError) {
+      console.error('Staff creation error:', staffError);
     }
 
+    setNewVenueName('');
+    setNewVenueEmail('');
+
+    const { data: updatedVenues } = await supabase
+      .from('venues')
+      .select('*')
+      .eq('account_id', accountId)
+      .order('created_at', { ascending: false });
+
+    setVenues(updatedVenues || []);
     setLoading(false);
   };
 
@@ -107,7 +137,9 @@ export default function LocationsPage() {
           <div key={venue.id} className="bg-white p-4 rounded shadow flex justify-between items-center">
             <div>
               <div className="font-medium text-lg">{venue.name}</div>
-              <div className="text-sm text-gray-500">Created: {new Date(venue.created_at).toLocaleDateString()}</div>
+              <div className="text-sm text-gray-500">
+                Created: {new Date(venue.created_at).toLocaleDateString()}
+              </div>
             </div>
             <button
               onClick={() => console.log('Manage venue:', venue.id)}
