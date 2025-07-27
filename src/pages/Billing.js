@@ -13,7 +13,7 @@ const BillingPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchTrialInfo = async () => {
       const { data: authData } = await supabase.auth.getUser();
       const email = authData?.user?.email;
 
@@ -24,18 +24,29 @@ const BillingPage = () => {
 
       setUserEmail(email);
 
-      const { data: venue } = await supabase
-        .from('venues')
-        .select('trial_ends_at')
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('account_id')
         .eq('email', email)
         .single();
 
-      if (venue?.trial_ends_at) {
-        setTrialEndsAt(venue.trial_ends_at);
+      if (!userRow) {
+        navigate('/signin');
+        return;
+      }
+
+      const { data: account } = await supabase
+        .from('accounts')
+        .select('trial_ends_at')
+        .eq('id', userRow.account_id)
+        .single();
+
+      if (account?.trial_ends_at) {
+        setTrialEndsAt(account.trial_ends_at);
       }
     };
 
-    fetchUser();
+    fetchTrialInfo();
   }, [navigate]);
 
   const handleCheckout = async () => {
