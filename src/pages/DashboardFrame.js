@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   MessageSquare,
-  LogOut,
   BarChart,
   Settings,
   Map,
@@ -20,13 +19,13 @@ const DashboardFrame = ({ children }) => {
 
   const [copied, setCopied] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [userInfo, setUserInfo] = useState({ first_name: '', last_name: '', email: '', role: '', is_paid: false, trial_ends_at: '' });
+  const [userInfo, setUserInfo] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
-      const { data: userData, error: authError } = await supabase.auth.getUser();
+      const { data: userData } = await supabase.auth.getUser();
       const email = userData?.user?.email;
 
       if (!email) {
@@ -34,9 +33,9 @@ const DashboardFrame = ({ children }) => {
         return;
       }
 
-      const { data: user, error: userError } = await supabase
+      const { data: user } = await supabase
         .from('users')
-        .select('email, role, account_id, venue_id')
+        .select('email, role, account_id, venue_id, first_name, last_name')
         .eq('email', email)
         .single();
 
@@ -45,7 +44,7 @@ const DashboardFrame = ({ children }) => {
         return;
       }
 
-      const { data: account, error: accountError } = await supabase
+      const { data: account } = await supabase
         .from('accounts')
         .select('trial_ends_at, is_paid')
         .eq('id', user.account_id)
@@ -56,17 +55,17 @@ const DashboardFrame = ({ children }) => {
         return;
       }
 
+      const trialExpired = !account.is_paid && new Date() > new Date(account.trial_ends_at);
+
       setUserInfo({
         email: user.email,
+        role: user.role,
         first_name: user.first_name || '',
         last_name: user.last_name || '',
-        role: user.role,
         is_paid: account.is_paid,
         trial_ends_at: account.trial_ends_at,
+        trialExpired,
       });
-
-      const trialExpired =
-        !account.is_paid && new Date() > new Date(account.trial_ends_at);
 
       if (trialExpired && location.pathname !== '/settings/billing') {
         navigate('/settings/billing');
@@ -74,7 +73,7 @@ const DashboardFrame = ({ children }) => {
     };
 
     fetchUserInfo();
-  }, []);
+  }, [location.pathname, navigate]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -109,11 +108,16 @@ const DashboardFrame = ({ children }) => {
     );
   };
 
+  if (!userInfo) {
+    return null; // Loading state
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       {!userInfo.is_paid && new Date() <= new Date(userInfo.trial_ends_at) && (
         <div className="bg-yellow-100 text-yellow-800 p-3 text-sm text-center">
-          You're on a free trial. You have {Math.ceil((new Date(userInfo.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24))} day(s) left. 
+          You're on a free trial. You have{' '}
+          {Math.ceil((new Date(userInfo.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24))} day(s) left.
           <a href="/settings/billing" className="underline ml-1">Upgrade now</a>
         </div>
       )}
@@ -201,7 +205,7 @@ const DashboardFrame = ({ children }) => {
           <NavLink to="/templates" icon={QrCode}>QR Templates</NavLink>
           <NavLink to="/staff" icon={User}>Staff</NavLink>
           <NavLink to="/settings" icon={Settings}>Settings</NavLink>
-          {userInfo?.role === 'master' && (
+          {userInfo.role === 'master' && (
             <NavLink to="/locations" icon={Map}>Locations</NavLink>
           )}
         </div>
