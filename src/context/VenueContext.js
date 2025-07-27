@@ -43,7 +43,6 @@ export const VenueProvider = ({ children }) => {
         .from('venues')
         .select('id, name')
         .eq('account_id', accountId)
-        .order('created_at', { ascending: true })
         .limit(1);
 
       if (venueError) {
