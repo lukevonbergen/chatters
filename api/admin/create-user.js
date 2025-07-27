@@ -1,6 +1,6 @@
-// ==========================
+// ===============================
 // /api/admin/create-user.js
-// ==========================
+// ===============================
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -10,22 +10,23 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  console.log('🔁 [API] Admin Create User + Locations');
+  console.log('🔁 [API] Admin Create Master User + Venues');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, firstName, lastName, trialEndsAt, venues } = req.body;
+  const { email, firstName, lastName, phone, trialEndsAt, venues } = req.body;
 
-  if (!email || !firstName || !lastName || !trialEndsAt || !Array.isArray(venues)) {
-    return res.status(400).json({ error: 'Missing required fields or venues not valid' });
+  if (!email || !firstName || !lastName || !phone || !trialEndsAt || !Array.isArray(venues) || venues.length === 0) {
+    return res.status(400).json({ error: 'Missing required fields or venues invalid' });
   }
 
   try {
     // 1. Create Supabase Auth user
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
+      phone,
       user_metadata: { firstName, lastName, invited_by_admin: true },
     });
     if (createError) throw createError;
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
     const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
     if (inviteError) throw inviteError;
 
-    // 3. Create Account with trial info
+    // 3. Create Account
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
       .insert([{ name: `${firstName} ${lastName} Org`, trial_ends_at: new Date(trialEndsAt), is_paid: false }])
@@ -44,35 +45,57 @@ export default async function handler(req, res) {
     if (accountError) throw accountError;
     const accountId = accountData.id;
 
-    // 4. Insert user row
+    // 4. Create User row
     const { error: userInsertError } = await supabase.from('users').insert([
       {
         id: authUserId,
         email,
         role: 'master',
+        phone,
         account_id: accountId,
-        venue_id: null, // linked by staff entries instead
+        venue_id: null,
       },
     ]);
     if (userInsertError) throw userInsertError;
 
-    // 5. Create each Venue & Staff
+    // 5. Create each venue
     for (const venue of venues) {
-      const { name, email: venueEmail } = venue;
-      if (!name || !venueEmail) continue;
+      const {
+        name,
+        address,
+        tableCount,
+        logo = null,
+        primaryColor = '#000000',
+        secondaryColor = '#ffffff',
+      } = venue;
+
+      if (!name || !address || !tableCount) continue;
 
       const { data: venueData, error: venueError } = await supabase
         .from('venues')
-        .insert([{ name, email: venueEmail, account_id: accountId, is_paid: false, first_name: firstName, last_name: lastName }])
+        .insert([
+          {
+            name,
+            account_id: accountId,
+            first_name: firstName,
+            last_name: lastName,
+            is_paid: false,
+            logo,
+            primary_color: primaryColor,
+            secondary_color: secondaryColor,
+            address,
+            table_count: tableCount,
+          },
+        ])
         .select()
         .single();
+
       if (venueError) throw venueError;
 
       const venueId = venueData.id;
 
       const { error: staffError } = await supabase.from('staff').insert([
         {
-          email: venueEmail,
           first_name: firstName,
           last_name: lastName,
           venue_id: venueId,
@@ -80,6 +103,7 @@ export default async function handler(req, res) {
           user_id: authUserId,
         },
       ]);
+
       if (staffError) throw staffError;
     }
 

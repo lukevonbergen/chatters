@@ -1,6 +1,6 @@
-// =========================
-// /pages/admin/AdminDashboard.jsx
-// =========================
+// =============================
+// pages/admin/AdminDashboard.jsx
+// =============================
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -10,54 +10,120 @@ export default function AdminDashboard() {
     email: '',
     firstName: '',
     lastName: '',
+    phone: '',
     trialEndsAt: '',
-    venues: [{ name: '', email: '' }],
+    venues: [
+      {
+        name: '',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        postcode: '',
+        tableCount: '',
+        logo: null,
+      },
+    ],
   });
 
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleVenueChange = (index, field, value) => {
+  const handleVenueChange = (index, e) => {
+    const { name, value, files } = e.target;
     const newVenues = [...formData.venues];
-    newVenues[index][field] = value;
+    newVenues[index][name] = files ? files[0] : value;
     setFormData((prev) => ({ ...prev, venues: newVenues }));
   };
 
   const addVenue = () => {
     setFormData((prev) => ({
       ...prev,
-      venues: [...prev.venues, { name: '', email: '' }],
+      venues: [
+        ...prev.venues,
+        {
+          name: '',
+          addressLine1: '',
+          addressLine2: '',
+          city: '',
+          postcode: '',
+          tableCount: '',
+          logo: null,
+        },
+      ],
     }));
-  };
-
-  const removeVenue = (index) => {
-    const newVenues = formData.venues.filter((_, i) => i !== index);
-    setFormData((prev) => ({ ...prev, venues: newVenues }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
+      const payload = { ...formData };
+
+      payload.venues = await Promise.all(
+        formData.venues.map(async (venue) => {
+          let logoPath = null;
+
+          if (venue.logo) {
+            const fileExt = venue.logo.name.split('.').pop();
+            const fileName = `${Date.now()}-${venue.logo.name}`;
+            const filePath = `logos/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from('venue-assets')
+              .upload(filePath, venue.logo);
+
+            if (uploadError) throw uploadError;
+            logoPath = filePath;
+          }
+
+          return {
+            name: venue.name,
+            table_count: parseInt(venue.tableCount || '0', 10),
+            logo: logoPath,
+            primary_color: '#000000',
+            secondary_color: '#ffffff',
+            address: {
+              line1: venue.addressLine1,
+              line2: venue.addressLine2,
+              city: venue.city,
+              postcode: venue.postcode,
+            },
+          };
+        })
+      );
+
       const res = await fetch('/api/admin/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'Unknown error');
 
-      toast.success('User and venues created!');
+      toast.success('Master user and venues created!');
       setFormData({
         email: '',
         firstName: '',
         lastName: '',
+        phone: '',
         trialEndsAt: '',
-        venues: [{ name: '', email: '' }],
+        venues: [
+          {
+            name: '',
+            addressLine1: '',
+            addressLine2: '',
+            city: '',
+            postcode: '',
+            tableCount: '',
+            logo: null,
+          },
+        ],
       });
     } catch (err) {
       toast.error(err.message);
@@ -67,104 +133,45 @@ export default function AdminDashboard() {
   };
 
   return (
-    <>
-      <h2 className="text-xl font-semibold mb-4">Admin Dashboard</h2>
-      <p className="text-gray-600 mb-8">Create a master user and one or more venues under them.</p>
-
-      <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium">First Name</label>
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              required
-              onChange={handleChange}
-              className="mt-1 w-full border rounded px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Last Name</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              required
-              onChange={handleChange}
-              className="mt-1 w-full border rounded px-3 py-2"
-            />
-          </div>
-        </div>
-
+    <div className="max-w-2xl mx-auto">
+      <h2 className="text-xl font-semibold mb-4">Create Master User + Locations</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium">Master Account Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            required
-            onChange={handleChange}
-            className="mt-1 w-full border rounded px-3 py-2"
-          />
+          <label className="block text-sm font-medium">Email</label>
+          <input type="email" name="email" required value={formData.email} onChange={handleChange} className="w-full border rounded px-3 py-2" />
         </div>
-
+        <div className="flex gap-4">
+          <input type="text" name="firstName" required placeholder="First Name" value={formData.firstName} onChange={handleChange} className="w-full border rounded px-3 py-2" />
+          <input type="text" name="lastName" required placeholder="Last Name" value={formData.lastName} onChange={handleChange} className="w-full border rounded px-3 py-2" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Phone Number</label>
+          <input type="text" name="phone" required value={formData.phone} onChange={handleChange} className="w-full border rounded px-3 py-2" />
+        </div>
         <div>
           <label className="block text-sm font-medium">Trial Ends At</label>
-          <input
-            type="date"
-            name="trialEndsAt"
-            value={formData.trialEndsAt}
-            required
-            onChange={handleChange}
-            className="mt-1 w-full border rounded px-3 py-2"
-          />
+          <input type="date" name="trialEndsAt" required value={formData.trialEndsAt} onChange={handleChange} className="w-full border rounded px-3 py-2" />
         </div>
 
-        <div>
-          <h3 className="font-semibold text-sm mb-2">Venues</h3>
-          {formData.venues.map((venue, i) => (
-            <div key={i} className="border rounded p-4 mb-4 space-y-2 bg-gray-50">
-              <input
-                type="text"
-                placeholder="Venue Name"
-                value={venue.name}
-                required
-                onChange={(e) => handleVenueChange(i, 'name', e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-              <input
-                type="email"
-                placeholder="Venue Email"
-                value={venue.email}
-                required
-                onChange={(e) => handleVenueChange(i, 'email', e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-              {formData.venues.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeVenue(i)}
-                  className="text-sm text-red-600"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button type="button" onClick={addVenue} className="text-blue-600 text-sm">
-            + Add Another Venue
-          </button>
-        </div>
+        {formData.venues.map((venue, index) => (
+          <div key={index} className="border p-4 rounded bg-white">
+            <h4 className="font-medium mb-2">Location {index + 1}</h4>
+            <input type="text" name="name" required placeholder="Venue Name" value={venue.name} onChange={(e) => handleVenueChange(index, e)} className="w-full border rounded px-3 py-2 mb-2" />
+            <input type="text" name="addressLine1" placeholder="Address Line 1" value={venue.addressLine1} onChange={(e) => handleVenueChange(index, e)} className="w-full border rounded px-3 py-2 mb-2" />
+            <input type="text" name="addressLine2" placeholder="Address Line 2" value={venue.addressLine2} onChange={(e) => handleVenueChange(index, e)} className="w-full border rounded px-3 py-2 mb-2" />
+            <input type="text" name="city" placeholder="City" value={venue.city} onChange={(e) => handleVenueChange(index, e)} className="w-full border rounded px-3 py-2 mb-2" />
+            <input type="text" name="postcode" placeholder="Postcode" value={venue.postcode} onChange={(e) => handleVenueChange(index, e)} className="w-full border rounded px-3 py-2 mb-2" />
+            <input type="number" name="tableCount" placeholder="Table Count" value={venue.tableCount} onChange={(e) => handleVenueChange(index, e)} className="w-full border rounded px-3 py-2 mb-2" />
+            <input type="file" name="logo" accept="image/*" onChange={(e) => handleVenueChange(index, e)} className="w-full mb-2" />
+          </div>
+        ))}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          {loading ? 'Creating...' : 'Create Master + Venues'}
+        <button type="button" onClick={addVenue} className="bg-gray-200 px-3 py-1 rounded">+ Add Another Location</button>
+
+        <button type="submit" disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          {loading ? 'Creating...' : 'Create Account'}
         </button>
       </form>
-    </>
+    </div>
   );
 }
