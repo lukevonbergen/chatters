@@ -12,59 +12,79 @@ export const VenueProvider = ({ children }) => {
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    const init = async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      const user = auth?.user;
-      if (!user) return;
+  const init = async () => {
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError) {
+      console.error('Auth error:', authError);
+      return;
+    }
 
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('id, role, account_id')
-        .eq('id', user.id)
-        .single();
+    const user = auth?.user;
+    if (!user) return;
 
-      if (!userRow) return;
+    const { data: userRow, error: userFetchError } = await supabase
+      .from('users')
+      .select('id, role, account_id')
+      .eq('id', user.id)
+      .single();
 
-      setUserRole(userRow.role);
+    if (userFetchError || !userRow) {
+      console.error('User fetch error:', userFetchError);
+      return;
+    }
 
-      if (userRow.role === 'master') {
-        // Fetch all venues under this account
-        const { data: venues } = await supabase
-          .from('venues')
-          .select('id, name')
-          .eq('account_id', userRow.account_id)
-          .order('created_at', { ascending: true });
+    setUserRole(userRow.role);
 
-        setAllVenues(venues || []);
-
-        const cachedId = localStorage.getItem('chatters_currentVenueId');
-        const validCached = venues?.find((v) => v.id === cachedId);
-
-        const selected = validCached ? validCached : venues?.[0];
-        if (selected) {
-          setVenueId(selected.id);
-          setVenueName(selected.name);
-          localStorage.setItem('chatters_currentVenueId', selected.id);
-        }
-      } else {
-        // Manager/staff access: fetch venue from staff
-        const { data: staff } = await supabase
-          .from('staff')
-          .select('venue_id, venues(name)')
-          .eq('user_id', user.id)
-          .single();
-
-        if (staff?.venue_id) {
-          setVenueId(staff.venue_id);
-          setVenueName(staff.venues?.name || '');
-        }
+    if (userRow.role === 'master') {
+      if (!userRow.account_id) {
+        console.warn('No account_id found for master user');
+        return;
       }
 
-      setLoading(false);
-    };
+      const { data: venues, error: venueError } = await supabase
+        .from('venues')
+        .select('id, name')
+        .eq('account_id', userRow.account_id)
+        .order('created_at', { ascending: true });
 
-    init();
-  }, []);
+      if (venueError) {
+        console.error('Venue fetch error:', venueError);
+        return;
+      }
+
+      setAllVenues(venues || []);
+
+      const cachedId = localStorage.getItem('chatters_currentVenueId');
+      const validCached = venues?.find((v) => v.id === cachedId);
+
+      const selected = validCached || venues?.[0];
+      if (selected) {
+        setVenueId(selected.id);
+        setVenueName(selected.name);
+        localStorage.setItem('chatters_currentVenueId', selected.id);
+      }
+    } else {
+      const { data: staff, error: staffError } = await supabase
+        .from('staff')
+        .select('venue_id, venues(name)')
+        .eq('user_id', user.id)
+        .single();
+
+      if (staffError || !staff?.venue_id) {
+        console.error('Staff fetch error or missing venue:', staffError);
+        return;
+      }
+
+      setVenueId(staff.venue_id);
+      setVenueName(staff.venues?.name || '');
+    }
+
+    setLoading(false);
+  };
+
+  init();
+}, []);
+
 
   const setCurrentVenue = (id) => {
     const found = allVenues.find((v) => v.id === id);
