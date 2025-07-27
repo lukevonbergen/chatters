@@ -1,27 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from '../utils/supabase';
 
 const ResetPassword = () => {
-  const { session, isLoading } = useSessionContext();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [formReady, setFormReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && session && window.location.hash.includes('type=recovery')) {
-      setFormReady(true);
-    } else if (!isLoading && !session) {
-      setError('Invalid or expired reset link.');
-      setTimeout(() => navigate('/forgot-password'), 3000);
-    }
-  }, [isLoading, session, navigate]);
+    const runRecovery = async () => {
+      if (window.location.hash.includes('type=recovery')) {
+        const { error } = await supabase.auth.exchangeCodeForSession();
+
+        if (error) {
+          console.error('[ResetPassword] exchangeCodeForSession error:', error.message);
+          setError('Invalid or expired reset link.');
+          setTimeout(() => navigate('/forgot-password'), 3000);
+        } else {
+          console.log('[ResetPassword] Session set via recovery link');
+          setFormReady(true);
+        }
+      } else {
+        setError('Invalid password reset link.');
+        setTimeout(() => navigate('/forgot-password'), 3000);
+      }
+
+      setIsLoading(false);
+    };
+
+    runRecovery();
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,7 +89,7 @@ const ResetPassword = () => {
           {error && <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
           {message && <div className="mb-6 p-4 bg-green-50 text-green-600 rounded-lg text-sm">{message}</div>}
 
-          {formReady && (
+          {!isLoading && formReady && (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
@@ -110,14 +124,7 @@ const ResetPassword = () => {
                 disabled={isLoading}
                 className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
               >
-                {isLoading ? (
-                  <span>Resetting...</span>
-                ) : (
-                  <>
-                    <span>Reset Password</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                {isLoading ? <span>Resetting...</span> : (<><span>Reset Password</span><ArrowRight className="h-4 w-4" /></>)}
               </button>
             </form>
           )}
