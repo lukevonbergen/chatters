@@ -24,7 +24,7 @@ const DashboardPage = () => {
         return;
       }
 
-      // Step 1: Fetch user record to get account_id
+      // Step 1: Get user account_id
       const { data: userRecord, error: userError } = await supabase
         .from('users')
         .select('account_id')
@@ -36,14 +36,15 @@ const DashboardPage = () => {
         return;
       }
 
-      // Step 2: Fetch the first venue under the same account
-      const { data: venue, error: venueError } = await supabase
+      // Step 2: Get first venue for that account
+      const { data: venues, error: venueError } = await supabase
         .from('venues')
         .select('id')
         .eq('account_id', userRecord.account_id)
         .order('created_at', { ascending: true })
-        .limit(1)
-        .single();
+        .limit(1);
+
+      const venue = venues?.[0];
 
       if (!venue?.id) {
         navigate('/settings'); // fallback
@@ -75,7 +76,7 @@ const DashboardPage = () => {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Overview</h1>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Left column: feedback feed */}
+        {/* Left column: Feedback feed */}
         <div className="flex-1">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -108,7 +109,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Right column: metrics */}
+        {/* Right column: Stats */}
         <div className="w-full lg:w-80 space-y-4">
           <SessionsActionedTile venueId={venueId} />
           <UnresolvedAlertsTile venueId={venueId} />

@@ -12,37 +12,55 @@ export const VenueProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchVenue = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: auth, error: authError } = await supabase.auth.getUser();
+      const user = auth?.user;
 
-      // Step 1: Get account_id from users table
-      const { data: userRecord, error: userError } = await supabase
-        .from('users')
-        .select('account_id')
-        .eq('email', user.email)
-        .single();
-
-      if (!userRecord?.account_id) {
-        console.warn('No account_id found for user');
+      if (!user) {
+        console.warn('⚠️ No user signed in');
+        setLoading(false);
         return;
       }
 
-      // Step 2: Get the first venue for that account
-      const { data: venue, error: venueError } = await supabase
-        .from('venues')
-        .select('id, name')
-        .eq('account_id', userRecord.account_id)
-        .order('created_at', { ascending: true })
-        .limit(1)
+      const email = user.email;
+
+      // Step 1: Get user record to get account_id
+      const { data: userRow, error: userError } = await supabase
+        .from('users')
+        .select('account_id')
+        .eq('email', email)
         .single();
 
-      if (venue) {
-        setVenueName(venue.name);
-        setVenueId(venue.id);
-      } else {
-        console.warn('No venue found for account');
+      if (userError || !userRow?.account_id) {
+        console.error('❌ Failed to fetch user/account_id:', userError);
+        setLoading(false);
+        return;
       }
 
+      const accountId = userRow.account_id;
+
+      // Step 2: Get the first venue under that account
+      const { data: venueList, error: venueError } = await supabase
+        .from('venues')
+        .select('id, name')
+        .eq('account_id', accountId)
+        .order('created_at', { ascending: true })
+        .limit(1);
+
+      if (venueError) {
+        console.error('❌ Error fetching venue:', venueError);
+        setLoading(false);
+        return;
+      }
+
+      if (!venueList || venueList.length === 0) {
+        console.warn('🚫 No venue found for account');
+        setLoading(false);
+        return;
+      }
+
+      const venue = venueList[0];
+      setVenueName(venue.name);
+      setVenueId(venue.id);
       setLoading(false);
     };
 
