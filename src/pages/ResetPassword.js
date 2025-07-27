@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useSessionContext } from '@supabase/auth-helpers-react';
+import { supabase } from '../utils/supabase';
 
 const ResetPassword = () => {
   const { session, isLoading } = useSessionContext();
@@ -33,7 +34,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const { error } = await session.user.update({ password });
+      const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
         console.error('[ResetPassword] Password update error:', error.message);
@@ -109,7 +110,14 @@ const ResetPassword = () => {
                 disabled={isLoading}
                 className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
               >
-                {isLoading ? <span>Resetting...</span> : (<><span>Reset Password</span><ArrowRight className="h-4 w-4" /></>)}
+                {isLoading ? (
+                  <span>Resetting...</span>
+                ) : (
+                  <>
+                    <span>Reset Password</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </button>
             </form>
           )}
