@@ -1,4 +1,3 @@
-// Updated DashboardFrame.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -129,12 +128,16 @@ const DashboardFrame = ({ children }) => {
 
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
             <img src="https://www.getchatters.com/img/Logo.svg" alt="Chatters Logo" className="h-7 w-auto" />
-            {userInfo.role === 'master' ? (
+            {userInfo.role === 'master' && allVenues.length > 0 ? (
               <select
                 value={venueId}
-                onChange={(e) => setCurrentVenue(e.target.value)}
+                onChange={(e) => {
+                  const newVenueId = e.target.value;
+                  // Prevent dropdown glitch by delaying state update
+                  setTimeout(() => setCurrentVenue(newVenueId), 50);
+                }}
                 className="text-sm text-gray-600 border border-gray-300 rounded px-2 py-1"
               >
                 {allVenues.map((v) => (
@@ -145,6 +148,7 @@ const DashboardFrame = ({ children }) => {
               <span className="text-sm text-gray-500">{venueName || 'Loading venue...'}</span>
             )}
           </div>
+
           <div className="flex items-center gap-4">
             <div className="text-xs text-gray-500 flex items-center gap-1">
               <button
@@ -164,6 +168,7 @@ const DashboardFrame = ({ children }) => {
                 {copied ? 'Copied!' : 'Copy Venue ID'}
               </button>
             </div>
+
             <div className="relative" ref={dropdownRef}>
               <img
                 src={`https://ui-avatars.com/api/?name=${userInfo.first_name || 'User'}`}
