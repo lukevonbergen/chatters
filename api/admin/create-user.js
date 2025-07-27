@@ -1,6 +1,4 @@
-// ===============================
 // /api/admin/create-user.js
-// ===============================
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -10,90 +8,102 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  console.log('🔁 [API] Admin Create Master User + Venues');
+  console.log('🔁 [API] Admin Create User + Venues');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, firstName, lastName, phone, trialEndsAt, venues } = req.body;
+  const { email, firstName, lastName, phone, trialEndsAt, companyName, accountPhone, venues } = req.body;
 
-  if (!email || !firstName || !lastName || !phone || !trialEndsAt || !Array.isArray(venues) || venues.length === 0) {
-    return res.status(400).json({ error: 'Missing required fields or venues invalid' });
+  if (!email || !firstName || !lastName || !phone || !trialEndsAt || !companyName || !Array.isArray(venues)) {
+    return res.status(400).json({ error: 'Missing required fields or invalid venue data' });
   }
 
   try {
     // 1. Create Supabase Auth user
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
-      phone,
-      user_metadata: { firstName, lastName, invited_by_admin: true },
+      user_metadata: { firstName, lastName, phone, invited_by_admin: true },
     });
     if (createError) throw createError;
+
     const authUserId = userData.user.id;
 
-    // 2. Invite user
+    // 2. Send invitation email
     const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
     if (inviteError) throw inviteError;
 
-    // 3. Create Account
+    // 3. Create account (company)
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
-      .insert([{ name: `${firstName} ${lastName} Org`, trial_ends_at: new Date(trialEndsAt), is_paid: false }])
+      .insert([
+        {
+          name: companyName,
+          phone: accountPhone,
+          trial_ends_at: new Date(trialEndsAt),
+          is_paid: false,
+        },
+      ])
       .select()
       .single();
     if (accountError) throw accountError;
+
     const accountId = accountData.id;
 
-    // 4. Create User row
+    // 4. Insert user into users table as master
     const { error: userInsertError } = await supabase.from('users').insert([
       {
         id: authUserId,
         email,
-        role: 'master',
         phone,
+        role: 'master',
         account_id: accountId,
         venue_id: null,
       },
     ]);
     if (userInsertError) throw userInsertError;
 
-    // 5. Create each venue
+    // 5. Loop through venues and insert each one
     for (const venue of venues) {
       const {
         name,
-        address,
-        tableCount,
+        address = {},
+        table_count = 0,
         logo = null,
-        primaryColor = '#000000',
-        secondaryColor = '#ffffff',
+        primary_color = '#000000',
+        secondary_color = '#ffffff',
+        tripadvisor_link = '',
+        google_review_link = '',
       } = venue;
 
-      if (!name || !address || !tableCount) continue;
+      if (!name || typeof table_count !== 'number') continue;
 
       const { data: venueData, error: venueError } = await supabase
         .from('venues')
         .insert([
           {
             name,
+            table_count,
+            logo,
+            primary_color,
+            secondary_color,
+            address,
+            tripadvisor_link,
+            google_review_link,
             account_id: accountId,
+            is_paid: false,
             first_name: firstName,
             last_name: lastName,
-            is_paid: false,
-            logo,
-            primary_color: primaryColor,
-            secondary_color: secondaryColor,
-            address,
-            table_count: tableCount,
           },
         ])
         .select()
         .single();
-
       if (venueError) throw venueError;
 
       const venueId = venueData.id;
 
+      // 6. Add staff entry for the user at this venue
       const { error: staffError } = await supabase.from('staff').insert([
         {
           first_name: firstName,
@@ -103,13 +113,12 @@ export default async function handler(req, res) {
           user_id: authUserId,
         },
       ]);
-
       if (staffError) throw staffError;
     }
 
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error('🔥 Error in create-user:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message || 'Unexpected error' });
   }
 }
