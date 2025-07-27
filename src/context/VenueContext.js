@@ -45,7 +45,6 @@ export const VenueProvider = ({ children }) => {
         .from('venues')
         .select('id, name')
         .eq('account_id', userRow.account_id)
-        .order('created_at', { ascending: true });
 
       if (venueError) {
         console.error('Venue fetch error:', venueError);
