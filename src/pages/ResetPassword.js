@@ -15,11 +15,19 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const runRecovery = async () => {
-      if (window.location.hash.includes('type=recovery')) {
-        const { error } = await supabase.auth.exchangeCodeForSession();
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const access_token = hashParams.get('access_token');
+      const refresh_token = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
+
+      if (type === 'recovery' && access_token && refresh_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token,
+          refresh_token,
+        });
 
         if (error) {
-          console.error('[ResetPassword] exchangeCodeForSession error:', error.message);
+          console.error('[ResetPassword] setSession error:', error.message);
           setError('Invalid or expired reset link.');
           setTimeout(() => navigate('/forgot-password'), 3000);
         } else {
