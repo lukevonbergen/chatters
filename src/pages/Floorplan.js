@@ -4,6 +4,7 @@ import PageContainer from '../components/PageContainer';
 import Draggable from 'react-draggable';
 import { v4 as uuidv4 } from 'uuid';
 import usePageTitle from '../hooks/usePageTitle';
+const { venueId } = useVenue();
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useVenue } from '../context/VenueContext';
@@ -40,7 +41,6 @@ const Heatmap = () => {
 
   const [staffSelections, setStaffSelections] = useState({});
 
-  const { venueId } = useVenue();
 
   useEffect(() => {
     if (!venueId) return;
