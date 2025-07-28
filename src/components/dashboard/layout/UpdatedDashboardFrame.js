@@ -1,25 +1,25 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useVenue } from '@/context/VenueContext';
+import { useVenue } from '../../../context/VenueContext';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase';
+import { supabase } from '../../../utils/supabase';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '../../../components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
+} from '../../../components/ui/dropdown-menu';
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from '@/components/ui/popover';
+} from '../../../components/ui/popover';
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from '@/components/ui/avatar';
+} from '../../../components/ui/avatar';
 
 const navLinks = [
   { to: '/', label: 'Overview' },
