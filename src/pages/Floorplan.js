@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import usePageTitle from '../hooks/usePageTitle';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useVenue } from '../context/VenueContext';
 dayjs.extend(relativeTime);
 
 const GRID_SIZE = 20;
@@ -14,7 +15,6 @@ const Heatmap = () => {
   usePageTitle('Floor Plan');
   const layoutRef = useRef(null);
 
-  const [venueId, setVenueId] = useState(null);
   const [zones, setZones] = useState([]);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [editingZoneId, setEditingZoneId] = useState(null);
@@ -40,29 +40,33 @@ const Heatmap = () => {
 
   const [staffSelections, setStaffSelections] = useState({});
 
-  useEffect(() => {
-    const load = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const email = userData?.user?.email;
-      if (!email) return;
+  const { venueId } = useVenue();
 
-      const { data: venue } = await supabase
+  useEffect(() => {
+    if (!venueId) return;
+
+    const load = async () => {
+      const { data: venue, error } = await supabase
         .from('venues')
-        .select('id, table_count')
-        .eq('email', email)
+        .select('table_count')
+        .eq('id', venueId)
         .single();
 
-      if (!venue) return;
-      setVenueId(venue.id);
+      if (error || !venue) {
+        console.error('Error loading venue data:', error);
+        return;
+      }
+
       setTableLimit(venue.table_count);
 
-      await loadZones(venue.id);
-      await loadTables(venue.id);
-      await fetchFeedback(venue.id);
-      await loadStaff(venue.id);
+      await loadZones(venueId);
+      await loadTables(venueId);
+      await fetchFeedback(venueId);
+      await loadStaff(venueId);
     };
+
     load();
-  }, []);
+  }, [venueId]);
 
   useEffect(() => {
   if (!venueId) return;
