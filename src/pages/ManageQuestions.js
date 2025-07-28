@@ -1,3 +1,4 @@
+// ManageQuestions.js
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utils/supabase';
 import { DragDropContext } from 'react-beautiful-dnd';
@@ -9,14 +10,16 @@ import ReplaceModal from '../components/ReplaceModal';
 import PreviouslyUsedQuestions from '../components/PreviouslyUsedQuestions';
 import PageContainer from '../components/PageContainer';
 import usePageTitle from '../hooks/usePageTitle';
+import { useVenue } from '../context/VenueContext';
 
 const ManageQuestions = () => {
   usePageTitle('Feedback Manager');
+  const { venueId } = useVenue();
+
   const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [editingQuestionText, setEditingQuestionText] = useState('');
-  const [venueId, setVenueId] = useState(null);
   const [inactiveQuestions, setInactiveQuestions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false);
@@ -40,31 +43,10 @@ const ManageQuestions = () => {
   );
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        fetchVenueId(user.email);
-      }
-    };
-
-    fetchSession();
-  }, []);
-
-  const fetchVenueId = async (email) => {
-    const { data: venueData, error: venueError } = await supabase
-      .from('venues')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (venueError) {
-      console.error('Error fetching venue ID:', venueError);
-    } else {
-      setVenueId(venueData.id);
-      fetchQuestions(venueData.id);
-      fetchInactiveQuestions(venueData.id);
-    }
-  };
+    if (!venueId) return;
+    fetchQuestions(venueId);
+    fetchInactiveQuestions(venueId);
+  }, [venueId]);
 
   const fetchQuestions = async (venueId) => {
     const { data, error } = await supabase
@@ -139,7 +121,6 @@ const ManageQuestions = () => {
   };
 
   const handleAddInactiveQuestion = async (inactiveQuestion) => {
-    // Mark the inactive question as active
     const { error } = await supabase
       .from('questions')
       .update({ active: true, order: questions.length + 1 })
@@ -148,7 +129,6 @@ const ManageQuestions = () => {
     if (error) {
       console.error('Error re-adding inactive question:', error);
     } else {
-      // Refresh both active and inactive questions
       fetchQuestions(venueId);
       fetchInactiveQuestions(venueId);
     }
@@ -309,61 +289,61 @@ const ManageQuestions = () => {
 
   return (
     <PageContainer>
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4 sm:mb-0">Manage Questions</h1>
-          <div className="bg-blue-50 px-4 py-2 rounded-lg">
-            <span className="text-blue-600 font-medium">Questions Active: {questions.length}/5</span>
-          </div>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4 sm:mb-0">Manage Questions</h1>
+        <div className="bg-blue-50 px-4 py-2 rounded-lg">
+          <span className="text-blue-600 font-medium">Questions Active: {questions.length}/5</span>
         </div>
+      </div>
 
-        <QRCodeSection feedbackUrl={feedbackUrl} venueId={venueId} />
+      <QRCodeSection feedbackUrl={feedbackUrl} venueId={venueId} />
 
-        <SuggestedQuestions
-          suggestedQuestions={filteredSuggestedQuestions}
-          onQuestionClick={(question) => setNewQuestion(question)}
-        />
+      <SuggestedQuestions
+        suggestedQuestions={filteredSuggestedQuestions}
+        onQuestionClick={(question) => setNewQuestion(question)}
+      />
 
-        <AddNewQuestion
-          newQuestion={newQuestion}
-          onQuestionChange={handleNewQuestionChange}
-          onAddQuestion={handleAddQuestion}
+      <AddNewQuestion
+        newQuestion={newQuestion}
+        onQuestionChange={handleNewQuestionChange}
+        onAddQuestion={handleAddQuestion}
+        questions={questions}
+        duplicateError={duplicateError}
+      />
+
+      <DragDropContext onDragEnd={onDragEnd}>
+        <CurrentQuestions
           questions={questions}
-          duplicateError={duplicateError}
+          onEdit={startEditingQuestion}
+          onDelete={handleDeleteQuestion}
         />
+      </DragDropContext>
 
-        <DragDropContext onDragEnd={onDragEnd}>
-          <CurrentQuestions
-            questions={questions}
-            onEdit={startEditingQuestion}
-            onDelete={handleDeleteQuestion}
-          />
-        </DragDropContext>
+      <PreviouslyUsedQuestions
+        inactiveQuestions={inactiveQuestions}
+        searchTerm={searchTerm}
+        onSearchChange={(e) => setSearchTerm(e.target.value)}
+        onAddInactiveQuestion={(question) => {
+          if (questions.length >= 5) {
+            setSelectedInactiveQuestion(question);
+            setReplacementSource('inactive');
+            setIsReplaceModalOpen(true);
+          } else {
+            handleAddInactiveQuestion(question);
+          }
+        }}
+      />
 
-        <PreviouslyUsedQuestions
-          inactiveQuestions={inactiveQuestions}
-          searchTerm={searchTerm}
-          onSearchChange={(e) => setSearchTerm(e.target.value)}
-          onAddInactiveQuestion={(question) => {
-            if (questions.length >= 5) {
-              setSelectedInactiveQuestion(question);
-              setReplacementSource('inactive');
-              setIsReplaceModalOpen(true);
-            } else {
-              handleAddInactiveQuestion(question);
-            }
-          }}
-        />
-
-        <ReplaceModal
-          isOpen={isReplaceModalOpen}
-          onRequestClose={() => setIsReplaceModalOpen(false)}
-          replacementSource={replacementSource}
-          pendingNewQuestion={pendingNewQuestion}
-          selectedInactiveQuestion={selectedInactiveQuestion}
-          questions={questions}
-          onReplaceQuestion={handleReplaceQuestion}
-        />
-      </PageContainer>
+      <ReplaceModal
+        isOpen={isReplaceModalOpen}
+        onRequestClose={() => setIsReplaceModalOpen(false)}
+        replacementSource={replacementSource}
+        pendingNewQuestion={pendingNewQuestion}
+        selectedInactiveQuestion={selectedInactiveQuestion}
+        questions={questions}
+        onReplaceQuestion={handleReplaceQuestion}
+      />
+    </PageContainer>
   );
 };
 

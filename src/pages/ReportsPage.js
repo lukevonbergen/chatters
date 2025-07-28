@@ -1,4 +1,4 @@
-// Final version: ReportsPage.js with Satisfaction Trend Graph
+// ReportsPage.js — Refactored to use useVenue() instead of email lookup
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,32 +15,19 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import usePageTitle from '../hooks/usePageTitle';
+import { useVenue } from '../context/VenueContext';
 
 const ReportsPage = () => {
   usePageTitle('Reports');
-  const [venueId, setVenueId] = useState(null);
-  const [feedbackSessions, setFeedbackSessions] = useState([]);
   const navigate = useNavigate();
+  const { venueId } = useVenue();
+  const [feedbackSessions, setFeedbackSessions] = useState([]);
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return navigate('/signin');
-
-      const { data: venue } = await supabase
-        .from('venues')
-        .select('id')
-        .eq('email', user.email)
-        .single();
-
-      if (!venue) return;
-
-      setVenueId(venue.id);
-      fetchFeedback(venue.id);
-      setupRealtime(venue.id);
-    };
-    init();
-  }, [navigate]);
+    if (!venueId) return;
+    fetchFeedback(venueId);
+    setupRealtime(venueId);
+  }, [venueId]);
 
   const fetchFeedback = async (venueId) => {
     const { data } = await supabase
@@ -115,47 +102,47 @@ const ReportsPage = () => {
   );
 
   return (
-      <PageContainer>
-        <h1 className="text-2xl font-bold mb-6">Reports Overview</h1>
+    <PageContainer>
+      <h1 className="text-2xl font-bold mb-6">Reports Overview</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center space-y-4 border">
-            <div className="w-32 h-32">
-              <CircularProgressbar
-                value={completionRate}
-                text={`${completionRate}%`}
-                styles={{
-                  path: { stroke: '#10B981' },
-                  text: { fill: '#111827', fontSize: '18px' },
-                }}
-              />
-            </div>
-            <p className="text-gray-700 text-center">
-              {actionedCount} of {totalCount} sessions have been actioned
-            </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+        <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center space-y-4 border">
+          <div className="w-32 h-32">
+            <CircularProgressbar
+              value={completionRate}
+              text={`${completionRate}%`}
+              styles={{
+                path: { stroke: '#10B981' },
+                text: { fill: '#111827', fontSize: '18px' },
+              }}
+            />
           </div>
-
-          <Tile title="Total Feedback Sessions" value={totalCount} icon={BarChart3} color="blue" />
-          <Tile title="Sessions Actioned" value={actionedCount} icon={CheckCircle} color="green" />
-          <Tile title="Unresolved Alerts" value={alertsCount} icon={AlertTriangle} color="red" />
-          <Tile title="Feedback This Week" value={recentCount} icon={CalendarClock} color="purple" />
-          <Tile title="Tables Participated" value={uniqueTables.length} icon={LayoutGrid} color="yellow" />
+          <p className="text-gray-700 text-center">
+            {actionedCount} of {totalCount} sessions have been actioned
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 border mb-10">
-          <h2 className="text-xl font-semibold mb-4">Customer Satisfaction Trend</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={satisfactionTrend}>
-              <XAxis dataKey="day" stroke="#6B7280" fontSize={12} />
-              <YAxis domain={[1, 5]} stroke="#6B7280" fontSize={12} allowDecimals={false} />
-              <Tooltip />
-              <Line type="monotone" dataKey="average" stroke="#6366F1" strokeWidth={2} dot={{ r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <Tile title="Total Feedback Sessions" value={totalCount} icon={BarChart3} color="blue" />
+        <Tile title="Sessions Actioned" value={actionedCount} icon={CheckCircle} color="green" />
+        <Tile title="Unresolved Alerts" value={alertsCount} icon={AlertTriangle} color="red" />
+        <Tile title="Feedback This Week" value={recentCount} icon={CalendarClock} color="purple" />
+        <Tile title="Tables Participated" value={uniqueTables.length} icon={LayoutGrid} color="yellow" />
+      </div>
 
-        <Tile title="Avg. Customer Satisfaction (1–5)" value={averageRating} icon={BarChart3} color="indigo" />
-        </PageContainer>
+      <div className="bg-white rounded-xl shadow-sm p-6 border mb-10">
+        <h2 className="text-xl font-semibold mb-4">Customer Satisfaction Trend</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={satisfactionTrend}>
+            <XAxis dataKey="day" stroke="#6B7280" fontSize={12} />
+            <YAxis domain={[1, 5]} stroke="#6B7280" fontSize={12} allowDecimals={false} />
+            <Tooltip />
+            <Line type="monotone" dataKey="average" stroke="#6366F1" strokeWidth={2} dot={{ r: 3 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <Tile title="Avg. Customer Satisfaction (1–5)" value={averageRating} icon={BarChart3} color="indigo" />
+    </PageContainer>
   );
 };
 
