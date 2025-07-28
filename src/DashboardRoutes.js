@@ -28,7 +28,7 @@ import LocationsPage from './pages/Locations';
 import CustomerFeedbackPage from './pages/CustomerFeedback';
 
 
-import TestDashboardPage from './pages/TestDashboardPage';
+import TestDashboardPage from './pages/admin/TestDashboardPage';
 
 const DashboardRoutes = () => {
   return (
