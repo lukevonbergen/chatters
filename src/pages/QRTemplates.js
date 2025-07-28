@@ -4,9 +4,12 @@ import Template1 from '../components/QRTemplates/Template1';
 import Template2 from '../components/QRTemplates/Template2';
 import PageContainer from '../components/PageContainer';
 import usePageTitle from '../hooks/usePageTitle';
+import { useVenue } from '../context/VenueContext';
 
 const QRTemplates = () => {
   usePageTitle('QR Templates');
+  const { venueId } = useVenue();
+
   const [logo, setLogo] = useState(null);
   const [primaryColor, setPrimaryColor] = useState('#1890ff');
   const [secondaryColor, setSecondaryColor] = useState('#52c41a');
@@ -14,30 +17,19 @@ const QRTemplates = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!venueId) return;
+
     const fetchBrandingData = async () => {
       try {
-        const { data: userData } = await supabase.auth.getUser();
-        const userId = userData?.user?.id;
-        if (!userId) throw new Error('User not logged in');
-
-        // Get user's assigned venue
-        const { data: userProfile, error: userError } = await supabase
-          .from('users')
-          .select('venue_id')
-          .eq('id', userId)
-          .single();
-        if (userError || !userProfile?.venue_id) throw userError;
-
-        const venueId = userProfile.venue_id;
-
-        const { data: venueData, error: venueError } = await supabase
+        const { data: venueData, error } = await supabase
           .from('venues')
           .select('logo, primary_color, secondary_color')
           .eq('id', venueId)
           .single();
-        if (venueError) throw venueError;
 
-        setLogo(venueData.logo);
+        if (error) throw error;
+
+        setLogo(venueData.logo || null);
         setPrimaryColor(venueData.primary_color || '#1890ff');
         setSecondaryColor(venueData.secondary_color || '#52c41a');
         setFeedbackUrl(`https://my.getchatters.com/feedback/${venueId}`);
@@ -49,7 +41,7 @@ const QRTemplates = () => {
     };
 
     fetchBrandingData();
-  }, []);
+  }, [venueId]);
 
   if (loading) return <p>Loading...</p>;
 
