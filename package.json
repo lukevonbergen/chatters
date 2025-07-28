@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
+    "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-slot": "^1.2.3",
     "@sentry/react": "^9.24.0",
     "@sentry/tracing": "^7.120.3",
