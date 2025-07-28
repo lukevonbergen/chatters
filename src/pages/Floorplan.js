@@ -4,7 +4,6 @@ import PageContainer from '../components/PageContainer';
 import Draggable from 'react-draggable';
 import { v4 as uuidv4 } from 'uuid';
 import usePageTitle from '../hooks/usePageTitle';
-const { venueId } = useVenue();
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useVenue } from '../context/VenueContext';
@@ -14,6 +13,7 @@ const GRID_SIZE = 20;
 
 const Heatmap = () => {
   usePageTitle('Floor Plan');
+  const { venueId } = useVenue();
   const layoutRef = useRef(null);
 
   const [zones, setZones] = useState([]);
