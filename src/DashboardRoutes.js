@@ -27,6 +27,9 @@ import LocationsPage from './pages/Locations';
 
 import CustomerFeedbackPage from './pages/CustomerFeedback';
 
+
+import TestDashboardPage from './pages/TestDashboardPage';
+
 const DashboardRoutes = () => {
   return (
     <VenueProvider>
@@ -62,6 +65,11 @@ const DashboardRoutes = () => {
          {/* ✍️ Public Feedback Form */}
         <Route path="/feedback" element={<CustomerFeedbackPage />} />
         <Route path="/feedback/:venueId" element={<CustomerFeedbackPage />} />
+
+        
+        {/* TESTING URLS */}
+        <Route path="/lvb" element={<TestDashboardPage />} />
+
 
       </Routes>
     </VenueProvider>
