@@ -66,85 +66,90 @@ const UpdatedDashboardFrame = ({ children }) => {
   return (
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Geist, sans-serif' }}>
       {/* Top nav */}
-      <header className="border-b bg-white px-6 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-6">
-          {/* Logo */}
-          <img
-            src="https://www.getchatters.com/img/Logo.svg"
-            alt="Chatters"
-            className="h-6 w-auto cursor-pointer"
-            onClick={() => navigate('/')}
-          />
+<header className="border-b bg-white px-6 py-4 flex items-center justify-between shadow-sm">
+  {/* Left: Logo + Nav */}
+  <div className="flex items-center gap-6">
+    {/* Logo */}
+    <img
+      src="https://www.getchatters.com/img/Logo.svg"
+      alt="Chatters"
+      className="h-6 w-auto cursor-pointer"
+      onClick={() => navigate('/')}
+    />
 
-          {/* Venue Switcher or Static */}
-          {userRole === 'master' ? (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  {venueName || 'Select Venue'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-48">
-                <div className="flex flex-col space-y-1">
-                  {allVenues.map((v) => (
-                    <Button
-                      key={v.id}
-                      variant={v.id === venueId ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setCurrentVenue(v.id)}
-                    >
-                      {v.name}
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          ) : (
-            <span className="text-sm text-muted-foreground">{venueName}</span>
-          )}
+    {/* Nav links */}
+    <nav className="flex gap-4">
+      {[...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])].map((link) => (
+        <Link
+          key={link.to}
+          to={link.to}
+          className={`text-sm font-medium transition-colors ${
+            location.pathname.startsWith(link.to)
+              ? 'text-black'
+              : 'text-muted-foreground hover:text-black'
+          }`}
+        >
+          {link.label}
+        </Link>
+      ))}
+    </nav>
+  </div>
 
-          {/* Nav links */}
-          <nav className="flex gap-4">
-            {[...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])].map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`text-sm font-medium transition-colors ${
-                  location.pathname.startsWith(link.to)
-                    ? 'text-black'
-                    : 'text-muted-foreground hover:text-black'
-                }`}
+  {/* Right: Venue Switcher + Avatar */}
+  <div className="flex items-center gap-4">
+    {userRole === 'master' && (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-[160px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm"
+          >
+            {venueName || 'Select Venue'}
+            <span className="ml-2 text-xs opacity-50">⌄</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-48">
+          <div className="flex flex-col space-y-1">
+            {allVenues.map((v) => (
+              <Button
+                key={v.id}
+                variant={v.id === venueId ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setCurrentVenue(v.id)}
               >
-                {link.label}
-              </Link>
+                {v.name}
+              </Button>
             ))}
-          </nav>
-        </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    )}
 
-        {/* Avatar menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Avatar className="h-8 w-8 cursor-pointer border">
-              <AvatarImage src={`https://ui-avatars.com/api/?name=${userInfo.first_name}`} />
-              <AvatarFallback>{userInfo.first_name?.[0]}</AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => navigate('/settings/profile')}>
-              Account Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                navigate('/signin');
-              }}
-            >
-              Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
+    {/* Avatar menu */}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Avatar className="h-8 w-8 cursor-pointer border">
+          <AvatarImage src={`https://ui-avatars.com/api/?name=${userInfo.first_name}`} />
+          <AvatarFallback>{userInfo.first_name?.[0]}</AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => navigate('/settings/profile')}>
+          Account Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-red-600"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            navigate('/signin');
+          }}
+        >
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </div>
+</header>
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
