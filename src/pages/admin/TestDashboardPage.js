@@ -1,14 +1,20 @@
+// /pages/admin/TestDashboardPage.jsx
 import React from 'react';
 import UpdatedDashboardFrame from '../../components/dashboard/layout/UpdatedDashboardFrame';
+import { useVenue } from '../../context/VenueContext';
 
 const TestDashboardPage = () => {
+  const { venueId, venueName } = useVenue();
+
   return (
     <UpdatedDashboardFrame>
       <div style={{ fontFamily: 'Geist, sans-serif' }}>
-        <h1 className="text-2xl font-bold">This is a test dashboard page.</h1>
-        <p className="mt-4 text-muted-foreground">
-          This page uses the Geist font for testing only.
-        </p>
+        <h1 className="text-2xl font-bold mb-4">Test Dashboard Page</h1>
+
+        <div className="space-y-2 text-muted-foreground">
+          <p><strong>Venue Name:</strong> {venueName || 'No venue selected'}</p>
+          <p><strong>Venue ID:</strong> {venueId || 'N/A'}</p>
+        </div>
       </div>
     </UpdatedDashboardFrame>
   );
