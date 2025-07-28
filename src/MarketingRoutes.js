@@ -18,8 +18,6 @@ import CustomBranding_Feature from './pages/Features_CustomBranding';
 import CustomQuestions_Feature from './pages/Features_CustomQuestions';
 import Dashboards_Feature from './pages/Features_Dashboards';
 
-import CustomerFeedbackPage from './pages/CustomerFeedback';
-
 const MarketingRoutes = () => {
   return (
     <Routes>

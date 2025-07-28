@@ -23,10 +23,9 @@ import { VenueProvider } from './context/VenueContext';
 import DashboardFrame from './pages/DashboardFrame';
 import RequireMasterUser from './components/RequireMasterUser';
 
-import AdminFrame from './pages/admin/AdminFrame';
-import AdminDashboard from './pages/admin/AdminDashboard';
-
 import LocationsPage from './pages/Locations';
+
+import CustomerFeedbackPage from './pages/CustomerFeedback';
 
 const DashboardRoutes = () => {
   return (
