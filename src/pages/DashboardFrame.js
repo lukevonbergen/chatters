@@ -93,7 +93,13 @@ const DashboardFrame = ({ children }) => {
     );
   };
 
-  if (!userInfo) return null;
+  if (!userInfo) {
+  return (
+    <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="text-gray-400 text-sm">Loading dashboard...</div>
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen bg-gray-100">
