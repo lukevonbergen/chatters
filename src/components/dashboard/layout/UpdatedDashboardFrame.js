@@ -64,7 +64,7 @@ const UpdatedDashboardFrame = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Geist, sans-serif' }}>
       {/* Top nav */}
       <header className="border-b bg-white px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-6">

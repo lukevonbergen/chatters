@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://unpkg.com/@geist-ui/react@latest/dist/geist.css');
+
 /* Add Gilroy Font */
 @font-face {
   font-family: 'Gilroy';

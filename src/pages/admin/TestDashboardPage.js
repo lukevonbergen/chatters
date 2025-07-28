@@ -4,8 +4,12 @@ import UpdatedDashboardFrame from '../../components/dashboard/layout/UpdatedDash
 const TestDashboardPage = () => {
   return (
     <UpdatedDashboardFrame>
-      <div className="text-2xl font-bold">This is a test dashboard page.</div>
-      <p className="mt-4 text-muted-foreground">Use this to test your new layout.</p>
+      <div style={{ fontFamily: 'Geist, sans-serif' }}>
+        <h1 className="text-2xl font-bold">This is a test dashboard page.</h1>
+        <p className="mt-4 text-muted-foreground">
+          This page uses the Geist font for testing only.
+        </p>
+      </div>
     </UpdatedDashboardFrame>
   );
 };
