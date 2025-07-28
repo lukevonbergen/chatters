@@ -60,6 +60,10 @@ const DashboardRoutes = () => {
         {/* Require Master Role Pages */}
         <Route path="/locations" element={<RequireMasterUser><DashboardFrame><LocationsPage /></DashboardFrame></RequireMasterUser>}/>
 
+         {/* ✍️ Public Feedback Form */}
+        <Route path="/feedback" element={<CustomerFeedbackPage />} />
+        <Route path="/feedback/:venueId" element={<CustomerFeedbackPage />} />
+
       </Routes>
     </VenueProvider>
   );

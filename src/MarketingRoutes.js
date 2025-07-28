@@ -42,9 +42,6 @@ const MarketingRoutes = () => {
       <Route path="/features/custom-questions" element={<CustomQuestions_Feature />} />
       <Route path="/features/dashboards" element={<Dashboards_Feature />} />
 
-      {/* ✍️ Public Feedback Form */}
-      <Route path="/feedback" element={<CustomerFeedbackPage />} />
-      <Route path="/feedback/:venueId" element={<CustomerFeedbackPage />} />
     </Routes>
   );
 };
