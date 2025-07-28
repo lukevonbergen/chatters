@@ -1,5 +1,5 @@
 import React from 'react';
-import UpdatedDashboardFrame from '@/components/layout/UpdatedDashboardFrame';
+import UpdatedDashboardFrame from '../../components/dashboard/layout/UpdatedDashboardFrame';
 
 const TestDashboardPage = () => {
   return (
