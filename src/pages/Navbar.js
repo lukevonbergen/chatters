@@ -76,9 +76,6 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden lg:flex lg:items-center lg:space-x-4">
-            <Link to="https://my.getchatters.com/signup" className="text-sm text-gray-600 hover:text-gray-900">
-              Sign Up
-            </Link>
             <Link to="https://my.getchatters.com/signin" className="bg-black text-white px-4 py-2 rounded-md text-sm hover:bg-gray-800">
               Login
             </Link>
@@ -137,9 +134,6 @@ const Navbar = () => {
                 </Link>
               )
             )}
-            <Link to="/signup" className="block text-sm text-gray-700 hover:text-gray-900">
-              Sign Up
-            </Link>
             <Link to="/signin" className="block text-sm text-white bg-black px-4 py-2 rounded-md hover:bg-gray-800">
               Login
             </Link>

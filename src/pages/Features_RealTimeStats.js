@@ -1,174 +1,128 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { BarChart2, Eye, Zap, Bell, Smartphone, LineChart } from 'lucide-react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
 const RealTimeStatsPage = () => {
+  const features = [
+    {
+      title: 'Live Feedback Updates',
+      description: 'View guest feedback the moment it’s submitted — no delay.',
+      icon: <Eye className="h-6 w-6 text-black" />,
+    },
+    {
+      title: 'Custom Dashboards',
+      description: 'Focus on the metrics that matter most to your venue.',
+      icon: <BarChart2 className="h-6 w-6 text-black" />,
+    },
+    {
+      title: 'Instant Alerts',
+      description: 'Get notified when negative feedback comes in so you can act fast.',
+      icon: <Bell className="h-6 w-6 text-black" />,
+    },
+    {
+      title: 'Trend Analysis',
+      description: 'Spot patterns and make data-backed decisions across teams and shifts.',
+      icon: <LineChart className="h-6 w-6 text-black" />,
+    },
+    {
+      title: 'Anywhere Access',
+      description: 'Check your stats from any device — desktop, tablet or mobile.',
+      icon: <Smartphone className="h-6 w-6 text-black" />,
+    },
+    {
+      title: 'AI-Powered Insights',
+      description: 'Get recommendations based on customer behaviour and patterns.',
+      icon: <Zap className="h-6 w-6 text-black" />,
+    },
+  ];
+
+  const howItWorks = [
+    {
+      title: 'Collect Feedback',
+      description: 'Guests scan a QR code and share their experience in seconds.',
+    },
+    {
+      title: 'Track in Real-Time',
+      description: 'Responses appear instantly in your dashboard, with sentiment alerts.',
+    },
+    {
+      title: 'Take Action Fast',
+      description: 'Fix issues before they become negative reviews.',
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50">
       <Navbar />
 
-      {/* Hero Section */}
-      <div className="relative pt-32 pb-16 sm:pt-40 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 space-y-3 tracking-tight">
-              <span className="block">Real-Time</span>
-              <span className="block bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                Stats & Insights
-              </span>
-            </h1>
-            <p className="mt-6 max-w-2xl mx-auto text-xl text-gray-600">
-              Monitor customer feedback, track performance, and make data-driven decisions with real-time analytics.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Hero */}
+      <section className="bg-white pt-32 pb-20 text-center px-6">
+        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
+          Real-Time Stats & Insights
+        </h1>
+        <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-600">
+          Monitor guest feedback, track performance, and fix problems before they reach TripAdvisor.
+        </p>
+      </section>
 
-      {/* Why Real-Time Stats Matter Section */}
-      <div className="bg-gradient-to-br from-slate-50 via-emerald-50 to-green-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Why Real-Time Stats Matter</h2>
-              <p className="text-gray-600 mb-4">
-                In today’s fast-paced world, businesses need to act quickly to stay ahead. Real-time stats provide instant visibility into customer feedback, allowing you to:
-              </p>
-              <ul className="list-disc list-inside text-gray-600 mb-4">
-                <li><strong>Identify Issues Immediately:</strong> Address customer concerns before they escalate.</li>
-                <li><strong>Track Performance:</strong> Monitor key metrics like NPS, customer satisfaction, and feedback trends.</li>
-                <li><strong>Make Data-Driven Decisions:</strong> Use live data to optimize operations and improve customer experience.</li>
-              </ul>
-              <p className="text-gray-600 mb-4">
-                With Chatters, you can access real-time stats from anywhere, ensuring you’re always in the loop.
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-              <img
-                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-                alt="Real-Time Stats Dashboard"
-                className="rounded-lg"
-              />
-              <p className="mt-4 text-sm text-gray-500 text-center">
-                A real-time dashboard showing live customer feedback and performance metrics.
-              </p>
-            </div>
+      {/* Feature Grid */}
+      <section className="bg-gray-100 py-20 px-6">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6 text-gray-900">Why Real-Time Matters</h2>
+          <p className="text-gray-600 max-w-xl mx-auto mb-12">
+            Visibility in the moment means faster action, happier guests, and fewer bad reviews.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition"
+              >
+                <div className="mb-4">{feature.icon}</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Key Features Section */}
-      <div className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Key Features of Real-Time Stats</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto mb-8">
-              Chatters’ real-time stats dashboard provides everything you need to stay on top of customer feedback and performance. Here’s what you can expect:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  title: 'Live Feedback Updates',
-                  description: 'See customer feedback as it comes in, with no delays.',
-                  icon: '📈',
-                },
-                {
-                  title: 'Customizable Dashboards',
-                  description: 'Tailor your dashboard to display the metrics that matter most to your venue.',
-                  icon: '📊',
-                },
-                {
-                  title: 'AI-Powered Insights',
-                  description: 'Get actionable insights and recommendations based on real-time data.',
-                  icon: '🤖',
-                },
-                {
-                  title: 'Trend Analysis',
-                  description: 'Track feedback trends over time to identify patterns and opportunities.',
-                  icon: '📅',
-                },
-                {
-                  title: 'Alerts & Notifications',
-                  description: 'Receive instant alerts for critical issues or significant changes in feedback.',
-                  icon: '🔔',
-                },
-                {
-                  title: 'Multi-Platform Access',
-                  description: 'Access your real-time stats from any device, anywhere.',
-                  icon: '📱',
-                },
-              ].map((feature, index) => (
-                <div
-                  key={index}
-                  className="p-6 bg-gradient-to-br from-slate-50 via-emerald-50 to-green-50 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow"
-                >
-                  <div className="text-3xl mb-4">{feature.icon}</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </div>
-              ))}
-            </div>
+      {/* How It Works */}
+      <section className="bg-white py-20 px-6 border-t border-gray-200">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6 text-gray-900">How It Works</h2>
+          <p className="text-gray-600 max-w-xl mx-auto mb-12">
+            No hardware, no delays, no training needed. Just real-time guest feedback that your team can act on.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+            {howItWorks.map((step, index) => (
+              <div key={index} className="bg-slate-50 rounded-xl p-6 border border-gray-200">
+                <div className="text-3xl font-bold text-gray-300 mb-4">0{index + 1}</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{step.title}</h3>
+                <p className="text-gray-600">{step.description}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* How It Works Section */}
-      <div className="bg-gradient-to-br from-slate-50 via-emerald-50 to-green-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">How Real-Time Stats Work</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto mb-8">
-              Chatters makes it easy to monitor real-time stats and take action. Here’s how it works:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  title: 'Collect Feedback',
-                  description: 'Customers provide feedback via QR codes, surveys, or in-app prompts.',
-                  icon: '📋',
-                },
-                {
-                  title: 'Analyze Data',
-                  description: 'Chatters processes feedback instantly and updates your dashboard in real-time.',
-                  icon: '📊',
-                },
-                {
-                  title: 'Take Action',
-                  description: 'Use live insights to address issues, improve service, and delight customers.',
-                  icon: '✅',
-                },
-              ].map((feature, index) => (
-                <div
-                  key={index}
-                  className="p-6 bg-gradient-to-br from-slate-50 via-emerald-50 to-green-50 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow"
-                >
-                  <div className="text-3xl mb-4">{feature.icon}</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Call to Action Section */}
-      <div className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Ready to See Real-Time Stats in Action?</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto mb-8">
-              Start monitoring customer feedback and performance metrics in real-time with Chatters.
-            </p>
-            <Link
-              to="/demo"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
-            >
-              Try Real-Time Stats Today
-            </Link>
-          </div>
-        </div>
-      </div>
+      {/* CTA */}
+      <section className="bg-black py-20 text-center px-6">
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          See Real-Time Stats in Action
+        </h2>
+        <p className="text-gray-400 max-w-xl mx-auto mb-8">
+          Get instant visibility into guest experiences — and stop bad reviews before they happen.
+        </p>
+        <Link
+          to="/demo"
+          className="inline-block bg-white text-black font-semibold px-6 py-3 rounded-md hover:bg-gray-100 transition"
+        >
+          Try Chatters Free
+        </Link>
+      </section>
 
       <Footer />
     </div>

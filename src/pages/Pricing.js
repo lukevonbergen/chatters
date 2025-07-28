@@ -8,7 +8,7 @@ const PricingPage = () => {
   const pricingPlans = [
     {
       title: 'Reputation Rescue Plan',
-      price: '£29',
+      price: '£59',
       description: 'Protect your venue from negative reviews with real-time feedback alerts',
       features: [
         'Unlimited table feedback',
@@ -19,9 +19,9 @@ const PricingPage = () => {
         'Manager dashboard + support',
       ],
       cta: 'Protect My Reputation',
-      ctaLink: '/signup',
+      ctaLink: '/demo',
       popular: true,
-      annualPrice: '£23/month (billed annually)',
+      annualPrice: '£47/month (billed annually)',
     },
   ];
 
@@ -37,7 +37,7 @@ const PricingPage = () => {
           {/* Heading Container */}
           <div className="mx-auto mb-8 text-center md:mb-12 lg:mb-16">
             {/* Heading */}
-            <h2 className="text-3xl md:text-5xl font-bold">Protect Your Reputation for Just £29/month</h2>
+            <h2 className="text-3xl md:text-5xl font-bold">Protect Your Reputation for Just £47/month</h2>
             <p className="mt-5 text-gray-500">Simple pricing. No hardware. Cancel anytime.</p>
           </div>
 
