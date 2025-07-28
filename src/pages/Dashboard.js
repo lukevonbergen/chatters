@@ -1,3 +1,4 @@
+// DashboardPage.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
@@ -15,11 +16,15 @@ const DashboardPage = () => {
   const [questionsMap, setQuestionsMap] = useState({});
   const [sortOrder, setSortOrder] = useState('desc');
   const [tableFilter, setTableFilter] = useState('');
+  const [tableOptions, setTableOptions] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!venueId) return;
     loadQuestionsMap(venueId);
+    loadTableOptions(venueId);
+    setTableFilter('');
+    setSortOrder('desc');
   }, [venueId]);
 
   const loadQuestionsMap = async (venueId) => {
@@ -35,6 +40,15 @@ const DashboardPage = () => {
     setQuestionsMap(map);
   };
 
+  const loadTableOptions = async (venueId) => {
+    const { data: tables } = await supabase
+      .from('tables')
+      .select('table_number')
+      .eq('venue_id', venueId);
+
+    setTableOptions(tables?.map(t => t.table_number) || []);
+  };
+
   if (!venueId) return null;
 
   return (
@@ -42,7 +56,6 @@ const DashboardPage = () => {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Overview</h1>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Left column: Feedback feed */}
         <div className="flex-1">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -62,6 +75,11 @@ const DashboardPage = () => {
                   className="border rounded px-2 py-1 text-sm"
                 >
                   <option value="">All Tables</option>
+                  {tableOptions.map((tableNum) => (
+                    <option key={tableNum} value={tableNum}>
+                      Table {tableNum}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -75,7 +93,6 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Right column: Stats */}
         <div className="w-full lg:w-80 space-y-4">
           <SessionsActionedTile venueId={venueId} />
           <UnresolvedAlertsTile venueId={venueId} />

@@ -1,4 +1,3 @@
-// ✅ Updated DashboardFrame.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -109,11 +108,16 @@ const DashboardFrame = ({ children }) => {
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="https://www.getchatters.com/img/Logo.svg" alt="Chatters Logo" className="h-7 w-auto cursor-pointer" onClick={() => navigate('/dashboard')} />
+            <img
+              src="https://www.getchatters.com/img/Logo.svg"
+              alt="Chatters Logo"
+              className="h-7 w-auto cursor-pointer"
+              onClick={() => navigate('/dashboard')}
+            />
             {userInfo.role === 'master' && allVenues.length > 0 ? (
               <select
                 value={venueId}
-                onChange={(e) => setTimeout(() => setCurrentVenue(e.target.value), 10)}
+                onChange={(e) => setCurrentVenue(e.target.value)} // ✅ Removed setTimeout
                 className="text-sm text-gray-600 border border-gray-300 rounded px-2 py-1 cursor-pointer"
               >
                 {allVenues.map((v) => (

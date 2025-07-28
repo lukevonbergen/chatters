@@ -88,6 +88,7 @@ export const VenueProvider = ({ children }) => {
     const found = allVenues.find((v) => v.id === id);
     if (!found) return;
 
+    console.log('[Chatters] Switching to venue:', found); // ✅ debug
     setVenueId(found.id);
     setVenueName(found.name);
     localStorage.setItem('chatters_currentVenueId', found.id);
