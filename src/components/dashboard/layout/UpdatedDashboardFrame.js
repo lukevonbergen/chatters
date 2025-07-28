@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
+import { Settings } from 'lucide-react'
 
 import { Button } from '../../../components/ui/button';
 import {
@@ -22,6 +23,7 @@ import {
   AvatarImage,
 } from '../../../components/ui/avatar';
 
+
 const navLinks = [
   { to: '/', label: 'Overview' },
   { to: '/questions', label: 'Feedback' },
@@ -32,6 +34,8 @@ const navLinks = [
 ];
 
 const UpdatedDashboardFrame = ({ children }) => {
+  const [switchingVenue, setSwitchingVenue] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { venueId, venueName, allVenues, setCurrentVenue, userRole } = useVenue();
@@ -103,14 +107,21 @@ const UpdatedDashboardFrame = ({ children }) => {
   {/* Right: Venue Switcher + Avatar */}
   <div className="flex items-center gap-4">
     {userRole === 'master' && (
-      <Popover>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
   <PopoverTrigger asChild>
     <div title={venueName}>
       <Button
         variant="outline"
         className="w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm truncate whitespace-nowrap"
       >
-        {venueName || 'Select Venue'}
+        {switchingVenue ? (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
+            <span className="text-sm text-muted-foreground">Switching...</span>
+          </div>
+        ) : (
+          venueName || 'Select Venue'
+        )}
         <span className="ml-2 text-xs opacity-50">⌄</span>
       </Button>
     </div>
@@ -123,7 +134,15 @@ const UpdatedDashboardFrame = ({ children }) => {
           key={v.id}
           variant={v.id === venueId ? 'default' : 'ghost'}
           size="sm"
-          onClick={() => setCurrentVenue(v.id)}
+          disabled={switchingVenue}
+          onClick={async () => {
+            if (v.id === venueId) return;
+            setSwitchingVenue(true);
+            await new Promise((res) => setTimeout(res, 500)); // simulate fetch
+            setCurrentVenue(v.id);
+            setPopoverOpen(false); // closes popover
+            setSwitchingVenue(false);
+          }}
           className={`w-full justify-start rounded-lg ${
             v.id === venueId ? 'bg-black text-white' : ''
           }`}
@@ -139,14 +158,13 @@ const UpdatedDashboardFrame = ({ children }) => {
     {/* Avatar menu */}
 <DropdownMenu>
   <DropdownMenuTrigger asChild>
-    <Avatar className="h-9 w-9 cursor-pointer border border-gray-300 shadow-sm">
-      <AvatarImage src={`https://ui-avatars.com/api/?name=${userInfo.first_name}`} />
-      <AvatarFallback>
-        {userInfo.first_name?.[0]}
-        {userInfo.last_name?.[0]}
-      </AvatarFallback>
-    </Avatar>
-  </DropdownMenuTrigger>
+  <Button
+    variant="ghost"
+    className="h-9 w-9 p-0 flex items-center justify-center rounded-full border border-gray-300 shadow-sm"
+  >
+    <Settings className="h-5 w-5 text-gray-600" />
+  </Button>
+</DropdownMenuTrigger>
 
   <DropdownMenuContent
     align="end"
