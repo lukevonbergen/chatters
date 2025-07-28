@@ -42,7 +42,7 @@ const DashboardPage = () => {
 
   const loadTableOptions = async (venueId) => {
     const { data: tables } = await supabase
-      .from('tables')
+      .from('table_positions')
       .select('table_number')
       .eq('venue_id', venueId);
 
