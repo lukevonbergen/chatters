@@ -1,3 +1,4 @@
+// ✅ Updated DashboardFrame.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -15,13 +16,7 @@ import { useVenue } from '../context/VenueContext';
 const DashboardFrame = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    venueName,
-    venueId,
-    setCurrentVenue,
-    allVenues,
-    userRole,
-  } = useVenue();
+  const { venueName, venueId, setCurrentVenue, allVenues, userRole } = useVenue();
 
   const [copied, setCopied] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -33,33 +28,21 @@ const DashboardFrame = ({ children }) => {
     const fetchUserInfo = async () => {
       const { data: userData } = await supabase.auth.getUser();
       const email = userData?.user?.email;
-
-      if (!email) {
-        navigate('/signin');
-        return;
-      }
+      if (!email) return navigate('/signin');
 
       const { data: user } = await supabase
         .from('users')
         .select('email, role, account_id, venue_id, first_name, last_name')
         .eq('email', email)
         .single();
-
-      if (!user) {
-        navigate('/signin');
-        return;
-      }
+      if (!user) return navigate('/signin');
 
       const { data: account } = await supabase
         .from('accounts')
         .select('trial_ends_at, is_paid')
         .eq('id', user.account_id)
         .single();
-
-      if (!account) {
-        navigate('/signin');
-        return;
-      }
+      if (!account) return navigate('/signin');
 
       const trialExpired = !account.is_paid && new Date() > new Date(account.trial_ends_at);
 
@@ -97,10 +80,7 @@ const DashboardFrame = ({ children }) => {
   };
 
   const NavLink = ({ to, children, icon: Icon }) => {
-    const isExactMatch = location.pathname === to;
-    const isNestedMatch = to !== '/' && location.pathname.startsWith(to);
-    const isActive = isExactMatch || isNestedMatch;
-
+    const isActive = location.pathname === to || location.pathname.startsWith(to);
     return (
       <Link
         to={to}
@@ -128,17 +108,13 @@ const DashboardFrame = ({ children }) => {
 
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
-            <img src="https://www.getchatters.com/img/Logo.svg" alt="Chatters Logo" className="h-7 w-auto" />
+          <div className="flex items-center gap-3">
+            <img src="https://www.getchatters.com/img/Logo.svg" alt="Chatters Logo" className="h-7 w-auto cursor-pointer" onClick={() => navigate('/dashboard')} />
             {userInfo.role === 'master' && allVenues.length > 0 ? (
               <select
                 value={venueId}
-                onChange={(e) => {
-                  const newVenueId = e.target.value;
-                  // Prevent dropdown glitch by delaying state update
-                  setTimeout(() => setCurrentVenue(newVenueId), 50);
-                }}
-                className="text-sm text-gray-600 border border-gray-300 rounded px-2 py-1"
+                onChange={(e) => setTimeout(() => setCurrentVenue(e.target.value), 10)}
+                className="text-sm text-gray-600 border border-gray-300 rounded px-2 py-1 cursor-pointer"
               >
                 {allVenues.map((v) => (
                   <option key={v.id} value={v.id}>{v.name}</option>
