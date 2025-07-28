@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 import { useNavigate } from 'react-router-dom';
+import PageContainer from '../components/PageContainer';
 
 export default function LocationsPage() {
   const [venues, setVenues] = useState([]);
@@ -99,7 +100,7 @@ export default function LocationsPage() {
   };
 
   return (
-    <div>
+    <PageContainer>
       <h1 className="text-2xl font-bold mb-6">Locations</h1>
 
       <form onSubmit={handleCreate} className="bg-white p-4 rounded shadow mb-6 max-w-md space-y-4">
@@ -150,6 +151,6 @@ export default function LocationsPage() {
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }
