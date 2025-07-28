@@ -106,70 +106,75 @@ const UpdatedDashboardFrame = ({ children }) => {
 
   {/* Right: Venue Switcher + Avatar */}
   <div className="flex items-center gap-4">
-    {userRole === 'master' && (
-      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-  <PopoverTrigger asChild>
-    <div title={venueName}>
-      <Button
-        variant="outline"
-        className="w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm truncate whitespace-nowrap"
-      >
-        {switchingVenue ? (
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
-            <span className="text-sm text-muted-foreground">Switching...</span>
-          </div>
-        ) : (
-          venueName || 'Select Venue'
-        )}
-        <span className="ml-2 text-xs opacity-50">⌄</span>
-      </Button>
-    </div>
-  </PopoverTrigger>
-
-  <PopoverContent className="w-[200px] p-2 rounded-xl shadow-md">
-    <div className="flex flex-col space-y-1">
-      {allVenues.map((v) => (
+{userRole === 'master' ? (
+  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+    <PopoverTrigger asChild>
+      <div title={venueName}>
         <Button
-          key={v.id}
-          variant={v.id === venueId ? 'default' : 'ghost'}
-          size="sm"
-          disabled={switchingVenue}
-          onClick={async () => {
-            if (v.id === venueId) return;
-            setSwitchingVenue(true);
-            await new Promise((res) => setTimeout(res, 500)); // simulate fetch
-            setCurrentVenue(v.id);
-            setPopoverOpen(false); // closes popover
-            setSwitchingVenue(false);
-          }}
-          className={`w-full justify-start rounded-lg ${
-            v.id === venueId ? 'bg-black text-white' : ''
-          }`}
+          variant="outline"
+          className="w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm truncate whitespace-nowrap"
         >
-          {v.name}
+          {switchingVenue ? (
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
+              <span className="text-sm text-muted-foreground">Switching...</span>
+            </div>
+          ) : (
+            venueName || 'Select Venue'
+          )}
+          <span className="ml-2 text-xs opacity-50">⌄</span>
         </Button>
-      ))}
-    </div>
-  </PopoverContent>
-</Popover>
-    )}
+      </div>
+    </PopoverTrigger>
+
+    <PopoverContent className="w-[200px] p-2 rounded-xl shadow-md">
+      <div className="flex flex-col space-y-1">
+        {allVenues.map((v) => (
+          <Button
+            key={v.id}
+            variant={v.id === venueId ? 'default' : 'ghost'}
+            size="sm"
+            disabled={switchingVenue}
+            onClick={async () => {
+              if (v.id === venueId) return;
+              setSwitchingVenue(true);
+              await new Promise((res) => setTimeout(res, 500));
+              setCurrentVenue(v.id);
+              setPopoverOpen(false);
+              setSwitchingVenue(false);
+            }}
+            className={`w-full justify-start rounded-lg ${
+              v.id === venueId ? 'bg-black text-white' : ''
+            }`}
+          >
+            {v.name}
+          </Button>
+        ))}
+      </div>
+    </PopoverContent>
+  </Popover>
+) : (
+  <div className="text-sm font-medium text-gray-600 px-3 py-2 rounded-md border border-gray-200 bg-gray-50">
+    {venueName}
+  </div>
+)}
+
 
     {/* Avatar menu */}
 <DropdownMenu>
   <DropdownMenuTrigger asChild>
-  <Button
-    variant="ghost"
-    className="h-9 w-9 p-0 flex items-center justify-center rounded-full border border-gray-300 shadow-sm"
-  >
-    <Settings className="h-5 w-5 text-gray-600" />
-  </Button>
-</DropdownMenuTrigger>
+    <Button
+      variant="ghost"
+      className="h-9 w-9 p-0 flex items-center justify-center rounded-full border border-gray-300 shadow-sm"
+    >
+      <Settings className="h-5 w-5 text-gray-600" />
+    </Button>
+  </DropdownMenuTrigger>
 
   <DropdownMenuContent
-    align="end"
-    className="w-48 rounded-xl border border-gray-200 shadow-md p-1 font-medium"
-  >
+  align="end"
+  className="w-48 rounded-xl border border-gray-200 bg-white shadow-md p-1 font-medium"
+>
     <DropdownMenuItem
       onClick={() => navigate('/settings/profile')}
       className="rounded-md px-3 py-2 hover:bg-muted/50 cursor-pointer"
@@ -182,14 +187,15 @@ const UpdatedDashboardFrame = ({ children }) => {
     <DropdownMenuItem
       className="rounded-md px-3 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 cursor-pointer"
       onClick={async () => {
-        await supabase.auth.signOut()
-        navigate('/signin')
+        await supabase.auth.signOut();
+        navigate('/signin');
       }}
     >
       Sign Out
     </DropdownMenuItem>
   </DropdownMenuContent>
 </DropdownMenu>
+
   </div>
 </header>
 
