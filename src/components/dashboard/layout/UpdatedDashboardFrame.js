@@ -79,21 +79,25 @@ const UpdatedDashboardFrame = ({ children }) => {
     />
 
     {/* Nav links */}
-    <nav className="flex gap-4">
-      {[...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])].map((link) => (
-        <Link
-          key={link.to}
-          to={link.to}
-          className={`text-sm font-medium transition-colors ${
-            location.pathname.startsWith(link.to)
-              ? 'text-black'
-              : 'text-muted-foreground hover:text-black'
-          }`}
-        >
-          {link.label}
-        </Link>
-      ))}
-    </nav>
+<nav className="flex gap-6">
+  {[...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])].map((link) => {
+    const isActive = location.pathname.startsWith(link.to);
+
+    return (
+      <Link
+        key={link.to}
+        to={link.to}
+        className={`relative text-sm transition-colors after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-black after:transition-all after:duration-300 hover:after:w-full ${
+          isActive
+            ? 'font-bold text-black after:w-full'
+            : 'font-normal text-muted-foreground hover:text-black'
+        }`}
+      >
+        {link.label}
+      </Link>
+    );
+  })}
+</nav>
   </div>
 
   {/* Right: Venue Switcher + Avatar */}
