@@ -93,7 +93,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                   to={link.to}
                   className={`relative text-sm transition-colors after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-black after:transition-all after:duration-300 hover:after:w-full ${
                     isActive
-                      ? 'font-bold text-black after:w-full'
+                      ? 'font-medium text-black after:w-full'
                       : 'font-normal text-muted-foreground hover:text-black'
                   }`}
                 >
