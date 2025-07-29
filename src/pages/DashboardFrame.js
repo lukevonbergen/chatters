@@ -176,7 +176,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               className="w-48 rounded-xl border border-gray-200 bg-white shadow-md p-1 font-medium"
             >
               <DropdownMenuItem
-                onClick={() => navigate('/settings/profile')}
+                onClick={() => navigate('/settings')}
                 className="rounded-md px-3 py-2 hover:bg-muted/50 cursor-pointer"
               >
                 Account Settings
