@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
-import { Cog, Menu, X } from 'lucide-react'
+import { Cog, Menu, X } from 'lucide-react';
 
 import { Button } from '../../../components/ui/button';
 import {
@@ -256,7 +256,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                     </Button>
                   </PopoverTrigger>
 
-                  <PopoverContent className="w-56 p-2 rounded-xl shadow-md">
+                  <PopoverContent className="w-56 p-2 rounded-xl shadow-md" side="bottom" align="start">
                     <div className="flex flex-col space-y-1">
                       {allVenues.map((v) => (
                         <Button
