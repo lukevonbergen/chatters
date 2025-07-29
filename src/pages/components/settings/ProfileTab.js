@@ -45,11 +45,11 @@ const ProfileTab = ({
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <p className="text-xs text-gray-500 mt-1">You can manage verified email addresses in your email settings.</p>
+          <p className="text-xs text-gray-500 mt-1">You can manage verified email addresses in your email settings. This also does not link to a Supabase object as of yet.</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number (Currently not linked)</label>
           <input
             type="tel"
             placeholder="+44 7932 054932"

@@ -179,7 +179,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               className="w-48 rounded-xl border border-gray-200 bg-white shadow-md p-1 font-medium"
             >
               <DropdownMenuItem
-                onClick={() => navigate('/settings/profile')}
+                onClick={() => navigate('/settings')}
                 className="rounded-md px-3 py-2 hover:bg-muted/50 cursor-pointer"
               >
                 Account Settings
@@ -312,7 +312,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               {/* Mobile settings */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <Link
-                  to="/settings/profile"
+                  to="/settings"
                   className="block px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   onClick={() => setMobileMenuOpen(false)}
                 >

@@ -13,7 +13,7 @@ const NotificationsTab = ({
     <div className="max-w-2xl">
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Notifications</h2>
-        <p className="text-gray-600 text-sm">Manage your notification preferences.</p>
+        <p className="text-gray-600 text-sm">Manage your notification preferences. This does NOT do anything at the moment</p>
       </div>
 
       <div className="space-y-6">
