@@ -304,7 +304,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               {/* Mobile settings */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <Link
-                  to="/settings/profile"
+                  to="/settings"
                   className="block px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   onClick={() => setMobileMenuOpen(false)}
                 >
