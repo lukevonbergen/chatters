@@ -88,12 +88,13 @@ export const VenueProvider = ({ children }) => {
     const found = allVenues.find((v) => v.id === id);
     if (!found) return;
 
-    console.log('[Chatters] Switching to venue:', found); // ✅ debug
+    console.log('[Chatters] Switching to venue:', found);
     setVenueId(found.id);
     setVenueName(found.name);
     localStorage.setItem('chatters_currentVenueId', found.id);
   };
 
+  // Always render the provider, let individual components handle loading states
   return (
     <VenueContext.Provider
       value={{
@@ -105,7 +106,7 @@ export const VenueProvider = ({ children }) => {
         loading,
       }}
     >
-      {!loading && children}
+      {children}
     </VenueContext.Provider>
   );
 };
