@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../context/VenueContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { Cog, Menu, X } from 'lucide-react';
+import { FiSettings, FiMenu, FiX } from 'react-icons/fi';
 
 import { Button } from '../components/ui/button';
 import {
@@ -40,21 +40,17 @@ const UpdatedDashboardFrame = ({ children }) => {
       const { data: userData } = await supabase.auth.getUser();
       const email = userData?.user?.email;
       if (!email) return navigate('/signin');
-
       const { data: user } = await supabase
         .from('users')
         .select('email, role, first_name, last_name')
         .eq('email', email)
         .single();
-
       if (!user) return navigate('/signin');
       setUserInfo(user);
     };
-
     loadUser();
   }, [navigate]);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
@@ -87,7 +83,6 @@ const UpdatedDashboardFrame = ({ children }) => {
           <nav className="hidden lg:flex gap-6">
             {allNavLinks.map((link) => {
               const isActive = location.pathname.startsWith(link.to);
-
               return (
                 <Link
                   key={link.to}
@@ -129,7 +124,6 @@ const UpdatedDashboardFrame = ({ children }) => {
                     </Button>
                   </div>
                 </PopoverTrigger>
-
                 <PopoverContent className="w-[140px] md:w-[200px] p-2 rounded-xl shadow-md bg-white">
                   <div className="flex flex-col space-y-1">
                     {allVenues.map((v) => (
@@ -163,17 +157,16 @@ const UpdatedDashboardFrame = ({ children }) => {
             )}
           </div>
 
-          {/* Avatar menu */}
+          {/* Avatar menu (settings) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 className="h-9 w-9 p-0 flex items-center justify-center rounded-full border border-gray-300 shadow-sm"
               >
-                <Cog className="h-5 w-5 text-gray-600" />
+                <FiSettings className="h-5 w-5 text-gray-600" />
               </Button>
             </DropdownMenuTrigger>
-
             <DropdownMenuContent
               align="end"
               className="w-48 rounded-xl border border-gray-200 bg-white shadow-md p-1 font-medium"
@@ -184,9 +177,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               >
                 Account Settings
               </DropdownMenuItem>
-
               <DropdownMenuSeparator />
-
               <DropdownMenuItem
                 className="rounded-md px-3 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 cursor-pointer"
                 onClick={async () => {
@@ -206,9 +197,9 @@ const UpdatedDashboardFrame = ({ children }) => {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
-              <X className="h-5 w-5" />
+              <FiX className="h-5 w-5" />
             ) : (
-              <Menu className="h-5 w-5" />
+              <FiMenu className="h-5 w-5" />
             )}
           </Button>
         </div>
@@ -229,11 +220,10 @@ const UpdatedDashboardFrame = ({ children }) => {
                   className="h-8 w-8 p-0"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <X className="h-4 w-4" />
+                  <FiX className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-
             {/* Mobile venue switcher */}
             {userRole === 'master' && (
               <div className="p-4 border-b sm:hidden">
@@ -255,7 +245,6 @@ const UpdatedDashboardFrame = ({ children }) => {
                       <span className="ml-2 text-xs opacity-50">⌄</span>
                     </Button>
                   </PopoverTrigger>
-
                   <PopoverContent className="w-72 p-2 rounded-xl shadow-md bg-white" side="bottom" align="start">
                     <div className="flex flex-col space-y-1">
                       {allVenues.map((v) => (
@@ -285,13 +274,11 @@ const UpdatedDashboardFrame = ({ children }) => {
                 </Popover>
               </div>
             )}
-
             {/* Mobile navigation links */}
             <nav className="p-4">
               <div className="space-y-2">
                 {allNavLinks.map((link) => {
                   const isActive = location.pathname.startsWith(link.to);
-
                   return (
                     <Link
                       key={link.to}
@@ -308,7 +295,6 @@ const UpdatedDashboardFrame = ({ children }) => {
                   );
                 })}
               </div>
-
               {/* Mobile settings */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <Link
