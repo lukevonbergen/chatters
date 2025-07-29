@@ -30,7 +30,6 @@ const navLinks = [
   { to: '/reports', label: 'Reports' },
   { to: '/floorplan', label: 'Floor Plan' },
   { to: '/staff', label: 'Staff' },
-  { to: '/settings/profile', label: 'Settings' },
 ];
 
 const UpdatedDashboardFrame = ({ children }) => {
