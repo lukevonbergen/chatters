@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import AccountSettings from '../components/settings/AccountSettings';
-import VenueSettings from '../components/settings/VenueSettings';
-import BrandingSettings from '../components/settings/BrandingSettings';
-import SubscriptionStatus from '../components/settings/SubscriptionStatus';
 import PageContainer from '../components/PageContainer';
 import usePageTitle from '../hooks/usePageTitle';
 import { useVenue } from '../context/VenueContext';
+
+// Import tab components
+import ProfileTab from './components/settings/ProfileTab';
+import VenueTab from './components/settings/VenueTab';
+import BrandingTab from './components/settings/BrandingTab';
+import NotificationsTab from './components/settings/NotificationsTab';
 
 const SettingsPage = () => {
   usePageTitle('Settings');
   const { venueId } = useVenue();
 
+  // State for active tab
+  const [activeTab, setActiveTab] = useState('Profile');
+
+  // All your existing state variables
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -32,12 +38,17 @@ const SettingsPage = () => {
     postalCode: '',
     country: '',
   });
-
   const [message, setMessage] = useState('');
-  const [isAccountLocked, setIsAccountLocked] = useState(true);
-  const [isVenueLocked, setIsVenueLocked] = useState(true);
-  const [isBrandingLocked, setIsBrandingLocked] = useState(true);
 
+  // Sidebar navigation items
+  const navItems = [
+    { id: 'Profile', label: 'Profile' },
+    { id: 'Venue', label: 'Venue' },
+    { id: 'Branding', label: 'Branding' },
+    { id: 'Notifications', label: 'Notifications' },
+  ];
+
+  // Fetch venue data
   useEffect(() => {
     if (!venueId) return;
 
@@ -77,60 +88,7 @@ const SettingsPage = () => {
     fetchVenueData();
   }, [venueId]);
 
-  const handleLogoUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !venueId) return;
-
-    setLoading(true);
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${venueId}-logo.${fileExt}`;
-    const filePath = `${fileName}`;
-
-    const { error: deleteError } = await supabase.storage
-      .from('venue-logos')
-      .remove([filePath]);
-
-    if (deleteError && deleteError.message !== 'The resource was not found') {
-      console.error('Error deleting existing logo:', deleteError);
-      setLoading(false);
-      return;
-    }
-
-    const { error: uploadError } = await supabase.storage
-      .from('venue-logos')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error('Error uploading logo:', uploadError);
-      setLoading(false);
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('venue-logos')
-      .getPublicUrl(filePath);
-
-    const { error: updateError } = await supabase
-      .from('venues')
-      .update({ logo: publicUrl })
-      .eq('id', venueId);
-
-    if (updateError) {
-      console.error('Error updating logo:', updateError);
-    } else {
-      setLogo(publicUrl);
-    }
-
-    setLoading(false);
-  };
-
-  const handleColorChange = (type, color) => {
-    if (type === 'primary') setPrimaryColor(color);
-    if (type === 'secondary') setSecondaryColor(color);
-  };
-
-  const saveAllSettings = async () => {
+  const saveSettings = async () => {
     if (!venueId) return;
 
     setLoading(true);
@@ -151,11 +109,7 @@ const SettingsPage = () => {
       };
 
       await supabase.from('venues').update(updates).eq('id', venueId);
-
       setMessage('Settings updated successfully!');
-      setIsAccountLocked(true);
-      setIsVenueLocked(true);
-      setIsBrandingLocked(true);
     } catch (error) {
       console.error('Error updating settings:', error);
       setMessage('Failed to update settings. Please try again.');
@@ -164,88 +118,76 @@ const SettingsPage = () => {
     }
   };
 
+  // Props to pass to tab components
+  const tabProps = {
+    // Data
+    name, setName,
+    email, setEmail,
+    firstName, setFirstName,
+    lastName, setLastName,
+    logo, setLogo,
+    primaryColor, setPrimaryColor,
+    secondaryColor, setSecondaryColor,
+    tableCount, setTableCount,
+    address, setAddress,
+    tripadvisorLink, setTripadvisorLink,
+    googleReviewLink, setGoogleReviewLink,
+    
+    // Actions
+    saveSettings,
+    loading,
+    message,
+    venueId,
+  };
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'Profile':
+        return <ProfileTab {...tabProps} />;
+      case 'Venue':
+        return <VenueTab {...tabProps} />;
+      case 'Branding':
+        return <BrandingTab {...tabProps} />;
+      case 'Notifications':
+        return <NotificationsTab {...tabProps} />;
+      default:
+        return <ProfileTab {...tabProps} />;
+    }
+  };
+
   if (!venueId) return null;
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Settings</h1>
-
-      <AccountSettings
-        name={name}
-        email={email}
-        firstName={firstName}
-        lastName={lastName}
-        onNameChange={(e) => setName(e.target.value)}
-        onEmailChange={(e) => setEmail(e.target.value)}
-        onFirstNameChange={(e) => setFirstName(e.target.value)}
-        onLastNameChange={(e) => setLastName(e.target.value)}
-        locked={isAccountLocked}
-        onLockToggle={() => setIsAccountLocked(!isAccountLocked)}
-      />
-
-      <SubscriptionStatus
-        isPaid={isPaid}
-        onUpgrade={() => window.location.href = '/settings/billing'}
-      />
-
-      <VenueSettings
-        name={name}
-        tableCount={tableCount}
-        address={address}
-        onNameChange={(e) => setName(e.target.value)}
-        onTableCountChange={(e) => setTableCount(e.target.value)}
-        onAddressChange={setAddress}
-        loading={loading}
-        locked={isVenueLocked}
-        onLockToggle={() => setIsVenueLocked(!isVenueLocked)}
-      />
-
-      <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Review Links</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tripadvisor Link</label>
-            <input
-              type="url"
-              value={tripadvisorLink}
-              onChange={(e) => setTripadvisorLink(e.target.value)}
-              placeholder="https://www.tripadvisor.com/yourpage"
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Google Review Link</label>
-            <input
-              type="url"
-              value={googleReviewLink}
-              onChange={(e) => setGoogleReviewLink(e.target.value)}
-              placeholder="https://g.page/yourbusiness"
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Settings</h1>
+        <p className="text-gray-600">Some form of blurb text here.</p>
       </div>
 
-      <BrandingSettings
-        logo={logo}
-        onLogoUpload={handleLogoUpload}
-        primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
-        onColorChange={handleColorChange}
-        loading={loading}
-        locked={isBrandingLocked}
-        onLockToggle={() => setIsBrandingLocked(!isBrandingLocked)}
-      />
+      <div className="flex gap-8">
+        {/* Sidebar */}
+        <div className="w-64 flex-shrink-0">
+          <nav className="space-y-1">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full text-left px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                  activeTab === item.id
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </div>
 
-      <div className="mt-8">
-        <button
-          onClick={saveAllSettings}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : 'Save'}
-        </button>
-        {message && <p className="text-sm text-red-500 mt-2">{message}</p>}
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          {renderActiveTab()}
+        </div>
       </div>
     </PageContainer>
   );
