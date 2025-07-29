@@ -48,26 +48,47 @@ const SettingsPage = () => {
     { id: 'Notifications', label: 'Notifications' },
   ];
 
-  // Fetch venue data
+  // Fetch venue data - UPDATED TO FETCH FROM BOTH TABLES
   useEffect(() => {
     if (!venueId) return;
 
     const fetchVenueData = async () => {
-      const { data: venueData, error } = await supabase
-        .from('venues')
-        .select('id, name, email, first_name, last_name, logo, primary_color, secondary_color, is_paid, table_count, address, tripadvisor_link, google_review_link')
-        .eq('id', venueId)
-        .single();
+      // Get current user ID
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
 
-      if (error) {
-        console.error('Error fetching venue settings:', error);
+      if (!userId) {
+        console.error('User not authenticated');
         return;
       }
 
+      // Fetch venue data
+      const { data: venueData, error: venueError } = await supabase
+        .from('venues')
+        .select('id, name, logo, primary_color, secondary_color, is_paid, table_count, address, tripadvisor_link, google_review_link')
+        .eq('id', venueId)
+        .single();
+
+      if (venueError) {
+        console.error('Error fetching venue settings:', venueError);
+        return;
+      }
+
+      // Fetch staff data (profile info)
+      const { data: staffData, error: staffError } = await supabase
+        .from('staff')
+        .select('first_name, last_name, email')
+        .eq('user_id', userId)
+        .eq('venue_id', venueId)
+        .single();
+
+      if (staffError) {
+        console.error('Error fetching staff settings:', staffError);
+        return;
+      }
+
+      // Set venue data
       setName(venueData.name || '');
-      setEmail(venueData.email || '');
-      setFirstName(venueData.first_name || '');
-      setLastName(venueData.last_name || '');
       setLogo(venueData.logo || null);
       setPrimaryColor(venueData.primary_color || '#1890ff');
       setSecondaryColor(venueData.secondary_color || '#52c41a');
@@ -83,11 +104,17 @@ const SettingsPage = () => {
         postalCode: '',
         country: '',
       });
+
+      // Set staff data
+      setFirstName(staffData.first_name || '');
+      setLastName(staffData.last_name || '');
+      setEmail(staffData.email || '');
     };
 
     fetchVenueData();
   }, [venueId]);
 
+  // UPDATED SAVE SETTINGS - SAVES TO BOTH TABLES
   const saveSettings = async () => {
     if (!venueId) return;
 
@@ -95,11 +122,34 @@ const SettingsPage = () => {
     setMessage('');
 
     try {
-      const updates = {
-        name,
-        email,
+      // Get current user ID
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      // Update staff table (profile data)
+      const staffUpdates = {
         first_name: firstName,
         last_name: lastName,
+        email: email,
+      };
+
+      const { error: staffError } = await supabase
+        .from('staff')
+        .update(staffUpdates)
+        .eq('user_id', userId)
+        .eq('venue_id', venueId);
+
+      if (staffError) {
+        throw staffError;
+      }
+
+      // Update venues table (venue data)
+      const venueUpdates = {
+        name,
         primary_color: primaryColor,
         secondary_color: secondaryColor,
         table_count: tableCount,
@@ -108,7 +158,15 @@ const SettingsPage = () => {
         google_review_link: googleReviewLink,
       };
 
-      await supabase.from('venues').update(updates).eq('id', venueId);
+      const { error: venueError } = await supabase
+        .from('venues')
+        .update(venueUpdates)
+        .eq('id', venueId);
+
+      if (venueError) {
+        throw venueError;
+      }
+
       setMessage('Settings updated successfully!');
     } catch (error) {
       console.error('Error updating settings:', error);
