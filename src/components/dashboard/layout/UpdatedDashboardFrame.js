@@ -115,7 +115,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                   <div title={venueName}>
                     <Button
                       variant="outline"
-                      className="w-[140px] md:w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm truncate whitespace-nowrap"
+                      className="w-[140px] md:w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm truncate whitespace-nowrap bg-white"
                     >
                       {switchingVenue ? (
                         <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                   </div>
                 </PopoverTrigger>
 
-                <PopoverContent className="w-[140px] md:w-[200px] p-2 rounded-xl shadow-md">
+                <PopoverContent className="w-[140px] md:w-[200px] p-2 rounded-xl shadow-md bg-white">
                   <div className="flex flex-col space-y-1">
                     {allVenues.map((v) => (
                       <Button
@@ -242,7 +242,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-between font-medium text-gray-700 border rounded-xl shadow-sm"
+                      className="w-full justify-between font-medium text-gray-700 border rounded-xl shadow-sm bg-white"
                     >
                       {switchingVenue ? (
                         <div className="flex items-center gap-2">
@@ -256,7 +256,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                     </Button>
                   </PopoverTrigger>
 
-                  <PopoverContent className="w-72 p-2 rounded-xl shadow-md" side="bottom" align="start">
+                  <PopoverContent className="w-72 p-2 rounded-xl shadow-md bg-white" side="bottom" align="start">
                     <div className="flex flex-col space-y-1">
                       {allVenues.map((v) => (
                         <Button
