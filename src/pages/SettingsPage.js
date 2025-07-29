@@ -48,91 +48,76 @@ const SettingsPage = () => {
     { id: 'Notifications', label: 'Notifications' },
   ];
 
-  // Fetch venue data function
-  const fetchVenueData = async () => {
-    console.log('🔄 Fetching data for venue:', venueId);
-    
-    // Get current user ID
-    const { data: auth } = await supabase.auth.getUser();
-    const userId = auth?.user?.id;
-
-    if (!userId) {
-      console.error('❌ User not authenticated');
-      return;
-    }
-
-    console.log('👤 User ID:', userId);
-
-    // Fetch venue data
-    const { data: venueData, error: venueError } = await supabase
-      .from('venues')
-      .select('id, name, logo, primary_color, secondary_color, is_paid, table_count, address, tripadvisor_link, google_review_link')
-      .eq('id', venueId)
-      .single();
-
-    if (venueError) {
-      console.error('❌ Error fetching venue settings:', venueError);
-      return;
-    }
-
-    console.log('🏢 Venue data loaded:', venueData);
-
-    // Fetch staff data (profile info)
-    const { data: staffData, error: staffError } = await supabase
-      .from('staff')
-      .select('first_name, last_name, email')
-      .eq('user_id', userId)
-      .eq('venue_id', venueId)
-      .single();
-
-    if (staffError) {
-      console.error('❌ Error fetching staff settings:', staffError);
-      return;
-    }
-
-    console.log('👥 Staff data loaded:', staffData);
-
-    // Set venue data
-    setName(venueData.name || '');
-    setLogo(venueData.logo || null);
-    setPrimaryColor(venueData.primary_color || '#1890ff');
-    setSecondaryColor(venueData.secondary_color || '#52c41a');
-    setIsPaid(venueData.is_paid || false);
-    setTableCount(venueData.table_count || '');
-    setTripadvisorLink(venueData.tripadvisor_link || '');
-    setGoogleReviewLink(venueData.google_review_link || '');
-    setAddress(venueData.address || {
-      line1: '',
-      line2: '',
-      city: '',
-      county: '',
-      postalCode: '',
-      country: '',
-    });
-
-    // Set staff data
-    setFirstName(staffData.first_name || '');
-    setLastName(staffData.last_name || '');
-    setEmail(staffData.email || '');
-
-    console.log('✅ All settings data loaded successfully');
-  };
-
-  // Fetch venue data with debug logging
+  // Fetch venue data - UPDATED TO FETCH FROM BOTH TABLES
   useEffect(() => {
-    console.log('🔄 Settings page - venueId changed to:', venueId);
-    if (!venueId) {
-      console.log('⚠️ No venueId, skipping fetch');
-      return;
-    }
+    if (!venueId) return;
+
+    const fetchVenueData = async () => {
+      // Get current user ID
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId) {
+        console.error('User not authenticated');
+        return;
+      }
+
+      // Fetch venue data
+      const { data: venueData, error: venueError } = await supabase
+        .from('venues')
+        .select('id, name, logo, primary_color, secondary_color, is_paid, table_count, address, tripadvisor_link, google_review_link')
+        .eq('id', venueId)
+        .single();
+
+      if (venueError) {
+        console.error('Error fetching venue settings:', venueError);
+        return;
+      }
+
+      // Fetch staff data (profile info)
+      const { data: staffData, error: staffError } = await supabase
+        .from('staff')
+        .select('first_name, last_name, email')
+        .eq('user_id', userId)
+        .eq('venue_id', venueId)
+        .single();
+
+      if (staffError) {
+        console.error('Error fetching staff settings:', staffError);
+        return;
+      }
+
+      // Set venue data
+      setName(venueData.name || '');
+      setLogo(venueData.logo || null);
+      setPrimaryColor(venueData.primary_color || '#1890ff');
+      setSecondaryColor(venueData.secondary_color || '#52c41a');
+      setIsPaid(venueData.is_paid || false);
+      setTableCount(venueData.table_count || '');
+      setTripadvisorLink(venueData.tripadvisor_link || '');
+      setGoogleReviewLink(venueData.google_review_link || '');
+      setAddress(venueData.address || {
+        line1: '',
+        line2: '',
+        city: '',
+        county: '',
+        postalCode: '',
+        country: '',
+      });
+
+      // Set staff data
+      setFirstName(staffData.first_name || '');
+      setLastName(staffData.last_name || '');
+      setEmail(staffData.email || '');
+    };
+
     fetchVenueData();
   }, [venueId]);
 
-  // SAVE SETTINGS with debug logging
+  // UPDATED SAVE SETTINGS - SAVES TO BOTH TABLES
   const saveSettings = async () => {
     if (!venueId) return;
 
-    console.log('💾 Starting save settings for venue:', venueId);
     setLoading(true);
     setMessage('');
 
@@ -144,8 +129,6 @@ const SettingsPage = () => {
       if (!userId) {
         throw new Error('User not authenticated');
       }
-
-      console.log('💾 Saving staff data:', { firstName, lastName, email });
 
       // Update staff table (profile data)
       const staffUpdates = {
@@ -161,13 +144,8 @@ const SettingsPage = () => {
         .eq('venue_id', venueId);
 
       if (staffError) {
-        console.error('❌ Staff update error:', staffError);
         throw staffError;
       }
-
-      console.log('✅ Staff data saved successfully');
-
-      console.log('💾 Saving venue data:', { name, primaryColor, secondaryColor, tableCount });
 
       // Update venues table (venue data)
       const venueUpdates = {
@@ -186,14 +164,12 @@ const SettingsPage = () => {
         .eq('id', venueId);
 
       if (venueError) {
-        console.error('❌ Venue update error:', venueError);
         throw venueError;
       }
 
-      console.log('✅ Venue data saved successfully');
       setMessage('Settings updated successfully!');
     } catch (error) {
-      console.error('❌ Error updating settings:', error);
+      console.error('Error updating settings:', error);
       setMessage('Failed to update settings. Please try again.');
     } finally {
       setLoading(false);
@@ -237,18 +213,13 @@ const SettingsPage = () => {
     }
   };
 
-  if (!venueId) {
-    console.log('⚠️ No venueId, not rendering settings page');
-    return null;
-  }
+  if (!venueId) return null;
 
   return (
     <PageContainer>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Settings</h1>
         <p className="text-gray-600">Some form of blurb text here.</p>
-        {/* Debug info - remove this later */}
-        <p className="text-xs text-gray-400">Current venue ID: {venueId}</p>
       </div>
 
       <div className="flex gap-8">
