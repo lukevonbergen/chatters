@@ -82,7 +82,9 @@ const UpdatedDashboardFrame = ({ children }) => {
           {/* Desktop Nav links */}
           <nav className="hidden lg:flex gap-6">
             {allNavLinks.map((link) => {
-              const isActive = location.pathname.startsWith(link.to);
+              const isActive = link.to === '/' 
+                ? location.pathname === '/' 
+                : location.pathname.startsWith(link.to);
               return (
                 <Link
                   key={link.to}
@@ -278,7 +280,9 @@ const UpdatedDashboardFrame = ({ children }) => {
             <nav className="p-4">
               <div className="space-y-2">
                 {allNavLinks.map((link) => {
-                  const isActive = location.pathname.startsWith(link.to);
+                  const isActive = link.to === '/' 
+                    ? location.pathname === '/' 
+                    : location.pathname.startsWith(link.to);
                   return (
                     <Link
                       key={link.to}
