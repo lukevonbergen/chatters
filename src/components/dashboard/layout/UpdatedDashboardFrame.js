@@ -72,7 +72,7 @@ const UpdatedDashboardFrame = ({ children }) => {
   return (
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Top nav */}
-      <header className="border-b bg-white px-4 md:px-6 py-4 flex items-center justify-between shadow-sm">
+      <header className="border-b bg-white px-4 md:px-6 py-4 flex items-center justify-between shadow-sm relative z-50">
         {/* Left: Logo + Desktop Nav */}
         <div className="flex items-center gap-6">
           {/* Logo */}
@@ -107,7 +107,7 @@ const UpdatedDashboardFrame = ({ children }) => {
 
         {/* Right: Venue Switcher + Avatar + Mobile Menu Button */}
         <div className="flex items-center gap-2 md:gap-4">
-          {/* Venue Switcher */}
+          {/* Venue Switcher - Desktop */}
           <div className="hidden sm:block">
             {userRole === 'master' ? (
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -216,9 +216,9 @@ const UpdatedDashboardFrame = ({ children }) => {
 
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)}>
+        <div className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)}>
           <div 
-            className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out"
+            className="absolute right-0 top-0 h-full w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b">
@@ -237,7 +237,7 @@ const UpdatedDashboardFrame = ({ children }) => {
             {/* Mobile venue switcher */}
             {userRole === 'master' && (
               <div className="p-4 border-b sm:hidden">
-                <span className="text-sm font-medium text-gray-700 block mb-2">Switch Venue</span>
+                <span className="text-sm font-medium text-gray-700 block mb-3">Switch Venue</span>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -256,7 +256,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                     </Button>
                   </PopoverTrigger>
 
-                  <PopoverContent className="w-56 p-2 rounded-xl shadow-md" side="bottom" align="start">
+                  <PopoverContent className="w-72 p-2 rounded-xl shadow-md" side="bottom" align="start">
                     <div className="flex flex-col space-y-1">
                       {allVenues.map((v) => (
                         <Button
@@ -269,6 +269,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                             setSwitchingVenue(true);
                             await new Promise((res) => setTimeout(res, 500));
                             setCurrentVenue(v.id);
+                            setPopoverOpen(false);
                             setSwitchingVenue(false);
                             setMobileMenuOpen(false);
                           }}
@@ -295,7 +296,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                     <Link
                       key={link.to}
                       to={link.to}
-                      className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      className={`block px-3 py-3 rounded-md text-base font-medium transition-colors ${
                         isActive
                           ? 'bg-black text-white'
                           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -306,6 +307,27 @@ const UpdatedDashboardFrame = ({ children }) => {
                     </Link>
                   );
                 })}
+              </div>
+
+              {/* Mobile settings */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <Link
+                  to="/settings/profile"
+                  className="block px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Account Settings
+                </Link>
+                <button
+                  className="w-full text-left px-3 py-3 rounded-md text-base font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    navigate('/signin');
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  Sign Out
+                </button>
               </div>
             </nav>
           </div>
