@@ -23,7 +23,7 @@
     "cra-template": "1.2.0",
     "dayjs": "^1.11.13",
     "framer-motion": "^11.15.0",
-    "lucide-react": "^0.263.1",
+    "lucide-react": "^0.532.0",
     "micro": "^10.0.1",
     "papaparse": "^5.5.2",
     "qrcode.react": "^4.2.0",

@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
-import { Cog } from 'lucide-react'
+import { Cog, Menu, X } from 'lucide-react'
 
 import { Button } from '../../../components/ui/button';
 import {
@@ -17,12 +17,6 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from '../../../components/ui/popover';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '../../../components/ui/avatar';
-
 
 const navLinks = [
   { to: '/', label: 'Overview' },
@@ -35,6 +29,7 @@ const navLinks = [
 const UpdatedDashboardFrame = ({ children }) => {
   const [switchingVenue, setSwitchingVenue] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { venueId, venueName, allVenues, setCurrentVenue, userRole } = useVenue();
@@ -59,6 +54,11 @@ const UpdatedDashboardFrame = ({ children }) => {
     loadUser();
   }, [navigate]);
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   if (!userInfo) {
     return (
       <div className="flex items-center justify-center h-screen bg-muted">
@@ -67,139 +67,253 @@ const UpdatedDashboardFrame = ({ children }) => {
     );
   }
 
+  const allNavLinks = [...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])];
+
   return (
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Top nav */}
-<header className="border-b bg-white px-6 py-4 flex items-center justify-between shadow-sm">
-  {/* Left: Logo + Nav */}
-  <div className="flex items-center gap-6">
-    {/* Logo */}
-    <img
-      src="https://www.getchatters.com/img/Logo.svg"
-      alt="Chatters"
-      className="h-6 w-auto cursor-pointer"
-      onClick={() => navigate('/')}
-    />
+      <header className="border-b bg-white px-4 md:px-6 py-4 flex items-center justify-between shadow-sm">
+        {/* Left: Logo + Desktop Nav */}
+        <div className="flex items-center gap-6">
+          {/* Logo */}
+          <img
+            src="https://www.getchatters.com/img/Logo.svg"
+            alt="Chatters"
+            className="h-6 w-auto cursor-pointer"
+            onClick={() => navigate('/')}
+          />
 
-    {/* Nav links */}
-<nav className="flex gap-6">
-  {[...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])].map((link) => {
-    const isActive = location.pathname.startsWith(link.to);
+          {/* Desktop Nav links */}
+          <nav className="hidden lg:flex gap-6">
+            {allNavLinks.map((link) => {
+              const isActive = location.pathname.startsWith(link.to);
 
-    return (
-      <Link
-        key={link.to}
-        to={link.to}
-        className={`relative text-sm transition-colors after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-black after:transition-all after:duration-300 hover:after:w-full ${
-          isActive
-            ? 'font-bold text-black after:w-full'
-            : 'font-normal text-muted-foreground hover:text-black'
-        }`}
-      >
-        {link.label}
-      </Link>
-    );
-  })}
-</nav>
-  </div>
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`relative text-sm transition-colors after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-black after:transition-all after:duration-300 hover:after:w-full ${
+                    isActive
+                      ? 'font-bold text-black after:w-full'
+                      : 'font-normal text-muted-foreground hover:text-black'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-  {/* Right: Venue Switcher + Avatar */}
-  <div className="flex items-center gap-4">
-{userRole === 'master' ? (
-  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-    <PopoverTrigger asChild>
-      <div title={venueName}>
-        <Button
-          variant="outline"
-          className="w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm truncate whitespace-nowrap"
-        >
-          {switchingVenue ? (
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
-              <span className="text-sm text-muted-foreground">Switching...</span>
-            </div>
-          ) : (
-            venueName || 'Select Venue'
-          )}
-          <span className="ml-2 text-xs opacity-50">⌄</span>
-        </Button>
-      </div>
-    </PopoverTrigger>
+        {/* Right: Venue Switcher + Avatar + Mobile Menu Button */}
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Venue Switcher */}
+          <div className="hidden sm:block">
+            {userRole === 'master' ? (
+              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <div title={venueName}>
+                    <Button
+                      variant="outline"
+                      className="w-[140px] md:w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm truncate whitespace-nowrap"
+                    >
+                      {switchingVenue ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
+                          <span className="text-sm text-muted-foreground hidden md:inline">Switching...</span>
+                        </div>
+                      ) : (
+                        venueName || 'Select Venue'
+                      )}
+                      <span className="ml-2 text-xs opacity-50">⌄</span>
+                    </Button>
+                  </div>
+                </PopoverTrigger>
 
-    <PopoverContent className="w-[200px] p-2 rounded-xl shadow-md">
-      <div className="flex flex-col space-y-1">
-        {allVenues.map((v) => (
+                <PopoverContent className="w-[140px] md:w-[200px] p-2 rounded-xl shadow-md">
+                  <div className="flex flex-col space-y-1">
+                    {allVenues.map((v) => (
+                      <Button
+                        key={v.id}
+                        variant={v.id === venueId ? 'default' : 'ghost'}
+                        size="sm"
+                        disabled={switchingVenue}
+                        onClick={async () => {
+                          if (v.id === venueId) return;
+                          setSwitchingVenue(true);
+                          await new Promise((res) => setTimeout(res, 500));
+                          setCurrentVenue(v.id);
+                          setPopoverOpen(false);
+                          setSwitchingVenue(false);
+                        }}
+                        className={`w-full justify-start rounded-lg ${
+                          v.id === venueId ? 'bg-black text-white' : ''
+                        }`}
+                      >
+                        <span className="truncate">{v.name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <div className="text-sm font-medium text-gray-600 px-3 py-2 rounded-md border border-gray-200 bg-gray-50 max-w-[140px] md:max-w-[200px] truncate">
+                {venueName}
+              </div>
+            )}
+          </div>
+
+          {/* Avatar menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-9 w-9 p-0 flex items-center justify-center rounded-full border border-gray-300 shadow-sm"
+              >
+                <Cog className="h-5 w-5 text-gray-600" />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="end"
+              className="w-48 rounded-xl border border-gray-200 bg-white shadow-md p-1 font-medium"
+            >
+              <DropdownMenuItem
+                onClick={() => navigate('/settings/profile')}
+                className="rounded-md px-3 py-2 hover:bg-muted/50 cursor-pointer"
+              >
+                Account Settings
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                className="rounded-md px-3 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 cursor-pointer"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  navigate('/signin');
+                }}
+              >
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Mobile menu button */}
           <Button
-            key={v.id}
-            variant={v.id === venueId ? 'default' : 'ghost'}
-            size="sm"
-            disabled={switchingVenue}
-            onClick={async () => {
-              if (v.id === venueId) return;
-              setSwitchingVenue(true);
-              await new Promise((res) => setTimeout(res, 500));
-              setCurrentVenue(v.id);
-              setPopoverOpen(false);
-              setSwitchingVenue(false);
-            }}
-            className={`w-full justify-start rounded-lg ${
-              v.id === venueId ? 'bg-black text-white' : ''
-            }`}
+            variant="ghost"
+            className="lg:hidden h-9 w-9 p-0 flex items-center justify-center"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {v.name}
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </Button>
-        ))}
-      </div>
-    </PopoverContent>
-  </Popover>
-) : (
-  <div className="text-sm font-medium text-gray-600 px-3 py-2 rounded-md border border-gray-200 bg-gray-50">
-    {venueName}
-  </div>
-)}
+        </div>
+      </header>
 
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)}>
+          <div 
+            className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-gray-900">Menu</span>
+                <Button
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
 
-    {/* Avatar menu */}
-<DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button
-      variant="ghost"
-      className="h-9 w-9 p-0 flex items-center justify-center rounded-full border border-gray-300 shadow-sm"
-    >
-      <Cog className="h-5 w-5 text-gray-600" />
-    </Button>
-  </DropdownMenuTrigger>
+            {/* Mobile venue switcher */}
+            {userRole === 'master' && (
+              <div className="p-4 border-b sm:hidden">
+                <span className="text-sm font-medium text-gray-700 block mb-2">Switch Venue</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between font-medium text-gray-700 border rounded-xl shadow-sm"
+                    >
+                      {switchingVenue ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
+                          <span className="text-sm text-muted-foreground">Switching...</span>
+                        </div>
+                      ) : (
+                        venueName || 'Select Venue'
+                      )}
+                      <span className="ml-2 text-xs opacity-50">⌄</span>
+                    </Button>
+                  </PopoverTrigger>
 
-  <DropdownMenuContent
-  align="end"
-  className="w-48 rounded-xl border border-gray-200 bg-white shadow-md p-1 font-medium"
->
-    <DropdownMenuItem
-      onClick={() => navigate('/settings/profile')}
-      className="rounded-md px-3 py-2 hover:bg-muted/50 cursor-pointer"
-    >
-      Account Settings
-    </DropdownMenuItem>
+                  <PopoverContent className="w-56 p-2 rounded-xl shadow-md">
+                    <div className="flex flex-col space-y-1">
+                      {allVenues.map((v) => (
+                        <Button
+                          key={v.id}
+                          variant={v.id === venueId ? 'default' : 'ghost'}
+                          size="sm"
+                          disabled={switchingVenue}
+                          onClick={async () => {
+                            if (v.id === venueId) return;
+                            setSwitchingVenue(true);
+                            await new Promise((res) => setTimeout(res, 500));
+                            setCurrentVenue(v.id);
+                            setSwitchingVenue(false);
+                            setMobileMenuOpen(false);
+                          }}
+                          className={`w-full justify-start rounded-lg ${
+                            v.id === venueId ? 'bg-black text-white' : ''
+                          }`}
+                        >
+                          {v.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
 
-    <DropdownMenuSeparator />
+            {/* Mobile navigation links */}
+            <nav className="p-4">
+              <div className="space-y-2">
+                {allNavLinks.map((link) => {
+                  const isActive = location.pathname.startsWith(link.to);
 
-    <DropdownMenuItem
-      className="rounded-md px-3 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 cursor-pointer"
-      onClick={async () => {
-        await supabase.auth.signOut();
-        navigate('/signin');
-      }}
-    >
-      Sign Out
-    </DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
-
-  </div>
-</header>
+                  return (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                        isActive
+                          ? 'bg-black text-white'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">{children}</main>
     </div>
   );
 };
