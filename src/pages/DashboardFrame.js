@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 import { FiSettings, FiMenu, FiX } from 'react-icons/fi';
 
-console.log('Icons loaded:', { FiSettings, FiMenu, FiX });
-
 import { Button } from '../components/ui/button';
 import {
   DropdownMenu,
@@ -66,6 +64,8 @@ const UpdatedDashboardFrame = ({ children }) => {
   }
 
   const allNavLinks = [...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])];
+
+  console.log('Icons loaded:', { FiSettings, FiMenu, FiX });
 
   return (
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
