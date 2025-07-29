@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
-import { Settings } from 'lucide-react'
+import { Cog } from 'lucide-react'
 
 import { Button } from '../../../components/ui/button';
 import {
@@ -166,7 +166,7 @@ const UpdatedDashboardFrame = ({ children }) => {
       variant="ghost"
       className="h-9 w-9 p-0 flex items-center justify-center rounded-full border border-gray-300 shadow-sm"
     >
-      <Settings className="h-5 w-5 text-gray-600" />
+      <Cog className="h-5 w-5 text-gray-600" />
     </Button>
   </DropdownMenuTrigger>
 
