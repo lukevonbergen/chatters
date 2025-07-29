@@ -1,223 +1,343 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  MessageSquare,
-  BarChart,
-  Settings,
-  Map,
-  QrCode,
-  User,
-} from 'lucide-react';
-import { supabase } from '../utils/supabase';
-import { useVenue } from '../context/VenueContext';
+import { useVenue } from '../../../context/VenueContext';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../../utils/supabase';
+import { Cog, Menu, X } from 'lucide-react';
 
-const DashboardFrame = ({ children }) => {
+import { Button } from '../../../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '../../../components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '../../../components/ui/popover';
+
+const navLinks = [
+  { to: '/', label: 'Overview' },
+  { to: '/questions', label: 'Feedback' },
+  { to: '/reports', label: 'Reports' },
+  { to: '/floorplan', label: 'Floor Plan' },
+  { to: '/staff', label: 'Staff' },
+];
+
+const UpdatedDashboardFrame = ({ children }) => {
+  const [switchingVenue, setSwitchingVenue] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { venueName, venueId, setCurrentVenue, allVenues, userRole } = useVenue();
-
-  const [copied, setCopied] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const { venueId, venueName, allVenues, setCurrentVenue, userRole } = useVenue();
   const [userInfo, setUserInfo] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const fetchUserInfo = async () => {
+    const loadUser = async () => {
       const { data: userData } = await supabase.auth.getUser();
       const email = userData?.user?.email;
       if (!email) return navigate('/signin');
 
       const { data: user } = await supabase
         .from('users')
-        .select('email, role, account_id, venue_id, first_name, last_name')
+        .select('email, role, first_name, last_name')
         .eq('email', email)
         .single();
+
       if (!user) return navigate('/signin');
-
-      const { data: account } = await supabase
-        .from('accounts')
-        .select('trial_ends_at, is_paid')
-        .eq('id', user.account_id)
-        .single();
-      if (!account) return navigate('/signin');
-
-      const trialExpired = !account.is_paid && new Date() > new Date(account.trial_ends_at);
-
-      setUserInfo({
-        email: user.email,
-        role: user.role,
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        is_paid: account.is_paid,
-        trial_ends_at: account.trial_ends_at,
-        trialExpired,
-      });
-
-      if (trialExpired && location.pathname !== '/settings/billing') {
-        navigate('/settings/billing');
-      }
+      setUserInfo(user);
     };
 
-    fetchUserInfo();
-  }, [location.pathname, navigate]);
+    loadUser();
+  }, [navigate]);
 
+  // Close mobile menu when route changes
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/signin');
-  };
-
-  const NavLink = ({ to, children, icon: Icon }) => {
-    const isActive = location.pathname === to || location.pathname.startsWith(to);
-    return (
-      <Link
-        to={to}
-        className={`flex items-center gap-2 text-sm px-3 py-2 rounded transition-all duration-200 ${
-          isActive ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'
-        }`}
-      >
-        {Icon && <Icon className="w-5 h-5" />}
-        {children}
-      </Link>
-    );
-  };
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   if (!userInfo) {
-  return (
-    <div className="flex items-center justify-center h-screen bg-gray-50">
-      <div className="text-gray-400 text-sm">Loading dashboard...</div>
-    </div>
-  );
-}
+    return (
+      <div className="flex items-center justify-center h-screen bg-muted">
+        <span className="text-muted-foreground">Loading...</span>
+      </div>
+    );
+  }
+
+  const allNavLinks = [...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])];
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {!userInfo.is_paid && new Date() <= new Date(userInfo.trial_ends_at) && (
-        <div className="bg-yellow-100 text-yellow-800 p-3 text-sm text-center">
-          You're on a free trial. You have{' '}
-          {Math.ceil((new Date(userInfo.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24))} day(s) left.
-          <a href="/settings/billing" className="underline ml-1">Upgrade now</a>
+    <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
+      {/* Top nav */}
+      <header className="border-b bg-white px-4 md:px-6 py-4 flex items-center justify-between shadow-sm relative z-50">
+        {/* Left: Logo + Desktop Nav */}
+        <div className="flex items-center gap-6">
+          {/* Logo */}
+          <img
+            src="https://www.getchatters.com/img/Logo.svg"
+            alt="Chatters"
+            className="h-6 w-auto cursor-pointer"
+            onClick={() => navigate('/')}
+          />
+
+          {/* Desktop Nav links */}
+          <nav className="hidden lg:flex gap-6">
+            {allNavLinks.map((link) => {
+              const isActive = location.pathname.startsWith(link.to);
+
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`relative text-sm transition-colors after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-black after:transition-all after:duration-300 hover:after:w-full ${
+                    isActive
+                      ? 'font-bold text-black after:w-full'
+                      : 'font-normal text-muted-foreground hover:text-black'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
-      )}
 
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              src="https://www.getchatters.com/img/Logo.svg"
-              alt="Chatters Logo"
-              className="h-7 w-auto cursor-pointer"
-              onClick={() => navigate('/dashboard')}
-            />
-            {userInfo.role === 'master' && allVenues.length > 0 ? (
-              <select
-                value={venueId}
-                onChange={(e) => setCurrentVenue(e.target.value)} // ✅ Removed setTimeout
-                className="text-sm text-gray-600 border border-gray-300 rounded px-2 py-1 cursor-pointer"
-              >
-                {allVenues.map((v) => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
-                ))}
-              </select>
+        {/* Right: Venue Switcher + Avatar + Mobile Menu Button */}
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Venue Switcher - Desktop */}
+          <div className="hidden sm:block">
+            {userRole === 'master' ? (
+              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <div title={venueName}>
+                    <Button
+                      variant="outline"
+                      className="w-[140px] md:w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm truncate whitespace-nowrap bg-white"
+                    >
+                      {switchingVenue ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
+                          <span className="text-sm text-muted-foreground hidden md:inline">Switching...</span>
+                        </div>
+                      ) : (
+                        venueName || 'Select Venue'
+                      )}
+                      <span className="ml-2 text-xs opacity-50">⌄</span>
+                    </Button>
+                  </div>
+                </PopoverTrigger>
+
+                <PopoverContent className="w-[140px] md:w-[200px] p-2 rounded-xl shadow-md bg-white">
+                  <div className="flex flex-col space-y-1">
+                    {allVenues.map((v) => (
+                      <Button
+                        key={v.id}
+                        variant={v.id === venueId ? 'default' : 'ghost'}
+                        size="sm"
+                        disabled={switchingVenue}
+                        onClick={async () => {
+                          if (v.id === venueId) return;
+                          setSwitchingVenue(true);
+                          await new Promise((res) => setTimeout(res, 500));
+                          setCurrentVenue(v.id);
+                          setPopoverOpen(false);
+                          setSwitchingVenue(false);
+                        }}
+                        className={`w-full justify-start rounded-lg ${
+                          v.id === venueId ? 'bg-black text-white' : ''
+                        }`}
+                      >
+                        <span className="truncate">{v.name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             ) : (
-              <span className="text-sm text-gray-500">{venueName || 'Loading venue...'}</span>
+              <div className="text-sm font-medium text-gray-600 px-3 py-2 rounded-md border border-gray-200 bg-gray-50 max-w-[140px] md:max-w-[200px] truncate">
+                {venueName}
+              </div>
             )}
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-xs text-gray-500 flex items-center gap-1">
-              <button
-                onClick={() => {
-                  if (!venueId) return;
-                  navigator.clipboard.writeText(venueId);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-                disabled={!venueId}
-                className="flex items-center text-xs text-gray-500 hover:text-gray-700 transition"
-                title="Copy Venue ID"
+          {/* Avatar menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-9 w-9 p-0 flex items-center justify-center rounded-full border border-gray-300 shadow-sm"
               >
-                <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8l6 6v8a2 2 0 01-2 2h-2" />
-                </svg>
-                {copied ? 'Copied!' : 'Copy Venue ID'}
-              </button>
-            </div>
+                <Cog className="h-5 w-5 text-gray-600" />
+              </Button>
+            </DropdownMenuTrigger>
 
-            <div className="relative" ref={dropdownRef}>
-              <img
-                src={`https://ui-avatars.com/api/?name=${userInfo.first_name || 'User'}`}
-                alt="User"
-                className="w-8 h-8 rounded-full border cursor-pointer"
-                onClick={() => setDropdownOpen(prev => !prev)}
-              />
-              {dropdownOpen && (
-                <div className="absolute right-0 top-10 flex flex-col bg-white border shadow-lg rounded-md min-w-[180px] z-50">
-                  <div className="px-4 py-3 text-sm text-gray-700 border-b">
-                    <div className="font-medium">{userInfo.first_name} {userInfo.last_name}</div>
-                    <div className="text-xs text-gray-500">{userInfo.email}</div>
-                  </div>
-                  <Link to="/settings" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Account Settings
-                  </Link>
-                  <button onClick={() => setIsLogoutModalOpen(true)} className="text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                    Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+            <DropdownMenuContent
+              align="end"
+              className="w-48 rounded-xl border border-gray-200 bg-white shadow-md p-1 font-medium"
+            >
+              <DropdownMenuItem
+                onClick={() => navigate('/settings/profile')}
+                className="rounded-md px-3 py-2 hover:bg-muted/50 cursor-pointer"
+              >
+                Account Settings
+              </DropdownMenuItem>
 
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap gap-4 items-center">
-          <NavLink to="/" icon={LayoutDashboard}>Overview</NavLink>
-          <NavLink to="/questions" icon={MessageSquare}>Questions</NavLink>
-          <NavLink to="/reports" icon={BarChart}>Reports</NavLink>
-          <NavLink to="/floorplan" icon={Map}>Floor Plan</NavLink>
-          <NavLink to="/templates" icon={QrCode}>QR Templates</NavLink>
-          <NavLink to="/staff" icon={User}>Staff</NavLink>
-          <NavLink to="/settings" icon={Settings}>Settings</NavLink>
-          {userInfo.role === 'master' && (
-            <NavLink to="/locations" icon={Map}>Locations</NavLink>
-          )}
-        </div>
-      </div>
+              <DropdownMenuSeparator />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {children}
-      </main>
-
-      {isLogoutModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Confirm Logout</h2>
-            <p className="text-gray-600 mb-6">Are you sure you want to sign out?</p>
-            <div className="flex justify-end gap-4">
-              <button onClick={() => setIsLogoutModalOpen(false)} className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
-                Cancel
-              </button>
-              <button onClick={handleLogout} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+              <DropdownMenuItem
+                className="rounded-md px-3 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 cursor-pointer"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  navigate('/signin');
+                }}
+              >
                 Sign Out
-              </button>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            className="lg:hidden h-9 w-9 p-0 flex items-center justify-center"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
+      </header>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)}>
+          <div 
+            className="absolute right-0 top-0 h-full w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-gray-900">Menu</span>
+                <Button
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+
+            {/* Mobile venue switcher */}
+            {userRole === 'master' && (
+              <div className="p-4 border-b sm:hidden">
+                <span className="text-sm font-medium text-gray-700 block mb-3">Switch Venue</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between font-medium text-gray-700 border rounded-xl shadow-sm bg-white"
+                    >
+                      {switchingVenue ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
+                          <span className="text-sm text-muted-foreground">Switching...</span>
+                        </div>
+                      ) : (
+                        venueName || 'Select Venue'
+                      )}
+                      <span className="ml-2 text-xs opacity-50">⌄</span>
+                    </Button>
+                  </PopoverTrigger>
+
+                  <PopoverContent className="w-72 p-2 rounded-xl shadow-md bg-white" side="bottom" align="start">
+                    <div className="flex flex-col space-y-1">
+                      {allVenues.map((v) => (
+                        <Button
+                          key={v.id}
+                          variant={v.id === venueId ? 'default' : 'ghost'}
+                          size="sm"
+                          disabled={switchingVenue}
+                          onClick={async () => {
+                            if (v.id === venueId) return;
+                            setSwitchingVenue(true);
+                            await new Promise((res) => setTimeout(res, 500));
+                            setCurrentVenue(v.id);
+                            setPopoverOpen(false);
+                            setSwitchingVenue(false);
+                            setMobileMenuOpen(false);
+                          }}
+                          className={`w-full justify-start rounded-lg ${
+                            v.id === venueId ? 'bg-black text-white' : ''
+                          }`}
+                        >
+                          {v.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {/* Mobile navigation links */}
+            <nav className="p-4">
+              <div className="space-y-2">
+                {allNavLinks.map((link) => {
+                  const isActive = location.pathname.startsWith(link.to);
+
+                  return (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className={`block px-3 py-3 rounded-md text-base font-medium transition-colors ${
+                        isActive
+                          ? 'bg-black text-white'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Mobile settings */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <Link
+                  to="/settings/profile"
+                  className="block px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Account Settings
+                </Link>
+                <button
+                  className="w-full text-left px-3 py-3 rounded-md text-base font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    navigate('/signin');
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  Sign Out
+                </button>
+              </div>
+            </nav>
           </div>
         </div>
       )}
+
+      {/* Main content */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">{children}</main>
     </div>
   );
 };
 
-export default DashboardFrame;
+export default UpdatedDashboardFrame;
