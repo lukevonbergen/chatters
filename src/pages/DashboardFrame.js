@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 import { FiSettings, FiMenu, FiX } from 'react-icons/fi';
 
+console.log('Icons loaded:', { FiSettings, FiMenu, FiX });
+
 import { Button } from '../components/ui/button';
 import {
   DropdownMenu,
