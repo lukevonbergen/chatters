@@ -8,11 +8,12 @@ import { useVenue } from '../context/VenueContext';
 import ProfileTab from './components/settings/ProfileTab';
 import VenueTab from './components/settings/VenueTab';
 import BrandingTab from './components/settings/BrandingTab';
+import BillingTab from './components/settings/BillingTab';
 import NotificationsTab from './components/settings/NotificationsTab';
 
 const SettingsPage = () => {
   usePageTitle('Settings');
-  const { venueId } = useVenue();
+  const { venueId, userRole } = useVenue(); // Add userRole
 
   // State for active tab
   const [activeTab, setActiveTab] = useState('Profile');
@@ -39,11 +40,12 @@ const SettingsPage = () => {
   });
   const [message, setMessage] = useState('');
 
-  // Sidebar navigation items
+  // Sidebar navigation items - conditionally include Billing for master users
   const navItems = [
     { id: 'Profile', label: 'Profile' },
     { id: 'Venue', label: 'Venue' },
     { id: 'Branding', label: 'Branding' },
+    ...(userRole === 'master' ? [{ id: 'Billing', label: 'Billing' }] : []),
     { id: 'Notifications', label: 'Notifications' },
   ];
 
@@ -91,7 +93,7 @@ const SettingsPage = () => {
         .select('first_name, last_name, email')
         .eq('user_id', userId)
         .eq('venue_id', venueId)
-        .single();
+        .maybeSingle(); // Use maybeSingle to handle missing records
 
       if (staffError) {
         console.error('❌ Error fetching staff settings:', staffError);
@@ -119,11 +121,18 @@ const SettingsPage = () => {
         country: '',
       });
 
-      // Set staff data
+      // Set staff data (handle missing staff records)
       console.log('📝 Setting staff state...');
-      setFirstName(staffData.first_name || '');
-      setLastName(staffData.last_name || '');
-      setEmail(staffData.email || '');
+      if (staffData) {
+        setFirstName(staffData.first_name || '');
+        setLastName(staffData.last_name || '');
+        setEmail(staffData.email || '');
+      } else {
+        console.log('⚠️ No staff record found, using empty values');
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+      }
 
       console.log('🎉 All data loaded and state updated!');
     };
@@ -233,6 +242,8 @@ const SettingsPage = () => {
         return <VenueTab {...tabProps} />;
       case 'Branding':
         return <BrandingTab {...tabProps} />;
+      case 'Billing':
+        return <BillingTab />;
       case 'Notifications':
         return <NotificationsTab {...tabProps} />;
       default:
@@ -252,7 +263,7 @@ const SettingsPage = () => {
         <p className="text-gray-600">Some form of blurb text here.</p>
         {/* Debug info */}
         <p className="text-xs text-gray-400 mt-2">
-          Debug: Current venueId = {venueId}
+          Debug: Current venueId = {venueId} | User role = {userRole}
         </p>
       </div>
 
