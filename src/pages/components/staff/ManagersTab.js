@@ -24,14 +24,21 @@ const ManagersTab = ({
   // Edit manager state
   const [editManagerVenues, setEditManagerVenues] = useState([]);
 
+  // Debug: Log the managers data
+  console.log('🔍 ManagersTab - managers data:', managers);
+  console.log('🔍 ManagersTab - allVenues data:', allVenues);
+
   // Group managers by venue for display
   const managersByVenue = {};
   allVenues.forEach(venue => {
+    const venueManagers = managers.filter(manager => 
+      manager.venue_id === venue.id
+    );
+    console.log(`🔍 Venue ${venue.name} (${venue.id}) has ${venueManagers.length} managers:`, venueManagers);
+    
     managersByVenue[venue.id] = {
       venue: venue,
-      managers: managers.filter(manager => 
-        manager.venue_id === venue.id
-      )
+      managers: venueManagers
     };
   });
 
@@ -220,6 +227,15 @@ const ManagersTab = ({
             Add Manager
           </button>
         </div>
+      </div>
+
+      {/* Debug info */}
+      <div className="mb-4 p-3 bg-gray-100 rounded text-xs text-gray-600">
+        <p>Debug: Total managers: {managers.length}</p>
+        <p>Debug: Total venues: {allVenues.length}</p>
+        {managers.length > 0 && (
+          <p>Debug: Sample manager: {JSON.stringify(managers[0], null, 2)}</p>
+        )}
       </div>
 
       {/* Managers grouped by venue */}
