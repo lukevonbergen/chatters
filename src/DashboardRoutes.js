@@ -23,7 +23,6 @@ import { VenueProvider } from './context/VenueContext';
 import DashboardFrame from './pages/DashboardFrame';
 import RequireMasterUser from './components/RequireMasterUser';
 
-import LocationsPage from './pages/Locations';
 
 import CustomerFeedbackPage from './pages/CustomerFeedback';
 
@@ -58,9 +57,6 @@ const DashboardRoutes = () => {
         <Route path="/staff/leaderboard" element={<DashboardFrame><StaffLeaderboard /></DashboardFrame>} />
         <Route path="/feedbackfeed" element={<DashboardFrame><FeedbackFeed /></DashboardFrame>} />
         <Route path="/settings/billing" element={<DashboardFrame><BillingPage /></DashboardFrame>} />
-        
-        {/* Require Master Role Pages */}
-        <Route path="/locations" element={<RequireMasterUser><DashboardFrame><LocationsPage /></DashboardFrame></RequireMasterUser>}/>
 
          {/* ✍️ Public Feedback Form */}
         <Route path="/feedback" element={<CustomerFeedbackPage />} />

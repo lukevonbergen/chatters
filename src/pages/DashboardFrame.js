@@ -104,7 +104,8 @@ const UpdatedDashboardFrame = ({ children }) => {
     );
   }
 
-  const allNavLinks = [...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])];
+  // Remove the locations link - venue management is now in Settings
+  const allNavLinks = navLinks;
 
   return (
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
