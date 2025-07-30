@@ -49,7 +49,7 @@ const UpdatedDashboardFrame = ({ children }) => {
       
       const { data: user } = await supabase
         .from('users')
-        .select('email, role, first_name, last_name, account_id')
+        .select('email, role, account_id')
         .eq('email', email)
         .single();
       
@@ -62,7 +62,7 @@ const UpdatedDashboardFrame = ({ children }) => {
         userId: userId,
         accountId: user.account_id,
         userRole: user.role,
-        userName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown',
+        userName: email.split('@')[0],
         userEmail: email
       });
 
