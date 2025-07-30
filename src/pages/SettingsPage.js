@@ -240,6 +240,7 @@ const SettingsPage = () => {
     loading,
     message,
     venueId,
+    userRole,
   };
 
   const renderActiveTab = () => {
