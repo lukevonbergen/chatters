@@ -24,7 +24,7 @@ export const VenueProvider = ({ children }) => {
 
       const { data: userRow, error: userFetchError } = await supabase
         .from('users')
-        .select('id, role, account_id, venue_id')
+        .select('id, role, account_id')
         .eq('id', userId)
         .single();
 
