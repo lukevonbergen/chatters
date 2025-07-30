@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { supabase } from '../../../supabaseutils/supabase';
+import { supabase } from '../../../utils/supabase';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
