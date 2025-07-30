@@ -13,10 +13,12 @@ import NotificationsTab from './components/settings/NotificationsTab';
 
 const SettingsPage = () => {
   usePageTitle('Settings');
-  const { venueId, userRole } = useVenue(); // Add userRole
+  const { venueId, userRole } = useVenue();
 
   // State for active tab
   const [activeTab, setActiveTab] = useState('Profile');
+  // Add mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // All your existing state variables
   const [name, setName] = useState('');
@@ -48,6 +50,12 @@ const SettingsPage = () => {
     ...(userRole === 'master' ? [{ id: 'Billing', label: 'Billing' }] : []),
     { id: 'Notifications', label: 'Notifications' },
   ];
+
+  // Close mobile menu when tab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setIsMobileMenuOpen(false);
+  };
 
   // Fetch venue data with debug logging
   useEffect(() => {
@@ -93,7 +101,7 @@ const SettingsPage = () => {
         .select('first_name, last_name, email')
         .eq('user_id', userId)
         .eq('venue_id', venueId)
-        .maybeSingle(); // Use maybeSingle to handle missing records
+        .maybeSingle();
 
       if (staffError) {
         console.error('❌ Error fetching staff settings:', staffError);
@@ -258,18 +266,55 @@ const SettingsPage = () => {
 
   return (
     <PageContainer>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p className="text-gray-600">Some form of blurb text here.</p>
-        {/* Debug info */}
-        <p className="text-xs text-gray-400 mt-2">
+      {/* Header */}
+      <div className="mb-6 lg:mb-8">
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Settings</h1>
+        <p className="text-gray-600 text-sm lg:text-base">Some form of blurb text here.</p>
+        {/* Debug info - hide on mobile */}
+        <p className="text-xs text-gray-400 mt-2 hidden lg:block">
           Debug: Current venueId = {venueId} | User role = {userRole}
         </p>
       </div>
 
-      <div className="flex gap-8">
-        {/* Sidebar */}
-        <div className="w-64 flex-shrink-0">
+      {/* Mobile Tab Selector */}
+      <div className="lg:hidden mb-6">
+        <div className="relative">
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-full bg-white border border-gray-300 rounded-md px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <span className="block truncate">
+              {navItems.find(item => item.id === activeTab)?.label || 'Select Tab'}
+            </span>
+            <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </span>
+          </button>
+
+          {isMobileMenuOpen && (
+            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleTabChange(item.id)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                    activeTab === item.id ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Desktop Sidebar - Hidden on mobile */}
+        <div className="hidden lg:block w-64 flex-shrink-0">
           <nav className="space-y-1">
             {navItems.map((item) => (
               <button
