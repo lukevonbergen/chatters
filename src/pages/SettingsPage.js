@@ -25,7 +25,6 @@ const SettingsPage = () => {
   const [logo, setLogo] = useState(null);
   const [primaryColor, setPrimaryColor] = useState('#1890ff');
   const [secondaryColor, setSecondaryColor] = useState('#52c41a');
-  const [isPaid, setIsPaid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [tableCount, setTableCount] = useState('');
   const [tripadvisorLink, setTripadvisorLink] = useState('');
@@ -74,7 +73,7 @@ const SettingsPage = () => {
       console.log('🏢 Fetching venue data for venueId:', venueId);
       const { data: venueData, error: venueError } = await supabase
         .from('venues')
-        .select('id, name, logo, primary_color, secondary_color, is_paid, table_count, address, tripadvisor_link, google_review_link')
+        .select('id, name, logo, primary_color, secondary_color, table_count, address, tripadvisor_link, google_review_link')
         .eq('id', venueId)
         .single();
 
@@ -108,7 +107,6 @@ const SettingsPage = () => {
       setLogo(venueData.logo || null);
       setPrimaryColor(venueData.primary_color || '#1890ff');
       setSecondaryColor(venueData.secondary_color || '#52c41a');
-      setIsPaid(venueData.is_paid || false);
       setTableCount(venueData.table_count || '');
       setTripadvisorLink(venueData.tripadvisor_link || '');
       setGoogleReviewLink(venueData.google_review_link || '');
