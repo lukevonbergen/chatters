@@ -10,10 +10,8 @@ const VenueTab = ({
   saveSettings,
   loading,
   message,
-  userRole
+  userRole 
 }) => {
-
-  console.log('🔍 VenueTab Debug - userRole:', userRole, 'type:', typeof userRole);
   // Master-only states for venue management
   const [venues, setVenues] = useState([]);
   const [newVenue, setNewVenue] = useState({
@@ -84,7 +82,6 @@ const VenueTab = ({
         .insert([
           {
             name: newVenue.name,
-            email: null,
             account_id: accountId,
             logo: null,
             address: newVenue.address,

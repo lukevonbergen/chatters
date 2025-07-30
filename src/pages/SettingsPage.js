@@ -57,30 +57,23 @@ const SettingsPage = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Fetch venue data with debug logging
+  // Fetch venue data
   useEffect(() => {
-    console.log('🔄 SettingsPage useEffect triggered - venueId:', venueId);
     if (!venueId) {
-      console.log('❌ No venueId provided');
       return;
     }
 
     const fetchVenueData = async () => {
-      console.log('🔍 Starting fetch for venue:', venueId);
-      
       // Get current user ID
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth?.user?.id;
 
       if (!userId) {
-        console.error('❌ User not authenticated');
+        console.error('User not authenticated');
         return;
       }
 
-      console.log('👤 User ID:', userId);
-
       // Fetch venue data
-      console.log('🏢 Fetching venue data for venueId:', venueId);
       const { data: venueData, error: venueError } = await supabase
         .from('venues')
         .select('id, name, logo, primary_color, secondary_color, table_count, address, tripadvisor_link, google_review_link')
@@ -88,14 +81,11 @@ const SettingsPage = () => {
         .single();
 
       if (venueError) {
-        console.error('❌ Error fetching venue settings:', venueError);
+        console.error('Error fetching venue settings:', venueError);
         return;
       }
 
-      console.log('✅ Venue data fetched:', venueData);
-
       // Fetch staff data (profile info)
-      console.log('👥 Fetching staff data for userId:', userId, 'venueId:', venueId);
       const { data: staffData, error: staffError } = await supabase
         .from('staff')
         .select('first_name, last_name, email')
@@ -104,15 +94,11 @@ const SettingsPage = () => {
         .maybeSingle();
 
       if (staffError) {
-        console.error('❌ Error fetching staff settings:', staffError);
-        console.error('Staff query details:', { userId, venueId });
+        console.error('Error fetching staff settings:', staffError);
         return;
       }
 
-      console.log('✅ Staff data fetched:', staffData);
-
       // Set venue data
-      console.log('📝 Setting venue state...');
       setName(venueData.name || '');
       setLogo(venueData.logo || null);
       setPrimaryColor(venueData.primary_color || '#1890ff');
@@ -130,34 +116,29 @@ const SettingsPage = () => {
       });
 
       // Set staff data (handle missing staff records)
-      console.log('📝 Setting staff state...');
       if (staffData) {
         setFirstName(staffData.first_name || '');
         setLastName(staffData.last_name || '');
         setEmail(staffData.email || '');
       } else {
-        console.log('⚠️ No staff record found, using empty values');
         setFirstName('');
         setLastName('');
         setEmail('');
       }
-
-      console.log('🎉 All data loaded and state updated!');
     };
 
     fetchVenueData();
   }, [venueId]);
 
-  // UPDATED SAVE SETTINGS - SAVES TO BOTH TABLES
+  // Save settings - saves to both tables
   const saveSettings = async () => {
     if (!venueId) return;
 
-    console.log('💾 Starting save for venue:', venueId);
     setLoading(true);
     setMessage('');
 
     try {
-      // Get current user ID
+      // Get current user ID and email
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth?.user?.id;
       const userEmail = auth?.user?.email;
@@ -165,8 +146,6 @@ const SettingsPage = () => {
       if (!userId) {
         throw new Error('User not authenticated');
       }
-
-      console.log('💾 Saving staff data:', { firstName, lastName, email });
 
       // Update staff table (profile data)
       const staffUpdates = {
@@ -182,13 +161,8 @@ const SettingsPage = () => {
         .eq('venue_id', venueId);
 
       if (staffError) {
-        console.error('❌ Staff save error:', staffError);
         throw staffError;
       }
-
-      console.log('✅ Staff data saved');
-
-      console.log('💾 Saving venue data:', { name, primaryColor, secondaryColor, tableCount });
 
       // Update venues table (venue data)
       const venueUpdates = {
@@ -207,14 +181,12 @@ const SettingsPage = () => {
         .eq('id', venueId);
 
       if (venueError) {
-        console.error('❌ Venue save error:', venueError);
         throw venueError;
       }
 
-      console.log('✅ Venue data saved');
       setMessage('Settings updated successfully!');
     } catch (error) {
-      console.error('❌ Error updating settings:', error);
+      console.error('Error updating settings:', error);
       setMessage('Failed to update settings. Please try again.');
     } finally {
       setLoading(false);
@@ -262,7 +234,6 @@ const SettingsPage = () => {
   };
 
   if (!venueId) {
-    console.log('⚠️ SettingsPage: No venueId, not rendering');
     return null;
   }
 
@@ -271,11 +242,7 @@ const SettingsPage = () => {
       {/* Header */}
       <div className="mb-6 lg:mb-8">
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p className="text-gray-600 text-sm lg:text-base">Some form of blurb text here.</p>
-        {/* Debug info - hide on mobile */}
-        <p className="text-xs text-gray-400 mt-2 hidden lg:block">
-          Debug: Current venueId = {venueId} | User role = {userRole}
-        </p>
+        <p className="text-gray-600 text-sm lg:text-base">Manage your account and venue settings.</p>
       </div>
 
       {/* Mobile Tab Selector */}
