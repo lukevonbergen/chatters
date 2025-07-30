@@ -14,6 +14,8 @@ const StaffPage = () => {
 
   // State for active tab
   const [activeTab, setActiveTab] = useState(userRole === 'master' ? 'Managers' : 'Employees');
+  // Add mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Staff data state
   const [managers, setManagers] = useState([]);
@@ -26,6 +28,12 @@ const StaffPage = () => {
     ...(userRole === 'master' ? [{ id: 'Managers', label: 'Managers' }] : []),
     { id: 'Employees', label: 'Employees' },
   ];
+
+  // Close mobile menu when tab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setIsMobileMenuOpen(false);
+  };
 
   // Fetch staff data
   useEffect(() => {
@@ -230,18 +238,55 @@ const StaffPage = () => {
 
   return (
     <PageContainer>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Staff Management</h1>
-        <p className="text-gray-600">Manage your team members and their venue access.</p>
-        {/* Debug info */}
-        <p className="text-xs text-gray-400 mt-2">
+      {/* Header */}
+      <div className="mb-6 lg:mb-8">
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Staff Management</h1>
+        <p className="text-gray-600 text-sm lg:text-base">Manage your team members and their venue access.</p>
+        {/* Debug info - hide on mobile */}
+        <p className="text-xs text-gray-400 mt-2 hidden lg:block">
           Debug: Current venueId = {venueId} | User role = {userRole}
         </p>
       </div>
 
-      <div className="flex gap-8">
-        {/* Sidebar */}
-        <div className="w-64 flex-shrink-0">
+      {/* Mobile Tab Selector */}
+      <div className="lg:hidden mb-6">
+        <div className="relative">
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-full bg-white border border-gray-300 rounded-md px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <span className="block truncate">
+              {navItems.find(item => item.id === activeTab)?.label || 'Select Tab'}
+            </span>
+            <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </span>
+          </button>
+
+          {isMobileMenuOpen && (
+            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleTabChange(item.id)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                    activeTab === item.id ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Desktop Sidebar - Hidden on mobile */}
+        <div className="hidden lg:block w-64 flex-shrink-0">
           <nav className="space-y-1">
             {navItems.map((item) => (
               <button
@@ -263,15 +308,15 @@ const StaffPage = () => {
         <div className="flex-1 min-w-0">
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <span className="text-gray-500">Loading staff data...</span>
+              <span className="text-gray-500 text-sm lg:text-base">Loading staff data...</span>
             </div>
           )}
           {!loading && renderActiveTab()}
           
           {/* Message display */}
           {message && (
-            <div className={`mt-4 p-3 rounded-md ${
-              message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            <div className={`mt-4 p-3 rounded-md text-sm ${
+              message.includes('success') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
             }`}>
               {message}
             </div>
