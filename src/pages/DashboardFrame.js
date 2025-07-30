@@ -34,19 +34,60 @@ const UpdatedDashboardFrame = ({ children }) => {
   const navigate = useNavigate();
   const { venueId, venueName, allVenues, setCurrentVenue, userRole } = useVenue();
   const [userInfo, setUserInfo] = useState(null);
+  
+  // New state for trial/debug info
+  const [trialInfo, setTrialInfo] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     const loadUser = async () => {
       const { data: userData } = await supabase.auth.getUser();
       const email = userData?.user?.email;
+      const userId = userData?.user?.id;
+      
       if (!email) return navigate('/signin');
+      
       const { data: user } = await supabase
         .from('users')
-        .select('email, role, first_name, last_name')
+        .select('email, role, first_name, last_name, account_id')
         .eq('email', email)
         .single();
+      
       if (!user) return navigate('/signin');
+      
       setUserInfo(user);
+
+      // Set debug info
+      setDebugInfo({
+        userId: userId,
+        accountId: user.account_id,
+        userRole: user.role,
+        userName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown',
+        userEmail: email
+      });
+
+      // Fetch trial info if user is master
+      if (user.role === 'master' && user.account_id) {
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('trial_ends_at')
+          .eq('id', user.account_id)
+          .single();
+
+        if (account?.trial_ends_at) {
+          const trialEndDate = new Date(account.trial_ends_at);
+          const daysLeft = Math.max(
+            0,
+            Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          );
+          
+          setTrialInfo({
+            endsAt: trialEndDate,
+            daysLeft: daysLeft,
+            isActive: daysLeft > 0
+          });
+        }
+      }
     };
     loadUser();
   }, [navigate]);
@@ -65,10 +106,45 @@ const UpdatedDashboardFrame = ({ children }) => {
 
   const allNavLinks = [...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])];
 
-  console.log('Icons loaded:', { FiSettings, FiMenu, FiX });
-
   return (
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
+      {/* Trial Banner */}
+      {trialInfo && trialInfo.isActive && (
+        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-yellow-800 text-sm font-medium">
+                ⚡ Trial Account: {trialInfo.daysLeft} day{trialInfo.daysLeft !== 1 ? 's' : ''} remaining
+              </span>
+            </div>
+            <Button
+              onClick={() => navigate('/settings')}
+              size="sm"
+              className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1"
+            >
+              Upgrade Now
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Debug Banner */}
+      {debugInfo && (
+        <div className="bg-gray-900 text-gray-100 px-4 py-1 text-xs font-mono">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span>👤 {debugInfo.userName} ({debugInfo.userRole})</span>
+              <span>🏢 Venue: {venueId || 'None'}</span>
+              <span>🏦 Account: {debugInfo.accountId}</span>
+              <span>📧 {debugInfo.userEmail}</span>
+            </div>
+            <div className="text-gray-400">
+              DEBUG MODE
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top nav */}
       <header className="border-b bg-white px-4 md:px-6 py-4 flex items-center justify-between shadow-sm relative z-50">
         {/* Left: Logo + Desktop Nav */}
