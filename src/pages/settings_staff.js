@@ -1,250 +1,283 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import { useVenue } from '../context/VenueContext';
 import PageContainer from '../components/PageContainer';
 import usePageTitle from '../hooks/usePageTitle';
+import { useVenue } from '../context/VenueContext';
+
+// Import tab components
+import ManagersTab from './components/staff/ManagersTab';
+import EmployeesTab from './components/staff/EmployeesTab';
 
 const StaffPage = () => {
   usePageTitle('Staff');
-  const { venueId, venueName, userRole } = useVenue();
+  const { venueId, userRole, allVenues } = useVenue();
 
-  const [staffList, setStaffList] = useState([]);
+  // State for active tab
+  const [activeTab, setActiveTab] = useState(userRole === 'master' ? 'Managers' : 'Employees');
+
+  // Staff data state
+  const [managers, setManagers] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState(null);
+  const [message, setMessage] = useState('');
 
-  const [showInvite, setShowInvite] = useState(false);
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '' });
+  // Sidebar navigation items - based on user role
+  const navItems = [
+    ...(userRole === 'master' ? [{ id: 'Managers', label: 'Managers' }] : []),
+    { id: 'Employees', label: 'Employees' },
+  ];
 
+  // Fetch staff data
   useEffect(() => {
-    if (!venueId) return;
-    fetchStaff();
-  }, [venueId]);
+    console.log('🔄 StaffPage useEffect triggered - venueId:', venueId, 'userRole:', userRole);
+    if (!venueId && userRole !== 'master') {
+      console.log('❌ No venueId provided and not master');
+      return;
+    }
 
-  const fetchStaff = async () => {
-    const { data, error } = await supabase
+    fetchStaffData();
+  }, [venueId, userRole]);
+
+  const fetchStaffData = async () => {
+    setLoading(true);
+    console.log('🔍 Starting fetch staff data');
+
+    try {
+      // Get current user info
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId) {
+        console.error('❌ User not authenticated');
+        return;
+      }
+
+      // Get user's account info
+      const { data: userData } = await supabase
+        .from('users')
+        .select('account_id')
+        .eq('id', userId)
+        .single();
+
+      if (!userData?.account_id) {
+        console.error('❌ No account_id found');
+        return;
+      }
+
+      if (userRole === 'master') {
+        // Masters: Get all staff under account
+        await fetchAllStaffForAccount(userData.account_id);
+      } else {
+        // Managers: Get staff for their venue(s)
+        await fetchStaffForManager(userId);
+      }
+
+    } catch (error) {
+      console.error('❌ Error fetching staff data:', error);
+      setMessage('Failed to load staff data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAllStaffForAccount = async (accountId) => {
+    console.log('🏦 Fetching all staff for account:', accountId);
+
+    // Get all staff under this account (via venues)
+    const { data: staffData, error } = await supabase
       .from('staff')
-      .select('id, first_name, last_name, email, role, user_id, venue_id')
-      .eq('venue_id', venueId);
+      .select(`
+        id,
+        user_id,
+        venue_id,
+        first_name,
+        last_name,
+        email,
+        role,
+        created_at,
+        venues (
+          id,
+          name
+        ),
+        users (
+          id,
+          email,
+          role
+        )
+      `)
+      .in('venue_id', allVenues.map(v => v.id));
 
-    if (!error) setStaffList(data);
-  };
-
-  const handleResend = async (staff) => {
-    setLoading(true);
-    setFeedback(null);
-    try {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth?.user?.id;
-      if (!userId) throw new Error('Missing user');
-
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('account_id')
-        .eq('id', userId)
-        .single();
-
-      await fetch('/api/admin/invite-manager', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: staff.first_name,
-          lastName: staff.last_name,
-          email: staff.email,
-          venueId: staff.venue_id,
-          accountId: userRow.account_id,
-        }),
-      });
-
-      setFeedback({ type: 'success', message: 'Invite re-sent.' });
-    } catch (err) {
-      setFeedback({ type: 'error', message: err.message });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this invite?')) return;
-    setLoading(true);
-    const { error } = await supabase.from('staff').delete().eq('id', id);
     if (error) {
-      setFeedback({ type: 'error', message: error.message });
-    } else {
-      setFeedback({ type: 'success', message: 'Staff removed.' });
-      fetchStaff();
+      console.error('❌ Error fetching staff:', error);
+      return;
     }
-    setLoading(false);
+
+    console.log('✅ Staff data fetched:', staffData);
+
+    // Separate managers and employees
+    const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
+    const employeesData = staffData?.filter(staff => staff.users?.role === 'employee') || [];
+
+    setManagers(managersData);
+    setEmployees(employeesData);
   };
 
-  const handleInviteSubmit = async (e) => {
-    e.preventDefault();
+  const fetchStaffForManager = async (userId) => {
+    console.log('👤 Fetching staff for manager:', userId);
+
+    // Get staff for venues this manager has access to
+    const { data: staffData, error } = await supabase
+      .from('staff')
+      .select(`
+        id,
+        user_id,
+        venue_id,
+        first_name,
+        last_name,
+        email,
+        role,
+        created_at,
+        venues (
+          id,
+          name
+        ),
+        users (
+          id,
+          email,
+          role
+        )
+      `)
+      .eq('venue_id', venueId)
+      .neq('user_id', userId); // Don't include themselves
+
+    if (error) {
+      console.error('❌ Error fetching venue staff:', error);
+      return;
+    }
+
+    console.log('✅ Venue staff data fetched:', staffData);
+
+    // Separate managers and employees
+    const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
+    const employeesData = staffData?.filter(staff => staff.users?.role === 'employee') || [];
+
+    setManagers(managersData);
+    setEmployees(employeesData);
+  };
+
+  // Add new manager (master only)
+  const addManager = async (managerData) => {
     setLoading(true);
-    setFeedback(null);
-
     try {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth?.user?.id;
-      if (!userId) throw new Error('Missing user');
-
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('account_id')
-        .eq('id', userId)
-        .single();
-
-      const res = await fetch('/api/admin/invite-manager', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: form.firstName,
-          lastName: form.lastName,
-          email: form.email,
-          venueId,
-          accountId: userRow.account_id,
-        }),
-      });
-
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Failed to invite');
-
-      setFeedback({ type: 'success', message: 'Invite sent successfully.' });
-      setShowInvite(false);
-      setForm({ firstName: '', lastName: '', email: '' });
-      fetchStaff();
-    } catch (err) {
-      setFeedback({ type: 'error', message: err.message });
+      console.log('➕ Adding new manager:', managerData);
+      
+      // This will be implemented when we build the add manager functionality
+      await fetchStaffData(); // Refresh data
+      setMessage('Manager added successfully!');
+    } catch (error) {
+      console.error('❌ Error adding manager:', error);
+      setMessage('Failed to add manager');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Update manager venue assignments (master only)
+  const updateManagerVenues = async (managerId, venueIds) => {
+    setLoading(true);
+    try {
+      console.log('🔄 Updating manager venues:', { managerId, venueIds });
+      
+      // This will be implemented when we build the venue assignment functionality
+      await fetchStaffData(); // Refresh data
+      setMessage('Manager venues updated successfully!');
+    } catch (error) {
+      console.error('❌ Error updating manager venues:', error);
+      setMessage('Failed to update manager venues');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Props to pass to tab components
+  const tabProps = {
+    // Data
+    managers,
+    employees,
+    allVenues,
+    venueId,
+    userRole,
+    
+    // Actions
+    addManager,
+    updateManagerVenues,
+    fetchStaffData,
+    loading,
+    message,
+    setMessage,
+  };
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'Managers':
+        return <ManagersTab {...tabProps} />;
+      case 'Employees':
+        return <EmployeesTab {...tabProps} />;
+      default:
+        return userRole === 'master' ? <ManagersTab {...tabProps} /> : <EmployeesTab {...tabProps} />;
     }
   };
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Staff</h1>
-
-      {feedback && (
-        <div className={`mb-4 p-3 rounded text-sm ${
-          feedback.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-        }`}>
-          {feedback.message}
-        </div>
-      )}
-
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">Team at {venueName}</h2>
-          {userRole === 'master' && (
-            <button
-              onClick={() => setShowInvite(true)}
-              className="text-sm bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-            >
-              + Invite Manager
-            </button>
-          )}
-        </div>
-
-        {staffList.length === 0 ? (
-          <p className="text-gray-500 text-sm">No staff found for this location.</p>
-        ) : (
-          <table className="min-w-full text-sm divide-y divide-gray-200">
-            <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2">Email</th>
-                <th className="px-4 py-2">Role</th>
-                <th className="px-4 py-2">Location</th>
-                <th className="px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {staffList.map((s) => (
-                <tr key={s.id}>
-                  <td className="px-4 py-3">{s.first_name} {s.last_name}</td>
-                  <td className="px-4 py-3">{s.email || '—'}</td>
-                  <td className="px-4 py-3">{s.role || 'Unassigned'}</td>
-                  <td className="px-4 py-3">{venueName}</td>
-                  <td className="px-4 py-3 flex gap-2">
-                    {!s.user_id && (
-                      <>
-                        <button
-                          onClick={() => handleResend(s)}
-                          disabled={loading}
-                          className="text-blue-600 hover:underline text-xs"
-                        >
-                          Resend
-                        </button>
-                        <button
-                          onClick={() => handleDelete(s.id)}
-                          disabled={loading}
-                          className="text-red-600 hover:underline text-xs"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Staff Management</h1>
+        <p className="text-gray-600">Manage your team members and their venue access.</p>
+        {/* Debug info */}
+        <p className="text-xs text-gray-400 mt-2">
+          Debug: Current venueId = {venueId} | User role = {userRole}
+        </p>
       </div>
 
-      {showInvite && (
-        <div className="bg-white border mt-6 border-gray-200 rounded-lg shadow p-6 max-w-md mx-auto">
-          <h3 className="text-lg font-semibold mb-4">Invite New Manager</h3>
-
-          <form onSubmit={handleInviteSubmit} className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">First Name</label>
-              <input
-                value={form.firstName}
-                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                required
-                className="w-full border rounded px-3 py-2 text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Last Name</label>
-              <input
-                value={form.lastName}
-                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                required
-                className="w-full border rounded px-3 py-2 text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Email</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-                className="w-full border rounded px-3 py-2 text-sm"
-              />
-            </div>
-
-            <div className="flex gap-4 mt-4">
+      <div className="flex gap-8">
+        {/* Sidebar */}
+        <div className="w-64 flex-shrink-0">
+          <nav className="space-y-1">
+            {navItems.map((item) => (
               <button
-                type="submit"
-                disabled={loading}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm"
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full text-left px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                  activeTab === item.id
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               >
-                {loading ? 'Inviting...' : 'Send Invite'}
+                {item.label}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowInvite(false)}
-                className="text-gray-500 hover:text-gray-700 text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+            ))}
+          </nav>
         </div>
-      )}
+
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <span className="text-gray-500">Loading staff data...</span>
+            </div>
+          )}
+          {!loading && renderActiveTab()}
+          
+          {/* Message display */}
+          {message && (
+            <div className={`mt-4 p-3 rounded-md ${
+              message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            }`}>
+              {message}
+            </div>
+          )}
+        </div>
+      </div>
     </PageContainer>
   );
 };
