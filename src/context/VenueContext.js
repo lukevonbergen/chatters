@@ -61,21 +61,36 @@ export const VenueProvider = ({ children }) => {
         }
 
       } else {
-        const { data: staffRow, error: staffError } = await supabase
+        // ✅ Fixed: Handle multiple venue assignments for managers
+        const { data: staffRows, error: staffError } = await supabase
           .from('staff')
           .select('venue_id, venues(name)')
-          .eq('user_id', userId)
-          .single();
+          .eq('user_id', userId);  // Remove .single() to get all venues
 
-        if (staffError || !staffRow?.venue_id) {
+        if (staffError || !staffRows?.length) {
           console.error('Staff row error:', staffError);
           setLoading(false);
           return;
         }
 
-        setVenueId(staffRow.venue_id);
-        setVenueName(staffRow.venues?.name || '');
-        setAllVenues([{ id: staffRow.venue_id, name: staffRow.venues?.name || '' }]);
+        // Convert to venue format
+        const userVenues = staffRows.map(row => ({
+          id: row.venue_id,
+          name: row.venues?.name || ''
+        }));
+
+        setAllVenues(userVenues);
+
+        // Set first venue as current (or use cached preference)
+        const cachedId = localStorage.getItem('chatters_currentVenueId');
+        const validCached = userVenues.find(v => v.id === cachedId);
+        const selected = validCached || userVenues[0];
+
+        if (selected) {
+          setVenueId(selected.id);
+          setVenueName(selected.name);
+          localStorage.setItem('chatters_currentVenueId', selected.id);
+        }
       }
 
       setLoading(false);
@@ -94,7 +109,6 @@ export const VenueProvider = ({ children }) => {
     localStorage.setItem('chatters_currentVenueId', found.id);
   };
 
-  // Always render the provider, let individual components handle loading states
   return (
     <VenueContext.Provider
       value={{
