@@ -160,6 +160,7 @@ const SettingsPage = () => {
       // Get current user ID
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth?.user?.id;
+      const userEmail = auth?.user?.email;
 
       if (!userId) {
         throw new Error('User not authenticated');
@@ -171,7 +172,7 @@ const SettingsPage = () => {
       const staffUpdates = {
         first_name: firstName,
         last_name: lastName,
-        email: email,
+        email: userEmail,
       };
 
       const { error: staffError } = await supabase
