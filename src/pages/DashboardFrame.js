@@ -184,7 +184,7 @@ const UpdatedDashboardFrame = ({ children }) => {
         <div className="flex items-center gap-2 md:gap-4">
           {/* Venue Switcher - Desktop */}
           <div className="hidden sm:block">
-            {userRole === 'master' ? (
+            {userRole === 'master' || allVenues.length > 1 ? (
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <div title={venueName}>
@@ -305,7 +305,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               </div>
             </div>
             {/* Mobile venue switcher */}
-            {userRole === 'master' && (
+            {(userRole === 'master' || allVenues.length > 1) && (
               <div className="p-4 border-b sm:hidden">
                 <span className="text-sm font-medium text-gray-700 block mb-3">Switch Venue</span>
                 <Popover>
