@@ -24,17 +24,12 @@ const ManagersTab = ({
   // Edit manager state
   const [editManagerVenues, setEditManagerVenues] = useState([]);
 
-  // Debug: Log the managers data
-  console.log('🔍 ManagersTab - managers data:', managers);
-  console.log('🔍 ManagersTab - allVenues data:', allVenues);
-
   // Group managers by venue for display
   const managersByVenue = {};
   allVenues.forEach(venue => {
     const venueManagers = managers.filter(manager => 
       manager.venue_id === venue.id
     );
-    console.log(`🔍 Venue ${venue.name} (${venue.id}) has ${venueManagers.length} managers:`, venueManagers);
     
     managersByVenue[venue.id] = {
       venue: venue,
@@ -83,7 +78,6 @@ const ManagersTab = ({
       });
 
       if (authError) {
-        console.error('Auth user creation error:', authError);
         throw new Error('Failed to create user account: ' + authError.message);
       }
 
@@ -98,7 +92,6 @@ const ManagersTab = ({
         });
 
       if (userError) {
-        console.error('Public user creation error:', userError);
         throw new Error('Failed to create user profile: ' + userError.message);
       }
 
@@ -117,7 +110,6 @@ const ManagersTab = ({
         .insert(staffRecords);
 
       if (staffError) {
-        console.error('Staff creation error:', staffError);
         throw new Error('Failed to assign venues: ' + staffError.message);
       }
 
@@ -128,7 +120,6 @@ const ManagersTab = ({
       await fetchStaffData();
 
     } catch (error) {
-      console.error('Error adding manager:', error);
       setMessage('Failed to add manager: ' + error.message);
     } finally {
       setAddFormLoading(false);
@@ -204,7 +195,6 @@ const ManagersTab = ({
       await fetchStaffData();
 
     } catch (error) {
-      console.error('Error updating venue assignments:', error);
       setMessage('Failed to update venue assignments: ' + error.message);
     } finally {
       setEditFormLoading(false);
@@ -227,15 +217,6 @@ const ManagersTab = ({
             Add Manager
           </button>
         </div>
-      </div>
-
-      {/* Debug info */}
-      <div className="mb-4 p-3 bg-gray-100 rounded text-xs text-gray-600">
-        <p>Debug: Total managers: {managers.length}</p>
-        <p>Debug: Total venues: {allVenues.length}</p>
-        {managers.length > 0 && (
-          <p>Debug: Sample manager: {JSON.stringify(managers[0], null, 2)}</p>
-        )}
       </div>
 
       {/* Managers grouped by venue */}
