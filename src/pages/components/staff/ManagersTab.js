@@ -9,9 +9,12 @@ const ManagersTab = ({
   setMessage 
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showAssignForm, setShowAssignForm] = useState(false);
+  const [assigningToVenue, setAssigningToVenue] = useState(null);
   const [editingManager, setEditingManager] = useState(null);
   const [addFormLoading, setAddFormLoading] = useState(false);
   const [editFormLoading, setEditFormLoading] = useState(false);
+  const [assignFormLoading, setAssignFormLoading] = useState(false);
 
   // Add manager form state
   const [newManager, setNewManager] = useState({
@@ -23,6 +26,9 @@ const ManagersTab = ({
 
   // Edit manager state
   const [editManagerVenues, setEditManagerVenues] = useState([]);
+  
+  // Selected managers for assignment
+  const [selectedManagersForAssignment, setSelectedManagersForAssignment] = useState([]);
 
   // Group managers by venue for display
   const managersByVenue = {};
@@ -35,6 +41,17 @@ const ManagersTab = ({
       venue: venue,
       managers: venueManagers
     };
+  });
+
+  // Get unique managers (not grouped by venue)
+  const uniqueManagers = [];
+  const seenUserIds = new Set();
+  
+  managers.forEach(manager => {
+    if (!seenUserIds.has(manager.user_id)) {
+      seenUserIds.add(manager.user_id);
+      uniqueManagers.push(manager);
+    }
   });
 
   // Generate a random temporary password
@@ -136,6 +153,77 @@ const ManagersTab = ({
     }));
   };
 
+  // Handle assign managers to venue
+  const handleAssignToVenue = (venue) => {
+    setAssigningToVenue(venue);
+    setShowAssignForm(true);
+    // Pre-select managers already assigned to this venue
+    const assignedManagerIds = managers
+      .filter(m => m.venue_id === venue.id)
+      .map(m => m.user_id);
+    setSelectedManagersForAssignment(assignedManagerIds);
+  };
+
+  // Handle manager selection for assignment
+  const handleManagerAssignmentToggle = (managerId) => {
+    setSelectedManagersForAssignment(prev => 
+      prev.includes(managerId)
+        ? prev.filter(id => id !== managerId)
+        : [...prev, managerId]
+    );
+  };
+
+  // Save manager assignments to venue
+  const handleSaveManagerAssignments = async () => {
+    setAssignFormLoading(true);
+    
+    try {
+      // Delete existing assignments for this venue
+      const { error: deleteError } = await supabase
+        .from('staff')
+        .delete()
+        .eq('venue_id', assigningToVenue.id)
+        .eq('role', 'manager');
+
+      if (deleteError) {
+        throw new Error('Failed to update manager assignments: ' + deleteError.message);
+      }
+
+      // Create new assignments for selected managers
+      if (selectedManagersForAssignment.length > 0) {
+        const assignmentRecords = selectedManagersForAssignment.map(managerId => {
+          const manager = uniqueManagers.find(m => m.user_id === managerId);
+          return {
+            user_id: managerId,
+            venue_id: assigningToVenue.id,
+            first_name: manager.first_name,
+            last_name: manager.last_name,
+            email: manager.email,
+            role: 'manager'
+          };
+        });
+
+        const { error: insertError } = await supabase
+          .from('staff')
+          .insert(assignmentRecords);
+
+        if (insertError) {
+          throw new Error('Failed to assign managers: ' + insertError.message);
+        }
+      }
+
+      setMessage('Manager assignments updated successfully!');
+      setShowAssignForm(false);
+      setAssigningToVenue(null);
+      await fetchStaffData();
+
+    } catch (error) {
+      setMessage('Failed to update manager assignments: ' + error.message);
+    } finally {
+      setAssignFormLoading(false);
+    }
+  };
+
   // Start editing manager venues
   const handleVenueAssignment = (manager) => {
     setEditingManager(manager);
@@ -234,7 +322,7 @@ const ManagersTab = ({
               <div className="text-center py-6 lg:py-8 text-gray-500">
                 <p className="text-sm lg:text-base mb-2">No managers assigned to this venue</p>
                 <button
-                  onClick={() => setShowAddForm(true)}
+                  onClick={() => handleAssignToVenue(venue)}
                   className="text-black hover:underline text-sm lg:text-base font-medium"
                 >
                   Assign a manager
@@ -286,7 +374,7 @@ const ManagersTab = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm lg:text-base">
           <div className="flex justify-between sm:flex-col sm:justify-start">
             <span className="text-blue-700">Total Managers:</span>
-            <span className="font-medium text-blue-900 sm:mt-1">{managers.length}</span>
+            <span className="font-medium text-blue-900 sm:mt-1">{uniqueManagers.length}</span>
           </div>
           <div className="flex justify-between sm:flex-col sm:justify-start">
             <span className="text-blue-700">Total Venues:</span>
@@ -377,6 +465,81 @@ const ManagersTab = ({
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Managers to Venue Modal */}
+      {showAssignForm && assigningToVenue && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-4 lg:p-6">
+              <h3 className="text-lg lg:text-xl font-medium mb-4 lg:mb-6">
+                Assign Managers to {assigningToVenue.name}
+              </h3>
+              
+              <div className="space-y-4 lg:space-y-6">
+                {uniqueManagers.length === 0 ? (
+                  <div className="text-center py-6 text-gray-500">
+                    <p className="text-sm lg:text-base mb-2">No managers available</p>
+                    <p className="text-xs text-gray-400">Create a manager first using the "Add Manager" button</p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Select Managers</label>
+                    <div className="border border-gray-200 rounded-md p-3 max-h-64 overflow-y-auto">
+                      <div className="space-y-2">
+                        {uniqueManagers.map(manager => (
+                          <label key={manager.user_id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedManagersForAssignment.includes(manager.user_id)}
+                              onChange={() => handleManagerAssignmentToggle(manager.user_id)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                            />
+                            <div className="flex items-center space-x-2 flex-1">
+                              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-xs font-medium text-gray-700">
+                                  {manager.first_name?.[0]}{manager.last_name?.[0]}
+                                </span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {manager.first_name} {manager.last_name}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">{manager.email}</p>
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Select managers to assign to this venue</p>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t">
+                  <button
+                    onClick={() => {
+                      setShowAssignForm(false);
+                      setAssigningToVenue(null);
+                    }}
+                    className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 text-sm lg:text-base font-medium"
+                  >
+                    Cancel
+                  </button>
+                  {uniqueManagers.length > 0 && (
+                    <button
+                      onClick={handleSaveManagerAssignments}
+                      disabled={assignFormLoading}
+                      className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm lg:text-base font-medium"
+                    >
+                      {assignFormLoading ? 'Saving...' : 'Save Assignments'}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
