@@ -54,16 +54,6 @@ const ManagersTab = ({
     }
   });
 
-  // Generate a random temporary password
-  const generateTempPassword = () => {
-    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
-  };
-
   // Add new manager
   const handleAddManager = async (e) => {
     e.preventDefault();
@@ -76,9 +66,6 @@ const ManagersTab = ({
     setAddFormLoading(true);
     
     try {
-      // Generate temporary password
-      const tempPassword = generateTempPassword();
-      
       // Get current user's account_id
       const { data: authUser } = await supabase.auth.getUser();
       const { data: userData } = await supabase
@@ -87,57 +74,35 @@ const ManagersTab = ({
         .eq('id', authUser.user.id)
         .single();
 
-      // 1. Create user in auth.users
-      const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
+      // Call updated API with multiple venues
+      const payload = {
         email: newManager.email,
-        password: tempPassword,
-        email_confirm: true
+        firstName: newManager.firstName,
+        lastName: newManager.lastName,
+        venueIds: newManager.venueIds, // Pass all venue IDs
+        accountId: userData.account_id
+      };
+
+      const res = await fetch('/api/admin/invite-manager', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
-      if (authError) {
-        throw new Error('Failed to create user account: ' + authError.message);
-      }
-
-      // 2. Create user in public.users table
-      const { error: userError } = await supabase
-        .from('users')
-        .insert({
-          id: newAuthUser.user.id,
-          email: newManager.email,
-          role: 'manager',
-          account_id: userData.account_id
-        });
-
-      if (userError) {
-        throw new Error('Failed to create user profile: ' + userError.message);
-      }
-
-      // 3. Create staff records for each venue
-      const staffRecords = newManager.venueIds.map(venueId => ({
-        user_id: newAuthUser.user.id,
-        venue_id: venueId,
-        first_name: newManager.firstName,
-        last_name: newManager.lastName,
-        email: newManager.email,
-        role: 'manager'
-      }));
-
-      const { error: staffError } = await supabase
-        .from('staff')
-        .insert(staffRecords);
-
-      if (staffError) {
-        throw new Error('Failed to assign venues: ' + staffError.message);
+      const result = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to invite manager');
       }
 
       // Success!
-      setMessage(`Manager added successfully! Temporary password: ${tempPassword} (Share this securely with the new manager)`);
+      setMessage(`Manager invited successfully! An invitation email has been sent to ${newManager.email}.`);
       setNewManager({ firstName: '', lastName: '', email: '', venueIds: [] });
       setShowAddForm(false);
       await fetchStaffData();
 
     } catch (error) {
-      setMessage('Failed to add manager: ' + error.message);
+      setMessage('Failed to invite manager: ' + error.message);
     } finally {
       setAddFormLoading(false);
     }
@@ -461,7 +426,7 @@ const ManagersTab = ({
                     disabled={addFormLoading}
                     className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm lg:text-base font-medium"
                   >
-                    {addFormLoading ? 'Creating...' : 'Create Manager'}
+                    {addFormLoading ? 'Inviting...' : 'Invite Manager'}
                   </button>
                 </div>
               </form>
