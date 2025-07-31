@@ -227,9 +227,9 @@ const UpdatedDashboardFrame = ({ children }) => {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="h-10 w-10 p-0 flex items-center justify-center rounded-full hover:bg-gray-100"
+                className="h-12 w-12 p-0 flex items-center justify-center rounded-full hover:bg-gray-100"
               >
-                <FiSettings className="h-6 w-6 text-gray-600" />
+                <FiSettings className="h-8 w-8 text-gray-600" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
