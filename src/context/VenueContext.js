@@ -61,30 +61,55 @@ export const VenueProvider = ({ children }) => {
         }
 
       } else {
-        // ✅ Fixed: Handle multiple venue assignments for managers
+        // Handle manager role - get venues they have access to
         const { data: staffRows, error: staffError } = await supabase
           .from('staff')
-          .select('venue_id, venues(name)')
-          .eq('user_id', userId);  // Remove .single() to get all venues
+          .select(`
+            venue_id,
+            venues!inner (
+              id,
+              name,
+              account_id
+            )
+          `)
+          .eq('user_id', userId)
+          .eq('venues.account_id', userRow.account_id); // Ensure same account
 
-        if (staffError || !staffRows?.length) {
+        // Debug logging
+        console.log('Manager staff query result:', { staffRows, staffError, userId, accountId: userRow.account_id });
+
+        if (staffError) {
           console.error('Staff row error:', staffError);
+          setLoading(false);
+          return;
+        }
+
+        // Check if manager has any venue assignments
+        if (!staffRows || staffRows.length === 0) {
+          console.warn('Manager has no venue assignments in staff table');
+          // Set empty venues array and continue
+          setAllVenues([]);
           setLoading(false);
           return;
         }
 
         // Convert to venue format
         const userVenues = staffRows.map(row => ({
-          id: row.venue_id,
-          name: row.venues?.name || ''
+          id: row.venues.id,
+          name: row.venues.name
         }));
 
-        setAllVenues(userVenues);
+        // Remove duplicates (in case manager is assigned to same venue multiple times)
+        const uniqueVenues = userVenues.filter((venue, index, array) => 
+          array.findIndex(v => v.id === venue.id) === index
+        );
+
+        setAllVenues(uniqueVenues);
 
         // Set first venue as current (or use cached preference)
         const cachedId = localStorage.getItem('chatters_currentVenueId');
-        const validCached = userVenues.find(v => v.id === cachedId);
-        const selected = validCached || userVenues[0];
+        const validCached = uniqueVenues.find(v => v.id === cachedId);
+        const selected = validCached || uniqueVenues[0];
 
         if (selected) {
           setVenueId(selected.id);
