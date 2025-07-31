@@ -37,9 +37,7 @@ const StaffPage = () => {
 
   // Fetch staff data
   useEffect(() => {
-    console.log('🔄 StaffPage useEffect triggered - venueId:', venueId, 'userRole:', userRole);
     if (!venueId && userRole !== 'master') {
-      console.log('❌ No venueId provided and not master');
       return;
     }
 
@@ -48,7 +46,6 @@ const StaffPage = () => {
 
   const fetchStaffData = async () => {
     setLoading(true);
-    console.log('🔍 Starting fetch staff data');
 
     try {
       // Get current user info
@@ -56,7 +53,6 @@ const StaffPage = () => {
       const userId = auth?.user?.id;
 
       if (!userId) {
-        console.error('❌ User not authenticated');
         return;
       }
 
@@ -68,7 +64,6 @@ const StaffPage = () => {
         .single();
 
       if (!userData?.account_id) {
-        console.error('❌ No account_id found');
         return;
       }
 
@@ -81,7 +76,6 @@ const StaffPage = () => {
       }
 
     } catch (error) {
-      console.error('❌ Error fetching staff data:', error);
       setMessage('Failed to load staff data');
     } finally {
       setLoading(false);
@@ -89,8 +83,6 @@ const StaffPage = () => {
   };
 
   const fetchAllStaffForAccount = async (accountId) => {
-    console.log('🏦 Fetching all staff for account:', accountId);
-
     // Get all staff under this account (via venues)
     const { data: staffData, error } = await supabase
       .from('staff')
@@ -116,11 +108,8 @@ const StaffPage = () => {
       .in('venue_id', allVenues.map(v => v.id));
 
     if (error) {
-      console.error('❌ Error fetching staff:', error);
       return;
     }
-
-    console.log('✅ Staff data fetched:', staffData);
 
     // Separate managers and employees
     const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
@@ -131,8 +120,6 @@ const StaffPage = () => {
   };
 
   const fetchStaffForManager = async (userId) => {
-    console.log('👤 Fetching staff for manager:', userId);
-
     // Get staff for venues this manager has access to
     const { data: staffData, error } = await supabase
       .from('staff')
@@ -159,11 +146,8 @@ const StaffPage = () => {
       .neq('user_id', userId); // Don't include themselves
 
     if (error) {
-      console.error('❌ Error fetching venue staff:', error);
       return;
     }
-
-    console.log('✅ Venue staff data fetched:', staffData);
 
     // Separate managers and employees
     const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
@@ -177,13 +161,10 @@ const StaffPage = () => {
   const addManager = async (managerData) => {
     setLoading(true);
     try {
-      console.log('➕ Adding new manager:', managerData);
-      
       // This will be implemented when we build the add manager functionality
       await fetchStaffData(); // Refresh data
       setMessage('Manager added successfully!');
     } catch (error) {
-      console.error('❌ Error adding manager:', error);
       setMessage('Failed to add manager');
     } finally {
       setLoading(false);
@@ -194,13 +175,10 @@ const StaffPage = () => {
   const updateManagerVenues = async (managerId, venueIds) => {
     setLoading(true);
     try {
-      console.log('🔄 Updating manager venues:', { managerId, venueIds });
-      
       // This will be implemented when we build the venue assignment functionality
       await fetchStaffData(); // Refresh data
       setMessage('Manager venues updated successfully!');
     } catch (error) {
-      console.error('❌ Error updating manager venues:', error);
       setMessage('Failed to update manager venues');
     } finally {
       setLoading(false);
@@ -242,10 +220,6 @@ const StaffPage = () => {
       <div className="mb-6 lg:mb-8">
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Staff Management</h1>
         <p className="text-gray-600 text-sm lg:text-base">Manage your team members and their venue access.</p>
-        {/* Debug info - hide on mobile */}
-        <p className="text-xs text-gray-400 mt-2 hidden lg:block">
-          Debug: Current venueId = {venueId} | User role = {userRole}
-        </p>
       </div>
 
       {/* Mobile Tab Selector */}
