@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../context/VenueContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { FiSettings, FiMenu, FiX } from 'react-icons/fi';
+import { FiSettings, FiMenu, FiX, FiClock, FiZap } from 'react-icons/fi';
 
 import { Button } from '../components/ui/button';
 import {
@@ -35,9 +35,8 @@ const UpdatedDashboardFrame = ({ children }) => {
   const { venueId, venueName, allVenues, setCurrentVenue, userRole } = useVenue();
   const [userInfo, setUserInfo] = useState(null);
   
-  // New state for trial/debug info
+  // Trial info state
   const [trialInfo, setTrialInfo] = useState(null);
-  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -56,15 +55,6 @@ const UpdatedDashboardFrame = ({ children }) => {
       if (!user) return navigate('/signin');
       
       setUserInfo(user);
-
-      // Set debug info
-      setDebugInfo({
-        userId: userId,
-        accountId: user.account_id,
-        userRole: user.role,
-        userName: email.split('@')[0],
-        userEmail: email
-      });
 
       // Fetch trial info if user is master
       if (user.role === 'master' && user.account_id) {
@@ -111,37 +101,31 @@ const UpdatedDashboardFrame = ({ children }) => {
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Trial Banner */}
       {trialInfo && trialInfo.isActive && (
-        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2">
+        <div className="bg-gray-100 border-b border-gray-200 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-yellow-800 text-sm font-medium">
-                ⚡ Trial Account: {trialInfo.daysLeft} day{trialInfo.daysLeft !== 1 ? 's' : ''} remaining
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 bg-gray-200 rounded-full">
+                <FiZap className="w-4 h-4 text-gray-600" />
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-gray-700 font-medium text-sm">
+                  Trial Account
+                </span>
+                <div className="flex items-center gap-1 text-gray-600 text-sm">
+                  <FiClock className="w-3 h-3" />
+                  <span>
+                    <span className="font-bold">{trialInfo.daysLeft}</span> day{trialInfo.daysLeft !== 1 ? 's' : ''} remaining
+                  </span>
+                </div>
+              </div>
             </div>
             <Button
               onClick={() => navigate('/settings')}
               size="sm"
-              className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1"
+              className="bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
             >
               Upgrade Now
             </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Debug Banner */}
-      {debugInfo && (
-        <div className="bg-gray-900 text-gray-100 px-4 py-1 text-xs font-mono">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span>👤 {debugInfo.userName} ({debugInfo.userRole})</span>
-              <span>🏢 Venue: {venueId || 'None'}</span>
-              <span>🏦 Account: {debugInfo.accountId}</span>
-              <span>📧 {debugInfo.userEmail}</span>
-            </div>
-            <div className="text-gray-400">
-              DEBUG MODE
-            </div>
           </div>
         </div>
       )}
@@ -291,6 +275,10 @@ const UpdatedDashboardFrame = ({ children }) => {
         <div className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)}>
           <div 
             className="absolute right-0 top-0 h-full w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out overflow-y-auto"
+            style={{ 
+              top: trialInfo && trialInfo.isActive ? '120px' : '72px', // Account for trial banner + nav height
+              height: trialInfo && trialInfo.isActive ? 'calc(100vh - 120px)' : 'calc(100vh - 72px)'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b">
