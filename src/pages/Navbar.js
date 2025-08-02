@@ -134,7 +134,7 @@ const Navbar = () => {
                 </Link>
               )
             )}
-            <Link to="/signin" className="block text-sm text-white bg-black px-4 py-2 rounded-md hover:bg-gray-800">
+            <Link to="https://my.getchatters.com/signin" className="block text-sm text-white bg-black px-4 py-2 rounded-md hover:bg-gray-800">
               Login
             </Link>
           </div>
