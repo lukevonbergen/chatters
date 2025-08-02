@@ -13,27 +13,66 @@ const CustomerFeedbackPage = () => {
   const [feedbackAnswers, setFeedbackAnswers] = useState([]);
   const [freeText, setFreeText] = useState('');
   const [isFinished, setIsFinished] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const { data: questionsData } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('venue_id', venueId)
-        .eq('active', true)
-        .order('order');
+      try {
+        console.log('Loading data for venueId:', venueId);
+        
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('venue_id', venueId)
+          .eq('active', true)
+          .order('order');
 
-      const { data: venueData } = await supabase
-        .from('venues')
-        .select('logo, primary_color, secondary_color, table_count')
-        .eq('id', venueId)
-        .single();
+        if (questionsError) {
+          console.error('Questions error:', questionsError);
+          throw new Error(`Failed to load questions: ${questionsError.message}`);
+        }
 
-      setQuestions(questionsData || []);
-      setVenue(venueData);
+        const { data: venueData, error: venueError } = await supabase
+          .from('venues')
+          .select('logo, primary_color, secondary_color, table_count')
+          .eq('id', venueId)
+          .single();
+
+        if (venueError) {
+          console.error('Venue error:', venueError);
+          throw new Error(`Failed to load venue: ${venueError.message}`);
+        }
+
+        console.log('Questions loaded:', questionsData?.length || 0);
+        console.log('Venue loaded:', venueData ? 'success' : 'failed');
+
+        if (!questionsData || questionsData.length === 0) {
+          throw new Error('No active questions found for this venue');
+        }
+
+        if (!venueData) {
+          throw new Error('Venue not found');
+        }
+
+        setQuestions(questionsData);
+        setVenue(venueData);
+        setError(null);
+
+      } catch (err) {
+        console.error('Error loading feedback form:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadData();
+    if (venueId) {
+      loadData();
+    } else {
+      setError('No venue ID provided');
+      setLoading(false);
+    }
   }, [venueId]);
 
   const handleEmojiAnswer = (emoji) => {
@@ -53,35 +92,72 @@ const CustomerFeedbackPage = () => {
   };
 
   const handleSubmit = async () => {
-    const entries = [...feedbackAnswers];
-    if (freeText.trim()) {
-      entries.push({
-        venue_id: venueId,
-        question_id: null,
-        sentiment: null,
-        rating: null,
-        additional_feedback: freeText,
-        table_number: tableNumber || null,
-        session_id: sessionId,
-      });
-    }
+    try {
+      const entries = [...feedbackAnswers];
+      if (freeText.trim()) {
+        entries.push({
+          venue_id: venueId,
+          question_id: null,
+          sentiment: null,
+          rating: null,
+          additional_feedback: freeText,
+          table_number: tableNumber || null,
+          session_id: sessionId,
+        });
+      }
 
-    const { error } = await supabase.from('feedback').insert(entries);
-    if (!error) setIsFinished(true);
+      const { error } = await supabase.from('feedback').insert(entries);
+      if (error) {
+        console.error('Error submitting feedback:', error);
+        alert('Failed to submit feedback. Please try again.');
+        return;
+      }
+      
+      setIsFinished(true);
+    } catch (err) {
+      console.error('Error submitting feedback:', err);
+      alert('Failed to submit feedback. Please try again.');
+    }
   };
 
-  if (!venue || !questions.length) {
+  // Loading state
+  if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen text-gray-600 text-lg">
-        Loading feedback form...
+      <div className="flex flex-col justify-center items-center min-h-screen text-gray-600 text-lg space-y-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+        <div>Loading feedback form...</div>
+        <div className="text-sm text-gray-400">Venue ID: {venueId}</div>
       </div>
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen text-red-600 text-lg space-y-4 p-6">
+        <div className="text-4xl">⚠️</div>
+        <div className="text-center max-w-md">
+          <div className="font-semibold mb-2">Unable to load feedback form</div>
+          <div className="text-sm text-gray-600 mb-2">{error}</div>
+          <div className="text-xs text-gray-400">Venue ID: {venueId}</div>
+        </div>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Success state
   if (isFinished) {
     return (
-      <div className="flex justify-center items-center min-h-screen text-green-600 text-xl font-semibold">
-        Thanks for your feedback!
+      <div className="flex flex-col justify-center items-center min-h-screen text-green-600 space-y-4">
+        <div className="text-4xl">✅</div>
+        <div className="text-xl font-semibold text-center">Thanks for your feedback!</div>
+        <div className="text-sm text-gray-500">Your response has been submitted successfully.</div>
       </div>
     );
   }
@@ -118,13 +194,27 @@ const CustomerFeedbackPage = () => {
           </div>
         ) : current >= 0 ? (
           <div>
+            <div className="mb-4">
+              <div className="text-sm text-gray-500 mb-2">
+                Question {current + 1} of {questions.length}
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="h-2 rounded-full transition-all duration-300" 
+                  style={{ 
+                    width: `${((current + 1) / questions.length) * 100}%`,
+                    backgroundColor: primary 
+                  }}
+                ></div>
+              </div>
+            </div>
             <h2 className="text-lg font-semibold mb-6">{questions[current].question}</h2>
             <div className="flex justify-between gap-3 flex-wrap px-4">
               {['😠', '😞', '😐', '😊', '😍'].map((emoji) => (
                 <button
                   key={emoji}
                   onClick={() => handleEmojiAnswer(emoji)}
-                  className="w-16 h-16 rounded-full text-3xl shadow-sm border hover:scale-110 transition"
+                  className="w-16 h-16 rounded-full text-3xl shadow-sm border hover:scale-110 transition transform active:scale-95"
                   style={{
                     borderColor: primary,
                     backgroundColor: secondary,
@@ -151,7 +241,7 @@ const CustomerFeedbackPage = () => {
             />
             <button
               onClick={handleSubmit}
-              className="w-full py-3 rounded-lg font-semibold text-white text-lg"
+              className="w-full py-3 rounded-lg font-semibold text-white text-lg transition-colors hover:opacity-90"
               style={{ backgroundColor: primary }}
             >
               Submit Feedback
