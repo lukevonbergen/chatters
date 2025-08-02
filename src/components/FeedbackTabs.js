@@ -107,7 +107,7 @@ const FeedbackTabs = ({ venueId, questionsMap }) => {
             <div className="flex items-center gap-2">
               {session.lowScore && !session.isActioned && !session.isExpired && <Bell className="text-red-500" size={18} />}
               <button
-                onClick={() => navigate('/dashboard/heatmap')}
+                onClick={() => navigate('/floorplan')}
                 className="text-sm bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
               >
                 View on Heatmap
