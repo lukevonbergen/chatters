@@ -2,35 +2,63 @@ import React from 'react';
 
 const AddNewQuestion = ({ newQuestion, onQuestionChange, onAddQuestion, questions, duplicateError }) => {
   return (
-    <div className="mb-8">
-      <h2 className="text-xl font-bold mb-4 text-gray-900">Add New Question</h2>
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <input
-            type="text"
-            placeholder="Enter a new question"
-            value={newQuestion}
-            onChange={onQuestionChange}
-            className="flex-1 p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            maxLength={100}
-          />
+    <div className="max-w-none lg:max-w-6xl mb-6 lg:mb-8">
+      <div className="mb-4 lg:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+          <div>
+            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Add New Question</h2>
+            <p className="text-gray-600 text-sm">
+              Create a new feedback question for your customers to answer.
+            </p>
+          </div>
           <button
             onClick={onAddQuestion}
-            className={`${
+            disabled={!newQuestion.trim()}
+            className={`w-full sm:w-auto px-4 py-2 rounded-md transition-colors duration-200 text-sm font-medium ${
               questions.length >= 5
-                ? 'bg-gray-500 hover:bg-gray-600'
-                : 'bg-blue-600 hover:bg-blue-700'
-            } text-white px-6 py-3 rounded-lg transition-colors duration-200`}
+                ? 'bg-gray-500 text-white hover:bg-gray-600'
+                : !newQuestion.trim()
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-black text-white hover:bg-gray-800'
+            }`}
           >
-            {questions.length >= 5 ? 'Replace...' : 'Add Question'}
+            {questions.length >= 5 ? 'Replace Question' : 'Add Question'}
           </button>
         </div>
-        <div className="flex justify-between mt-2">
-          <p className="text-sm text-gray-500">{newQuestion.length}/100 characters</p>
-          {duplicateError && <p className="text-sm text-red-500">{duplicateError}</p>}
-          {questions.length >= 5 && (
-            <p className="text-sm text-red-500">Maximum questions limit reached (5/5)</p>
-          )}
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6">
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="new-question" className="block text-sm font-medium text-gray-700 mb-2">
+              Question Text
+            </label>
+            <input
+              id="new-question"
+              type="text"
+              placeholder="Enter a new question..."
+              value={newQuestion}
+              onChange={onQuestionChange}
+              className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
+              maxLength={100}
+            />
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4">
+              <p className="text-xs text-gray-500">
+                {newQuestion.length}/100 characters
+              </p>
+              {questions.length >= 5 && (
+                <p className="text-xs text-yellow-600">
+                  Maximum questions limit reached (5/5)
+                </p>
+              )}
+            </div>
+            {duplicateError && (
+              <p className="text-xs text-red-600">{duplicateError}</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
