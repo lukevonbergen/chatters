@@ -146,38 +146,117 @@ const ReportsPage = () => {
           </div>
         </div>
 
-        {/* Completion Rate - Featured Card */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8 mb-6 lg:mb-8">
-          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
-            <div className="flex-shrink-0">
-              <div className="w-32 h-32 lg:w-40 lg:h-40">
-                <CircularProgressbar
-                  value={completionRate}
-                  text={`${completionRate}%`}
-                  styles={{
-                    path: { stroke: '#000000', strokeWidth: 3 },
-                    text: { fill: '#111827', fontSize: '16px', fontWeight: 'bold' },
-                    trail: { stroke: '#f3f4f6', strokeWidth: 3 }
-                  }}
-                />
+        {/* Top Row: Completion Rate and Satisfaction Trend */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8">
+          {/* Action Completion Rate */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8">
+            <div className="flex flex-col items-center space-y-6">
+              <div className="flex-shrink-0">
+                <div className="w-32 h-32 lg:w-40 lg:h-40">
+                  <CircularProgressbar
+                    value={completionRate}
+                    text={`${completionRate}%`}
+                    styles={{
+                      path: { stroke: '#000000', strokeWidth: 3 },
+                      text: { fill: '#111827', fontSize: '16px', fontWeight: 'bold' },
+                      trail: { stroke: '#f3f4f6', strokeWidth: 3 }
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="text-center">
+                <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Action Completion Rate</h2>
+                <p className="text-gray-600 text-sm mb-4">
+                  {actionedCount} of {totalCount} feedback sessions have been actioned by your team.
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Completed:</span>
+                    <span className="ml-2 font-medium text-green-600">{actionedCount}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Pending:</span>
+                    <span className="ml-2 font-medium text-gray-900">{totalCount - actionedCount}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex-1 text-center lg:text-left">
-              <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Action Completion Rate</h2>
-              <p className="text-gray-600 text-sm mb-4">
-                {actionedCount} of {totalCount} feedback sessions have been actioned by your team.
+          </div>
+
+          {/* Satisfaction Trend Chart */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8">
+            <div className="mb-4">
+              <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Satisfaction Trend</h2>
+              <p className="text-gray-600 text-sm">
+                Daily average satisfaction scores over time.
               </p>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Completed:</span>
-                  <span className="ml-2 font-medium text-green-600">{actionedCount}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Pending:</span>
-                  <span className="ml-2 font-medium text-gray-900">{totalCount - actionedCount}</span>
+            </div>
+            
+            {satisfactionTrend.length > 0 ? (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={satisfactionTrend}>
+                    <XAxis 
+                      dataKey="day"
+                      stroke="#6B7280" 
+                      fontSize={11}
+                      tick={{ fill: '#6B7280' }}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return date.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric' 
+                        });
+                      }}
+                      interval={Math.max(Math.floor(satisfactionTrend.length / 6), 0)}
+                    />
+                    <YAxis 
+                      domain={[1, 5]} 
+                      stroke="#6B7280" 
+                      fontSize={11} 
+                      allowDecimals={false}
+                      tick={{ fill: '#6B7280' }}
+                      width={30}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                      formatter={(value) => [value, 'Rating']}
+                      labelFormatter={(label) => {
+                        const date = new Date(label);
+                        return date.toLocaleDateString('en-US', { 
+                          weekday: 'short',
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        });
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="average" 
+                      stroke="#000000" 
+                      strokeWidth={2} 
+                      dot={{ r: 3, fill: '#000000', strokeWidth: 2 }}
+                      activeDot={{ r: 5, fill: '#000000', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <BarChart3 className="w-8 h-8 mx-auto mb-3 text-gray-300" />
+                  <p className="text-sm mb-1">No trend data available</p>
+                  <p className="text-xs">Trends will appear as feedback is collected</p>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -225,62 +304,6 @@ const ReportsPage = () => {
             description="Overall rating (1-5 scale)"
             variant={parseFloat(averageRating) >= 4 ? "success" : parseFloat(averageRating) >= 3 ? "warning" : "danger"}
           />
-        </div>
-
-        {/* Satisfaction Trend Chart */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 mb-6 lg:mb-8">
-          <div className="mb-4 lg:mb-6">
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Customer Satisfaction Trend</h2>
-            <p className="text-gray-600 text-sm">
-              Daily average satisfaction scores over time.
-            </p>
-          </div>
-          
-          {satisfactionTrend.length > 0 ? (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={satisfactionTrend}>
-                  <XAxis 
-                    dataKey="day" 
-                    stroke="#6B7280" 
-                    fontSize={12}
-                    tick={{ fill: '#6B7280' }}
-                  />
-                  <YAxis 
-                    domain={[1, 5]} 
-                    stroke="#6B7280" 
-                    fontSize={12} 
-                    allowDecimals={false}
-                    tick={{ fill: '#6B7280' }}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '14px'
-                    }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="average" 
-                    stroke="#000000" 
-                    strokeWidth={2} 
-                    dot={{ r: 4, fill: '#000000' }}
-                    activeDot={{ r: 6, fill: '#000000' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-80 flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-base lg:text-lg mb-2">No trend data available</p>
-                <p className="text-sm">Satisfaction trends will appear as feedback is collected</p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Summary Statistics */}
