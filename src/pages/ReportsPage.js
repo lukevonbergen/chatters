@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   BarChart3,
   CalendarClock,
-  LayoutGrid
+  LayoutGrid,
+  TrendingUp
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import usePageTitle from '../hooks/usePageTitle';
@@ -91,57 +92,220 @@ const ReportsPage = () => {
 
   const satisfactionTrend = getDailySatisfactionTrend(feedbackSessions);
 
-  const Tile = ({ title, value, icon: Icon, color = 'gray' }) => (
-    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-all duration-200 border border-gray-100 flex items-center space-x-4">
-      <Icon className={`w-6 h-6 text-${color}-600`} />
-      <div>
-        <p className="text-sm text-gray-600">{title}</p>
-        <p className="text-xl font-bold">{value}</p>
+  const MetricCard = ({ title, value, icon: Icon, description, variant = 'default' }) => {
+    const variantStyles = {
+      default: 'border-gray-200',
+      success: 'border-green-200 bg-green-50',
+      warning: 'border-yellow-200 bg-yellow-50',
+      danger: 'border-red-200 bg-red-50',
+      info: 'border-blue-200 bg-blue-50'
+    };
+
+    const iconStyles = {
+      default: 'text-gray-600',
+      success: 'text-green-600',
+      warning: 'text-yellow-600',
+      danger: 'text-red-600',
+      info: 'text-blue-600'
+    };
+
+    return (
+      <div className={`bg-white border rounded-lg p-4 lg:p-6 ${variantStyles[variant]}`}>
+        <div className="flex items-start space-x-3 lg:space-x-4">
+          <div className="flex-shrink-0">
+            <Icon className={`w-5 h-5 lg:w-6 lg:h-6 ${iconStyles[variant]}`} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-gray-900">{title}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-gray-900 mt-1">{value}</p>
+            {description && (
+              <p className="text-xs text-gray-500 mt-1">{description}</p>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-bold mb-6">Reports Overview</h1>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center space-y-4 border">
-          <div className="w-32 h-32">
-            <CircularProgressbar
-              value={completionRate}
-              text={`${completionRate}%`}
-              styles={{
-                path: { stroke: '#10B981' },
-                text: { fill: '#111827', fontSize: '18px' },
-              }}
-            />
+      <div className="max-w-none lg:max-w-6xl">
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+            <div>
+              <h1 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Reports Overview</h1>
+              <p className="text-gray-600 text-sm">
+                Track customer feedback performance and satisfaction metrics.
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Real-time
+              </span>
+            </div>
           </div>
-          <p className="text-gray-700 text-center">
-            {actionedCount} of {totalCount} sessions have been actioned
-          </p>
         </div>
 
-        <Tile title="Total Feedback Sessions" value={totalCount} icon={BarChart3} color="blue" />
-        <Tile title="Sessions Actioned" value={actionedCount} icon={CheckCircle} color="green" />
-        <Tile title="Unresolved Alerts" value={alertsCount} icon={AlertTriangle} color="red" />
-        <Tile title="Feedback This Week" value={recentCount} icon={CalendarClock} color="purple" />
-        <Tile title="Tables Participated" value={uniqueTables.length} icon={LayoutGrid} color="yellow" />
-      </div>
+        {/* Completion Rate - Featured Card */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8 mb-6 lg:mb-8">
+          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
+            <div className="flex-shrink-0">
+              <div className="w-32 h-32 lg:w-40 lg:h-40">
+                <CircularProgressbar
+                  value={completionRate}
+                  text={`${completionRate}%`}
+                  styles={{
+                    path: { stroke: '#000000', strokeWidth: 3 },
+                    text: { fill: '#111827', fontSize: '16px', fontWeight: 'bold' },
+                    trail: { stroke: '#f3f4f6', strokeWidth: 3 }
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex-1 text-center lg:text-left">
+              <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Action Completion Rate</h2>
+              <p className="text-gray-600 text-sm mb-4">
+                {actionedCount} of {totalCount} feedback sessions have been actioned by your team.
+              </p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Completed:</span>
+                  <span className="ml-2 font-medium text-green-600">{actionedCount}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Pending:</span>
+                  <span className="ml-2 font-medium text-gray-900">{totalCount - actionedCount}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6 border mb-10">
-        <h2 className="text-xl font-semibold mb-4">Customer Satisfaction Trend</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={satisfactionTrend}>
-            <XAxis dataKey="day" stroke="#6B7280" fontSize={12} />
-            <YAxis domain={[1, 5]} stroke="#6B7280" fontSize={12} allowDecimals={false} />
-            <Tooltip />
-            <Line type="monotone" dataKey="average" stroke="#6366F1" strokeWidth={2} dot={{ r: 3 }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
+          <MetricCard 
+            title="Total Feedback Sessions" 
+            value={totalCount} 
+            icon={BarChart3} 
+            description="All customer feedback received"
+            variant="info"
+          />
+          <MetricCard 
+            title="Sessions Actioned" 
+            value={actionedCount} 
+            icon={CheckCircle} 
+            description="Feedback that has been addressed"
+            variant="success"
+          />
+          <MetricCard 
+            title="Unresolved Alerts" 
+            value={alertsCount} 
+            icon={AlertTriangle} 
+            description="Low scores requiring attention"
+            variant={alertsCount > 0 ? "danger" : "default"}
+          />
+          <MetricCard 
+            title="Feedback This Week" 
+            value={recentCount} 
+            icon={CalendarClock} 
+            description="Recent customer responses"
+            variant="default"
+          />
+          <MetricCard 
+            title="Tables Participated" 
+            value={uniqueTables.length} 
+            icon={LayoutGrid} 
+            description="Different table locations"
+            variant="default"
+          />
+          <MetricCard 
+            title="Avg. Satisfaction" 
+            value={averageRating} 
+            icon={TrendingUp} 
+            description="Overall rating (1-5 scale)"
+            variant={parseFloat(averageRating) >= 4 ? "success" : parseFloat(averageRating) >= 3 ? "warning" : "danger"}
+          />
+        </div>
 
-      <Tile title="Avg. Customer Satisfaction (1–5)" value={averageRating} icon={BarChart3} color="indigo" />
+        {/* Satisfaction Trend Chart */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 mb-6 lg:mb-8">
+          <div className="mb-4 lg:mb-6">
+            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Customer Satisfaction Trend</h2>
+            <p className="text-gray-600 text-sm">
+              Daily average satisfaction scores over time.
+            </p>
+          </div>
+          
+          {satisfactionTrend.length > 0 ? (
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={satisfactionTrend}>
+                  <XAxis 
+                    dataKey="day" 
+                    stroke="#6B7280" 
+                    fontSize={12}
+                    tick={{ fill: '#6B7280' }}
+                  />
+                  <YAxis 
+                    domain={[1, 5]} 
+                    stroke="#6B7280" 
+                    fontSize={12} 
+                    allowDecimals={false}
+                    tick={{ fill: '#6B7280' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="average" 
+                    stroke="#000000" 
+                    strokeWidth={2} 
+                    dot={{ r: 4, fill: '#000000' }}
+                    activeDot={{ r: 6, fill: '#000000' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-80 flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-base lg:text-lg mb-2">No trend data available</p>
+                <p className="text-sm">Satisfaction trends will appear as feedback is collected</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Summary Statistics */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 lg:p-6">
+          <h3 className="text-base lg:text-lg font-medium text-gray-900 mb-2 lg:mb-3">Performance Summary</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4 text-sm">
+            <div className="flex justify-between sm:block">
+              <span className="text-gray-700">Response Rate:</span>
+              <span className="ml-2 font-medium">
+                {totalCount > 0 ? `${((recentCount / totalCount) * 100).toFixed(1)}%` : 'N/A'}
+              </span>
+            </div>
+            <div className="flex justify-between sm:block">
+              <span className="text-gray-700">Action Rate:</span>
+              <span className="ml-2 font-medium">{completionRate}%</span>
+            </div>
+            <div className="flex justify-between sm:block">
+              <span className="text-gray-700">Alert Rate:</span>
+              <span className="ml-2 font-medium">
+                {totalCount > 0 ? `${((alertsCount / totalCount) * 100).toFixed(1)}%` : '0%'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </PageContainer>
   );
 };
