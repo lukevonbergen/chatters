@@ -31,13 +31,13 @@ const SignInPage = () => {
       <div className="w-full max-w-md bg-white shadow-2xl rounded-3xl p-8 relative animate-fadeIn">
         {/* Logo or Back */}
         <div className="absolute top-4 left-4">
-          <Link
+          <a
             href="https://www.getchatters.com"
             className="text-sm text-gray-500 hover:text-gray-800 flex items-center transition-colors"
           >
             <ArrowRight className="h-4 w-4 rotate-180 mr-1" />
             Back
-          </Link>
+          </a>
         </div>
 
         {/* Heading */}
@@ -99,15 +99,8 @@ const SignInPage = () => {
           </button>
         </form>
 
-        {/* Links */}
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Don’t have an account?{' '}
-          <Link to="/signup" className="text-green-600 hover:text-green-700 font-semibold transition">
-            Sign up
-          </Link>
-        </div>
-
-        <div className="mt-2 text-center text-sm">
+        {/* Forgot Password Link */}
+        <div className="mt-6 text-center text-sm">
           <Link to="/forgot-password" className="text-gray-500 hover:text-gray-700 transition">
             Forgot password?
           </Link>
