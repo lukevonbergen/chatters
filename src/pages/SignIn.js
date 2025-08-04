@@ -32,7 +32,7 @@ const SignInPage = () => {
         {/* Logo or Back */}
         <div className="absolute top-4 left-4">
           <Link
-            href="https://my.getchatters.com"
+            href="https://www.getchatters.com"
             className="text-sm text-gray-500 hover:text-gray-800 flex items-center transition-colors"
           >
             <ArrowRight className="h-4 w-4 rotate-180 mr-1" />
