@@ -243,6 +243,17 @@ const ManageQuestions = () => {
     setEditingQuestionText(questionText);
   };
 
+  // Add this new function for canceling edit
+  const cancelEditingQuestion = () => {
+    setEditingQuestionId(null);
+    setEditingQuestionText('');
+  };
+
+  // Add this new function for handling text changes
+  const handleEditTextChange = (newText) => {
+    setEditingQuestionText(newText);
+  };
+
   const saveEditedQuestion = async () => {
     if (!editingQuestionText.trim()) {
       alert('Question cannot be empty.');
@@ -316,6 +327,12 @@ const ManageQuestions = () => {
           questions={questions}
           onEdit={startEditingQuestion}
           onDelete={handleDeleteQuestion}
+          onDragEnd={onDragEnd}
+          editingQuestionId={editingQuestionId}
+          editingQuestionText={editingQuestionText}
+          onSaveEdit={saveEditedQuestion}
+          onCancelEdit={cancelEditingQuestion}
+          onEditTextChange={handleEditTextChange}
         />
       </DragDropContext>
 
