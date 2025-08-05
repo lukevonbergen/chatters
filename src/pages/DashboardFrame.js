@@ -258,13 +258,13 @@ const UpdatedDashboardFrame = ({ children }) => {
           {/* Mobile menu button */}
           <Button
             variant="ghost"
-            className="lg:hidden h-9 w-9 p-0 flex items-center justify-center"
+            className="lg:hidden h-12 w-12 p-0 flex items-center justify-center rounded-full hover:bg-gray-100"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
-              <FiX className="h-5 w-5" />
+              <FiX className="h-8 w-8 text-gray-600" />
             ) : (
-              <FiMenu className="h-5 w-5" />
+              <FiMenu className="h-8 w-8 text-gray-600" />
             )}
           </Button>
         </div>
