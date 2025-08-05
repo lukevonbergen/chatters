@@ -49,7 +49,7 @@ const UpdatedDashboardFrame = ({ children }) => {
       const { data: user } = await supabase
         .from('users')
         .select('email, role, account_id')
-        .eq('email', email)
+        .eq('id', userId)  // Use the user ID instead of email
         .single();
       
       if (!user) return navigate('/signin');
