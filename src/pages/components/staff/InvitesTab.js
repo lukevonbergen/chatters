@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 
-const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentLoading }) => {
+const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
   const [invites, setInvites] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
+  const [managerData, setManagerData] = useState([]);
 
-  // Fetch invites data
+  // Fetch invites data - only when this component is actually rendered
   const fetchInvites = async () => {
+    if (userRole !== 'master') return;
+    
     setLoading(true);
     try {
       // Get current user's account_id
@@ -24,7 +27,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
         return;
       }
 
-      // Fetch pending invites for this account
+      // Fetch all invites for this account (including accepted ones)
       const { data: invitesData, error } = await supabase
         .from('user_invites')
         .select(`
@@ -46,8 +49,8 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
         return;
       }
 
-      // Process the data to include venue names
-      const processedInvites = invitesData.map(invite => {
+      // Process the invite data
+      const processedInvites = (invitesData || []).map(invite => {
         // Parse venue_ids if it's a string
         let venueIds = invite.venue_ids;
         if (typeof venueIds === 'string') {
@@ -60,46 +63,81 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
 
         // Get venue names from allVenues prop
         const venueNames = venueIds
-          .map(id => allVenues.find(v => v.id === id)?.name)
+          .map(id => allVenues?.find(v => v.id === id)?.name)
           .filter(Boolean)
           .join(', ') || 'No venues assigned';
 
         return {
           ...invite,
           venue_ids: venueIds,
-          venue_names: venueNames
+          venue_names: venueNames,
+          source: 'invite'
         };
       });
 
-      setInvites(processedInvites);
+      // Also include current managers from the managers prop
+      const currentManagers = (managers || []).map(manager => {
+        // Get venue names for this manager
+        const venueNames = allVenues?.find(v => v.id === manager.venue_id)?.name || 'Unknown venue';
+        
+        return {
+          id: manager.user_id,
+          email: manager.email,
+          first_name: manager.first_name,
+          last_name: manager.last_name,
+          status: 'accepted', // Current managers are accepted
+          invited_at: manager.created_at,
+          expires_at: null,
+          venue_names: venueNames,
+          source: 'manager'
+        };
+      });
+
+      // Combine and deduplicate (prioritize current managers over invites)
+      const emailMap = new Map();
+      
+      // Add current managers first
+      currentManagers.forEach(manager => {
+        emailMap.set(manager.email, manager);
+      });
+
+      // Add invites, but don't overwrite existing managers
+      processedInvites.forEach(invite => {
+        if (!emailMap.has(invite.email)) {
+          emailMap.set(invite.email, invite);
+        }
+      });
+
+      const combinedData = Array.from(emailMap.values());
+      setManagerData(combinedData);
+
     } catch (error) {
       console.error('Error in fetchInvites:', error);
-      setMessage('Failed to fetch invites');
+      setMessage('Failed to fetch manager data');
     } finally {
       setLoading(false);
     }
   };
 
+  // Only fetch when component mounts, not on every render
   useEffect(() => {
-    if (userRole === 'master') {
-      setMessage(''); // Clear any existing messages
-      fetchInvites();
-    }
-  }, [userRole]);
+    setMessage(''); // Clear any existing messages
+    fetchInvites();
+  }, []); // Empty dependency array - only run on mount
 
   // Resend invite
-  const handleResendInvite = async (invite) => {
-    setActionLoading(prev => ({ ...prev, [invite.id]: 'resending' }));
+  const handleResendInvite = async (manager) => {
+    setActionLoading(prev => ({ ...prev, [manager.id]: 'resending' }));
     
     try {
       const response = await fetch('/api/admin/resend-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          inviteId: invite.id,
-          email: invite.email,
-          firstName: invite.first_name,
-          lastName: invite.last_name
+          inviteId: manager.id,
+          email: manager.email,
+          firstName: manager.first_name,
+          lastName: manager.last_name
         }),
       });
 
@@ -109,50 +147,66 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
         throw new Error(result.error || 'Failed to resend invite');
       }
 
-      setMessage(`Invite resent successfully to ${invite.email}`);
+      setMessage(`Invite resent successfully to ${manager.email}`);
       await fetchInvites(); // Refresh the list
     } catch (error) {
       setMessage('Failed to resend invite: ' + error.message);
     } finally {
-      setActionLoading(prev => ({ ...prev, [invite.id]: null }));
+      setActionLoading(prev => ({ ...prev, [manager.id]: null }));
     }
   };
 
-  // Revoke invite
-  const handleRevokeInvite = async (invite) => {
-    if (!window.confirm(`Are you sure you want to revoke the invite for ${invite.email}?`)) {
+  // Revoke manager access (works for both pending invites and accepted managers)
+  const handleRevoke = async (manager) => {
+    const action = manager.status === 'accepted' ? 'revoke access for' : 'revoke the invite for';
+    if (!window.confirm(`Are you sure you want to ${action} ${manager.email}?`)) {
       return;
     }
 
-    setActionLoading(prev => ({ ...prev, [invite.id]: 'revoking' }));
+    setActionLoading(prev => ({ ...prev, [manager.id]: 'revoking' }));
     
     try {
-      const { error } = await supabase
-        .from('user_invites')
-        .update({ status: 'revoked' })
-        .eq('id', invite.id);
+      if (manager.source === 'manager') {
+        // Revoke access for accepted manager - remove from staff table
+        const { error } = await supabase
+          .from('staff')
+          .delete()
+          .eq('user_id', manager.id);
 
-      if (error) {
-        throw new Error(error.message);
+        if (error) {
+          throw new Error(error.message);
+        }
+      } else {
+        // Revoke pending invite
+        const { error } = await supabase
+          .from('user_invites')
+          .update({ status: 'revoked' })
+          .eq('id', manager.id);
+
+        if (error) {
+          throw new Error(error.message);
+        }
       }
 
-      setMessage(`Invite revoked for ${invite.email}`);
+      setMessage(`Access revoked for ${manager.email}`);
       await fetchInvites(); // Refresh the list
     } catch (error) {
-      setMessage('Failed to revoke invite: ' + error.message);
+      setMessage('Failed to revoke access: ' + error.message);
     } finally {
-      setActionLoading(prev => ({ ...prev, [invite.id]: null }));
+      setActionLoading(prev => ({ ...prev, [manager.id]: null }));
     }
   };
 
   // Get status badge styling
   const getStatusBadge = (status, expiresAt) => {
-    const isExpired = new Date(expiresAt) < new Date();
+    if (status === 'accepted') {
+      return 'bg-green-100 text-green-800';
+    }
+    
+    const isExpired = expiresAt && new Date(expiresAt) < new Date();
     
     if (status === 'revoked') {
       return 'bg-gray-100 text-gray-800';
-    } else if (status === 'accepted') {
-      return 'bg-green-100 text-green-800';  
     } else if (isExpired) {
       return 'bg-red-100 text-red-800';
     } else {
@@ -161,16 +215,18 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
   };
 
   const getStatusText = (status, expiresAt) => {
-    const isExpired = new Date(expiresAt) < new Date();
+    if (status === 'accepted') return 'Active';
+    
+    const isExpired = expiresAt && new Date(expiresAt) < new Date();
     
     if (status === 'revoked') return 'Revoked';
-    if (status === 'accepted') return 'Accepted';
     if (isExpired) return 'Expired';
     return 'Pending';
   };
 
   // Format date
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
@@ -183,7 +239,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
   if (userRole !== 'master') {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Only master users can manage invites.</p>
+        <p className="text-gray-500">Only master users can manage manager access.</p>
       </div>
     );
   }
@@ -192,7 +248,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
     return (
       <div className="flex items-center justify-center py-8">
         <div className="w-6 h-6 border-2 border-t-transparent border-gray-500 rounded-full animate-spin"></div>
-        <span className="ml-2 text-gray-600">Loading invites...</span>
+        <span className="ml-2 text-gray-600">Loading manager data...</span>
       </div>
     );
   }
@@ -201,16 +257,16 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
     <div className="max-w-none lg:max-w-6xl">
       {/* Header */}
       <div className="mb-6 lg:mb-8">
-        <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Manager Invites</h2>
+        <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Manager Access</h2>
         <p className="text-gray-600 text-sm lg:text-base">
-          Manage pending invitations and track their status.
+          Manage current managers and pending invitations.
         </p>
       </div>
 
-      {/* Invites List */}
-      {invites.length === 0 ? (
+      {/* Manager List */}
+      {managerData.length === 0 ? (
         <div className="text-center py-8 bg-white border border-gray-200 rounded-lg">
-          <p className="text-gray-500 text-sm lg:text-base">No invites found.</p>
+          <p className="text-gray-500 text-sm lg:text-base">No managers found.</p>
           <p className="text-gray-400 text-xs lg:text-sm mt-1">
             Invite managers from the Managers tab to see them here.
           </p>
@@ -232,10 +288,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Invited
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Expires
+                    Date
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -243,60 +296,57 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {invites.map((invite) => {
-                  const currentStatus = getStatusText(invite.status, invite.expires_at);
-                  const canResend = invite.status === 'pending' && new Date(invite.expires_at) < new Date();
-                  const canRevoke = invite.status === 'pending';
+                {managerData.map((manager) => {
+                  const currentStatus = getStatusText(manager.status, manager.expires_at);
+                  const canResend = manager.status === 'pending' && manager.expires_at && new Date(manager.expires_at) < new Date();
+                  const canRevoke = manager.status === 'pending' || manager.status === 'accepted';
                   
                   return (
-                    <tr key={invite.id}>
+                    <tr key={`${manager.source}-${manager.id}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                             <span className="text-sm font-medium text-gray-700">
-                              {invite.first_name?.[0]}{invite.last_name?.[0]}
+                              {manager.first_name?.[0]}{manager.last_name?.[0]}
                             </span>
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                              {invite.first_name} {invite.last_name}
+                              {manager.first_name} {manager.last_name}
                             </div>
-                            <div className="text-sm text-gray-500">{invite.email}</div>
+                            <div className="text-sm text-gray-500">{manager.email}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{invite.venue_names}</div>
+                        <div className="text-sm text-gray-900">{manager.venue_names}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(invite.status, invite.expires_at)}`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(manager.status, manager.expires_at)}`}>
                           {currentStatus}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(invite.invited_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(invite.expires_at)}
+                        {formatDate(manager.invited_at)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           {canResend && (
                             <button
-                              onClick={() => handleResendInvite(invite)}
-                              disabled={actionLoading[invite.id] === 'resending'}
+                              onClick={() => handleResendInvite(manager)}
+                              disabled={actionLoading[manager.id] === 'resending'}
                               className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {actionLoading[invite.id] === 'resending' ? 'Resending...' : 'Resend'}
+                              {actionLoading[manager.id] === 'resending' ? 'Resending...' : 'Resend'}
                             </button>
                           )}
                           {canRevoke && (
                             <button
-                              onClick={() => handleRevokeInvite(invite)}
-                              disabled={actionLoading[invite.id] === 'revoking'}
+                              onClick={() => handleRevoke(manager)}
+                              disabled={actionLoading[manager.id] === 'revoking'}
                               className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {actionLoading[invite.id] === 'revoking' ? 'Revoking...' : 'Revoke'}
+                              {actionLoading[manager.id] === 'revoking' ? 'Revoking...' : 'Revoke'}
                             </button>
                           )}
                         </div>
@@ -310,52 +360,51 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
 
           {/* Mobile Card View */}
           <div className="lg:hidden">
-            {invites.map((invite) => {
-              const currentStatus = getStatusText(invite.status, invite.expires_at);
-              const canResend = invite.status === 'pending' && new Date(invite.expires_at) < new Date();
-              const canRevoke = invite.status === 'pending';
+            {managerData.map((manager) => {
+              const currentStatus = getStatusText(manager.status, manager.expires_at);
+              const canResend = manager.status === 'pending' && manager.expires_at && new Date(manager.expires_at) < new Date();
+              const canRevoke = manager.status === 'pending' || manager.status === 'accepted';
 
               return (
-                <div key={invite.id} className="p-4 border-b border-gray-200 last:border-b-0">
+                <div key={`${manager.source}-${manager.id}`} className="p-4 border-b border-gray-200 last:border-b-0">
                   <div className="flex items-start space-x-3">
                     <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-medium text-gray-700">
-                        {invite.first_name?.[0]}{invite.last_name?.[0]}
+                        {manager.first_name?.[0]}{manager.last_name?.[0]}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-sm font-medium text-gray-900 truncate">
-                          {invite.first_name} {invite.last_name}
+                          {manager.first_name} {manager.last_name}
                         </p>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(invite.status, invite.expires_at)}`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(manager.status, manager.expires_at)}`}>
                           {currentStatus}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500 truncate">{invite.email}</p>
-                      <p className="text-xs text-gray-400 mt-1">Venues: {invite.venue_names}</p>
+                      <p className="text-sm text-gray-500 truncate">{manager.email}</p>
+                      <p className="text-xs text-gray-400 mt-1">Venues: {manager.venue_names}</p>
                       <div className="flex items-center justify-between mt-2">
                         <div className="text-xs text-gray-400">
-                          <div>Invited: {formatDate(invite.invited_at)}</div>
-                          <div>Expires: {formatDate(invite.expires_at)}</div>
+                          <div>Date: {formatDate(manager.invited_at)}</div>
                         </div>
                         <div className="flex space-x-2">
                           {canResend && (
                             <button
-                              onClick={() => handleResendInvite(invite)}
-                              disabled={actionLoading[invite.id] === 'resending'}
+                              onClick={() => handleResendInvite(manager)}
+                              disabled={actionLoading[manager.id] === 'resending'}
                               className="text-xs text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                             >
-                              {actionLoading[invite.id] === 'resending' ? 'Resending...' : 'Resend'}
+                              {actionLoading[manager.id] === 'resending' ? 'Resending...' : 'Resend'}
                             </button>
                           )}
                           {canRevoke && (
                             <button
-                              onClick={() => handleRevokeInvite(invite)}
-                              disabled={actionLoading[invite.id] === 'revoking'}
+                              onClick={() => handleRevoke(manager)}
+                              disabled={actionLoading[manager.id] === 'revoking'}
                               className="text-xs text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                             >
-                              {actionLoading[invite.id] === 'revoking' ? 'Revoking...' : 'Revoke'}
+                              {actionLoading[manager.id] === 'revoking' ? 'Revoking...' : 'Revoke'}
                             </button>
                           )}
                         </div>
@@ -370,30 +419,30 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
       )}
 
       {/* Summary */}
-      {invites.length > 0 && (
+      {managerData.length > 0 && (
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 lg:p-6">
-          <h3 className="text-base lg:text-lg font-medium text-blue-900 mb-3">Invite Summary</h3>
+          <h3 className="text-base lg:text-lg font-medium text-blue-900 mb-3">Manager Summary</h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm lg:text-base">
             <div className="flex flex-col">
-              <span className="text-blue-700">Total Invites:</span>
-              <span className="font-medium text-blue-900">{invites.length}</span>
+              <span className="text-blue-700">Total Managers:</span>
+              <span className="font-medium text-blue-900">{managerData.length}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-blue-700">Active:</span>
+              <span className="font-medium text-blue-900">
+                {managerData.filter(m => m.status === 'accepted').length}
+              </span>
             </div>
             <div className="flex flex-col">
               <span className="text-blue-700">Pending:</span>
               <span className="font-medium text-blue-900">
-                {invites.filter(inv => inv.status === 'pending' && new Date(inv.expires_at) > new Date()).length}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-blue-700">Accepted:</span>
-              <span className="font-medium text-blue-900">
-                {invites.filter(inv => inv.status === 'accepted').length}
+                {managerData.filter(m => m.status === 'pending' && (!m.expires_at || new Date(m.expires_at) > new Date())).length}
               </span>
             </div>
             <div className="flex flex-col">
               <span className="text-blue-700">Expired/Revoked:</span>
               <span className="font-medium text-blue-900">
-                {invites.filter(inv => inv.status === 'revoked' || new Date(inv.expires_at) < new Date()).length}
+                {managerData.filter(m => m.status === 'revoked' || (m.expires_at && new Date(m.expires_at) < new Date())).length}
               </span>
             </div>
           </div>
