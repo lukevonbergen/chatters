@@ -120,7 +120,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentL
 
   // Revoke invite
   const handleRevokeInvite = async (invite) => {
-    if (!confirm(`Are you sure you want to revoke the invite for ${invite.email}?`)) {
+    if (!window.confirm(`Are you sure you want to revoke the invite for ${invite.email}?`)) {
       return;
     }
 
