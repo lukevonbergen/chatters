@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 
-const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
+const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchStaffData }) => {
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
-  const [managerData, setManagerData] = useState([]);
+  const [combinedManagerData, setCombinedManagerData] = useState([]);
 
-  // Fetch invites data - only when this component is actually rendered
+  // Fetch pending invites data
   const fetchInvites = async () => {
     if (userRole !== 'master') return;
     
@@ -27,7 +27,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
         return;
       }
 
-      // Fetch all invites for this account (including accepted ones)
+      // Fetch pending invites for this account
       const { data: invitesData, error } = await supabase
         .from('user_invites')
         .select(`
@@ -45,87 +45,113 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
 
       if (error) {
         console.error('Error fetching invites:', error);
-        setMessage('Failed to fetch invites');
+        setMessage('Failed to fetch invites: ' + error.message);
         return;
       }
 
-      // Process the invite data
-      const processedInvites = (invitesData || []).map(invite => {
-        // Parse venue_ids if it's a string
-        let venueIds = invite.venue_ids;
-        if (typeof venueIds === 'string') {
-          try {
-            venueIds = JSON.parse(venueIds);
-          } catch (e) {
-            venueIds = [];
-          }
-        }
-
-        // Get venue names from allVenues prop
-        const venueNames = venueIds
-          .map(id => allVenues?.find(v => v.id === id)?.name)
-          .filter(Boolean)
-          .join(', ') || 'No venues assigned';
-
-        return {
-          ...invite,
-          venue_ids: venueIds,
-          venue_names: venueNames,
-          source: 'invite'
-        };
-      });
-
-      // Also include current managers from the managers prop
-      const currentManagers = (managers || []).map(manager => {
-        // Get venue names for this manager
-        const venueNames = allVenues?.find(v => v.id === manager.venue_id)?.name || 'Unknown venue';
-        
-        return {
-          id: manager.user_id,
-          email: manager.email,
-          first_name: manager.first_name,
-          last_name: manager.last_name,
-          status: 'accepted', // Current managers are accepted
-          invited_at: manager.created_at,
-          expires_at: null,
-          venue_names: venueNames,
-          source: 'manager'
-        };
-      });
-
-      // Combine and deduplicate (prioritize current managers over invites)
-      const emailMap = new Map();
-      
-      // Add current managers first
-      currentManagers.forEach(manager => {
-        emailMap.set(manager.email, manager);
-      });
-
-      // Add invites, but don't overwrite existing managers
-      processedInvites.forEach(invite => {
-        if (!emailMap.has(invite.email)) {
-          emailMap.set(invite.email, invite);
-        }
-      });
-
-      const combinedData = Array.from(emailMap.values());
-      setManagerData(combinedData);
+      setInvites(invitesData || []);
 
     } catch (error) {
       console.error('Error in fetchInvites:', error);
-      setMessage('Failed to fetch manager data');
+      setMessage('Failed to fetch invite data: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Only fetch when component mounts, not on every render
+  // Combine managers and invites data
+  useEffect(() => {
+    // Get unique managers (same logic as ManagersTab)
+    const uniqueManagers = [];
+    const seenUserIds = new Set();
+    
+    (managers || []).forEach(manager => {
+      if (!seenUserIds.has(manager.user_id)) {
+        seenUserIds.add(manager.user_id);
+        uniqueManagers.push(manager);
+      }
+    });
+
+    // Process active managers
+    const activeManagers = uniqueManagers.map(manager => {
+      // Get venue names for this manager (they might be assigned to multiple venues)
+      const managerVenues = (managers || [])
+        .filter(m => m.user_id === manager.user_id)
+        .map(m => allVenues.find(v => v.id === m.venue_id)?.name)
+        .filter(Boolean);
+      
+      return {
+        id: manager.user_id,
+        email: manager.email,
+        first_name: manager.first_name,
+        last_name: manager.last_name,
+        status: 'accepted',
+        invited_at: manager.created_at,
+        expires_at: null,
+        venue_names: managerVenues.join(', ') || 'No venues assigned',
+        source: 'manager',
+        originalData: manager
+      };
+    });
+
+    // Process pending invites
+    const pendingInvites = (invites || []).map(invite => {
+      // Parse venue_ids if it's a string
+      let venueIds = invite.venue_ids;
+      if (typeof venueIds === 'string') {
+        try {
+          venueIds = JSON.parse(venueIds);
+        } catch (e) {
+          venueIds = [];
+        }
+      }
+
+      // Get venue names from allVenues prop
+      const venueNames = (venueIds || [])
+        .map(id => allVenues?.find(v => v.id === id)?.name)
+        .filter(Boolean)
+        .join(', ') || 'No venues assigned';
+
+      return {
+        id: invite.id,
+        email: invite.email,
+        first_name: invite.first_name,
+        last_name: invite.last_name,
+        status: invite.status,
+        invited_at: invite.invited_at,
+        expires_at: invite.expires_at,
+        venue_names: venueNames,
+        source: 'invite',
+        originalData: invite
+      };
+    });
+
+    // Combine and deduplicate (prioritize active managers over pending invites)
+    const emailMap = new Map();
+    
+    // Add active managers first
+    activeManagers.forEach(manager => {
+      emailMap.set(manager.email, manager);
+    });
+
+    // Add pending invites, but don't overwrite existing active managers
+    pendingInvites.forEach(invite => {
+      if (!emailMap.has(invite.email)) {
+        emailMap.set(invite.email, invite);
+      }
+    });
+
+    const combined = Array.from(emailMap.values());
+    setCombinedManagerData(combined);
+  }, [managers, invites, allVenues]);
+
+  // Initial load
   useEffect(() => {
     setMessage(''); // Clear any existing messages
     fetchInvites();
-  }, []); // Empty dependency array - only run on mount
+  }, [userRole]);
 
-  // Resend invite
+  // Resend invite (only for pending invites)
   const handleResendInvite = async (manager) => {
     setActionLoading(prev => ({ ...prev, [manager.id]: 'resending' }));
     
@@ -148,7 +174,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
       }
 
       setMessage(`Invite resent successfully to ${manager.email}`);
-      await fetchInvites(); // Refresh the list
+      await fetchInvites(); // Refresh the invites
     } catch (error) {
       setMessage('Failed to resend invite: ' + error.message);
     } finally {
@@ -156,7 +182,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
     }
   };
 
-  // Revoke manager access (works for both pending invites and accepted managers)
+  // Revoke access/invite
   const handleRevoke = async (manager) => {
     const action = manager.status === 'accepted' ? 'revoke access for' : 'revoke the invite for';
     if (!window.confirm(`Are you sure you want to ${action} ${manager.email}?`)) {
@@ -167,7 +193,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
     
     try {
       if (manager.source === 'manager') {
-        // Revoke access for accepted manager - remove from staff table
+        // Revoke access for active manager - remove from staff table (same logic as ManagersTab)
         const { error } = await supabase
           .from('staff')
           .delete()
@@ -175,6 +201,12 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
 
         if (error) {
           throw new Error(error.message);
+        }
+
+        setMessage(`Manager access revoked for ${manager.email}`);
+        // Refresh staff data to update the managers list
+        if (fetchStaffData) {
+          await fetchStaffData();
         }
       } else {
         // Revoke pending invite
@@ -186,12 +218,12 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
         if (error) {
           throw new Error(error.message);
         }
-      }
 
-      setMessage(`Access revoked for ${manager.email}`);
-      await fetchInvites(); // Refresh the list
+        setMessage(`Invite revoked for ${manager.email}`);
+        await fetchInvites(); // Refresh the invites
+      }
     } catch (error) {
-      setMessage('Failed to revoke access: ' + error.message);
+      setMessage('Failed to revoke: ' + error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, [manager.id]: null }));
     }
@@ -264,7 +296,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
       </div>
 
       {/* Manager List */}
-      {managerData.length === 0 ? (
+      {combinedManagerData.length === 0 ? (
         <div className="text-center py-8 bg-white border border-gray-200 rounded-lg">
           <p className="text-gray-500 text-sm lg:text-base">No managers found.</p>
           <p className="text-gray-400 text-xs lg:text-sm mt-1">
@@ -296,9 +328,9 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {managerData.map((manager) => {
+                {combinedManagerData.map((manager) => {
                   const currentStatus = getStatusText(manager.status, manager.expires_at);
-                  const canResend = manager.status === 'pending' && manager.expires_at && new Date(manager.expires_at) < new Date();
+                  const canResend = manager.source === 'invite' && manager.status === 'pending' && manager.expires_at && new Date(manager.expires_at) < new Date();
                   const canRevoke = manager.status === 'pending' || manager.status === 'accepted';
                   
                   return (
@@ -360,9 +392,9 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
 
           {/* Mobile Card View */}
           <div className="lg:hidden">
-            {managerData.map((manager) => {
+            {combinedManagerData.map((manager) => {
               const currentStatus = getStatusText(manager.status, manager.expires_at);
-              const canResend = manager.status === 'pending' && manager.expires_at && new Date(manager.expires_at) < new Date();
+              const canResend = manager.source === 'invite' && manager.status === 'pending' && manager.expires_at && new Date(manager.expires_at) < new Date();
               const canRevoke = manager.status === 'pending' || manager.status === 'accepted';
 
               return (
@@ -419,30 +451,30 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers }) => {
       )}
 
       {/* Summary */}
-      {managerData.length > 0 && (
+      {combinedManagerData.length > 0 && (
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 lg:p-6">
           <h3 className="text-base lg:text-lg font-medium text-blue-900 mb-3">Manager Summary</h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm lg:text-base">
             <div className="flex flex-col">
               <span className="text-blue-700">Total Managers:</span>
-              <span className="font-medium text-blue-900">{managerData.length}</span>
+              <span className="font-medium text-blue-900">{combinedManagerData.length}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-blue-700">Active:</span>
               <span className="font-medium text-blue-900">
-                {managerData.filter(m => m.status === 'accepted').length}
+                {combinedManagerData.filter(m => m.status === 'accepted').length}
               </span>
             </div>
             <div className="flex flex-col">
               <span className="text-blue-700">Pending:</span>
               <span className="font-medium text-blue-900">
-                {managerData.filter(m => m.status === 'pending' && (!m.expires_at || new Date(m.expires_at) > new Date())).length}
+                {combinedManagerData.filter(m => m.status === 'pending' && (!m.expires_at || new Date(m.expires_at) > new Date())).length}
               </span>
             </div>
             <div className="flex flex-col">
               <span className="text-blue-700">Expired/Revoked:</span>
               <span className="font-medium text-blue-900">
-                {managerData.filter(m => m.status === 'revoked' || (m.expires_at && new Date(m.expires_at) < new Date())).length}
+                {combinedManagerData.filter(m => m.status === 'revoked' || (m.expires_at && new Date(m.expires_at) < new Date())).length}
               </span>
             </div>
           </div>
