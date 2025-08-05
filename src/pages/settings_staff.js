@@ -11,7 +11,7 @@ import InvitesTab from './components/staff/InvitesTab';
 
 const StaffPage = () => {
   usePageTitle('Staff');
-  const { venueId, userRole, allVenues } = useVenue();
+  const { venueId, userRole, allVenues, loading: venueLoading } = useVenue();
 
   // State for active tab
   const [activeTab, setActiveTab] = useState(userRole === 'master' ? 'Managers' : 'Employees');
@@ -38,16 +38,30 @@ const StaffPage = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Fetch staff data
+  // Fetch staff data - now waits for venues to load
   useEffect(() => {
-    if (!venueId && userRole !== 'master') {
+    // Don't fetch if venues are still loading
+    if (venueLoading) return;
+    
+    // For masters, wait until we have venues
+    // For managers, wait until we have a venueId
+    if (userRole === 'master' && (!allVenues || allVenues.length === 0)) {
+      return;
+    }
+    
+    if (userRole !== 'master' && !venueId) {
       return;
     }
 
     fetchStaffData();
-  }, [venueId, userRole]);
+  }, [venueId, userRole, allVenues, venueLoading]);
 
   const fetchStaffData = async () => {
+    console.log('🔍 fetchStaffData called');
+    console.log('🔍 userRole:', userRole);
+    console.log('🔍 venueId:', venueId);
+    console.log('🔍 allVenues:', allVenues);
+    
     setLoading(true);
 
     try {
@@ -56,6 +70,7 @@ const StaffPage = () => {
       const userId = auth?.user?.id;
 
       if (!userId) {
+        console.log('🔍 No userId found');
         return;
       }
 
@@ -67,8 +82,11 @@ const StaffPage = () => {
         .single();
 
       if (!userData?.account_id) {
+        console.log('🔍 No account_id found');
         return;
       }
+
+      console.log('🔍 Account ID:', userData.account_id);
 
       if (userRole === 'master') {
         // Masters: Get all staff under account
@@ -79,6 +97,7 @@ const StaffPage = () => {
       }
 
     } catch (error) {
+      console.error('🔥 Error in fetchStaffData:', error);
       setMessage('Failed to load staff data');
     } finally {
       setLoading(false);
@@ -86,6 +105,20 @@ const StaffPage = () => {
   };
 
   const fetchAllStaffForAccount = async (accountId) => {
+    console.log('🔍 fetchAllStaffForAccount called');
+    console.log('🔍 allVenues for query:', allVenues);
+    
+    // Safety check - make sure we have venues
+    if (!allVenues || allVenues.length === 0) {
+      console.log('🔍 No venues available, skipping staff fetch');
+      setManagers([]);
+      setEmployees([]);
+      return;
+    }
+
+    const venueIds = allVenues.map(v => v.id);
+    console.log('🔍 Querying for venue IDs:', venueIds);
+
     // Get all staff under this account (via venues)
     const { data: staffData, error } = await supabase
       .from('staff')
@@ -108,9 +141,12 @@ const StaffPage = () => {
           role
         )
       `)
-      .in('venue_id', allVenues.map(v => v.id));
+      .in('venue_id', venueIds);
+
+    console.log('🔍 Staff query result:', { staffData, error });
 
     if (error) {
+      console.error('🔥 Error fetching staff:', error);
       return;
     }
 
@@ -118,11 +154,16 @@ const StaffPage = () => {
     const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
     const employeesData = staffData?.filter(staff => staff.users?.role === 'employee') || [];
 
+    console.log('🔍 Processed data:', { managersData, employeesData });
+
     setManagers(managersData);
     setEmployees(employeesData);
   };
 
   const fetchStaffForManager = async (userId) => {
+    console.log('🔍 fetchStaffForManager called');
+    console.log('🔍 venueId:', venueId);
+    
     // Get staff for venues this manager has access to
     const { data: staffData, error } = await supabase
       .from('staff')
@@ -148,7 +189,10 @@ const StaffPage = () => {
       .eq('venue_id', venueId)
       .neq('user_id', userId); // Don't include themselves
 
+    console.log('🔍 Manager staff query result:', { staffData, error });
+
     if (error) {
+      console.error('🔥 Error fetching staff for manager:', error);
       return;
     }
 
@@ -218,6 +262,17 @@ const StaffPage = () => {
         return userRole === 'master' ? <ManagersTab {...tabProps} /> : <EmployeesTab {...tabProps} />;
     }
   };
+
+  // Show loading if venues are still loading
+  if (venueLoading) {
+    return (
+      <PageContainer>
+        <div className="flex items-center justify-center py-12">
+          <span className="text-gray-500 text-sm lg:text-base">Loading venues...</span>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
