@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../context/VenueContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { FiSettings, FiMenu, FiX, FiClock, FiZap } from 'react-icons/fi';
+import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown } from 'react-icons/fi';
 
 import { Button } from '../components/ui/button';
 import {
@@ -185,7 +185,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                       ) : (
                         venueName || 'Select Venue'
                       )}
-                      <span className="ml-2 text-xs opacity-50">⌄</span>
+                      <FiChevronDown className="ml-2 h-4 w-4 text-gray-400" />
                     </Button>
                   </div>
                 </PopoverTrigger>
@@ -311,7 +311,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                       ) : (
                         venueName || 'Select Venue'
                       )}
-                      <span className="ml-2 text-xs opacity-50">⌄</span>
+                      <FiChevronDown className="ml-2 h-4 w-4 text-gray-400" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72 p-2 rounded-xl shadow-md bg-white" side="bottom" align="start">
