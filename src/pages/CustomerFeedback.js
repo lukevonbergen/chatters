@@ -7,6 +7,7 @@ const CustomerFeedbackPage = () => {
   const { venueId } = useParams();
   const [questions, setQuestions] = useState([]);
   const [venue, setVenue] = useState(null);
+  const [activeTables, setActiveTables] = useState([]);
   const [sessionId] = useState(uuidv4());
   const [tableNumber, setTableNumber] = useState('');
   const [current, setCurrent] = useState(0);
@@ -21,6 +22,7 @@ const CustomerFeedbackPage = () => {
       try {
         console.log('Loading data for venueId:', venueId);
         
+        // Load questions
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
           .select('*')
@@ -33,9 +35,10 @@ const CustomerFeedbackPage = () => {
           throw new Error(`Failed to load questions: ${questionsError.message}`);
         }
 
+        // Load venue data
         const { data: venueData, error: venueError } = await supabase
           .from('venues')
-          .select('logo, primary_color, secondary_color, table_count')
+          .select('logo, primary_color, secondary_color')
           .eq('id', venueId)
           .single();
 
@@ -44,8 +47,22 @@ const CustomerFeedbackPage = () => {
           throw new Error(`Failed to load venue: ${venueError.message}`);
         }
 
+        // Load active tables from floor plan
+        const { data: tablesData, error: tablesError } = await supabase
+          .from('table_positions')
+          .select('table_number')
+          .eq('venue_id', venueId)
+          .order('table_number');
+
+        if (tablesError) {
+          console.error('Tables error:', tablesError);
+          // Don't throw error here, just log it and continue with empty tables
+          console.warn('Could not load tables, continuing without table selection');
+        }
+
         console.log('Questions loaded:', questionsData?.length || 0);
         console.log('Venue loaded:', venueData ? 'success' : 'failed');
+        console.log('Tables loaded:', tablesData?.length || 0);
 
         if (!questionsData || questionsData.length === 0) {
           throw new Error('No active questions found for this venue');
@@ -57,6 +74,31 @@ const CustomerFeedbackPage = () => {
 
         setQuestions(questionsData);
         setVenue(venueData);
+        
+        // Process and sort tables numerically
+        if (tablesData && tablesData.length > 0) {
+          const sortedTables = tablesData
+            .map(t => t.table_number)
+            .filter(Boolean) // Remove any null/empty table numbers
+            .sort((a, b) => {
+              // Handle mixed alphanumeric sorting
+              const aNum = parseInt(a);
+              const bNum = parseInt(b);
+              
+              // If both are numbers, sort numerically
+              if (!isNaN(aNum) && !isNaN(bNum)) {
+                return aNum - bNum;
+              }
+              
+              // Otherwise, sort alphabetically
+              return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+            });
+          
+          setActiveTables(sortedTables);
+        } else {
+          setActiveTables([]);
+        }
+        
         setError(null);
 
       } catch (err) {
@@ -177,20 +219,25 @@ const CustomerFeedbackPage = () => {
         {!tableNumber ? (
           <div>
             <h2 className="text-xl font-semibold mb-4">Select Your Table</h2>
-            <select
-              value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
-              className="w-full border px-4 py-3 rounded-lg text-base"
-              style={{
-                borderColor: primary,
-                backgroundColor: secondary,
-              }}
-            >
-              <option value="">Choose your table</option>
-              {Array.from({ length: venue.table_count || 10 }, (_, i) => (
-                <option key={i} value={i + 1}>Table {i + 1}</option>
-              ))}
-            </select>
+            
+            {activeTables.length > 0 && (
+              <select
+                value={tableNumber}
+                onChange={(e) => setTableNumber(e.target.value)}
+                className="w-full border px-4 py-3 rounded-lg text-base"
+                style={{
+                  borderColor: primary,
+                  backgroundColor: secondary,
+                }}
+              >
+                <option value="">Choose your table</option>
+                {activeTables.map((tableNum) => (
+                  <option key={tableNum} value={tableNum}>
+                    {tableNum}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         ) : current >= 0 ? (
           <div>
@@ -208,6 +255,14 @@ const CustomerFeedbackPage = () => {
                 ></div>
               </div>
             </div>
+            
+            {/* Show selected table */}
+            {tableNumber && (
+              <div className="mb-4 text-sm text-gray-600">
+                Feedback for Table {tableNumber}
+              </div>
+            )}
+            
             <h2 className="text-lg font-semibold mb-6">{questions[current].question}</h2>
             
             {/* Mobile-optimized emoji layout */}
