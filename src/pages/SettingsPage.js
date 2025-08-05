@@ -10,6 +10,7 @@ import VenueTab from './components/settings/VenueTab';
 import BrandingTab from './components/settings/BrandingTab';
 import BillingTab from './components/settings/BillingTab';
 import NotificationsTab from './components/settings/NotificationsTab';
+import InvitesTab from './components/settings/InvitesTab';
 
 const SettingsPage = () => {
   usePageTitle('Settings');
@@ -47,7 +48,10 @@ const SettingsPage = () => {
     { id: 'Profile', label: 'Profile' },
     { id: 'Venue', label: 'Venue' },
     { id: 'Branding', label: 'Branding' },
-    ...(userRole === 'master' ? [{ id: 'Billing', label: 'Billing' }] : []),
+    ...(userRole === 'master' ? [
+      { id: 'Billing', label: 'Billing' },
+      { id: 'Invites', label: 'Invites' }
+    ] : []),
     { id: 'Notifications', label: 'Notifications' },
   ];
 
@@ -217,21 +221,23 @@ const SettingsPage = () => {
   };
 
   const renderActiveTab = () => {
-    switch (activeTab) {
-      case 'Profile':
-        return <ProfileTab {...tabProps} />;
-      case 'Venue':
-        return <VenueTab {...tabProps} />;
-      case 'Branding':
-        return <BrandingTab {...tabProps} />;
-      case 'Billing':
-        return <BillingTab />;
-      case 'Notifications':
-        return <NotificationsTab {...tabProps} />;
-      default:
-        return <ProfileTab {...tabProps} />;
-    }
-  };
+  switch (activeTab) {
+    case 'Profile':
+      return <ProfileTab {...tabProps} />;
+    case 'Venue':
+      return <VenueTab {...tabProps} />;
+    case 'Branding':
+      return <BrandingTab {...tabProps} />;
+    case 'Billing':
+      return <BillingTab />;
+    case 'Invites':
+      return <InvitesTab userRole={userRole} message={message} setMessage={setMessage} />;
+    case 'Notifications':
+      return <NotificationsTab {...tabProps} />;
+    default:
+      return <ProfileTab {...tabProps} />;
+  }
+};
 
   if (!venueId) {
     return null;
