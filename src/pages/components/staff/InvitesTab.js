@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 
-const InvitesTab = ({ userRole, message, setMessage }) => {
+const InvitesTab = ({ userRole, message, setMessage, allVenues, loading: parentLoading }) => {
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
@@ -35,11 +35,7 @@ const InvitesTab = ({ userRole, message, setMessage }) => {
           status,
           invited_at,
           expires_at,
-          venue_ids,
-          venues:venue_ids (
-            id,
-            name
-          )
+          venue_ids
         `)
         .eq('account_id', userData.account_id)
         .order('invited_at', { ascending: false });
@@ -62,10 +58,16 @@ const InvitesTab = ({ userRole, message, setMessage }) => {
           }
         }
 
+        // Get venue names from allVenues prop
+        const venueNames = venueIds
+          .map(id => allVenues.find(v => v.id === id)?.name)
+          .filter(Boolean)
+          .join(', ') || 'No venues assigned';
+
         return {
           ...invite,
           venue_ids: venueIds,
-          venue_names: invite.venues ? invite.venues.map(v => v.name).join(', ') : 'No venues assigned'
+          venue_names: venueNames
         };
       });
 
@@ -80,6 +82,7 @@ const InvitesTab = ({ userRole, message, setMessage }) => {
 
   useEffect(() => {
     if (userRole === 'master') {
+      setMessage(''); // Clear any existing messages
       fetchInvites();
     }
   }, [userRole]);
@@ -204,19 +207,12 @@ const InvitesTab = ({ userRole, message, setMessage }) => {
         </p>
       </div>
 
-      {/* Message Display */}
-      {message && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 text-blue-600 rounded-lg text-sm">
-          {message}
-        </div>
-      )}
-
       {/* Invites List */}
       {invites.length === 0 ? (
         <div className="text-center py-8 bg-white border border-gray-200 rounded-lg">
           <p className="text-gray-500 text-sm lg:text-base">No invites found.</p>
           <p className="text-gray-400 text-xs lg:text-sm mt-1">
-            Invite managers from the Staff section to see them here.
+            Invite managers from the Managers tab to see them here.
           </p>
         </div>
       ) : (

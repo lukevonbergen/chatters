@@ -7,6 +7,7 @@ import { useVenue } from '../context/VenueContext';
 // Import tab components
 import ManagersTab from './components/staff/ManagersTab';
 import EmployeesTab from './components/staff/EmployeesTab';
+import InvitesTab from './components/staff/InvitesTab';
 
 const StaffPage = () => {
   usePageTitle('Staff');
@@ -23,9 +24,11 @@ const StaffPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Sidebar navigation items - based on user role
   const navItems = [
-    ...(userRole === 'master' ? [{ id: 'Managers', label: 'Managers' }] : []),
+    ...(userRole === 'master' ? [
+      { id: 'Managers', label: 'Managers' },
+      { id: 'Invites', label: 'Invites' }
+    ] : []),
     { id: 'Employees', label: 'Employees' },
   ];
 
@@ -207,6 +210,8 @@ const StaffPage = () => {
     switch (activeTab) {
       case 'Managers':
         return <ManagersTab {...tabProps} />;
+      case 'Invites':                           
+        return <InvitesTab {...tabProps} />;           
       case 'Employees':
         return <EmployeesTab {...tabProps} />;
       default:
