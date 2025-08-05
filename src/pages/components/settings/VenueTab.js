@@ -3,7 +3,6 @@ import { supabase } from '../../../utils/supabase';
 
 const VenueTab = ({ 
   name, setName,
-  tableCount, setTableCount,
   address, setAddress,
   tripadvisorLink, setTripadvisorLink,
   googleReviewLink, setGoogleReviewLink,
@@ -16,7 +15,6 @@ const VenueTab = ({
   const [venues, setVenues] = useState([]);
   const [newVenue, setNewVenue] = useState({
     name: '',
-    tableCount: '',
     address: {
       line1: '',
       line2: '',
@@ -89,7 +87,6 @@ const VenueTab = ({
             secondary_color: '#ffffff',
             tripadvisor_link: newVenue.tripadvisorLink,
             google_review_link: newVenue.googleReviewLink,
-            table_count: parseInt(newVenue.tableCount) || 0,
           },
         ])
         .select()
@@ -118,7 +115,6 @@ const VenueTab = ({
       setVenueMessage('Venue created successfully! You can now assign managers to it in the Staff page.');
       setNewVenue({
         name: '',
-        tableCount: '',
         address: {
           line1: '',
           line2: '',
@@ -156,17 +152,6 @@ const VenueTab = ({
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-          />
-        </div>
-
-        {/* Table Count */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Table Count</label>
-          <input
-            type="number"
-            value={tableCount}
-            onChange={(e) => setTableCount(e.target.value)}
-            className="w-full sm:w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
           />
         </div>
 
@@ -278,17 +263,6 @@ const VenueTab = ({
               />
             </div>
 
-            {/* Table Count */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Table Count</label>
-              <input
-                type="number"
-                value={newVenue.tableCount}
-                onChange={(e) => setNewVenue(prev => ({ ...prev, tableCount: e.target.value }))}
-                className="w-full sm:w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-              />
-            </div>
-
             {/* Address */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
@@ -392,16 +366,10 @@ const VenueTab = ({
           {venues.length > 0 && (
             <div className="mt-6 lg:mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 lg:p-6">
               <h4 className="text-base lg:text-lg font-medium text-blue-900 mb-3">Your Venues Summary</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm lg:text-base">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm lg:text-base">
                 <div className="flex justify-between sm:flex-col sm:justify-start">
                   <span className="text-blue-700">Total Venues:</span>
                   <span className="font-medium text-blue-900 sm:mt-1">{venues.length}</span>
-                </div>
-                <div className="flex justify-between sm:flex-col sm:justify-start">
-                  <span className="text-blue-700">Total Tables:</span>
-                  <span className="font-medium text-blue-900 sm:mt-1">
-                    {venues.reduce((sum, venue) => sum + (venue.table_count || 0), 0)}
-                  </span>
                 </div>
                 <div className="flex justify-between sm:flex-col sm:justify-start">
                   <span className="text-blue-700">Latest Venue:</span>
