@@ -12,7 +12,7 @@ import { useVenue } from '../context/VenueContext';
 
 const DashboardPage = () => {
   usePageTitle('Overview');
-  const { venueId, loading } = useVenue(); // Add loading from VenueContext
+  const { venueId } = useVenue(); // Remove loading dependency
   const [questionsMap, setQuestionsMap] = useState({});
   const [sortOrder, setSortOrder] = useState('desc');
   const [tableFilter, setTableFilter] = useState('');
@@ -49,15 +49,9 @@ const DashboardPage = () => {
     setTableOptions(tables?.map(t => t.table_number) || []);
   };
 
-  // Show loading state instead of returning null
-  if (loading || !venueId) {
-    return (
-      <PageContainer>
-        <div className="flex items-center justify-center h-64">
-          <span className="text-gray-500">Loading...</span>
-        </div>
-      </PageContainer>
-    );
+  // Just return null if no venueId yet - no loading screen
+  if (!venueId) {
+    return null;
   }
 
   return (
