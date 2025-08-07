@@ -22,26 +22,32 @@ const CustomerFeedbackPage = () => {
   const isFeedbackTimeAllowed = (feedbackHours) => {
     if (!feedbackHours) return true; // If no hours set, allow feedback anytime
     
-    const now = new Date();
-    const currentDay = now.toLocaleDateString('en-US', { weekday: 'lowercase' });
-    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
-    
-    const dayConfig = feedbackHours[currentDay];
-    if (!dayConfig || !dayConfig.enabled) {
-      return false; // Feedback disabled for this day
-    }
-    
-    // Check if current time falls within any of the allowed periods
-    return dayConfig.periods.some(period => {
-      const { start, end } = period;
+    try {
+      const now = new Date();
+      const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
       
-      // Handle overnight hours (e.g., 22:00 to 02:00)
-      if (start > end) {
-        return currentTime >= start || currentTime <= end;
-      } else {
-        return currentTime >= start && currentTime <= end;
+      const dayConfig = feedbackHours[currentDay];
+      if (!dayConfig || !dayConfig.enabled) {
+        return false; // Feedback disabled for this day
       }
-    });
+      
+      // Check if current time falls within any of the allowed periods
+      return dayConfig.periods.some(period => {
+        const { start, end } = period;
+        
+        // Handle overnight hours (e.g., 22:00 to 02:00)
+        if (start > end) {
+          return currentTime >= start || currentTime <= end;
+        } else {
+          return currentTime >= start && currentTime <= end;
+        }
+      });
+    } catch (error) {
+      console.error('Error checking feedback time:', error);
+      // If there's an error checking time, default to allowing feedback
+      return true;
+    }
   };
 
   useEffect(() => {
@@ -245,7 +251,6 @@ const CustomerFeedbackPage = () => {
         <div className="text-center max-w-md">
           <div className="font-semibold mb-2">Unable to load feedback form</div>
           <div className="text-sm text-gray-600 mb-2">{error}</div>
-          <div className="text-xs text-gray-400">Venue ID: {venueId}</div>
         </div>
         <button 
           onClick={() => window.location.reload()} 
