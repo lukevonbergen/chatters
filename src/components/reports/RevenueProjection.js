@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
-import { TrendingUp, DollarSign, Users, Shield, Settings } from 'lucide-react';
+import { TrendingUp, DollarSign, Users, Shield, Settings, MessageSquare } from 'lucide-react';
 
 const RevenueImpactAnalysis = ({ venueId }) => {
   const [data, setData] = useState({
