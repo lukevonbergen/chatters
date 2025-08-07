@@ -30,18 +30,19 @@ const FeedbackTimeSelection = () => {
       const user = auth?.user;
       if (!user) return;
 
-      const { data: userRow } = await supabase
-        .from('users')
+      // Get venue_id from staff table
+      const { data: staffRow } = await supabase
+        .from('staff')
         .select('venue_id')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
-      if (!userRow?.venue_id) return;
+      if (!staffRow?.venue_id) return;
 
       const { data: venue } = await supabase
         .from('venues')
         .select('feedback_hours')
-        .eq('id', userRow.venue_id)
+        .eq('id', staffRow.venue_id)
         .single();
 
       if (venue?.feedback_hours) {
@@ -126,20 +127,21 @@ const FeedbackTimeSelection = () => {
         throw new Error('User not authenticated');
       }
 
-      const { data: userRow } = await supabase
-        .from('users')
+      // Get venue_id from staff table
+      const { data: staffRow } = await supabase
+        .from('staff')
         .select('venue_id')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
-      if (!userRow?.venue_id) {
+      if (!staffRow?.venue_id) {
         throw new Error('No venue found for user');
       }
 
       const { error } = await supabase
         .from('venues')
         .update({ feedback_hours: feedbackHours })
-        .eq('id', userRow.venue_id);
+        .eq('id', staffRow.venue_id);
 
       if (error) throw error;
 
