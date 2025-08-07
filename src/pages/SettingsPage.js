@@ -214,6 +214,7 @@ const SettingsPage = () => {
     message,
     venueId,
     userRole,
+    currentVenueId: venueId, // Add this line - pass venueId as currentVenueId
   };
 
   const renderActiveTab = () => {
