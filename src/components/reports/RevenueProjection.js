@@ -23,10 +23,10 @@ const RevenueImpactAnalysis = ({ venueId }) => {
   const [assumptions, setAssumptions] = useState({
     avgTransactionValue: 28.50, // Average UK pub/restaurant meal
     visitsPerMonth: 2.5, // Average customer frequency
-    customerLifetimeMonths: 18, // How long customers stay loyal
-    lostCustomerRate: 0.65, // % of unresolved negative feedback that results in lost customers
-    referralRate: 0.12, // % of positive feedback that generates referrals
-    retentionImpactRate: 0.08, // % improvement in retention from good feedback management
+    customerLifetimeMonths: 12, // How long customers stay loyal (reduced)
+    lostCustomerRate: 0.25, // % of unresolved negative feedback that results in lost customers (much more conservative)
+    referralRate: 0.03, // % of positive feedback that generates referrals (much more conservative)
+    retentionImpactRate: 0.02, // % improvement in retention from good feedback management (much more conservative)
     acquisitionCost: 42 // Cost to acquire new customer
   });
 
@@ -127,19 +127,19 @@ const RevenueImpactAnalysis = ({ venueId }) => {
     const customerLifetimeValue = monthlyRevenuePerCustomer * assumptions.customerLifetimeMonths;
 
     // 1. Revenue Protected from Resolving Negative Feedback
-    const potentialLostCustomers = negativeFeedback * assumptions.lostCustomerRate;
+    // Only count actual negative feedback that was resolved vs unresolved
     const actualLostCustomers = (negativeFeedback - resolvedNegative) * assumptions.lostCustomerRate;
-    const customersRetained = potentialLostCustomers - actualLostCustomers;
+    const customersRetained = resolvedNegative * assumptions.lostCustomerRate; // Only count what was actually saved
     const revenueProtected = customersRetained * customerLifetimeValue;
 
-    // 2. Referral Value from Positive Feedback
+    // 2. Referral Value from Positive Feedback (much more conservative)
     const referralsGenerated = positiveFeedback * assumptions.referralRate;
     const referralValue = referralsGenerated * customerLifetimeValue;
 
-    // 3. Retention Improvement Value
-    const baseCustomers = Math.max(data.tableCount * 4, 50); // Estimate based on table count
-    const retentionImprovement = baseCustomers * assumptions.retentionImpactRate;
-    const retentionValue = retentionImprovement * monthlyRevenuePerCustomer * assumptions.customerLifetimeMonths;
+    // 3. Retention Improvement Value (scale with actual feedback volume, not table count)
+    const feedbackBasedCustomers = Math.min(data.totalFeedback * 2, 50); // More realistic customer estimate
+    const retentionImprovement = feedbackBasedCustomers * assumptions.retentionImpactRate;
+    const retentionValue = retentionImprovement * monthlyRevenuePerCustomer * 3; // Only 3 months impact, not full lifetime
 
     // 4. Cost Savings from Customer Retention vs Acquisition
     const acquisitionCostSavings = customersRetained * assumptions.acquisitionCost;
@@ -264,7 +264,7 @@ const RevenueImpactAnalysis = ({ venueId }) => {
               <div>Customer acquisition cost: {formatCurrency(assumptions.acquisitionCost)}</div>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              * These are industry-standard estimates. Actual results may vary based on your business model.
+              * These are conservative industry estimates. Revenue impact is calculated only for the selected time period.
             </p>
           </div>
         )}
