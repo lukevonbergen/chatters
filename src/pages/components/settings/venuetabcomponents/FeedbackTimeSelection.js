@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../utils/supabase';
 
-const FeedbackTimeSelection = () => {
+const FeedbackTimeSelection = ({ currentVenueId }) => {
   // Feedback hours state
   const [feedbackHours, setFeedbackHours] = useState({
     monday: { enabled: true, periods: [{ start: '09:00', end: '22:00' }] },
@@ -21,28 +21,22 @@ const FeedbackTimeSelection = () => {
 
   // Fetch feedback hours on component mount
   useEffect(() => {
-    fetchFeedbackHours();
-  }, []);
+    if (currentVenueId) {
+      fetchFeedbackHours();
+    }
+  }, [currentVenueId]);
 
   const fetchFeedbackHours = async () => {
     try {
-      const { data: auth } = await supabase.auth.getUser();
-      const user = auth?.user;
-      if (!user) return;
-
-      // Get venue_id from staff table
-      const { data: staffRow } = await supabase
-        .from('staff')
-        .select('venue_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!staffRow?.venue_id) return;
+      if (!currentVenueId) {
+        console.error('No venue ID provided');
+        return;
+      }
 
       const { data: venue } = await supabase
         .from('venues')
         .select('feedback_hours')
-        .eq('id', staffRow.venue_id)
+        .eq('id', currentVenueId)
         .single();
 
       if (venue?.feedback_hours) {
@@ -121,27 +115,14 @@ const FeedbackTimeSelection = () => {
     setMessage('');
 
     try {
-      const { data: auth } = await supabase.auth.getUser();
-      const user = auth?.user;
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get venue_id from staff table
-      const { data: staffRow } = await supabase
-        .from('staff')
-        .select('venue_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!staffRow?.venue_id) {
-        throw new Error('No venue found for user');
+      if (!currentVenueId) {
+        throw new Error('No venue selected');
       }
 
       const { error } = await supabase
         .from('venues')
         .update({ feedback_hours: feedbackHours })
-        .eq('id', staffRow.venue_id);
+        .eq('id', currentVenueId);
 
       if (error) throw error;
 

@@ -10,7 +10,8 @@ const VenueTab = ({
   saveSettings,
   loading,
   message,
-  userRole 
+  userRole,
+  currentVenueId  // Add this prop
 }) => {
   // Master-only states for venue management
   const [venues, setVenues] = useState([]);
@@ -240,7 +241,7 @@ const VenueTab = ({
         </div>
 
         {/* Section 2: Feedback Collection Hours */}
-        <FeedbackTimeSelection />
+        <FeedbackTimeSelection currentVenueId={currentVenueId} />
 
         {/* Save Basic Settings Button */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
