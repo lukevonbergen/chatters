@@ -16,12 +16,64 @@ const CustomerFeedbackPage = () => {
   const [isFinished, setIsFinished] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [feedbackUnavailable, setFeedbackUnavailable] = useState(false);
+
+  // Utility function to check if current time is within feedback hours
+  const isFeedbackTimeAllowed = (feedbackHours) => {
+    if (!feedbackHours) return true; // If no hours set, allow feedback anytime
+    
+    const now = new Date();
+    const currentDay = now.toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+    
+    const dayConfig = feedbackHours[currentDay];
+    if (!dayConfig || !dayConfig.enabled) {
+      return false; // Feedback disabled for this day
+    }
+    
+    // Check if current time falls within any of the allowed periods
+    return dayConfig.periods.some(period => {
+      const { start, end } = period;
+      
+      // Handle overnight hours (e.g., 22:00 to 02:00)
+      if (start > end) {
+        return currentTime >= start || currentTime <= end;
+      } else {
+        return currentTime >= start && currentTime <= end;
+      }
+    });
+  };
 
   useEffect(() => {
     const loadData = async () => {
       try {
         console.log('Loading data for venueId:', venueId);
         
+        // Load venue data first (including feedback_hours)
+        const { data: venueData, error: venueError } = await supabase
+          .from('venues')
+          .select('logo, primary_color, secondary_color, feedback_hours')
+          .eq('id', venueId)
+          .single();
+
+        if (venueError) {
+          console.error('Venue error:', venueError);
+          throw new Error(`Failed to load venue: ${venueError.message}`);
+        }
+
+        if (!venueData) {
+          throw new Error('Venue not found');
+        }
+
+        // Check if feedback is currently allowed
+        const feedbackAllowed = isFeedbackTimeAllowed(venueData.feedback_hours);
+        if (!feedbackAllowed) {
+          setFeedbackUnavailable(true);
+          setVenue(venueData);
+          setLoading(false);
+          return;
+        }
+
         // Load questions
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
@@ -33,18 +85,6 @@ const CustomerFeedbackPage = () => {
         if (questionsError) {
           console.error('Questions error:', questionsError);
           throw new Error(`Failed to load questions: ${questionsError.message}`);
-        }
-
-        // Load venue data
-        const { data: venueData, error: venueError } = await supabase
-          .from('venues')
-          .select('logo, primary_color, secondary_color')
-          .eq('id', venueId)
-          .single();
-
-        if (venueError) {
-          console.error('Venue error:', venueError);
-          throw new Error(`Failed to load venue: ${venueError.message}`);
         }
 
         // Load active tables from floor plan
@@ -66,10 +106,6 @@ const CustomerFeedbackPage = () => {
 
         if (!questionsData || questionsData.length === 0) {
           throw new Error('No active questions found for this venue');
-        }
-
-        if (!venueData) {
-          throw new Error('Venue not found');
         }
 
         setQuestions(questionsData);
@@ -169,6 +205,34 @@ const CustomerFeedbackPage = () => {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
         <div>Loading feedback form...</div>
         <div className="text-sm text-gray-400">Venue ID: {venueId}</div>
+      </div>
+    );
+  }
+
+  // Feedback unavailable state (outside of allowed hours)
+  if (feedbackUnavailable) {
+    const primary = venue?.primary_color || '#111827';
+    const secondary = venue?.secondary_color || '#f3f4f6';
+    
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: secondary }}>
+        <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 text-center" style={{ color: primary }}>
+          {venue?.logo && (
+            <div className="mb-6">
+              <img src={venue.logo} alt="Venue Logo" className="h-14 mx-auto" />
+            </div>
+          )}
+          
+          <div className="text-4xl mb-4">🕒</div>
+          <h2 className="text-xl font-semibold mb-4">Feedback Currently Unavailable</h2>
+          <p className="text-gray-600 text-sm mb-6">
+            We're not accepting feedback at the moment. Please try again during our service hours.
+          </p>
+          
+          <div className="text-xs text-gray-400">
+            Thank you for your interest in providing feedback!
+          </div>
+        </div>
       </div>
     );
   }
