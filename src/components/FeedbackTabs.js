@@ -113,32 +113,43 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
 
   return (
     <>
-      {/* Modern Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex space-x-8">
+      {/* Mobile-First Tab Navigation */}
+      <div className="border-b border-gray-200 mb-4 lg:mb-6">
+        <nav className="flex overflow-x-auto scrollbar-hide -mb-px">
           {[
-            { id: 'alerts', label: 'Alerts', icon: AlertTriangle, count: counts.alerts, color: 'red' },
-            { id: 'actioned', label: 'Resolved', icon: CheckCircle, count: counts.actioned, color: 'green' },
-            { id: 'expired', label: 'Expired', icon: Clock, count: counts.expired, color: 'yellow' },
-            { id: 'all', label: 'All Feedback', icon: null, count: counts.all, color: 'blue' }
+            { id: 'alerts', label: 'Alerts', labelShort: 'Alerts', icon: AlertTriangle, count: counts.alerts, color: 'red' },
+            { id: 'actioned', label: 'Resolved', labelShort: 'Resolved', icon: CheckCircle, count: counts.actioned, color: 'green' },
+            { id: 'expired', label: 'Expired', labelShort: 'Expired', icon: Clock, count: counts.expired, color: 'yellow' },
+            { id: 'all', label: 'All Feedback', labelShort: 'All', icon: null, count: counts.all, color: 'blue' }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`group relative flex items-center py-4 px-1 text-sm font-medium transition-colors ${
+              className={`group relative flex items-center py-3 lg:py-4 px-3 lg:px-1 text-xs lg:text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
                 activeTab === tab.id
-                  ? `text-${tab.color}-600 border-b-2 border-${tab.color}-500`
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-red-600 border-red-500'
+                  : 'text-gray-500 hover:text-gray-700 border-transparent'
               }`}
+              style={{
+                color: activeTab === tab.id ? (tab.color === 'red' ? '#dc2626' : tab.color === 'green' ? '#059669' : tab.color === 'yellow' ? '#d97706' : '#2563eb') : undefined,
+                borderBottomColor: activeTab === tab.id ? (tab.color === 'red' ? '#dc2626' : tab.color === 'green' ? '#059669' : tab.color === 'yellow' ? '#d97706' : '#2563eb') : 'transparent'
+              }}
             >
-              {tab.icon && <tab.icon className="w-4 h-4 mr-2" />}
-              {tab.label}
+              {tab.icon && <tab.icon className="w-4 h-4 mr-1 lg:mr-2 flex-shrink-0" />}
+              <span className="lg:hidden">{tab.labelShort}</span>
+              <span className="hidden lg:inline">{tab.label}</span>
               {tab.count > 0 && (
-                <span className={`ml-2 py-0.5 px-2 rounded-full text-xs font-medium ${
-                  activeTab === tab.id
-                    ? `bg-${tab.color}-100 text-${tab.color}-800`
-                    : 'bg-gray-100 text-gray-600'
-                }`}>
+                <span 
+                  className={`ml-1 lg:ml-2 py-0.5 px-1.5 lg:px-2 rounded-full text-xs font-medium ${
+                    activeTab === tab.id
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
+                  style={{
+                    backgroundColor: activeTab === tab.id ? (tab.color === 'red' ? '#fef2f2' : tab.color === 'green' ? '#f0fdf4' : tab.color === 'yellow' ? '#fefbeb' : '#eff6ff') : '#f3f4f6',
+                    color: activeTab === tab.id ? (tab.color === 'red' ? '#991b1b' : tab.color === 'green' ? '#166534' : tab.color === 'yellow' ? '#92400e' : '#1e40af') : '#4b5563'
+                  }}
+                >
                   {tab.count}
                 </span>
               )}
@@ -149,20 +160,20 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
 
       {/* Feedback Cards */}
       {filteredSessions.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            {activeTab === 'alerts' && <AlertTriangle className="w-8 h-8 text-gray-400" />}
-            {activeTab === 'actioned' && <CheckCircle className="w-8 h-8 text-gray-400" />}
-            {activeTab === 'expired' && <Clock className="w-8 h-8 text-gray-400" />}
-            {activeTab === 'all' && <Calendar className="w-8 h-8 text-gray-400" />}
+        <div className="text-center py-8 lg:py-12">
+          <div className="w-12 h-12 lg:w-16 lg:h-16 mx-auto mb-3 lg:mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+            {activeTab === 'alerts' && <AlertTriangle className="w-6 h-6 lg:w-8 lg:h-8 text-gray-400" />}
+            {activeTab === 'actioned' && <CheckCircle className="w-6 h-6 lg:w-8 lg:h-8 text-gray-400" />}
+            {activeTab === 'expired' && <Clock className="w-6 h-6 lg:w-8 lg:h-8 text-gray-400" />}
+            {activeTab === 'all' && <Calendar className="w-6 h-6 lg:w-8 lg:h-8 text-gray-400" />}
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-base lg:text-lg font-medium text-gray-900 mb-2">
             {activeTab === 'alerts' && 'No alerts'}
             {activeTab === 'actioned' && 'No resolved feedback'}
             {activeTab === 'expired' && 'No expired feedback'}
             {activeTab === 'all' && 'No feedback yet'}
           </h3>
-          <p className="text-gray-500">
+          <p className="text-sm lg:text-base text-gray-500 px-4">
             {activeTab === 'alerts' && 'All feedback is looking good!'}
             {activeTab === 'actioned' && 'Resolved feedback will appear here.'}
             {activeTab === 'expired' && 'Expired feedback will appear here.'}
@@ -170,11 +181,11 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 lg:space-y-4">
           {filteredSessions.map(session => (
             <div
               key={session.session_id}
-              className={`relative rounded-xl border-2 transition-all duration-200 hover:shadow-md cursor-pointer ${
+              className={`relative rounded-lg lg:rounded-xl border-2 transition-all duration-200 hover:shadow-md cursor-pointer ${
                 session.lowScore && !session.isActioned && !session.isExpired
                   ? 'border-red-200 bg-red-50 hover:bg-red-100'
                   : session.isActioned
@@ -185,72 +196,74 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
               }`}
               onClick={() => { setSelectedSession(session); setShowModal(true); }}
             >
-              {/* Status Indicator */}
-              <div className="absolute top-4 right-4">
+              {/* Mobile Status Indicator */}
+              <div className="absolute top-3 right-3 lg:top-4 lg:right-4">
                 {session.lowScore && !session.isActioned && !session.isExpired && (
                   <div className="flex items-center text-red-600">
-                    <AlertTriangle className="w-5 h-5 mr-1" />
-                    <span className="text-xs font-medium">Needs Attention</span>
+                    <AlertTriangle className="w-4 h-4 lg:w-5 lg:h-5 mr-1" />
+                    <span className="text-xs font-medium hidden sm:inline">Needs Attention</span>
                   </div>
                 )}
                 {session.isActioned && (
                   <div className="flex items-center text-green-600">
-                    <CheckCircle className="w-5 h-5 mr-1" />
-                    <span className="text-xs font-medium">Resolved</span>
+                    <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5 mr-1" />
+                    <span className="text-xs font-medium hidden sm:inline">Resolved</span>
                   </div>
                 )}
                 {session.isExpired && !session.isActioned && (
                   <div className="flex items-center text-yellow-600">
-                    <Clock className="w-5 h-5 mr-1" />
-                    <span className="text-xs font-medium">Expired</span>
+                    <Clock className="w-4 h-4 lg:w-5 lg:h-5 mr-1" />
+                    <span className="text-xs font-medium hidden sm:inline">Expired</span>
                   </div>
                 )}
               </div>
 
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="p-4 lg:p-6 pr-16 lg:pr-24">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-3 lg:mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-2 truncate">
                       Table {session.items[0].table_number}
                     </h3>
                     
                     {/* Rating Display */}
                     {session.avgRating !== null && (
-                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRatingBg(session.avgRating)} ${getRatingColor(session.avgRating)}`}>
-                        <span className="text-lg mr-1">
+                      <div className={`inline-flex items-center px-2 lg:px-3 py-1 rounded-full text-xs lg:text-sm font-medium ${getRatingBg(session.avgRating)} ${getRatingColor(session.avgRating)}`}>
+                        <span className="text-sm lg:text-lg mr-1">
                           {session.avgRating <= 2 ? '😞' : session.avgRating <= 3 ? '😐' : session.avgRating <= 4 ? '😊' : '😍'}
                         </span>
-                        Average: {session.avgRating.toFixed(1)}/5
+                        <span className="hidden sm:inline">Average: </span>{session.avgRating.toFixed(1)}/5
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Metadata */}
-                <div className="flex items-center text-sm text-gray-600 space-x-4 mb-4">
+                {/* Metadata - Mobile Optimized */}
+                <div className="flex flex-wrap items-center text-xs lg:text-sm text-gray-600 gap-2 lg:gap-4 mb-3 lg:mb-4">
                   <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {session.createdAt.format('MMM D, YYYY')}
+                    <Calendar className="w-3 h-3 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">{session.createdAt.format('MMM D')}</span>
                   </div>
                   <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {session.createdAt.format('h:mm A')}
+                    <Clock className="w-3 h-3 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">{session.createdAt.format('h:mm A')}</span>
                   </div>
                   <div className="flex items-center">
-                    <Timer className="w-4 h-4 mr-1" />
-                    {session.createdAt.fromNow()}
+                    <Timer className="w-3 h-3 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">{session.createdAt.fromNow()}</span>
                   </div>
                 </div>
 
                 {/* Preview of feedback items */}
-                <div className="space-y-2">
+                <div className="space-y-2 mb-3 lg:mb-4">
                   {session.items.slice(0, 2).map((item, index) => (
-                    <div key={index} className="text-sm">
+                    <div key={index} className="text-xs lg:text-sm">
                       {item.additional_feedback && (
-                        <p className="text-gray-700 italic">"{item.additional_feedback.substring(0, 100)}{item.additional_feedback.length > 100 ? '...' : ''}"</p>
+                        <p className="text-gray-700 italic break-words">
+                          "{item.additional_feedback.substring(0, 80)}{item.additional_feedback.length > 80 ? '...' : ''}"
+                        </p>
                       )}
                       {questionsMap[item.question_id] && item.rating && (
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 break-words">
                           <span className="font-medium">{questionsMap[item.question_id]}:</span> 
                           <span className={getRatingColor(item.rating)}> {item.rating}/5</span>
                         </p>
@@ -262,17 +275,17 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                   )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                {/* Actions - Mobile Optimized */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 lg:pt-4 border-t border-gray-200">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate('/floorplan');
                     }}
-                    className="inline-flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center justify-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs lg:text-sm font-medium rounded-lg transition-colors"
                   >
-                    <MapPin className="w-4 h-4 mr-1" />
-                    View on Floor Plan
+                    <MapPin className="w-3 h-3 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">View on Floor Plan</span>
                   </button>
 
                   {!session.isActioned && !session.isExpired && (
@@ -282,9 +295,9 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                         setSelectedSession(session);
                         setShowModal(true);
                       }}
-                      className="inline-flex items-center px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                      className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs lg:text-sm font-medium rounded-lg transition-colors"
                     >
-                      <User className="w-4 h-4 mr-1" />
+                      <User className="w-3 h-3 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
                       Resolve
                     </button>
                   )}
@@ -295,18 +308,20 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
         </div>
       )}
 
-      {/* Improved Modal */}
+      {/* Mobile-Optimized Modal */}
       {showModal && selectedSession && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-xl">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Resolve Feedback - Table {selectedSession.items[0].table_number}
-                </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 lg:p-4">
+          <div className="bg-white w-full max-w-2xl max-h-[95vh] lg:max-h-[90vh] overflow-y-auto rounded-lg lg:rounded-xl shadow-2xl">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 lg:p-6 rounded-t-lg lg:rounded-t-xl">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0 mr-4">
+                  <h2 className="text-lg lg:text-xl font-semibold text-gray-900 break-words">
+                    Resolve Feedback - Table {selectedSession.items[0].table_number}
+                  </h2>
+                </div>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none flex-shrink-0"
                 >
                   ×
                 </button>
@@ -319,7 +334,7 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                 <select
                   value={selectedStaffId}
                   onChange={e => setSelectedStaffId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select Staff Member</option>
                   {staffList.map(s => (
@@ -331,21 +346,21 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
               </div>
             </div>
 
-            <div className="p-6">
-              <div className="space-y-4 mb-6">
+            <div className="p-4 lg:p-6">
+              <div className="space-y-3 lg:space-y-4 mb-4 lg:mb-6">
                 {selectedSession.items.map((item, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div key={index} className="bg-gray-50 rounded-lg p-3 lg:p-4 border border-gray-200">
                     {questionsMap[item.question_id] && (
                       <div className="mb-3">
-                        <h4 className="font-medium text-gray-900 mb-1">
+                        <h4 className="font-medium text-gray-900 mb-1 text-sm lg:text-base break-words">
                           {questionsMap[item.question_id]}
                         </h4>
                         {item.rating !== null && (
                           <div className="flex items-center">
-                            <span className="text-lg mr-2">
+                            <span className="text-base lg:text-lg mr-2">
                               {item.rating <= 2 ? '😞' : item.rating <= 3 ? '😐' : item.rating <= 4 ? '😊' : '😍'}
                             </span>
-                            <span className={`font-semibold ${getRatingColor(item.rating)}`}>
+                            <span className={`font-semibold text-sm lg:text-base ${getRatingColor(item.rating)}`}>
                               {item.rating}/5
                             </span>
                           </div>
@@ -355,8 +370,8 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
 
                     {item.additional_feedback && (
                       <div className="mt-3 p-3 bg-white rounded border">
-                        <h5 className="text-sm font-medium text-gray-700 mb-1">Additional Comments:</h5>
-                        <p className="text-gray-800 italic">"{item.additional_feedback}"</p>
+                        <h5 className="text-xs lg:text-sm font-medium text-gray-700 mb-1">Additional Comments:</h5>
+                        <p className="text-sm lg:text-base text-gray-800 italic break-words">"{item.additional_feedback}"</p>
                       </div>
                     )}
                   </div>
@@ -366,13 +381,13 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
               <button
                 onClick={() => markSessionAsActioned(selectedSession)}
                 disabled={!selectedStaffId}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-colors text-sm lg:text-base ${
                   selectedStaffId
                     ? 'bg-green-600 hover:bg-green-700 text-white'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                <CheckCircle className="w-5 h-5 inline mr-2" />
+                <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5 inline mr-2" />
                 Mark as Resolved
               </button>
             </div>
