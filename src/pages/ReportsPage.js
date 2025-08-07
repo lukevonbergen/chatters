@@ -23,6 +23,7 @@ import TablePerformanceRankingTile from '../components/reports/TablePerformanceR
 import RatingDistributionTile from '../components/reports/RatingDistributionTile';
 import MetricCard from '../components/reports/MetricCard';
 import PerformanceSummaryTile from '../components/reports/PerformanceSummaryTile';
+import RevenueProjection from '../components/reports/RevenueProjection';
 
 const ReportsPage = () => {
   usePageTitle('Reports');
@@ -125,6 +126,17 @@ const ReportsPage = () => {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Business Impact */}
+        <SectionTitle 
+          title="Business Impact" 
+          description="Estimated revenue impact and return on investment from customer feedback management"
+        />
+        <div className="mb-8">
+          <RevenueProjection 
+            venueId={venueId} 
+          />
         </div>
 
         {/* Performance Dashboard */}
