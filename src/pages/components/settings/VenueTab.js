@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
+import FeedbackTimeSelection from './venuetabcomponents/FeedbackTimeSelection';
 
 const VenueTab = ({ 
   name, setName,
@@ -62,6 +63,107 @@ const VenueTab = ({
       .order('created_at', { ascending: false });
 
     setVenues(venuesData || []);
+  };
+
+  // Feedback hours utility functions
+  const validateTime = (time) => {
+    const regex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return regex.test(time);
+  };
+
+  const roundToQuarterHour = (time) => {
+    if (!validateTime(time)) return time;
+    const [hours, minutes] = time.split(':').map(Number);
+    const roundedMinutes = Math.round(minutes / 15) * 15;
+    if (roundedMinutes === 60) {
+      return `${String((hours + 1) % 24).padStart(2, '0')}:00`;
+    }
+    return `${String(hours).padStart(2, '0')}:${String(roundedMinutes).padStart(2, '0')}`;
+  };
+
+  const updateFeedbackHours = (day, field, value, periodIndex = 0) => {
+    setFeedbackHours(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: field === 'enabled' ? value : prev[day][field],
+        periods: field === 'enabled' ? prev[day].periods : 
+          prev[day].periods.map((period, index) => 
+            index === periodIndex ? { ...period, [field]: roundToQuarterHour(value) } : period
+          )
+      }
+    }));
+  };
+
+  const addPeriod = (day) => {
+    setFeedbackHours(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        periods: [...prev[day].periods, { start: '12:00', end: '18:00' }]
+      }
+    }));
+  };
+
+  const removePeriod = (day, periodIndex) => {
+    if (feedbackHours[day].periods.length <= 1) return;
+    setFeedbackHours(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        periods: prev[day].periods.filter((_, index) => index !== periodIndex)
+      }
+    }));
+  };
+
+  const copyToAllDays = (sourceDay) => {
+    const sourceConfig = feedbackHours[sourceDay];
+    const newConfig = {};
+    dayNames.forEach(day => {
+      newConfig[day] = { ...sourceConfig };
+    });
+    setFeedbackHours(newConfig);
+  };
+
+  const saveFeedbackHours = async () => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth?.user;
+      if (!user) return;
+
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('venue_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!userRow?.venue_id) return;
+
+      const { error } = await supabase
+        .from('venues')
+        .update({ feedback_hours: feedbackHours })
+        .eq('id', userRow.venue_id);
+
+      if (error) throw error;
+
+      // Show success message briefly
+      const messageEl = document.getElementById('feedback-hours-message');
+      if (messageEl) {
+        messageEl.textContent = 'Feedback hours saved successfully!';
+        messageEl.className = 'text-sm p-3 rounded-md text-green-700 bg-green-50 border border-green-200';
+        setTimeout(() => {
+          messageEl.textContent = '';
+          messageEl.className = 'hidden';
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error saving feedback hours:', error);
+      const messageEl = document.getElementById('feedback-hours-message');
+      if (messageEl) {
+        messageEl.textContent = 'Failed to save feedback hours: ' + error.message;
+        messageEl.className = 'text-sm p-3 rounded-md text-red-700 bg-red-50 border border-red-200';
+      }
+    }
   };
 
   const handleCreateVenue = async (e) => {
@@ -137,256 +239,248 @@ const VenueTab = ({
   };
 
   return (
-    <div className="max-w-none lg:max-w-2xl">
-      <div className="mb-6 lg:mb-8">
-        <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Venue Settings</h2>
-        <p className="text-gray-600 text-sm">Manage your venue information and settings.</p>
+    <div className="max-w-none lg:max-w-4xl">
+      {/* Page Header */}
+      <div className="mb-8 lg:mb-10">
+        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Venue Management</h2>
+        <p className="text-gray-600">Configure your venue settings, feedback collection hours, and manage multiple venues.</p>
       </div>
 
-      <div className="space-y-4 lg:space-y-6">
-        {/* Venue Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Venue Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-          />
-        </div>
-
-        {/* Address Section */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Address Line 1"
-              value={address.line1}
-              onChange={(e) => setAddress({...address, line1: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-            />
-            <input
-              type="text"
-              placeholder="Address Line 2"
-              value={address.line2}
-              onChange={(e) => setAddress({...address, line2: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                type="text"
-                placeholder="City"
-                value={address.city}
-                onChange={(e) => setAddress({...address, city: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-              />
-              <input
-                type="text"
-                placeholder="Postal Code"
-                value={address.postalCode}
-                onChange={(e) => setAddress({...address, postalCode: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Review Links Section */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Review Links</label>
-          <div className="space-y-3">
-            <div>
-              <input
-                type="url"
-                placeholder="Tripadvisor Link"
-                value={tripadvisorLink}
-                onChange={(e) => setTripadvisorLink(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-              />
-              <p className="text-xs text-gray-500 mt-1">Link to your Tripadvisor page</p>
-            </div>
-            <div>
-              <input
-                type="url"
-                placeholder="Google Review Link"
-                value={googleReviewLink}
-                onChange={(e) => setGoogleReviewLink(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-              />
-              <p className="text-xs text-gray-500 mt-1">Link to your Google Reviews</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Save Button */}
-        <div className="pt-2">
-          <button
-            onClick={saveSettings}
-            disabled={loading}
-            className="w-full sm:w-auto bg-black text-white px-4 lg:px-6 py-2 lg:py-3 rounded-md hover:bg-gray-800 transition-colors duration-200 text-sm lg:text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-
-        {/* Message Display */}
-        {message && (
-          <div className={`text-sm p-3 rounded-md ${
-            message.includes('success') 
-              ? 'text-green-700 bg-green-50 border border-green-200' 
-              : 'text-red-700 bg-red-50 border border-red-200'
-          }`}>
-            {message}
-          </div>
-        )}
-      </div>
-
-      {/* Master-Only Section: Create New Venue */}
-      {userRole === 'master' && (
-        <div className="mt-8 lg:mt-12 pt-6 lg:pt-8 border-t border-gray-200">
-          <div className="mb-6 lg:mb-8">
-            <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Create New Venue</h3>
-            <p className="text-gray-600 text-sm">Add additional venues to your account. After creating, assign managers in the Staff page.</p>
+      <div className="space-y-8 lg:space-y-12">
+        
+        {/* Section 1: Basic Venue Information */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8">
+          <div className="mb-6">
+            <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Basic Information</h3>
+            <p className="text-gray-600 text-sm">Update your venue's core details and contact information.</p>
           </div>
 
-          <form onSubmit={handleCreateVenue} className="space-y-4 lg:space-y-6">
+          <div className="space-y-6">
             {/* Venue Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Venue Name *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Venue Name</label>
               <input
                 type="text"
-                value={newVenue.name}
-                onChange={(e) => setNewVenue(prev => ({ ...prev, name: e.target.value }))}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-                required
+                placeholder="Enter your venue name"
               />
             </div>
 
-            {/* Address */}
+            {/* Address Section */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
               <div className="space-y-3">
                 <input
                   type="text"
                   placeholder="Address Line 1"
-                  value={newVenue.address.line1}
-                  onChange={(e) => setNewVenue(prev => ({ 
-                    ...prev, 
-                    address: { ...prev.address, line1: e.target.value }
-                  }))}
+                  value={address.line1}
+                  onChange={(e) => setAddress({...address, line1: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
                 />
                 <input
                   type="text"
-                  placeholder="Address Line 2"
-                  value={newVenue.address.line2}
-                  onChange={(e) => setNewVenue(prev => ({ 
-                    ...prev, 
-                    address: { ...prev.address, line2: e.target.value }
-                  }))}
+                  placeholder="Address Line 2 (Optional)"
+                  value={address.line2}
+                  onChange={(e) => setAddress({...address, line2: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
                     placeholder="City"
-                    value={newVenue.address.city}
-                    onChange={(e) => setNewVenue(prev => ({ 
-                      ...prev, 
-                      address: { ...prev.address, city: e.target.value }
-                    }))}
+                    value={address.city}
+                    onChange={(e) => setAddress({...address, city: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
                   />
                   <input
                     type="text"
                     placeholder="Postal Code"
-                    value={newVenue.address.postalCode}
-                    onChange={(e) => setNewVenue(prev => ({ 
-                      ...prev, 
-                      address: { ...prev.address, postalCode: e.target.value }
-                    }))}
+                    value={address.postalCode}
+                    onChange={(e) => setAddress({...address, postalCode: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Review Links */}
+            {/* Review Links Section */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Review Links</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Review Platform Links</label>
               <div className="space-y-3">
                 <div>
-                  <input
-                    type="url"
-                    placeholder="Tripadvisor Link"
-                    value={newVenue.tripadvisorLink}
-                    onChange={(e) => setNewVenue(prev => ({ ...prev, tripadvisorLink: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Link to your Tripadvisor page</p>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      placeholder="https://www.tripadvisor.com/your-venue"
+                      value={tripadvisorLink}
+                      onChange={(e) => setTripadvisorLink(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base pl-8"
+                    />
+                    <div className="absolute left-3 top-3 text-gray-400">🏨</div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Direct customers to leave reviews on Tripadvisor</p>
                 </div>
                 <div>
-                  <input
-                    type="url"
-                    placeholder="Google Review Link"
-                    value={newVenue.googleReviewLink}
-                    onChange={(e) => setNewVenue(prev => ({ ...prev, googleReviewLink: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Link to your Google Reviews</p>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      placeholder="https://g.page/your-business/review"
+                      value={googleReviewLink}
+                      onChange={(e) => setGoogleReviewLink(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base pl-8"
+                    />
+                    <div className="absolute left-3 top-3 text-gray-400">🌟</div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Direct customers to leave Google reviews</p>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Create Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={venueLoading}
-                className="w-full sm:w-auto bg-blue-600 text-white px-4 lg:px-6 py-2 lg:py-3 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm lg:text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {venueLoading ? 'Creating Venue...' : 'Create New Venue'}
-              </button>
+        {/* Section 2: Feedback Collection Hours */}
+        <FeedbackTimeSelection />
+
+        {/* Save Basic Settings Button */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-4 sm:mb-0">
+              <h4 className="text-sm font-medium text-gray-900">Save Basic Settings</h4>
+              <p className="text-xs text-gray-600">Save changes to venue name, address, and review links</p>
             </div>
+            <button
+              onClick={saveSettings}
+              disabled={loading}
+              className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Saving...' : 'Save Basic Settings'}
+            </button>
+          </div>
 
-            {/* Venue Creation Message */}
-            {venueMessage && (
-              <div className={`text-sm p-3 rounded-md ${
-                venueMessage.includes('success') 
-                  ? 'text-green-700 bg-green-50 border border-green-200' 
-                  : 'text-red-700 bg-red-50 border border-red-200'
-              }`}>
-                {venueMessage}
-              </div>
-            )}
-          </form>
-
-          {/* Venues Summary for Masters */}
-          {venues.length > 0 && (
-            <div className="mt-6 lg:mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 lg:p-6">
-              <h4 className="text-base lg:text-lg font-medium text-blue-900 mb-3">Your Venues Summary</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm lg:text-base">
-                <div className="flex justify-between sm:flex-col sm:justify-start">
-                  <span className="text-blue-700">Total Venues:</span>
-                  <span className="font-medium text-blue-900 sm:mt-1">{venues.length}</span>
-                </div>
-                <div className="flex justify-between sm:flex-col sm:justify-start">
-                  <span className="text-blue-700">Latest Venue:</span>
-                  <span className="font-medium text-blue-900 sm:mt-1 truncate">
-                    {venues[0]?.name || 'None'}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-blue-200">
-                <p className="text-xs text-blue-600">
-                  💡 After creating a venue, go to the <strong>Staff</strong> page to assign managers and employees.
-                </p>
-              </div>
+          {message && (
+            <div className={`text-sm p-3 rounded-md mt-4 ${
+              message.includes('success') 
+                ? 'text-green-700 bg-green-50 border border-green-200' 
+                : 'text-red-700 bg-red-50 border border-red-200'
+            }`}>
+              {message}
             </div>
           )}
         </div>
-      )}
+
+        {/* Master-Only Section: Create New Venue */}
+        {userRole === 'master' && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8">
+            <div className="mb-6">
+              <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Create Additional Venue</h3>
+              <p className="text-gray-600 text-sm">Expand your business by adding more venues to your account. Assign managers after creation.</p>
+            </div>
+
+            <form onSubmit={handleCreateVenue} className="space-y-6">
+              {/* Venue Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Venue Name *</label>
+                <input
+                  type="text"
+                  value={newVenue.name}
+                  onChange={(e) => setNewVenue(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                  placeholder="Enter the new venue name"
+                  required
+                />
+              </div>
+
+              {/* Simplified Address for New Venue */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address (Optional)</label>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Address Line 1"
+                    value={newVenue.address.line1}
+                    onChange={(e) => setNewVenue(prev => ({ 
+                      ...prev, 
+                      address: { ...prev.address, line1: e.target.value }
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="City"
+                      value={newVenue.address.city}
+                      onChange={(e) => setNewVenue(prev => ({ 
+                        ...prev, 
+                        address: { ...prev.address, city: e.target.value }
+                      }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Postal Code"
+                      value={newVenue.address.postalCode}
+                      onChange={(e) => setNewVenue(prev => ({ 
+                        ...prev, 
+                        address: { ...prev.address, postalCode: e.target.value }
+                      }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Create Button */}
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  type="submit"
+                  disabled={venueLoading}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {venueLoading ? 'Creating Venue...' : 'Create New Venue'}
+                </button>
+              </div>
+
+              {/* Venue Creation Message */}
+              {venueMessage && (
+                <div className={`text-sm p-3 rounded-md ${
+                  venueMessage.includes('success') 
+                    ? 'text-green-700 bg-green-50 border border-green-200' 
+                    : 'text-red-700 bg-red-50 border border-red-200'
+                }`}>
+                  {venueMessage}
+                </div>
+              )}
+            </form>
+
+            {/* Venues Summary for Masters */}
+            {venues.length > 0 && (
+              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-base font-medium text-blue-900 mb-3">📊 Your Venues Overview</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-900">{venues.length}</div>
+                    <div className="text-blue-700">Total Venues</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-blue-900 truncate">
+                      {venues[0]?.name || 'None'}
+                    </div>
+                    <div className="text-blue-700">Latest Venue</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm text-blue-800 bg-blue-100 px-2 py-1 rounded">
+                      Go to Staff page →
+                    </div>
+                    <div className="text-xs text-blue-600">Assign managers</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
