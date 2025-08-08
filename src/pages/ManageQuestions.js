@@ -1,21 +1,28 @@
-// ManageQuestions.js
+// ManageQuestions.js — Refactored with tabbed interface like ReportsPage
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utils/supabase';
 import { DragDropContext } from 'react-beautiful-dnd';
-import SuggestedQuestions from '../components/SuggestedQuestions';
-import CurrentQuestions from '../components/CurrentQuestions';
-import AddNewQuestion from '../components/AddNewQuestion';
-import QRCodeSection from '../components/QRCodeSection';
-import ReplaceModal from '../components/ReplaceModal';
-import PreviouslyUsedQuestions from '../components/PreviouslyUsedQuestions';
 import PageContainer from '../components/PageContainer';
 import usePageTitle from '../hooks/usePageTitle';
 import { useVenue } from '../context/VenueContext';
+
+// Import tab components
+import QRCodeTab from './components/feedbackmanager/QRCodeTab';
+import CreateQuestionsTab from './components/feedbackmanager/CreateQuestionsTab';
+import ManageQuestionsTab from './components/feedbackmanager/ManageQuestionsTab';
+import QuestionArchiveTab from './components/feedbackmanager/QuestionArchiveTab';
 
 const ManageQuestions = () => {
   usePageTitle('Feedback Manager');
   const { venueId } = useVenue();
 
+  // State for active tab
+  const [activeTab, setActiveTab] = useState('QRCode');
+  // Add mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // All your existing state variables
   const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [editingQuestionId, setEditingQuestionId] = useState(null);
@@ -41,6 +48,20 @@ const ManageQuestions = () => {
   const filteredSuggestedQuestions = suggestedQuestions.filter(
     (question) => !addedSuggestedQuestions.includes(question)
   );
+
+  // Navigation items
+  const navItems = [
+    { id: 'QRCode', label: 'QR Code & Sharing' },
+    { id: 'Create', label: 'Create Questions' },
+    { id: 'Manage', label: 'Current Questions' },
+    { id: 'Archive', label: 'Question Archive' },
+  ];
+
+  // Close mobile menu when tab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setIsMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     if (!venueId) return;
@@ -243,13 +264,11 @@ const ManageQuestions = () => {
     setEditingQuestionText(questionText);
   };
 
-  // Add this new function for canceling edit
   const cancelEditingQuestion = () => {
     setEditingQuestionId(null);
     setEditingQuestionText('');
   };
 
-  // Add this new function for handling text changes
   const handleEditTextChange = (newText) => {
     setEditingQuestionText(newText);
   };
@@ -298,73 +317,150 @@ const ManageQuestions = () => {
 
   const feedbackUrl = `${window.location.origin}/feedback/${venueId}`;
 
+  // Props to pass to tab components
+  const tabProps = {
+    // Data
+    questions,
+    newQuestion,
+    editingQuestionId,
+    editingQuestionText,
+    inactiveQuestions,
+    searchTerm,
+    isReplaceModalOpen,
+    selectedInactiveQuestion,
+    pendingNewQuestion,
+    replacementSource,
+    duplicateError,
+    addedSuggestedQuestions,
+    suggestedQuestions,
+    filteredSuggestedQuestions,
+    feedbackUrl,
+    venueId,
+    qrCodeRef,
+
+    // Setters
+    setNewQuestion,
+    setEditingQuestionId,
+    setEditingQuestionText,
+    setSearchTerm,
+    setIsReplaceModalOpen,
+    setSelectedInactiveQuestion,
+    setPendingNewQuestion,
+    setReplacementSource,
+    setDuplicateError,
+
+    // Actions
+    handleAddQuestion,
+    handleAddInactiveQuestion,
+    handleReplaceQuestion,
+    handleNewQuestionChange,
+    onDragEnd,
+    startEditingQuestion,
+    cancelEditingQuestion,
+    handleEditTextChange,
+    saveEditedQuestion,
+    handleDeleteQuestion,
+  };
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'QRCode':
+        return <QRCodeTab {...tabProps} />;
+      case 'Create':
+        return <CreateQuestionsTab {...tabProps} />;
+      case 'Manage':
+        return <ManageQuestionsTab {...tabProps} />;
+      case 'Archive':
+        return <QuestionArchiveTab {...tabProps} />;
+      default:
+        return <QRCodeTab {...tabProps} />;
+    }
+  };
+
+  if (!venueId) {
+    return null;
+  }
+
   return (
     <PageContainer>
-      <div className="mb-6 lg:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-          <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Manage Questions</h1>
-            <p className="text-gray-600 text-sm lg:text-base">Create and organize customer feedback questions.</p>
+      <div className="max-w-none lg:max-w-7xl">
+        {/* Header */}
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+            <div>
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Feedback Manager</h1>
+              <p className="text-gray-600 text-sm lg:text-base">Create and organize customer feedback questions.</p>
+            </div>
+            <div className="bg-blue-50 px-4 py-2 rounded-lg">
+              <span className="text-blue-600 font-medium">Questions Active: {questions.length}/5</span>
+            </div>
           </div>
-          <div className="bg-blue-50 px-4 py-2 rounded-lg">
-            <span className="text-blue-600 font-medium">Questions Active: {questions.length}/5</span>
+        </div>
+
+        {/* Mobile Tab Selector */}
+        <div className="lg:hidden mb-6">
+          <div className="relative">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="w-full bg-white border border-gray-300 rounded-md px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <span className="block truncate">
+                {navItems.find(item => item.id === activeTab)?.label || 'Select Tab'}
+              </span>
+              <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </span>
+            </button>
+
+            {isMobileMenuOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleTabChange(item.id)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                      activeTab === item.id ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Desktop Sidebar - Hidden on mobile */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
+            <nav className="space-y-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full text-left px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-gray-100 text-gray-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            <DragDropContext onDragEnd={onDragEnd}>
+              {renderActiveTab()}
+            </DragDropContext>
           </div>
         </div>
       </div>
-
-      <QRCodeSection feedbackUrl={feedbackUrl} venueId={venueId} />
-
-      <SuggestedQuestions
-        suggestedQuestions={filteredSuggestedQuestions}
-        onQuestionClick={(question) => setNewQuestion(question)}
-      />
-
-      <AddNewQuestion
-        newQuestion={newQuestion}
-        onQuestionChange={handleNewQuestionChange}
-        onAddQuestion={handleAddQuestion}
-        questions={questions}
-        duplicateError={duplicateError}
-      />
-
-      <DragDropContext onDragEnd={onDragEnd}>
-        <CurrentQuestions
-          questions={questions}
-          onEdit={startEditingQuestion}
-          onDelete={handleDeleteQuestion}
-          onDragEnd={onDragEnd}
-          editingQuestionId={editingQuestionId}
-          editingQuestionText={editingQuestionText}
-          onSaveEdit={saveEditedQuestion}
-          onCancelEdit={cancelEditingQuestion}
-          onEditTextChange={handleEditTextChange}
-        />
-      </DragDropContext>
-
-      <PreviouslyUsedQuestions
-        inactiveQuestions={inactiveQuestions}
-        searchTerm={searchTerm}
-        onSearchChange={(e) => setSearchTerm(e.target.value)}
-        onAddInactiveQuestion={(question) => {
-          if (questions.length >= 5) {
-            setSelectedInactiveQuestion(question);
-            setReplacementSource('inactive');
-            setIsReplaceModalOpen(true);
-          } else {
-            handleAddInactiveQuestion(question);
-          }
-        }}
-      />
-
-      <ReplaceModal
-        isOpen={isReplaceModalOpen}
-        onRequestClose={() => setIsReplaceModalOpen(false)}
-        replacementSource={replacementSource}
-        pendingNewQuestion={pendingNewQuestion}
-        selectedInactiveQuestion={selectedInactiveQuestion}
-        questions={questions}
-        onReplaceQuestion={handleReplaceQuestion}
-      />
     </PageContainer>
   );
 };
