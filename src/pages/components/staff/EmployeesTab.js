@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { Plus, X, User, Mail, Phone, Briefcase, AlertCircle, CheckCircle } from 'lucide-react';
 
@@ -137,7 +137,7 @@ const EmployeesTab = ({
     }
   };
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
       first_name: '',
       last_name: '',
@@ -147,9 +147,9 @@ const EmployeesTab = ({
       venue_id: venueId || ''
     });
     setFormErrors({});
-  };
+  }, [venueId]);
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = useCallback((field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear specific field error when user starts typing
@@ -160,9 +160,9 @@ const EmployeesTab = ({
         return newErrors;
       });
     }
-  };
+  }, [formErrors]);
 
-  const AddEmployeeModal = () => (
+  const AddEmployeeModal = useCallback(() => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="p-6">
@@ -335,7 +335,7 @@ const EmployeesTab = ({
         </div>
       </div>
     </div>
-  );
+  ), [formData, formErrors, submitting, allVenues, userRole, commonRoles, handleInputChange, handleSubmit, resetForm]);
 
   return (
     <div className="max-w-none lg:max-w-6xl">
