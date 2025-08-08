@@ -1,34 +1,29 @@
-// ReportsPage.js — Refactored to use individual tile components with grouped sections
+// ReportsPage.js — Refactored with tabbed interface like SettingsPage
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import PageContainer from '../components/PageContainer';
-import {
-  CheckCircle,
-  AlertTriangle,
-  BarChart3,
-  CalendarClock,
-  LayoutGrid,
-  TrendingUp
-} from 'lucide-react';
 import usePageTitle from '../hooks/usePageTitle';
 import { useVenue } from '../context/VenueContext';
 
-// Import report tile components
-import ActionCompletionRateTile from '../components/reports/ActionCompletionRateTile';
-import SatisfactionTrendTile from '../components/reports/SatisfactionTrendTile';
-import AverageResolutionTimeTile from '../components/reports/AverageResolutionTimeTile';
-import TablePerformanceRankingTile from '../components/reports/TablePerformanceRankingTile';
-import RatingDistributionTile from '../components/reports/RatingDistributionTile';
-import MetricCard from '../components/reports/MetricCard';
-import PerformanceSummaryTile from '../components/reports/PerformanceSummaryTile';
-import RevenueProjection from '../components/reports/RevenueProjection';
+// Import tab components
+import BusinessImpactTab from './components/reports/BusinessImpactTab';
+import PerformanceDashboardTab from './components/reports/PerformanceDashboardTab';
+import CustomerInsightsTab from './components/reports/CustomerInsightsTab';
+import QuickMetricsTab from './components/reports/QuickMetricsTab';
 
 const ReportsPage = () => {
   usePageTitle('Reports');
   const navigate = useNavigate();
   const { venueId } = useVenue();
+  
+  // State for active tab
+  const [activeTab, setActiveTab] = useState('Performance');
+  // Add mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Data state
   const [feedbackSessions, setFeedbackSessions] = useState([]);
 
   useEffect(() => {
@@ -71,6 +66,7 @@ const ReportsPage = () => {
       .subscribe();
   };
 
+  // Calculate derived data
   const actionedCount = feedbackSessions.filter(s => s.isActioned).length;
   const totalCount = feedbackSessions.length;
   const alertsCount = feedbackSessions.filter(s => s.lowScore && !s.isActioned).length;
@@ -99,19 +95,58 @@ const ReportsPage = () => {
 
   const satisfactionTrend = getDailySatisfactionTrend(feedbackSessions);
 
-  // Section title component
-  const SectionTitle = ({ title, description }) => (
-    <div className="mb-4">
-      <h2 className="text-base lg:text-lg font-medium text-gray-900 mb-1">{title}</h2>
-      {description && (
-        <p className="text-sm text-gray-600">{description}</p>
-      )}
-    </div>
-  );
+  // Navigation items
+  const navItems = [
+    { id: 'Performance', label: 'Performance Dashboard' },
+    { id: 'Business', label: 'Business Impact' },
+    { id: 'Insights', label: 'Customer Insights' },
+    { id: 'Metrics', label: 'Quick Metrics' },
+  ];
+
+  // Close mobile menu when tab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setIsMobileMenuOpen(false);
+  };
+
+  // Props to pass to tab components
+  const tabProps = {
+    venueId,
+    feedbackSessions,
+    actionedCount,
+    totalCount,
+    alertsCount,
+    recentCount,
+    uniqueTables,
+    completionRate,
+    averageRating,
+    satisfactionTrend,
+    allRatings,
+  };
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'Performance':
+        return <PerformanceDashboardTab {...tabProps} />;
+      case 'Business':
+        return <BusinessImpactTab {...tabProps} />;
+      case 'Insights':
+        return <CustomerInsightsTab {...tabProps} />;
+      case 'Metrics':
+        return <QuickMetricsTab {...tabProps} />;
+      default:
+        return <PerformanceDashboardTab {...tabProps} />;
+    }
+  };
+
+  if (!venueId) {
+    return null;
+  }
 
   return (
     <PageContainer>
       <div className="max-w-none lg:max-w-7xl">
+        {/* Header */}
         <div className="mb-6 lg:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
             <div>
@@ -128,113 +163,67 @@ const ReportsPage = () => {
           </div>
         </div>
 
-        {/* Business Impact */}
-        <SectionTitle 
-          title="Business Impact" 
-          description="Estimated revenue impact and return on investment from customer feedback management"
-        />
-        <div className="mb-8">
-          <RevenueProjection 
-            venueId={venueId} 
-          />
+        {/* Mobile Tab Selector */}
+        <div className="lg:hidden mb-6">
+          <div className="relative">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="w-full bg-white border border-gray-300 rounded-md px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <span className="block truncate">
+                {navItems.find(item => item.id === activeTab)?.label || 'Select Tab'}
+              </span>
+              <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </span>
+            </button>
+
+            {isMobileMenuOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleTabChange(item.id)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                      activeTab === item.id ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Performance Dashboard */}
-        <SectionTitle 
-          title="Performance Dashboard" 
-          description="Key metrics showing your team's response performance and customer satisfaction trends"
-        />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
-          <ActionCompletionRateTile 
-            actionedCount={actionedCount} 
-            totalCount={totalCount} 
-          />
-          
-          <SatisfactionTrendTile 
-            satisfactionTrend={satisfactionTrend} 
-          />
-          
-          <AverageResolutionTimeTile 
-            venueId={venueId} 
-          />
-        </div>
+        {/* Desktop Layout */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Desktop Sidebar - Hidden on mobile */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
+            <nav className="space-y-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full text-left px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-gray-100 text-gray-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </div>
 
-        {/* Customer Insights */}
-        <SectionTitle 
-          title="Customer Insights" 
-          description="Detailed analysis of customer feedback patterns and satisfaction distribution"
-        />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
-          <RatingDistributionTile 
-            venueId={venueId} 
-          />
-          
-          <TablePerformanceRankingTile 
-            venueId={venueId} 
-          />
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {renderActiveTab()}
+          </div>
         </div>
-
-        {/* Quick Metrics */}
-        <SectionTitle 
-          title="Quick Metrics" 
-          description="At-a-glance summary of key feedback statistics"
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
-          <MetricCard 
-            title="Total Feedback Sessions" 
-            value={totalCount} 
-            icon={BarChart3} 
-            description="All customer feedback received"
-            variant="info"
-          />
-          <MetricCard 
-            title="Sessions Actioned" 
-            value={actionedCount} 
-            icon={CheckCircle} 
-            description="Feedback that has been addressed"
-            variant="success"
-          />
-          <MetricCard 
-            title="Unresolved Alerts" 
-            value={alertsCount} 
-            icon={AlertTriangle} 
-            description="Low scores requiring attention"
-            variant={alertsCount > 0 ? "danger" : "default"}
-          />
-          <MetricCard 
-            title="Feedback This Week" 
-            value={recentCount} 
-            icon={CalendarClock} 
-            description="Recent customer responses"
-            variant="default"
-          />
-          <MetricCard 
-            title="Tables Participated" 
-            value={uniqueTables.length} 
-            icon={LayoutGrid} 
-            description="Different table locations"
-            variant="default"
-          />
-          <MetricCard 
-            title="Avg. Satisfaction" 
-            value={averageRating} 
-            icon={TrendingUp} 
-            description="Overall rating (1-5 scale)"
-            variant={parseFloat(averageRating) >= 4 ? "success" : parseFloat(averageRating) >= 3 ? "warning" : "danger"}
-          />
-        </div>
-
-        {/* Performance Summary */}
-        <SectionTitle 
-          title="Performance Summary" 
-          description="Consolidated overview of your venue's feedback performance"
-        />
-        <PerformanceSummaryTile 
-          totalCount={totalCount}
-          recentCount={recentCount}
-          completionRate={completionRate}
-          alertsCount={alertsCount}
-        />
       </div>
     </PageContainer>
   );
