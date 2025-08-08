@@ -147,8 +147,49 @@ const Floorplan = () => {
   };
 
   const loadStaff = async (venueId) => {
-    const { data } = await supabase.from('staff').select('id, first_name, last_name').eq('venue_id', venueId);
-    setStaffList(data || []);
+    try {
+      // Get staff members (these are users who can log in - managers, etc.)
+      const { data: staffData, error: staffError } = await supabase
+        .from('staff')
+        .select('id, first_name, last_name, role')
+        .eq('venue_id', venueId);
+
+      // Get employees (these are employee records)
+      const { data: employeesData, error: employeesError } = await supabase
+        .from('employees')
+        .select('id, first_name, last_name, role')
+        .eq('venue_id', venueId);
+
+      if (staffError) {
+        console.error('Error fetching staff:', staffError);
+      }
+
+      if (employeesError) {
+        console.error('Error fetching employees:', employeesError);
+      }
+
+      // Combine both arrays and add a source indicator
+      const combinedStaffList = [
+        ...(staffData || []).map(person => ({
+          ...person,
+          source: 'staff',
+          display_name: `${person.first_name} ${person.last_name}`,
+          role_display: person.role || 'Staff Member'
+        })),
+        ...(employeesData || []).map(person => ({
+          ...person,
+          source: 'employee',
+          display_name: `${person.first_name} ${person.last_name}`,
+          role_display: person.role || 'Employee'
+        }))
+      ].sort((a, b) => a.display_name.localeCompare(b.display_name)); // Sort alphabetically
+
+      console.log('Combined staff list:', combinedStaffList);
+      setStaffList(combinedStaffList);
+    } catch (error) {
+      console.error('Error in loadStaff:', error);
+      setStaffList([]);
+    }
   };
 
   // Event handlers
@@ -365,6 +406,9 @@ const Floorplan = () => {
       setSelectedTable(null);
     };
 
+    // Get the selected staff member details for display
+    const selectedStaffMember = staffList.find(staff => staff.id === selectedStaffId);
+
     return (
       <div className="fixed inset-0 z-40 bg-black/50" onClick={handleBackdropClick}>
         <div
@@ -394,13 +438,55 @@ const Floorplan = () => {
                 value={selectedStaffId}
                 onChange={(e) => setSelectedStaffId(e.target.value)}
               >
-                <option value="">Select Staff Member</option>
-                {staffList.map(staff => (
-                  <option key={staff.id} value={staff.id}>
-                    {staff.first_name} {staff.last_name}
-                  </option>
-                ))}
+                <option value="">Select Team Member</option>
+                
+                {/* Group staff members if we have both staff and employees */}
+                {staffList.some(person => person.source === 'staff') && (
+                  <optgroup label="Managers & Staff">
+                    {staffList
+                      .filter(person => person.source === 'staff')
+                      .map(staff => (
+                        <option key={`staff-${staff.id}`} value={staff.id}>
+                          {staff.display_name} ({staff.role_display})
+                        </option>
+                      ))
+                    }
+                  </optgroup>
+                )}
+                
+                {staffList.some(person => person.source === 'employee') && (
+                  <optgroup label="Employees">
+                    {staffList
+                      .filter(person => person.source === 'employee')
+                      .map(employee => (
+                        <option key={`employee-${employee.id}`} value={employee.id}>
+                          {employee.display_name} ({employee.role_display})
+                        </option>
+                      ))
+                    }
+                  </optgroup>
+                )}
+                
+                {/* If no grouping needed, show all together */}
+                {!staffList.some(person => person.source === 'staff') || 
+                 !staffList.some(person => person.source === 'employee') ? (
+                  staffList.map(person => (
+                    <option key={person.id} value={person.id}>
+                      {person.display_name} ({person.role_display})
+                    </option>
+                  ))
+                ) : null}
               </select>
+              
+              {/* Show selected staff member info */}
+              {selectedStaffMember && (
+                <div className="mt-2 text-xs text-gray-600">
+                  Selected: {selectedStaffMember.display_name} - {selectedStaffMember.role_display}
+                  {selectedStaffMember.source === 'employee' && (
+                    <span className="ml-1 text-blue-600">(Employee)</span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-4 mb-6">
@@ -419,7 +505,13 @@ const Floorplan = () => {
                   {f.rating !== null && f.rating !== undefined && (
                     <div className="mb-3">
                       <span className="text-sm text-gray-600">Rating: </span>
-                      <span className="font-semibold text-gray-900">{f.rating}/5</span>
+                      <span className={`font-semibold ${
+                        f.rating <= 2 ? 'text-red-600' : 
+                        f.rating <= 3 ? 'text-yellow-600' : 
+                        'text-green-600'
+                      }`}>
+                        {f.rating}/5
+                      </span>
                     </div>
                   )}
 
@@ -442,8 +534,17 @@ const Floorplan = () => {
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              Mark All Resolved
+              {selectedStaffMember ? (
+                `Mark Resolved by ${selectedStaffMember.display_name}`
+              ) : (
+                'Select Team Member to Resolve'
+              )}
             </button>
+
+            {/* Summary info */}
+            <div className="mt-4 text-xs text-gray-500 text-center">
+              {unresolvedCount} unresolved feedback item{unresolvedCount !== 1 ? 's' : ''}
+            </div>
           </div>
         </div>
       </div>
@@ -461,6 +562,7 @@ const Floorplan = () => {
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Floor Plan</h1>
         <p className="text-gray-600 text-sm lg:text-base">Organize table layout and manage real-time feedback alerts.</p>
       </div>
+      
       <EditControls
         editMode={editMode}
         hasUnsavedChanges={hasUnsavedChanges}

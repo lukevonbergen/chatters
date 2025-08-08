@@ -49,8 +49,49 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
   };
 
   const loadStaff = async () => {
-    const { data } = await supabase.from('staff').select('id, first_name, last_name').eq('venue_id', venueId);
-    setStaffList(data || []);
+    try {
+      // Get staff members (these are users who can log in - managers, etc.)
+      const { data: staffData, error: staffError } = await supabase
+        .from('staff')
+        .select('id, first_name, last_name, role')
+        .eq('venue_id', venueId);
+
+      // Get employees (these are employee records)
+      const { data: employeesData, error: employeesError } = await supabase
+        .from('employees')
+        .select('id, first_name, last_name, role')
+        .eq('venue_id', venueId);
+
+      if (staffError) {
+        console.error('Error fetching staff:', staffError);
+      }
+
+      if (employeesError) {
+        console.error('Error fetching employees:', employeesError);
+      }
+
+      // Combine both arrays and add a source indicator
+      const combinedStaffList = [
+        ...(staffData || []).map(person => ({
+          ...person,
+          source: 'staff',
+          display_name: `${person.first_name} ${person.last_name}`,
+          role_display: person.role || 'Staff Member'
+        })),
+        ...(employeesData || []).map(person => ({
+          ...person,
+          source: 'employee',
+          display_name: `${person.first_name} ${person.last_name}`,
+          role_display: person.role || 'Employee'
+        }))
+      ].sort((a, b) => a.display_name.localeCompare(b.display_name)); // Sort alphabetically
+
+      console.log('Combined staff list for FeedbackTabs:', combinedStaffList);
+      setStaffList(combinedStaffList);
+    } catch (error) {
+      console.error('Error in loadStaff:', error);
+      setStaffList([]);
+    }
   };
 
   const markSessionAsActioned = async (session) => {
@@ -101,6 +142,9 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
     if (rating <= 3) return 'bg-yellow-50';
     return 'bg-green-50';
   };
+
+  // Get the selected staff member details for display
+  const selectedStaffMember = staffList.find(staff => staff.id === selectedStaffId);
 
   if (loading) {
     return (
@@ -308,7 +352,7 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
         </div>
       )}
 
-      {/* Mobile-Optimized Modal */}
+      {/* Enhanced Mobile-Optimized Modal */}
       {showModal && selectedSession && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 lg:p-4">
           <div className="bg-white w-full max-w-2xl max-h-[95vh] lg:max-h-[90vh] overflow-y-auto rounded-lg lg:rounded-xl shadow-2xl">
@@ -329,20 +373,62 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
               
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assign to Staff Member
+                  Assign to Team Member
                 </label>
                 <select
                   value={selectedStaffId}
                   onChange={e => setSelectedStaffId(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">Select Staff Member</option>
-                  {staffList.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.first_name} {s.last_name}
-                    </option>
-                  ))}
+                  <option value="">Select Team Member</option>
+                  
+                  {/* Group staff members if we have both staff and employees */}
+                  {staffList.some(person => person.source === 'staff') && (
+                    <optgroup label="Managers & Staff">
+                      {staffList
+                        .filter(person => person.source === 'staff')
+                        .map(staff => (
+                          <option key={`staff-${staff.id}`} value={staff.id}>
+                            {staff.display_name} ({staff.role_display})
+                          </option>
+                        ))
+                      }
+                    </optgroup>
+                  )}
+                  
+                  {staffList.some(person => person.source === 'employee') && (
+                    <optgroup label="Employees">
+                      {staffList
+                        .filter(person => person.source === 'employee')
+                        .map(employee => (
+                          <option key={`employee-${employee.id}`} value={employee.id}>
+                            {employee.display_name} ({employee.role_display})
+                          </option>
+                        ))
+                      }
+                    </optgroup>
+                  )}
+                  
+                  {/* If no grouping needed, show all together */}
+                  {!staffList.some(person => person.source === 'staff') || 
+                   !staffList.some(person => person.source === 'employee') ? (
+                    staffList.map(person => (
+                      <option key={person.id} value={person.id}>
+                        {person.display_name} ({person.role_display})
+                      </option>
+                    ))
+                  ) : null}
                 </select>
+                
+                {/* Show selected staff member info */}
+                {selectedStaffMember && (
+                  <div className="mt-2 text-xs text-gray-600">
+                    Selected: {selectedStaffMember.display_name} - {selectedStaffMember.role_display}
+                    {selectedStaffMember.source === 'employee' && (
+                      <span className="ml-1 text-blue-600">(Employee)</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -388,7 +474,11 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                 }`}
               >
                 <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5 inline mr-2" />
-                Mark as Resolved
+                {selectedStaffMember ? (
+                  `Mark Resolved by ${selectedStaffMember.display_name}`
+                ) : (
+                  'Select Team Member to Resolve'
+                )}
               </button>
             </div>
           </div>
