@@ -1,9 +1,9 @@
 // PerformanceDashboardTab.js — Performance metrics and trends
 
 import React from 'react';
-import ActionCompletionRateTile from '../../ActionCompletionRateTile';
-import SatisfactionTrendTile from '../../SatisfactionTrendTile';
-import AverageResolutionTimeTile from '../../AverageResolutionTimeTile';
+import ActionCompletionRateTile from '../../../components/reports/ActionCompletionRateTile';
+import SatisfactionTrendTile from '../../../components/reports/SatisfactionTrendTile';
+import AverageResolutionTimeTile from '../../../components/reports/AverageResolutionTimeTile';
 
 const PerformanceDashboardTab = ({
   venueId,

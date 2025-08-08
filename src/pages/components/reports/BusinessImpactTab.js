@@ -1,8 +1,8 @@
 // BusinessImpactTab.js — Revenue impact and ROI metrics
 
 import React from 'react';
-import RevenueProjection from '../../RevenueProjection';
-import PerformanceSummaryTile from '../../PerformanceSummaryTile';
+import RevenueProjection from '../../../components/reports/RevenueProjection';
+import PerformanceSummaryTile from '../../../components/reports/PerformanceSummaryTile';
 
 const BusinessImpactTab = ({
   venueId,

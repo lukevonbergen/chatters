@@ -1,8 +1,8 @@
 // CustomerInsightsTab.js — Detailed customer feedback analysis
 
 import React from 'react';
-import RatingDistributionTile from '../../RatingDistributionTile';
-import TablePerformanceRankingTile from '../../TablePerformanceRankingTile';
+import RatingDistributionTile from '../../../components/reports/RatingDistributionTile';
+import TablePerformanceRankingTile from '../../../components/reports/TablePerformanceRankingTile';
 
 const CustomerInsightsTab = ({ venueId }) => {
   return (

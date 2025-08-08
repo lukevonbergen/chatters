@@ -9,7 +9,7 @@ import {
   LayoutGrid,
   TrendingUp
 } from 'lucide-react';
-import MetricCard from '../../MetricCard';
+import MetricCard from '../../../components/reports/MetricCard';
 
 const QuickMetricsTab = ({
   totalCount,
