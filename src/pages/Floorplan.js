@@ -457,6 +457,10 @@ const Floorplan = () => {
 
   return (
     <PageContainer>
+      <div className="mb-6 lg:mb-8">
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Floor Plan</h1>
+        <p className="text-gray-600 text-sm lg:text-base">Organize table layout and manage real-time feedback alerts.</p>
+      </div>
       <EditControls
         editMode={editMode}
         hasUnsavedChanges={hasUnsavedChanges}

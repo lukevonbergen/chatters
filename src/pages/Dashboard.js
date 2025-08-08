@@ -56,7 +56,10 @@ const DashboardPage = () => {
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Overview</h1>
+      <div className="mb-6 lg:mb-8">
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Overview</h1>
+        <p className="text-gray-600 text-sm lg:text-base">Monitor customer feedback and key performance metrics.</p>
+      </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1">

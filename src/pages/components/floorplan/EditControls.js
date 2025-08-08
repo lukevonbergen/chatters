@@ -52,12 +52,9 @@ const EditControls = ({
     <div className="mb-6">
       {/* Edit Mode Toggle */}
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Floor Plan Manager</h2>
-          <p className="text-sm text-gray-600">
-            {editMode ? 'Drag tables to reposition them' : 'Click tables to view customer feedback'}
-          </p>
-        </div>
+        <p className="text-sm text-gray-600">
+          {editMode ? 'Drag tables to reposition them' : 'Click tables to view customer feedback'}
+        </p>
         
         <button
           onClick={onToggleEdit}
