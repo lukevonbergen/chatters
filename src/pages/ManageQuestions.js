@@ -9,16 +9,14 @@ import { useVenue } from '../context/VenueContext';
 
 // Import tab components
 import QRCodeTab from './components/feedbackmanager/QRCodeTab';
-import CreateQuestionsTab from './components/feedbackmanager/CreateQuestionsTab';
-import ManageQuestionsTab from './components/feedbackmanager/ManageQuestionsTab';
-import QuestionArchiveTab from './components/feedbackmanager/QuestionArchiveTab';
+import QuestionManagementTab from './components/feedbackmanager/QuestionManagementTab';
 
 const ManageQuestions = () => {
   usePageTitle('Feedback Manager');
   const { venueId } = useVenue();
 
   // State for active tab
-  const [activeTab, setActiveTab] = useState('QRCode');
+  const [activeTab, setActiveTab] = useState('Questions');
   // Add mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -52,9 +50,7 @@ const ManageQuestions = () => {
   // Navigation items
   const navItems = [
     { id: 'QRCode', label: 'QR Code & Sharing' },
-    { id: 'Create', label: 'Create Questions' },
-    { id: 'Manage', label: 'Current Questions' },
-    { id: 'Archive', label: 'Question Archive' },
+    { id: 'Questions', label: 'Question Management' },
   ];
 
   // Close mobile menu when tab changes
@@ -366,14 +362,10 @@ const ManageQuestions = () => {
     switch (activeTab) {
       case 'QRCode':
         return <QRCodeTab {...tabProps} />;
-      case 'Create':
-        return <CreateQuestionsTab {...tabProps} />;
-      case 'Manage':
-        return <ManageQuestionsTab {...tabProps} />;
-      case 'Archive':
-        return <QuestionArchiveTab {...tabProps} />;
+      case 'Questions':
+        return <QuestionManagementTab {...tabProps} />;
       default:
-        return <QRCodeTab {...tabProps} />;
+        return <QuestionManagementTab {...tabProps} />;
     }
   };
 
