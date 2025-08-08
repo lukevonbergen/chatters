@@ -89,10 +89,10 @@ const StaffPage = () => {
       console.log('🔍 Account ID:', userData.account_id);
 
       if (userRole === 'master') {
-        // Masters: Get all staff under account
+        // Masters: Get all staff and employees under account
         await fetchAllStaffForAccount(userData.account_id);
       } else {
-        // Managers: Get staff for their venue(s)
+        // Managers: Get staff and employees for their venue(s)
         await fetchStaffForManager(userId);
       }
 
@@ -119,8 +119,8 @@ const StaffPage = () => {
     const venueIds = allVenues.map(v => v.id);
     console.log('🔍 Querying for venue IDs:', venueIds);
 
-    // Get all staff under this account (via venues)
-    const { data: staffData, error } = await supabase
+    // Get managers from staff table (users with role 'manager')
+    const { data: staffData, error: staffError } = await supabase
       .from('staff')
       .select(`
         id,
@@ -143,29 +143,55 @@ const StaffPage = () => {
       `)
       .in('venue_id', venueIds);
 
-    console.log('🔍 Staff query result:', { staffData, error });
+    console.log('🔍 Staff query result:', { staffData, staffError });
 
-    if (error) {
-      console.error('🔥 Error fetching staff:', error);
-      return;
+    // Get employees from employees table
+    const { data: employeesData, error: employeesError } = await supabase
+      .from('employees')
+      .select(`
+        id,
+        venue_id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        role,
+        created_at,
+        venues (
+          id,
+          name
+        )
+      `)
+      .in('venue_id', venueIds);
+
+    console.log('🔍 Employees query result:', { employeesData, employeesError });
+
+    if (staffError) {
+      console.error('🔥 Error fetching staff:', staffError);
     }
 
-    // Separate managers and employees
-    const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
-    const employeesData = staffData?.filter(staff => staff.users?.role === 'employee') || [];
+    if (employeesError) {
+      console.error('🔥 Error fetching employees:', employeesError);
+    }
 
-    console.log('🔍 Processed data:', { managersData, employeesData });
+    // Separate managers from staff table (these are users who can log in)
+    const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
+
+    // Use employees from the employees table (these are just employee records)
+    const employeesFromTable = employeesData || [];
+
+    console.log('🔍 Processed data:', { managersData, employeesFromTable });
 
     setManagers(managersData);
-    setEmployees(employeesData);
+    setEmployees(employeesFromTable); // This now comes from the employees table
   };
 
   const fetchStaffForManager = async (userId) => {
     console.log('🔍 fetchStaffForManager called');
     console.log('🔍 venueId:', venueId);
     
-    // Get staff for venues this manager has access to
-    const { data: staffData, error } = await supabase
+    // Get managers from staff table for this venue
+    const { data: staffData, error: staffError } = await supabase
       .from('staff')
       .select(`
         id,
@@ -189,19 +215,45 @@ const StaffPage = () => {
       .eq('venue_id', venueId)
       .neq('user_id', userId); // Don't include themselves
 
-    console.log('🔍 Manager staff query result:', { staffData, error });
+    console.log('🔍 Manager staff query result:', { staffData, staffError });
 
-    if (error) {
-      console.error('🔥 Error fetching staff for manager:', error);
-      return;
+    // Get employees from employees table for this venue
+    const { data: employeesData, error: employeesError } = await supabase
+      .from('employees')
+      .select(`
+        id,
+        venue_id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        role,
+        created_at,
+        venues (
+          id,
+          name
+        )
+      `)
+      .eq('venue_id', venueId);
+
+    console.log('🔍 Manager employees query result:', { employeesData, employeesError });
+
+    if (staffError) {
+      console.error('🔥 Error fetching staff for manager:', staffError);
     }
 
-    // Separate managers and employees
+    if (employeesError) {
+      console.error('🔥 Error fetching employees for manager:', employeesError);
+    }
+
+    // Separate managers (from staff table - these can log in)
     const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
-    const employeesData = staffData?.filter(staff => staff.users?.role === 'employee') || [];
+
+    // Use employees from employees table
+    const employeesFromTable = employeesData || [];
 
     setManagers(managersData);
-    setEmployees(employeesData);
+    setEmployees(employeesFromTable);
   };
 
   // Add new manager (master only)
