@@ -4,7 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import ManageQuestions from './pages/ManageQuestions';
 import Floorplan from './pages/Floorplan';
 import TablesDashboard from './pages/Dashboard_Tables'; // still used for /tablefeedback
-import DashboardPage from './pages/DashboardPage';       // ← use this for /dashboard
+import DashboardPage from './pages/Dashboard';       // ← use this for /dashboard
 import SettingsPage from './pages/SettingsPage';
 import TemplatesPage from './pages/QRTemplates';
 import ReportsPage from './pages/ReportsPage';
