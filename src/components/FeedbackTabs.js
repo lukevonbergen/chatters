@@ -39,9 +39,8 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
       const isExpired = now.diff(createdAt, 'minute') > EXPIRY_THRESHOLD_MINUTES;
       const isActioned = items.every(i => i.is_actioned);
       const lowScore = items.some(i => i.rating !== null && i.rating <= 2);
-      const avgRating = items.filter(i => i.rating !== null).length > 0 
-        ? items.filter(i => i.rating !== null).reduce((a, b) => a + b.rating, 0) / items.filter(i => i.rating !== null).length 
-        : null;
+      const rated = items.filter(i => i.rating !== null);
+      const avgRating = rated.length > 0 ? rated.reduce((a, b) => a + b.rating, 0) / rated.length : null;
       return { session_id, items, isActioned, lowScore, isExpired, createdAt, avgRating };
     });
     setSessionFeedback(sessions);
@@ -50,27 +49,16 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
 
   const loadStaff = async () => {
     try {
-      // Get staff members (these are users who can log in - managers, etc.)
-      const { data: staffData, error: staffError } = await supabase
+      const { data: staffData } = await supabase
         .from('staff')
         .select('id, first_name, last_name, role')
         .eq('venue_id', venueId);
 
-      // Get employees (these are employee records)
-      const { data: employeesData, error: employeesError } = await supabase
+      const { data: employeesData } = await supabase
         .from('employees')
         .select('id, first_name, last_name, role')
         .eq('venue_id', venueId);
 
-      if (staffError) {
-        console.error('Error fetching staff:', staffError);
-      }
-
-      if (employeesError) {
-        console.error('Error fetching employees:', employeesError);
-      }
-
-      // Combine both arrays and add a source indicator
       const combinedStaffList = [
         ...(staffData || []).map(person => ({
           ...person,
@@ -84,12 +72,10 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
           display_name: `${person.first_name} ${person.last_name}`,
           role_display: person.role || 'Employee'
         }))
-      ].sort((a, b) => a.display_name.localeCompare(b.display_name)); // Sort alphabetically
+      ].sort((a, b) => a.display_name.localeCompare(b.display_name));
 
-      console.log('Combined staff list for FeedbackTabs:', combinedStaffList);
       setStaffList(combinedStaffList);
-    } catch (error) {
-      console.error('Error in loadStaff:', error);
+    } catch {
       setStaffList([]);
     }
   };
@@ -109,10 +95,7 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
   };
 
   const filteredSessions = sessionFeedback.filter(session => {
-    // Table filter
     if (tableFilter && session.items[0]?.table_number !== tableFilter) return false;
-    
-    // Tab filter
     if (activeTab === 'alerts') return session.lowScore && !session.isActioned && !session.isExpired;
     if (activeTab === 'actioned') return session.isActioned;
     if (activeTab === 'expired') return session.isExpired && !session.isActioned;
@@ -143,7 +126,6 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
     return 'bg-green-50';
   };
 
-  // Get the selected staff member details for display
   const selectedStaffMember = staffList.find(staff => staff.id === selectedStaffId);
 
   if (loading) {
@@ -382,7 +364,6 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                 >
                   <option value="">Select Team Member</option>
                   
-                  {/* Group staff members if we have both staff and employees */}
                   {staffList.some(person => person.source === 'staff') && (
                     <optgroup label="Managers & Staff">
                       {staffList
@@ -409,7 +390,6 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                     </optgroup>
                   )}
                   
-                  {/* If no grouping needed, show all together */}
                   {!staffList.some(person => person.source === 'staff') || 
                    !staffList.some(person => person.source === 'employee') ? (
                     staffList.map(person => (
@@ -420,7 +400,6 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                   ) : null}
                 </select>
                 
-                {/* Show selected staff member info */}
                 {selectedStaffMember && (
                   <div className="mt-2 text-xs text-gray-600">
                     Selected: {selectedStaffMember.display_name} - {selectedStaffMember.role_display}

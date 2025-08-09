@@ -13,12 +13,9 @@ const StaffPage = () => {
   usePageTitle('Staff');
   const { venueId, userRole, allVenues, loading: venueLoading } = useVenue();
 
-  // State for active tab
   const [activeTab, setActiveTab] = useState(userRole === 'master' ? 'Managers' : 'Employees');
-  // Add mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Staff data state
   const [managers, setManagers] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,95 +29,55 @@ const StaffPage = () => {
     { id: 'Employees', label: 'Employees' },
   ];
 
-  // Close mobile menu when tab changes
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     setIsMobileMenuOpen(false);
   };
 
-  // Fetch staff data - now waits for venues to load
   useEffect(() => {
-    // Don't fetch if venues are still loading
     if (venueLoading) return;
-    
-    // For masters, wait until we have venues
-    // For managers, wait until we have a venueId
-    if (userRole === 'master' && (!allVenues || allVenues.length === 0)) {
-      return;
-    }
-    
-    if (userRole !== 'master' && !venueId) {
-      return;
-    }
-
+    if (userRole === 'master' && (!allVenues || allVenues.length === 0)) return;
+    if (userRole !== 'master' && !venueId) return;
     fetchStaffData();
   }, [venueId, userRole, allVenues, venueLoading]);
 
   const fetchStaffData = async () => {
-    console.log('🔍 fetchStaffData called');
-    console.log('🔍 userRole:', userRole);
-    console.log('🔍 venueId:', venueId);
-    console.log('🔍 allVenues:', allVenues);
-    
     setLoading(true);
-
     try {
-      // Get current user info
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth?.user?.id;
+      if (!userId) return;
 
-      if (!userId) {
-        console.log('🔍 No userId found');
-        return;
-      }
-
-      // Get user's account info
       const { data: userData } = await supabase
         .from('users')
         .select('account_id')
         .eq('id', userId)
         .single();
 
-      if (!userData?.account_id) {
-        console.log('🔍 No account_id found');
-        return;
-      }
-
-      console.log('🔍 Account ID:', userData.account_id);
+      if (!userData?.account_id) return;
 
       if (userRole === 'master') {
-        // Masters: Get all staff and employees under account
         await fetchAllStaffForAccount(userData.account_id);
       } else {
-        // Managers: Get staff and employees for their venue(s)
         await fetchStaffForManager(userId);
       }
-
     } catch (error) {
-      console.error('🔥 Error in fetchStaffData:', error);
       setMessage('Failed to load staff data');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchAllStaffForAccount = async (accountId) => {
-    console.log('🔍 fetchAllStaffForAccount called');
-    console.log('🔍 allVenues for query:', allVenues);
-    
-    // Safety check - make sure we have venues
+  const fetchAllStaffForAccount = async () => {
     if (!allVenues || allVenues.length === 0) {
-      console.log('🔍 No venues available, skipping staff fetch');
       setManagers([]);
       setEmployees([]);
       return;
     }
 
     const venueIds = allVenues.map(v => v.id);
-    console.log('🔍 Querying for venue IDs:', venueIds);
 
-    // Get managers from staff table (users with role 'manager')
-    const { data: staffData, error: staffError } = await supabase
+    const { data: staffData } = await supabase
       .from('staff')
       .select(`
         id,
@@ -131,22 +88,12 @@ const StaffPage = () => {
         email,
         role,
         created_at,
-        venues (
-          id,
-          name
-        ),
-        users (
-          id,
-          email,
-          role
-        )
+        venues (id, name),
+        users (id, email, role)
       `)
       .in('venue_id', venueIds);
 
-    console.log('🔍 Staff query result:', { staffData, staffError });
-
-    // Get employees from employees table
-    const { data: employeesData, error: employeesError } = await supabase
+    const { data: employeesData } = await supabase
       .from('employees')
       .select(`
         id,
@@ -157,143 +104,87 @@ const StaffPage = () => {
         phone,
         role,
         created_at,
-        venues (
-          id,
-          name
-        )
+        venues (id, name)
       `)
       .in('venue_id', venueIds);
 
-    console.log('🔍 Employees query result:', { employeesData, employeesError });
-
-    if (staffError) {
-      console.error('🔥 Error fetching staff:', staffError);
-    }
-
-    if (employeesError) {
-      console.error('🔥 Error fetching employees:', employeesError);
-    }
-
-    // Separate managers from staff table (these are users who can log in)
     const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
-
-    // Use employees from the employees table (these are just employee records)
-    const employeesFromTable = employeesData || [];
-
-    console.log('🔍 Processed data:', { managersData, employeesFromTable });
-
-    setManagers(managersData);
-    setEmployees(employeesFromTable); // This now comes from the employees table
-  };
-
-  const fetchStaffForManager = async (userId) => {
-    console.log('🔍 fetchStaffForManager called');
-    console.log('🔍 venueId:', venueId);
-    
-    // Get managers from staff table for this venue
-    const { data: staffData, error: staffError } = await supabase
-      .from('staff')
-      .select(`
-        id,
-        user_id,
-        venue_id,
-        first_name,
-        last_name,
-        email,
-        role,
-        created_at,
-        venues (
-          id,
-          name
-        ),
-        users (
-          id,
-          email,
-          role
-        )
-      `)
-      .eq('venue_id', venueId)
-      .neq('user_id', userId); // Don't include themselves
-
-    console.log('🔍 Manager staff query result:', { staffData, staffError });
-
-    // Get employees from employees table for this venue
-    const { data: employeesData, error: employeesError } = await supabase
-      .from('employees')
-      .select(`
-        id,
-        venue_id,
-        first_name,
-        last_name,
-        email,
-        phone,
-        role,
-        created_at,
-        venues (
-          id,
-          name
-        )
-      `)
-      .eq('venue_id', venueId);
-
-    console.log('🔍 Manager employees query result:', { employeesData, employeesError });
-
-    if (staffError) {
-      console.error('🔥 Error fetching staff for manager:', staffError);
-    }
-
-    if (employeesError) {
-      console.error('🔥 Error fetching employees for manager:', employeesError);
-    }
-
-    // Separate managers (from staff table - these can log in)
-    const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
-
-    // Use employees from employees table
     const employeesFromTable = employeesData || [];
 
     setManagers(managersData);
     setEmployees(employeesFromTable);
   };
 
-  // Add new manager (master only)
-  const addManager = async (managerData) => {
+  const fetchStaffForManager = async (userId) => {
+    const { data: staffData } = await supabase
+      .from('staff')
+      .select(`
+        id,
+        user_id,
+        venue_id,
+        first_name,
+        last_name,
+        email,
+        role,
+        created_at,
+        venues (id, name),
+        users (id, email, role)
+      `)
+      .eq('venue_id', venueId)
+      .neq('user_id', userId);
+
+    const { data: employeesData } = await supabase
+      .from('employees')
+      .select(`
+        id,
+        venue_id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        role,
+        created_at,
+        venues (id, name)
+      `)
+      .eq('venue_id', venueId);
+
+    const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
+    const employeesFromTable = employeesData || [];
+
+    setManagers(managersData);
+    setEmployees(employeesFromTable);
+  };
+
+  const addManager = async () => {
     setLoading(true);
     try {
-      // This will be implemented when we build the add manager functionality
-      await fetchStaffData(); // Refresh data
+      await fetchStaffData();
       setMessage('Manager added successfully!');
-    } catch (error) {
+    } catch {
       setMessage('Failed to add manager');
     } finally {
       setLoading(false);
     }
   };
 
-  // Update manager venue assignments (master only)
-  const updateManagerVenues = async (managerId, venueIds) => {
+  const updateManagerVenues = async () => {
     setLoading(true);
     try {
-      // This will be implemented when we build the venue assignment functionality
-      await fetchStaffData(); // Refresh data
+      await fetchStaffData();
       setMessage('Manager venues updated successfully!');
-    } catch (error) {
+    } catch {
       setMessage('Failed to update manager venues');
     } finally {
       setLoading(false);
     }
   };
 
-  // Props to pass to tab components
   const tabProps = {
-    // Data
     managers,
     employees,
     allVenues,
     venueId,
     userRole,
-    
-    // Actions
     addManager,
     updateManagerVenues,
     fetchStaffData,
@@ -306,16 +197,17 @@ const StaffPage = () => {
     switch (activeTab) {
       case 'Managers':
         return <ManagersTab {...tabProps} />;
-      case 'Invites':                           
-        return <InvitesTab {...tabProps} />;           
+      case 'Invites':
+        return <InvitesTab {...tabProps} />;
       case 'Employees':
         return <EmployeesTab {...tabProps} />;
       default:
-        return userRole === 'master' ? <ManagersTab {...tabProps} /> : <EmployeesTab {...tabProps} />;
+        return userRole === 'master'
+          ? <ManagersTab {...tabProps} />
+          : <EmployeesTab {...tabProps} />;
     }
   };
 
-  // Show loading if venues are still loading
   if (venueLoading) {
     return (
       <PageContainer>
@@ -328,7 +220,6 @@ const StaffPage = () => {
 
   return (
     <PageContainer>
-      {/* Header */}
       <div className="mb-6 lg:mb-8">
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Staff Management</h1>
         <p className="text-gray-600 text-sm lg:text-base">Manage your team members and their venue access.</p>
@@ -369,9 +260,8 @@ const StaffPage = () => {
         </div>
       </div>
 
-      {/* Desktop Layout */}
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        {/* Desktop Sidebar - Hidden on mobile */}
+        {/* Desktop Sidebar */}
         <div className="hidden lg:block w-64 flex-shrink-0">
           <nav className="space-y-1">
             {navItems.map((item) => (
@@ -398,11 +288,12 @@ const StaffPage = () => {
             </div>
           )}
           {!loading && renderActiveTab()}
-          
-          {/* Message display */}
+
           {message && (
             <div className={`mt-4 p-3 rounded-md text-sm ${
-              message.includes('success') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+              message.includes('success')
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-red-50 text-red-700 border border-red-200'
             }`}>
               {message}
             </div>
