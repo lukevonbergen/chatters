@@ -19,7 +19,7 @@ import {
 } from '../components/ui/popover';
 
 const navLinks = [
-  { to: '/', label: 'Overview' },
+  { to: '/dashboard', label: 'Overview' },
   { to: '/questions', label: 'Feedback' },
   { to: '/reports', label: 'Reports' },
   { to: '/floorplan', label: 'Floor Plan' },
@@ -139,15 +139,14 @@ const UpdatedDashboardFrame = ({ children }) => {
             src="https://www.getchatters.com/img/Logo.svg"
             alt="Chatters"
             className="h-6 w-auto cursor-pointer"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
           />
 
           {/* Desktop Nav links */}
           <nav className="hidden lg:flex gap-6">
             {allNavLinks.map((link) => {
-              const isActive = link.to === '/' 
-                ? location.pathname === '/' 
-                : location.pathname.startsWith(link.to);
+              const isActive = location.pathname === link.to
+                || location.pathname.startsWith(link.to + '/');
               return (
                 <Link
                   key={link.to}
@@ -347,9 +346,8 @@ const UpdatedDashboardFrame = ({ children }) => {
             <nav className="p-4">
               <div className="space-y-2">
                 {allNavLinks.map((link) => {
-                  const isActive = link.to === '/' 
-                    ? location.pathname === '/' 
-                    : location.pathname.startsWith(link.to);
+                  const isActive = location.pathname === link.to
+                || location.pathname.startsWith(link.to + '/');
                   return (
                     <Link
                       key={link.to}
