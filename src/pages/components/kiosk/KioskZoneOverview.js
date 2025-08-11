@@ -1,6 +1,17 @@
 import React from 'react';
 
 const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSelect }) => {
+  // Debug logging
+  console.log('KioskZoneOverview Debug:', {
+    zones: zones.length,
+    tables: tables.length,
+    feedbackList: feedbackList.length,
+    firstZone: zones[0],
+    firstTable: tables[0],
+    zoneIds: zones.map(z => z.id),
+    tableZoneIds: [...new Set(tables.map(t => t.zone_id))]
+  });
+
   // Calculate stats for each zone
   const getZoneStats = (zoneId) => {
     const zoneTables = tables.filter(t => t.zone_id === zoneId);

@@ -9,7 +9,15 @@ const KioskFloorPlan = forwardRef(({
 }, ref) => {
   
   const filteredTables = tables.filter(t => t.zone_id === selectedZoneId);
-  const selectedZone = selectedZoneId; // You might want to pass zone name instead
+  
+  // Debug logging
+  console.log('KioskFloorPlan Debug:', {
+    totalTables: tables.length,
+    filteredTables: filteredTables.length,
+    selectedZoneId,
+    firstTable: filteredTables[0],
+    allZoneIds: [...new Set(tables.map(t => t.zone_id))]
+  });
 
   const getFeedbackColor = (avg) => {
     if (avg === null || avg === undefined) return 'bg-blue-500';

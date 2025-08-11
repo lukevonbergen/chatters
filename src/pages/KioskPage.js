@@ -97,17 +97,34 @@ const KioskPage = () => {
 
   const loadTables = async (venueId) => {
     const { data } = await supabase.from('table_positions').select('*').eq('venue_id', venueId);
+    if (!data) return;
+    
+    // Set tables with percentage positions first, then convert to pixels after layout is ready
+    setTables(data.map(t => ({
+      ...t,
+      x_px: 0, // Will be calculated later
+      y_px: 0  // Will be calculated later
+    })));
+  };
+
+  // Convert percentage positions to pixels after layout ref is available
+  useEffect(() => {
+    if (!layoutRef.current || tables.length === 0) return;
+    
     const container = layoutRef.current;
-    if (!container) return;
     const { width, height } = container.getBoundingClientRect();
-    setTables(
-      (data || []).map(t => ({
+    
+    // Only update if we don't have pixel positions yet
+    const needsUpdate = tables.some(t => t.x_px === 0 && t.y_px === 0 && (t.x_percent || t.y_percent));
+    
+    if (needsUpdate) {
+      setTables(prev => prev.map(t => ({
         ...t,
         x_px: (t.x_percent / 100) * width,
         y_px: (t.y_percent / 100) * height
-      }))
-    );
-  };
+      })));
+    }
+  }, [tables, layoutRef.current]);
 
   const fetchFeedback = async (venueId) => {
     const now = dayjs();
