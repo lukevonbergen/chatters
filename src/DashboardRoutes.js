@@ -1,10 +1,12 @@
+// Update your DashboardRoutes.js file to include the kiosk route
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import ManageQuestions from './pages/ManageQuestions';
 import Floorplan from './pages/Floorplan';
-import TablesDashboard from './pages/Dashboard_Tables'; // still used for /tablefeedback
-import DashboardPage from './pages/Dashboard';       // ← use this for /dashboard
+import TablesDashboard from './pages/Dashboard_Tables';
+import DashboardPage from './pages/Dashboard';
 import SettingsPage from './pages/SettingsPage';
 import TemplatesPage from './pages/QRTemplates';
 import ReportsPage from './pages/ReportsPage';
@@ -12,6 +14,9 @@ import Settings_Staff from './pages/settings_staff';
 import StaffLeaderboard from './pages/Staff_Leaderboard';
 import BillingPage from './pages/Billing';
 import FeedbackFeed from './pages/FeedbackFeed';
+
+// Import kiosk page
+import KioskPage from './pages/KioskPage';
 
 import SignInPage from './pages/SignIn';
 import SignUpPage from './pages/SignUp';
@@ -38,6 +43,9 @@ const DashboardRoutes = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/set-password" element={<SetPasswordPage />} />
+
+        {/* Kiosk Mode (no frame, public-style access) */}
+        <Route path="/kiosk" element={<KioskPage />} />
 
         {/* Dashboard home (Overview) */}
         <Route
