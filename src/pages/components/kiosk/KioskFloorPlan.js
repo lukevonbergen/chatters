@@ -3,8 +3,7 @@ import React, { forwardRef, useMemo, useRef, useState, useEffect } from 'react';
 const slowPulseStyle = { animation: 'slow-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' };
 const pulseKeyframes = `@keyframes slow-pulse{0%,100%{opacity:1}50%{opacity:.3}}`;
 
-// Logical design size for % coords (not the rendered size)
-const WORLD_WIDTH = 1600;
+const WORLD_WIDTH = 1600;   // logical design space for % coords
 const WORLD_HEIGHT = 1000;
 const PADDING = 120;
 const TABLE_W = 64;
@@ -19,7 +18,7 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
 
   const filtered = useMemo(() => tables.filter(t => t.zone_id === selectedZoneId), [tables, selectedZoneId]);
 
-  // Measure container so the canvas can always fill to the bottom of the view
+  // Measure container to keep canvas stuck to bottom and decide pan per axis
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -31,11 +30,10 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
     return () => { ro.disconnect(); window.removeEventListener('resize', update); };
   }, []);
 
-  // Build “desired” world based on data (independent of viewport)
+  // Desired world from data (independent of viewport)
   const desired = useMemo(() => {
-    if (!filtered.length) {
-      return { width: WORLD_WIDTH + PADDING * 2, height: WORLD_HEIGHT + PADDING * 2, norm: [] };
-    }
+    if (!filtered.length) return { width: WORLD_WIDTH + PADDING * 2, height: WORLD_HEIGHT + PADDING * 2, norm: [] };
+
     const base = filtered.map(t => ({
       ...t,
       baseX: t.x_percent != null ? (t.x_percent / 100) * WORLD_WIDTH : t.x_px ?? 0,
@@ -52,10 +50,8 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
       maxY = Math.max(maxY, t.baseY + h);
     }
 
-    const contentW = (maxX - minX);
-    const contentH = (maxY - minY);
-    const width  = Math.max(WORLD_WIDTH,  contentW) + PADDING * 2;
-    const height = Math.max(WORLD_HEIGHT, contentH) + PADDING * 2;
+    const width  = Math.max(WORLD_WIDTH,  (maxX - minX)) + PADDING * 2;
+    const height = Math.max(WORLD_HEIGHT, (maxY - minY)) + PADDING * 2;
 
     const norm = base.map(t => ({
       ...t,
@@ -66,16 +62,17 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
     return { width, height, norm };
   }, [filtered]);
 
-  // Final rendered world size = at least container size (so canvas reaches the bottom)
+  // Rendered world is at least the container (so the canvas always reaches the bottom)
   const worldWidth  = Math.max(desired.width,  containerSize.width);
   const worldHeight = Math.max(desired.height, containerSize.height);
 
-  // Pan only if desired world exceeds container (not the min’d world)
-  const isPannable = desired.width > containerSize.width || desired.height > containerSize.height;
+  // Pan/scroll per axis
+  const canPanX = desired.width  > containerSize.width;
+  const canPanY = desired.height > containerSize.height;
 
-  // Drag to pan (only when pannable)
+  // Drag to pan (adjust only the axes that can pan)
   const startDrag = (e) => {
-    if (!isPannable) return;
+    if (!canPanX && !canPanY) return;
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
     setScrollStart({ x: scrollRef.current.scrollLeft, y: scrollRef.current.scrollTop });
@@ -85,8 +82,8 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
     if (!isDragging) return;
     const dx = e.clientX - dragStart.x;
     const dy = e.clientY - dragStart.y;
-    scrollRef.current.scrollLeft = scrollStart.x - dx;
-    scrollRef.current.scrollTop  = scrollStart.y - dy;
+    if (canPanX) scrollRef.current.scrollLeft = scrollStart.x - dx;
+    if (canPanY) scrollRef.current.scrollTop  = scrollStart.y - dy;
   };
   const endDrag = () => {
     if (!isDragging) return;
@@ -100,7 +97,7 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
     document.addEventListener('mousemove', mm);
     document.addEventListener('mouseup', mu);
     return () => { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
-  }, [isDragging, dragStart, scrollStart]);
+  }, [isDragging, dragStart, scrollStart, canPanX, canPanY]);
 
   const getFeedbackStatus = (avg) => {
     if (avg == null) return { borderColor: 'border-gray-800', bgColor: 'bg-gray-700', status: 'no-feedback' };
@@ -124,44 +121,38 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
       <style>{pulseKeyframes}</style>
 
       <div ref={outerRef} className="flex-1 min-h-0 flex flex-col bg-gray-100 rounded-lg border border-gray-200">
-        {/* Header */}
         <div className="flex-shrink-0 px-4 py-2 bg-white border-b flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-900">Zone Details</h2>
-          <div className="text-xs text-gray-600">{isPannable ? 'Drag background to pan' : 'All tables fit'}</div>
+          <div className="text-xs text-gray-600">
+            {canPanX || canPanY ? 'Drag background to pan' : 'All tables fit'}
+          </div>
         </div>
 
-        {/* Scroll container: no scrollbars unless needed */}
         <div
           ref={scrollRef}
-          className={`flex-1 relative ${isPannable ? 'overflow-auto' : 'overflow-hidden'} ${isPannable ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'cursor-default'}`}
+          className={[
+            'flex-1 relative',
+            canPanX ? 'overflow-x-auto' : 'overflow-x-hidden',
+            canPanY ? 'overflow-y-auto' : 'overflow-y-hidden',
+            canPanX || canPanY ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'cursor-default'
+          ].join(' ')}
           onMouseDown={startDrag}
           style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
         >
-          {/* No centering — world anchors top/left; background grid fills world */}
           <div className="w-full h-full">
-            <div className="relative bg-gray-50" style={{ width: worldWidth, height: worldHeight }}>
+            <div className="relative bg-gray-50" style={{ width: worldWidth, height: worldHeight, minWidth: '100%', minHeight: '100%' }}>
               <div
                 className="absolute inset-0 opacity-10 pointer-events-none"
                 style={{ backgroundImage: 'radial-gradient(circle,#94a3b8 2px,transparent 2px)', backgroundSize: '30px 30px' }}
               />
 
-              {/* Tables */}
               {desired.norm.map((t) => {
                 const avg = feedbackMap[t.table_number];
                 const feedbackStatus = getFeedbackStatus(avg);
                 const cfg = getTableShapeClasses(t.shape, feedbackStatus);
                 return (
-                  <div
-                    key={t.id}
-                    className="absolute"
-                    style={{ left: t.normX, top: t.normY }}
-                    onMouseDown={(e) => e.stopPropagation()} // prevent starting drag
-                  >
-                    <div
-                      className={cfg.className}
-                      style={cfg.style}
-                      onClick={(e) => { e.stopPropagation(); onTableClick(t.table_number); }}
-                    >
+                  <div key={t.id} className="absolute" style={{ left: t.normX, top: t.normY }} onMouseDown={(e) => e.stopPropagation()}>
+                    <div className={cfg.className} style={cfg.style} onClick={(e) => { e.stopPropagation(); onTableClick(t.table_number); }}>
                       {t.table_number}
                     </div>
                   </div>
