@@ -1,29 +1,54 @@
 import React from 'react';
 
 const TableComponent = ({ table, editMode, feedbackMap, onTableClick, onRemoveTable }) => {
-  const getFeedbackColor = (avg) => {
-    if (avg === null || avg === undefined) return 'bg-blue-500';
-    if (avg > 4) return 'bg-green-500';
-    if (avg >= 2.5) return 'bg-amber-400';
-    return 'bg-red-600';
+  const getFeedbackStatus = (avg) => {
+    if (avg === null || avg === undefined) {
+      return {
+        borderColor: 'border-gray-800', // No feedback submitted - black border
+        bgColor: 'bg-gray-700',
+        status: 'no-feedback'
+      };
+    }
+    if (avg > 4) {
+      return {
+        borderColor: 'border-green-500', // Table Happy - green border
+        bgColor: 'bg-gray-700',
+        status: 'happy'
+      };
+    }
+    if (avg >= 2.5) {
+      return {
+        borderColor: 'border-yellow-500', // Table Needs Attention - yellow border
+        bgColor: 'bg-gray-700',
+        status: 'attention'
+      };
+    }
+    return {
+      borderColor: 'border-red-500', // Table Unhappy - red border
+      bgColor: 'bg-gray-700',
+      status: 'unhappy'
+    };
   };
 
-  const getTableShapeClasses = (shape) => {
-    const baseClasses = 'text-white flex items-center justify-center font-bold border-2 border-gray-800 shadow-lg transition-all duration-200';
+  const getTableShapeClasses = (shape, feedbackStatus) => {
+    const baseClasses = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-200 ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
+    
+    // Add pulse animation for unhappy tables
+    const pulseClass = feedbackStatus.status === 'unhappy' ? 'animate-pulse' : '';
     
     switch (shape) {
       case 'circle':
-        return `${baseClasses} w-14 h-14 rounded-full bg-gray-700 hover:bg-gray-600`;
+        return `${baseClasses} w-14 h-14 rounded-full hover:bg-gray-600 ${pulseClass}`;
       case 'long':
-        return `${baseClasses} w-28 h-10 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm`;
+        return `${baseClasses} w-28 h-10 rounded-lg hover:bg-gray-600 text-sm ${pulseClass}`;
       default: // square
-        return `${baseClasses} w-14 h-14 rounded-lg bg-gray-700 hover:bg-gray-600`;
+        return `${baseClasses} w-14 h-14 rounded-lg hover:bg-gray-600 ${pulseClass}`;
     }
   };
 
   const avgRating = feedbackMap[table.table_number];
-  const feedbackColor = getFeedbackColor(avgRating);
-  const tableShapeClasses = getTableShapeClasses(table.shape);
+  const feedbackStatus = getFeedbackStatus(avgRating);
+  const tableShapeClasses = getTableShapeClasses(table.shape, feedbackStatus);
 
   const handleTableClick = () => {
     if (!editMode) {
@@ -36,25 +61,24 @@ const TableComponent = ({ table, editMode, feedbackMap, onTableClick, onRemoveTa
     onRemoveTable(table.id);
   };
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'happy': return 'Table Happy';
+      case 'attention': return 'Table Needs Attention';
+      case 'unhappy': return 'Table Unhappy';
+      default: return 'No Feedback Submitted';
+    }
+  };
+
   return (
     <div className="relative group">
       <div
         className={`${tableShapeClasses} ${!editMode ? 'cursor-pointer' : ''} ${editMode ? 'hover:scale-105' : ''}`}
         onClick={handleTableClick}
-        title={editMode ? `Table ${table.table_number}` : `View feedback for Table ${table.table_number}`}
+        title={editMode ? `Table ${table.table_number}` : `${getStatusText(feedbackStatus.status)} - ${avgRating != null ? `Rating: ${avgRating.toFixed(1)}/5` : 'No recent feedback'}`}
       >
         {table.table_number}
       </div>
-      
-      {/* Feedback indicator */}
-      {!editMode && (
-        <div
-          className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${feedbackColor} ${
-            feedbackColor === 'bg-red-600' ? 'animate-pulse' : ''
-          } shadow-sm`}
-          title={avgRating == null ? 'No recent feedback' : `Average rating: ${avgRating.toFixed(1)}/5`}
-        />
-      )}
       
       {/* Remove button in edit mode */}
       {editMode && (

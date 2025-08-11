@@ -19,27 +19,49 @@ const KioskFloorPlan = forwardRef(({
     allZoneIds: [...new Set(tables.map(t => t.zone_id))]
   });
 
-  const getFeedbackColor = (avg) => {
-    if (avg === null || avg === undefined) return 'bg-blue-500';
-    if (avg > 4) return 'bg-green-500';
-    if (avg >= 2.5) return 'bg-amber-400';
-    return 'bg-red-600';
+  const getFeedbackStatus = (avg) => {
+    if (avg === null || avg === undefined) {
+      return {
+        borderColor: 'border-gray-800', // No feedback submitted
+        bgColor: 'bg-gray-700',
+        status: 'no-feedback'
+      };
+    }
+    if (avg > 4) {
+      return {
+        borderColor: 'border-green-500', // Table Happy
+        bgColor: 'bg-gray-700',
+        status: 'happy'
+      };
+    }
+    if (avg >= 2.5) {
+      return {
+        borderColor: 'border-yellow-500', // Table Needs Attention
+        bgColor: 'bg-gray-700',
+        status: 'attention'
+      };
+    }
+    return {
+      borderColor: 'border-red-500', // Table Unhappy
+      bgColor: 'bg-gray-700',
+      status: 'unhappy'
+    };
   };
 
-  const getTableShapeClasses = (shape, isSelected, hasAlert) => {
-    const baseClasses = 'text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-300 cursor-pointer';
+  const getTableShapeClasses = (shape, feedbackStatus, isSelected, hasAlert) => {
+    const baseClasses = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-300 cursor-pointer ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
     
     // Selection and alert styling
-    const selectionClass = isSelected ? 'border-blue-500 scale-110 shadow-xl' : 'border-gray-800';
-    const alertClass = hasAlert ? 'animate-pulse' : '';
+    const selectionClass = isSelected ? 'scale-110 shadow-xl ring-4 ring-blue-300' : '';
+    const pulseClass = feedbackStatus.status === 'unhappy' ? 'animate-pulse' : '';
     
     switch (shape) {
       case 'circle':
-        return `${baseClasses} w-16 h-16 rounded-full bg-gray-700 hover:bg-gray-600 hover:scale-105 ${selectionClass} ${alertClass}`;
+        return `${baseClasses} w-16 h-16 rounded-full hover:bg-gray-600 hover:scale-105 ${selectionClass} ${pulseClass}`;
       case 'long':
-        return `${baseClasses} w-32 h-12 rounded-lg bg-gray-700 hover:bg-gray-600 hover:scale-105 text-sm ${selectionClass} ${alertClass}`;
+        return `${baseClasses} w-32 h-12 rounded-lg hover:bg-gray-600 hover:scale-105 text-sm ${selectionClass} ${pulseClass}`;
       default: // square
-        return `${baseClasses} w-16 h-16 rounded-lg bg-gray-700 hover:bg-gray-600 hover:scale-105 ${selectionClass} ${alertClass}`;
+        return `${baseClasses} w-16 h-16 rounded-lg hover:bg-gray-600 hover:scale-105 ${selectionClass} ${pulseClass}`;
     }
   };
 
@@ -100,10 +122,19 @@ const KioskFloorPlan = forwardRef(({
         {/* Tables */}
         {filteredTables.map((table) => {
           const avgRating = feedbackMap[table.table_number];
-          const feedbackColor = getFeedbackColor(avgRating);
+          const feedbackStatus = getFeedbackStatus(avgRating);
           const isSelected = isTableSelected(table.table_number);
-          const hasAlert = hasTableAlert(table.table_number);
-          const tableShapeClasses = getTableShapeClasses(table.shape, isSelected, hasAlert);
+          const hasAlert = avgRating !== null && avgRating !== undefined && avgRating <= 3;
+          const tableShapeClasses = getTableShapeClasses(table.shape, feedbackStatus, isSelected, hasAlert);
+
+          const getStatusText = (status) => {
+            switch (status) {
+              case 'happy': return 'Table Happy';
+              case 'attention': return 'Table Needs Attention';
+              case 'unhappy': return 'Table Unhappy';
+              default: return 'No Feedback Submitted';
+            }
+          };
 
           return (
             <div 
@@ -115,24 +146,9 @@ const KioskFloorPlan = forwardRef(({
                 <div
                   className={tableShapeClasses}
                   onClick={() => onTableClick(table.table_number)}
-                  title={`Table ${table.table_number} - Click to view feedback`}
+                  title={`Table ${table.table_number} - ${getStatusText(feedbackStatus.status)} ${avgRating !== null && avgRating !== undefined ? `(${avgRating.toFixed(1)}/5)` : ''}`}
                 >
                   {table.table_number}
-                </div>
-                
-                {/* Feedback indicator - larger for kiosk */}
-                <div
-                  className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white ${feedbackColor} ${
-                    feedbackColor === 'bg-red-600' ? 'animate-pulse' : ''
-                  } shadow-lg flex items-center justify-center`}
-                  title={avgRating == null || avgRating === undefined ? 'No recent feedback' : `Average rating: ${avgRating.toFixed(1)}/5`}
-                >
-                  {/* Show rating number for urgent cases */}
-                  {avgRating !== null && avgRating <= 2 && (
-                    <span className="text-white text-xs font-bold">
-                      {Math.round(avgRating)}
-                    </span>
-                  )}
                 </div>
 
                 {/* Selection highlight */}
@@ -142,9 +158,9 @@ const KioskFloorPlan = forwardRef(({
 
                 {/* Hover tooltip */}
                 <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                  Table {table.table_number}
+                  Table {table.table_number} - {getStatusText(feedbackStatus.status)}
                   {avgRating !== null && avgRating !== undefined && (
-                    <span> - Rating: {avgRating.toFixed(1)}/5</span>
+                    <span> ({avgRating.toFixed(1)}/5)</span>
                   )}
                 </div>
               </div>
@@ -157,20 +173,20 @@ const KioskFloorPlan = forwardRef(({
           <h4 className="text-sm font-semibold text-gray-900 mb-2">Status Legend</h4>
           <div className="space-y-2 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-600 rounded-full"></div>
-              <span>Needs urgent attention (≤2★)</span>
+              <div className="w-6 h-6 bg-gray-700 border-4 border-red-500 rounded"></div>
+              <span>Table Unhappy (≤2★)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-amber-400 rounded-full"></div>
-              <span>Attention needed (2.5-3★)</span>
+              <div className="w-6 h-6 bg-gray-700 border-4 border-yellow-500 rounded"></div>
+              <span>Table Needs Attention (2.5-3★)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-              <span>Satisfied (4-5★)</span>
+              <div className="w-6 h-6 bg-gray-700 border-4 border-green-500 rounded"></div>
+              <span>Table Happy (4-5★)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-              <span>No recent feedback</span>
+              <div className="w-6 h-6 bg-gray-700 border-4 border-gray-800 rounded"></div>
+              <span>No Feedback Submitted</span>
             </div>
           </div>
         </div>

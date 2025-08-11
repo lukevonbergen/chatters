@@ -12,47 +12,75 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
     tableZoneIds: [...new Set(tables.map(t => t.zone_id))]
   });
 
-  const getFeedbackColor = (avg) => {
-    if (avg === null || avg === undefined) return 'bg-blue-500';
-    if (avg > 4) return 'bg-green-500';
-    if (avg >= 2.5) return 'bg-amber-400';
-    return 'bg-red-600';
+  const getFeedbackStatus = (avg) => {
+    if (avg === null || avg === undefined) {
+      return {
+        borderColor: 'border-gray-800', // No feedback submitted
+        bgColor: 'bg-gray-700',
+        status: 'no-feedback'
+      };
+    }
+    if (avg > 4) {
+      return {
+        borderColor: 'border-green-500', // Table Happy
+        bgColor: 'bg-gray-700',
+        status: 'happy'
+      };
+    }
+    if (avg >= 2.5) {
+      return {
+        borderColor: 'border-yellow-500', // Table Needs Attention
+        bgColor: 'bg-gray-700',
+        status: 'attention'
+      };
+    }
+    return {
+      borderColor: 'border-red-500', // Table Unhappy
+      bgColor: 'bg-gray-700',
+      status: 'unhappy'
+    };
   };
 
-  const getTableShapeClasses = (shape, avgRating) => {
-    const feedbackColor = getFeedbackColor(avgRating);
-    const baseClasses = 'text-white flex items-center justify-center font-bold border-2 border-gray-800 shadow-lg transition-all duration-200 cursor-pointer hover:scale-105';
+  const getTableShapeClasses = (shape, feedbackStatus) => {
+    const baseClasses = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-200 cursor-pointer hover:scale-105 ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
+    
+    // Add pulse animation for unhappy tables
+    const pulseClass = feedbackStatus.status === 'unhappy' ? 'animate-pulse' : '';
     
     switch (shape) {
       case 'circle':
-        return `${baseClasses} w-12 h-12 rounded-full bg-gray-700 hover:bg-gray-600`;
+        return `${baseClasses} w-12 h-12 rounded-full hover:bg-gray-600 ${pulseClass}`;
       case 'long':
-        return `${baseClasses} w-20 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm`;
+        return `${baseClasses} w-20 h-8 rounded-lg hover:bg-gray-600 text-sm ${pulseClass}`;
       default: // square
-        return `${baseClasses} w-12 h-12 rounded-lg bg-gray-700 hover:bg-gray-600`;
+        return `${baseClasses} w-12 h-12 rounded-lg hover:bg-gray-600 ${pulseClass}`;
     }
   };
 
   const renderTable = (table) => {
     const avgRating = feedbackMap[table.table_number];
-    const feedbackColor = getFeedbackColor(avgRating);
-    const tableShapeClasses = getTableShapeClasses(table.shape, avgRating);
+    const feedbackStatus = getFeedbackStatus(avgRating);
+    const tableShapeClasses = getTableShapeClasses(table.shape, feedbackStatus);
+    
+    const getStatusText = (status) => {
+      switch (status) {
+        case 'happy': return 'Table Happy';
+        case 'attention': return 'Table Needs Attention';
+        case 'unhappy': return 'Table Unhappy';
+        default: return 'No Feedback Submitted';
+      }
+    };
     
     return (
       <div 
         key={table.id} 
         className="relative"
         onClick={() => onZoneSelect(table.zone_id)}
-        title={`Table ${table.table_number} - Click to view zone`}
+        title={`Table ${table.table_number} - ${getStatusText(feedbackStatus.status)} - Click to view zone`}
       >
         <div className={tableShapeClasses}>
           {table.table_number}
         </div>
-        <div
-          className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${feedbackColor} ${
-            feedbackColor === 'bg-red-600' ? 'animate-pulse' : ''
-          } shadow-sm`}
-        />
       </div>
     );
   };
@@ -136,20 +164,20 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
         <h4 className="text-sm font-semibold text-gray-900 mb-2">Status Legend</h4>
         <div className="space-y-2 text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-600 rounded-full animate-pulse"></div>
-            <span>Needs urgent attention (≤2★)</span>
+            <div className="w-6 h-6 bg-gray-700 border-4 border-red-500 rounded animate-pulse"></div>
+            <span>Table Unhappy (≤2★)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-amber-400 rounded-full"></div>
-            <span>Attention needed (2.5-3★)</span>
+            <div className="w-6 h-6 bg-gray-700 border-4 border-yellow-500 rounded"></div>
+            <span>Table Needs Attention (2.5-3★)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-            <span>Satisfied (4-5★)</span>
+            <div className="w-6 h-6 bg-gray-700 border-4 border-green-500 rounded"></div>
+            <span>Table Happy (4-5★)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-            <span>No recent feedback</span>
+            <div className="w-6 h-6 bg-gray-700 border-4 border-gray-800 rounded"></div>
+            <span>No Feedback Submitted</span>
           </div>
         </div>
       </div>
