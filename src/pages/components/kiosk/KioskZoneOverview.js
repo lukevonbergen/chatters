@@ -99,25 +99,36 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
 
   const getFeedbackStatus = (avg) => {
     if (avg === null || avg === undefined) {
-      return { borderColor: 'border-gray-800', bgColor: 'bg-gray-700', status: 'no-feedback' };
+      return { borderColor: 'border-gray-300', bgColor: 'bg-gray-700', status: 'no-feedback' };
     }
     if (avg > 4) return { borderColor: 'border-green-500', bgColor: 'bg-gray-700', status: 'happy' };
     if (avg >= 2.5) return { borderColor: 'border-yellow-500', bgColor: 'bg-gray-700', status: 'attention' };
     return { borderColor: 'border-red-500', bgColor: 'bg-gray-700', status: 'unhappy' };
   };
 
-  // Denser, more compact visual for overview
+  // Clean, professional table design
   const getTableShapeClasses = (shape, feedbackStatus) => {
-    const base = `text-white flex items-center justify-center font-semibold border-2 shadow-sm transition-all duration-150 cursor-pointer hover:opacity-90 ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
+    const baseClasses = 'text-white flex items-center justify-center font-semibold border-2 transition-all duration-200 cursor-pointer hover:scale-105';
     const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
+
+    const statusColors = `${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
 
     switch (shape) {
       case 'circle':
-        return { className: `${base} w-10 h-10 text-xs rounded-full`, style: pulseStyle };
+        return { 
+          className: `${baseClasses} ${statusColors} w-10 h-10 text-xs rounded-full shadow-sm`, 
+          style: pulseStyle 
+        };
       case 'long':
-        return { className: `${base} w-16 h-7 text-[11px] rounded-md`, style: pulseStyle };
+        return { 
+          className: `${baseClasses} ${statusColors} w-16 h-6 text-xs rounded`, 
+          style: pulseStyle 
+        };
       default:
-        return { className: `${base} w-10 h-10 text-xs rounded-md`, style: pulseStyle };
+        return { 
+          className: `${baseClasses} ${statusColors} w-10 h-10 text-xs rounded`, 
+          style: pulseStyle 
+        };
     }
   };
 
@@ -146,76 +157,113 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
     );
   };
 
+  const getZoneCardBorder = (urgentCount, totalAlerts) => {
+    if (urgentCount > 0) return 'border-red-200 bg-red-50';
+    if (totalAlerts > 0) return 'border-yellow-200 bg-yellow-50';
+    return 'border-gray-200 bg-white';
+  };
+
   return (
     <>
       <style>{pulseKeyframes}</style>
 
-      <div className="h-full">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">All Zones Overview</h2>
-          <p className="text-gray-600">Click any table to jump to its zone</p>
+      <div className="h-full bg-gray-50 p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Zone Overview</h1>
+          <p className="text-gray-600">Monitor all zones and click any table to view detailed feedback</p>
         </div>
 
         {zonesWithMeta.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+          <div className="text-center py-16">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
               </svg>
             </div>
-            <p className="text-gray-500 font-medium">No zones configured</p>
-            <p className="text-gray-400 text-sm">Contact your administrator to set up floor plan zones</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">No zones configured</h3>
+            <p className="text-gray-500">Contact your administrator to configure floor plan zones</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 max-w-6xl">
             {zonesWithMeta.map(({ zone, zoneTables, totalAlerts, urgentCount }) => (
-              <div key={zone.id} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-bold text-gray-900">{zone.name}</h3>
-                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
-                      {zoneTables.length} table{zoneTables.length !== 1 ? 's' : ''}
-                    </span>
+              <div 
+                key={zone.id} 
+                className={`rounded-lg border p-6 transition-all duration-200 ${getZoneCardBorder(urgentCount, totalAlerts)}`}
+              >
+                {/* Zone Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{zone.name}</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {zoneTables.length} table{zoneTables.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Alert badges based on grouped sessions */}
-                  <div className="flex items-center gap-2">
+                  {/* Status Indicators */}
+                  <div className="flex items-center gap-3">
                     {urgentCount > 0 && (
-                      <span className="bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full animate-pulse">
-                        {urgentCount} URGENT
-                      </span>
+                      <div className="bg-red-600 text-white text-sm font-medium px-3 py-1 rounded">
+                        {urgentCount} Urgent
+                      </div>
                     )}
                     {urgentCount === 0 && totalAlerts > 0 && (
-                      <span className="bg-yellow-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
-                        {totalAlerts} ALERT{totalAlerts > 1 ? 'S' : ''}
-                      </span>
+                      <div className="bg-yellow-600 text-white text-sm font-medium px-3 py-1 rounded">
+                        {totalAlerts} Alert{totalAlerts > 1 ? 's' : ''}
+                      </div>
                     )}
                     {totalAlerts === 0 && (
-                      <span className="bg-green-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
-                        ALL GOOD
-                      </span>
+                      <div className="bg-green-600 text-white text-sm font-medium px-3 py-1 rounded">
+                        Operational
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* Tables Grid (denser + responsive auto-fill) */}
+                {/* Tables Grid */}
                 {zoneTables.length === 0 ? (
-                  <div className="text-center py-6 text-gray-500">
-                    <p className="text-sm">No tables in this zone</p>
+                  <div className="text-center py-8 bg-gray-100 rounded border-2 border-dashed border-gray-300">
+                    <p className="text-gray-500">No tables configured in this zone</p>
                   </div>
                 ) : (
-                  <div
-                    className="grid gap-1.5"
-                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(2.5rem, 1fr))' }}
-                  >
-                    {zoneTables.map((table) => renderTable(table))}
+                  <div className="bg-white rounded border p-4">
+                    <div
+                      className="grid gap-2"
+                      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(2.5rem, 1fr))' }}
+                    >
+                      {zoneTables.map((table) => renderTable(table))}
+                    </div>
                   </div>
                 )}
               </div>
             ))}
           </div>
         )}
+
+        {/* Status Legend */}
+        <div className="fixed bottom-6 right-6 bg-white rounded-lg shadow-lg border border-gray-200 p-4 w-64">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Status Legend</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-gray-700 border-2 border-red-500 rounded"></div>
+              <span className="text-gray-700">Unhappy (≤2.0)</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-gray-700 border-2 border-yellow-500 rounded"></div>
+              <span className="text-gray-700">Needs Attention (2.5-3.0)</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-gray-700 border-2 border-green-500 rounded"></div>
+              <span className="text-gray-700">Satisfied (+4.0)</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-gray-700 border-2 border-gray-300 rounded"></div>
+              <span className="text-gray-700">No Recent Feedback</span>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
