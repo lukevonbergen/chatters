@@ -1,298 +1,324 @@
-import React, { forwardRef, useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { supabase } from '../utils/supabase';
+import { useVenue } from '../context/VenueContext';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
-// Custom slow pulse animation
-const slowPulseStyle = {
-  animation: 'slow-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
-};
+// Import kiosk-specific components
+import KioskFloorPlan from './components/kiosk/KioskFloorPlan';
+import KioskFeedbackList from './components/kiosk/KioskFeedbackList';
+import KioskZoneOverview from './components/kiosk/KioskZoneOverview';
 
-const pulseKeyframes = `
-@keyframes slow-pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}
-`;
+dayjs.extend(relativeTime);
 
-const KioskFloorPlan = forwardRef(({ 
-  tables, 
-  selectedZoneId, 
-  feedbackMap, 
-  selectedFeedback,
-  onTableClick 
-}, ref) => {
-  
-  const scrollContainerRef = useRef(null);
-  const canvasRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  
-  const filteredTables = tables.filter(t => t.zone_id === selectedZoneId);
-  
-  // Debug logging
-  console.log('KioskFloorPlan Debug:', {
-    totalTables: tables.length,
-    filteredTables: filteredTables.length,
-    selectedZoneId,
-    firstTable: filteredTables[0],
-    allZoneIds: [...new Set(tables.map(t => t.zone_id))]
-  });
+const KioskPage = () => {
+  const { venueId, venueName, loading: venueLoading } = useVenue();
+  const layoutRef = useRef(null);
 
-  // Zoom and scroll with mouse wheel
+  // State
+  const [zones, setZones] = useState([]);
+  const [tables, setTables] = useState([]);
+  const [feedbackMap, setFeedbackMap] = useState({});
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [currentView, setCurrentView] = useState('overview'); // 'overview' or zone id
+  const [inactivityTimer, setInactivityTimer] = useState(null);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
+
+  // Auto-return to overview after 10 seconds of inactivity
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleWheel = (e) => {
-      e.preventDefault();
+    if (currentView !== 'overview') {
+      const timer = setTimeout(() => {
+        setCurrentView('overview');
+        setSelectedFeedback(null);
+      }, 10000);
+      setInactivityTimer(timer);
       
-      if (e.ctrlKey || e.metaKey) {
-        // Zoom with Ctrl/Cmd + wheel
-        const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
-        const newZoom = Math.max(0.1, Math.min(3, zoom * zoomDelta));
-        setZoom(newZoom);
-      } else if (e.shiftKey) {
-        // Horizontal scroll with Shift + wheel
-        container.scrollLeft += e.deltaY;
-      } else {
-        // Normal scroll
-        container.scrollTop += e.deltaY;
-        container.scrollLeft += e.deltaX;
-      }
-    };
+      return () => clearTimeout(timer);
+    }
+  }, [currentView]);
 
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
-  }, [zoom]);
-
-  // Drag scrolling
-  const handleMouseDown = (e) => {
-    if (e.target.classList.contains('floor-plan-canvas') || 
-        e.target.classList.contains('grid-pattern')) {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX, y: e.clientY });
-      setScrollStart({
-        x: scrollContainerRef.current.scrollLeft,
-        y: scrollContainerRef.current.scrollTop
-      });
-      document.body.style.cursor = 'grabbing';
-      e.preventDefault();
+  // Reset inactivity timer on user interaction
+  const resetInactivityTimer = () => {
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+    }
+    if (currentView !== 'overview') {
+      const timer = setTimeout(() => {
+        setCurrentView('overview');
+        setSelectedFeedback(null);
+      }, 10000);
+      setInactivityTimer(timer);
     }
   };
 
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-
-    const deltaX = e.clientX - dragStart.x;
-    const deltaY = e.clientY - dragStart.y;
-
-    scrollContainerRef.current.scrollLeft = scrollStart.x - deltaX;
-    scrollContainerRef.current.scrollTop = scrollStart.y - deltaY;
-  };
-
-  const handleMouseUp = () => {
-    if (isDragging) {
-      setIsDragging(false);
-      document.body.style.cursor = 'default';
-    }
-  };
-
-  // Add mouse event listeners
+  // Main data loading effect
   useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, dragStart, scrollStart]);
+    if (!venueId || venueLoading) return;
 
-  const getFeedbackStatus = (avg) => {
-    if (avg === null || avg === undefined) {
-      return {
-        borderColor: 'border-gray-800', // No feedback submitted
-        bgColor: 'bg-gray-700',
-        status: 'no-feedback'
-      };
-    }
-    if (avg > 4) {
-      return {
-        borderColor: 'border-green-500', // Table Happy
-        bgColor: 'bg-gray-700',
-        status: 'happy'
-      };
-    }
-    if (avg >= 2.5) {
-      return {
-        borderColor: 'border-yellow-500', // Table Needs Attention
-        bgColor: 'bg-gray-700',
-        status: 'attention'
-      };
-    }
-    return {
-      borderColor: 'border-red-500', // Table Unhappy
-      bgColor: 'bg-gray-700',
-      status: 'unhappy'
+    const load = async () => {
+      await loadZones(venueId);
+      await loadTables(venueId);
+      await fetchFeedback(venueId);
     };
+
+    load();
+  }, [venueId, venueLoading]);
+
+  // Real-time feedback updates
+  useEffect(() => {
+    if (!venueId) return;
+
+    const channel = supabase
+      .channel('kiosk_feedback_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'feedback',
+          filter: `venue_id=eq.${venueId}`,
+        },
+        () => {
+          fetchFeedback(venueId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [venueId]);
+
+  // Data loading functions (simplified from main Floorplan)
+  const loadZones = async (venueId) => {
+    const { data } = await supabase.from('zones').select('*').eq('venue_id', venueId).order('order');
+    setZones(data || []);
   };
 
-  const getTableShapeClasses = (shape, feedbackStatus, isSelected) => {
-    const baseClasses = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-300 cursor-pointer ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
+  const loadTables = async (venueId) => {
+    const { data } = await supabase.from('table_positions').select('*').eq('venue_id', venueId);
+    if (!data) return;
     
-    // Selection and alert styling
-    const selectionClass = isSelected ? 'scale-110 shadow-xl ring-4 ring-blue-300' : '';
-    const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
+    // Use the fixed canvas size for positioning (2000x1500)
+    const canvasWidth = 2000;
+    const canvasHeight = 1500;
     
-    switch (shape) {
-      case 'circle':
-        return {
-          className: `${baseClasses} w-16 h-16 rounded-full hover:bg-gray-600 hover:scale-105 ${selectionClass}`,
-          style: pulseStyle
+    setTables(data.map(t => ({
+      ...t,
+      x_px: (t.x_percent / 100) * canvasWidth,
+      y_px: (t.y_percent / 100) * canvasHeight
+    })));
+  };
+
+  // Convert percentage positions to pixels after layout ref is available
+  useEffect(() => {
+    // This effect is no longer needed since we use fixed canvas dimensions
+  }, []);
+
+  const fetchFeedback = async (venueId) => {
+    const now = dayjs();
+    const cutoff = now.subtract(2, 'hour').toISOString();
+
+    const { data } = await supabase
+      .from('feedback')
+      .select('*, questions(question)')
+      .eq('venue_id', venueId)
+      .eq('is_actioned', false) // Only show unresolved feedback
+      .gt('created_at', cutoff)
+      .order('created_at', { ascending: false });
+
+    const sessionMap = {}, latestSession = {}, ratings = {};
+    const feedbackItems = [];
+
+    // Group by session_id to treat each session as one alert
+    const sessionGroups = {};
+    
+    for (const entry of data || []) {
+      const table = entry.table_number;
+      const sessionId = entry.session_id;
+      
+      if (!table || !sessionId) continue;
+      
+      // Group by session_id
+      if (!sessionGroups[sessionId]) {
+        sessionGroups[sessionId] = {
+          session_id: sessionId,
+          table_number: table,
+          created_at: entry.created_at,
+          venue_id: entry.venue_id,
+          items: []
         };
-      case 'long':
-        return {
-          className: `${baseClasses} w-32 h-12 rounded-lg hover:bg-gray-600 hover:scale-105 text-sm ${selectionClass}`,
-          style: pulseStyle
-        };
-      default: // square
-        return {
-          className: `${baseClasses} w-16 h-16 rounded-lg hover:bg-gray-600 hover:scale-105 ${selectionClass}`,
-          style: pulseStyle
-        };
+      }
+      sessionGroups[sessionId].items.push(entry);
+      
+      // Keep the earliest timestamp for the session
+      if (new Date(entry.created_at) < new Date(sessionGroups[sessionId].created_at)) {
+        sessionGroups[sessionId].created_at = entry.created_at;
+      }
+    }
+
+    // Convert session groups to feedback items (one per session)
+    for (const sessionId in sessionGroups) {
+      const session = sessionGroups[sessionId];
+      
+      // Calculate average rating for the session
+      const ratingsInSession = session.items.filter(item => item.rating !== null);
+      const avgRating = ratingsInSession.length > 0 
+        ? ratingsInSession.reduce((sum, item) => sum + item.rating, 0) / ratingsInSession.length 
+        : null;
+      
+      // Find the most relevant feedback item (lowest rating or first with text)
+      const primaryItem = session.items.find(item => item.additional_feedback) || 
+                         session.items.reduce((prev, current) => 
+                           (current.rating !== null && (prev.rating === null || current.rating < prev.rating)) ? current : prev
+                         );
+      
+      feedbackItems.push({
+        ...primaryItem,
+        session_id: sessionId,
+        items_count: session.items.length,
+        session_rating: avgRating
+      });
+      
+      // Store rating for table visualization
+      const table = session.table_number;
+      if (!latestSession[table]) {
+        latestSession[table] = sessionId;
+        ratings[table] = avgRating;
+      }
+    }
+
+    setFeedbackMap(ratings);
+    setFeedbackList(feedbackItems);
+  };
+
+  // Event handlers
+  const handleZoneSelect = (zoneId) => {
+    setCurrentView(zoneId);
+    resetInactivityTimer();
+  };
+
+  const handleFeedbackClick = (feedback) => {
+    setSelectedFeedback(feedback);
+    
+    // Find the zone for this table
+    const table = tables.find(t => t.table_number === feedback.table_number);
+    if (table && table.zone_id) {
+      setCurrentView(table.zone_id);
+    }
+    
+    resetInactivityTimer();
+  };
+
+  const handleTableClick = (tableNumber) => {
+    // Highlight the table and show its feedback
+    const tableFeedback = feedbackList.filter(f => f.table_number === tableNumber);
+    if (tableFeedback.length > 0) {
+      setSelectedFeedback(tableFeedback[0]); // Show the most recent
+    }
+    resetInactivityTimer();
+  };
+
+  const handleBackToOverview = () => {
+    setCurrentView('overview');
+    setSelectedFeedback(null);
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+      setInactivityTimer(null);
     }
   };
 
-  const isTableSelected = (tableNumber) => {
-    return selectedFeedback?.table_number === tableNumber;
+  // Exit kiosk mode
+  const handleExitKiosk = () => {
+    if (window.confirm('Exit kiosk mode?')) {
+      window.close();
+    }
   };
 
-  const hasTableAlert = (tableNumber) => {
-    const rating = feedbackMap[tableNumber];
-    return rating !== null && rating !== undefined && rating <= 3;
-  };
+  // Loading state
+  if (venueLoading || !venueId) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading kiosk mode...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {/* Inject keyframes */}
-      <style>{pulseKeyframes}</style>
-      
-      <div className="h-full flex flex-col">
-        {/* Fixed Header */}
-        <div className="flex-shrink-0 mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Zone Details
-          </h2>
+    <div className="min-h-screen bg-gray-50 flex overflow-hidden" onClick={resetInactivityTimer}>
+      {/* Left Sidebar - Feedback List */}
+      <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
-            <p className="text-gray-600">
-              Click on a table to view its feedback details
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                💡 Ctrl+scroll to zoom • Drag to pan • Shift+scroll for horizontal
-              </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">Staff View</h1>
+              <p className="text-sm text-gray-600">{venueName}</p>
+            </div>
+            <button
+              onClick={handleExitKiosk}
+              className="text-gray-400 hover:text-gray-600 text-xl"
+              title="Exit Kiosk Mode"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Feedback List */}
+        <KioskFeedbackList
+          feedbackList={feedbackList}
+          selectedFeedback={selectedFeedback}
+          onFeedbackClick={handleFeedbackClick}
+        />
+      </div>
+
+      {/* Right Side - Floor Plan */}
+      <div className="flex-1 flex flex-col">
+        {/* Zone Navigation */}
+        {currentView !== 'overview' && (
+          <div className="p-4 bg-white border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={handleBackToOverview}
+                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                ← Back to Overview
+              </button>
               <div className="text-sm text-gray-600">
-                Zoom: {Math.round(zoom * 100)}%
+                Auto-return in 10s
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Full Height Scrollable Floor Plan */}
-        <div 
-          ref={scrollContainerRef}
-          className={`flex-1 overflow-auto ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'} bg-gray-100`}
-          onMouseDown={handleMouseDown}
-          style={{ 
-            scrollBehavior: 'smooth',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
-          <div 
-            ref={canvasRef}
-            className="floor-plan-canvas bg-gray-50 relative"
-            style={{ 
-              width: '2000px',  // Large fixed canvas
-              height: '1500px',
-              transform: `scale(${zoom})`,
-              transformOrigin: '0 0',
-              border: '2px solid #e5e7eb',
-              borderRadius: '12px'
-            }}
-          >
-            {/* Grid pattern */}
-            <div 
-              className="absolute inset-0 opacity-10 pointer-events-none grid-pattern"
-              style={{
-                backgroundImage: `
-                  radial-gradient(circle, #94a3b8 2px, transparent 2px)
-                `,
-                backgroundSize: '30px 30px',
-              }}
+        {/* Floor Plan Area */}
+        <div className="flex-1 p-6">
+          {currentView === 'overview' ? (
+            <KioskZoneOverview
+              zones={zones}
+              tables={tables}
+              feedbackMap={feedbackMap}
+              feedbackList={feedbackList}
+              onZoneSelect={handleZoneSelect}
             />
-            
-            {/* Empty state */}
-            {filteredTables.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center text-gray-500">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  </div>
-                  <p className="text-lg font-medium">No tables in this zone</p>
-                  <p className="text-sm text-gray-400">
-                    Contact your administrator to add tables to this zone
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Tables */}
-            {filteredTables.map((table) => {
-              const avgRating = feedbackMap[table.table_number];
-              const feedbackStatus = getFeedbackStatus(avgRating);
-              const isSelected = isTableSelected(table.table_number);
-              const tableShapeConfig = getTableShapeClasses(table.shape, feedbackStatus, isSelected);
-
-              return (
-                <div 
-                  key={table.id} 
-                  className="absolute table-element" 
-                  style={{ left: table.x_px, top: table.y_px }}
-                >
-                  <div
-                    className={tableShapeConfig.className}
-                    style={tableShapeConfig.style}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onTableClick(table.table_number);
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                  >
-                    {table.table_number}
-                  </div>
-
-                  {/* Selection highlight */}
-                  {isSelected && (
-                    <div className="absolute -inset-4 border-4 border-blue-400 rounded-lg opacity-50 pointer-events-none animate-pulse" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          ) : (
+            <KioskFloorPlan
+              ref={layoutRef}
+              tables={tables}
+              selectedZoneId={currentView}
+              feedbackMap={feedbackMap}
+              selectedFeedback={selectedFeedback}
+              onTableClick={handleTableClick}
+            />
+          )}
         </div>
       </div>
-    </>
+    </div>
   );
-});
+};
 
-KioskFloorPlan.displayName = 'KioskFloorPlan';
-
-export default KioskFloorPlan;
+export default KioskPage;
