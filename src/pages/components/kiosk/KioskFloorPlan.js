@@ -28,6 +28,7 @@ const KioskFloorPlan = forwardRef(({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   const filtered = useMemo(() => tables.filter(t => t.zone_id === selectedZoneId), [tables, selectedZoneId]);
 
@@ -48,7 +49,7 @@ const KioskFloorPlan = forwardRef(({
     const width  = Math.max(1, (maxX - minX) + PADDING * 2);
     const height = Math.max(1, (maxY - minY) + PADDING * 2);
 
-    // Normalize each table to world coords so (minX,minY) sits at PADDING
+    // Normalise tables into world coords so (minX,minY) is at PADDING
     const norm = filtered.map(t => ({
       ...t,
       normX: (t.x_px - minX) + PADDING,
@@ -58,24 +59,43 @@ const KioskFloorPlan = forwardRef(({
     return { minX, minY, width, height, norm };
   }, [filtered]);
 
-  // Pan/zoom handlers
+  // Measure container with ResizeObserver
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    const update = () => setContainerSize({ width: el.clientWidth, height: el.clientHeight });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener('resize', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
 
+  // Enable panning/scrolling ONLY when needed (world bigger than container or zoomed)
+  const worldW = world.width * zoom;
+  const worldH = world.height * zoom;
+  const isPannable = worldW > containerSize.width || worldH > containerSize.height;
+
+  // Zoom with Ctrl/Cmd + wheel
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
     const onWheel = (e) => {
       if (!(e.ctrlKey || e.metaKey)) return;
       e.preventDefault();
       const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      setZoom(z => Math.max(0.2, Math.min(3, z * delta)));
+      setZoom((z) => Math.max(0.2, Math.min(3, z * delta)));
     };
-
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
+  // Background drag-to-pan (only when pannable)
   const startDrag = (e) => {
-    // only when dragging background
+    if (!isPannable) return;
     if (e.target === e.currentTarget) {
       setIsDragging(true);
       setDragStart({ x: e.clientX, y: e.clientY });
@@ -115,21 +135,19 @@ const KioskFloorPlan = forwardRef(({
     return { borderColor: 'border-red-500', bgColor: 'bg-gray-700', status: 'unhappy' };
   };
 
-  const getTableShapeClasses = (shape, feedbackStatus, isSelected) => {
+  const getTableShapeClasses = (shape, feedbackStatus /* , isSelected */) => {
+    // Removed selection ring/overlay to avoid the blue double-borders
     const base = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-300 cursor-pointer ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
-    const selection = isSelected ? 'scale-110 shadow-xl ring-4 ring-blue-300' : '';
     const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
     switch (shape) {
       case 'circle':
-        return { className: `${base} w-16 h-16 rounded-full hover:bg-gray-600 hover:scale-105 ${selection}`, style: pulseStyle };
+        return { className: `${base} w-16 h-16 rounded-full hover:bg-gray-600 hover:scale-105`, style: pulseStyle };
       case 'long':
-        return { className: `${base} w-32 h-12 rounded-lg hover:bg-gray-600 hover:scale-105 text-sm ${selection}`, style: pulseStyle };
+        return { className: `${base} w-32 h-12 rounded-lg hover:bg-gray-600 hover:scale-105 text-sm`, style: pulseStyle };
       default:
-        return { className: `${base} w-16 h-16 rounded-lg hover:bg-gray-600 hover:scale-105 ${selection}`, style: pulseStyle };
+        return { className: `${base} w-16 h-16 rounded-lg hover:bg-gray-600 hover:scale-105`, style: pulseStyle };
     }
   };
-
-  const isSelected = (n) => selectedFeedback?.table_number === n;
 
   return (
     <>
@@ -149,20 +167,19 @@ const KioskFloorPlan = forwardRef(({
           </div>
         </div>
 
-        {/* Scroll/pan container */}
+        {/* Scroll/pan container — only pannable when needed */}
         <div
           ref={scrollRef}
-          className={`flex-1 overflow-auto relative ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+          className={`flex-1 relative ${isPannable ? 'overflow-auto' : 'overflow-hidden'} ${isPannable ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'cursor-default'}`}
           onMouseDown={startDrag}
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          {/* World canvas sized to bounds */}
+          {/* World canvas sized to bounds (scaled via width/height) */}
           <div
             className="relative bg-gray-50"
             style={{
-              width: world.width * zoom,
-              height: world.height * zoom,
-              transformOrigin: '0 0'
+              width: worldW,
+              height: worldH
             }}
           >
             {/* Grid */}
@@ -192,7 +209,7 @@ const KioskFloorPlan = forwardRef(({
             {world.norm.map((t) => {
               const avg = feedbackMap[t.table_number];
               const feedbackStatus = getFeedbackStatus(avg);
-              const cfg = getTableShapeClasses(t.shape, feedbackStatus, isSelected(t.table_number));
+              const cfg = getTableShapeClasses(t.shape, feedbackStatus);
               return (
                 <div
                   key={t.id}
@@ -212,10 +229,6 @@ const KioskFloorPlan = forwardRef(({
                   >
                     {t.table_number}
                   </div>
-
-                  {isSelected(t.table_number) && (
-                    <div className="absolute -inset-4 border-4 border-blue-400 rounded-lg opacity-50 pointer-events-none animate-pulse" />
-                  )}
                 </div>
               );
             })}

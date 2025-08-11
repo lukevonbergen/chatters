@@ -21,31 +21,31 @@ const KioskPage = () => {
   const [feedbackMap, setFeedbackMap] = useState({});
   const [feedbackList, setFeedbackList] = useState([]);
   const [currentView, setCurrentView] = useState('overview'); // 'overview' or zone id
-  const [inactivityTimer, setInactivityTimer] = useState(null);
+  const [inactivityTimer, setInactivityTimer] = useState(null); // kept for easy re-enable
   const [selectedFeedback, setSelectedFeedback] = useState(null);
 
-  // Auto-return to overview after 10 seconds of inactivity
-  useEffect(() => {
-    if (currentView !== 'overview') {
-      const timer = setTimeout(() => {
-        setCurrentView('overview');
-        setSelectedFeedback(null);
-      }, 10000);
-      setInactivityTimer(timer);
-      return () => clearTimeout(timer);
-    }
-  }, [currentView]);
+  // ==== AUTO-RETURN (10s) — DISABLED ====
+  // useEffect(() => {
+  //   if (currentView !== 'overview') {
+  //     const timer = setTimeout(() => {
+  //       setCurrentView('overview');
+  //       setSelectedFeedback(null);
+  //     }, 10000);
+  //     setInactivityTimer(timer);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [currentView]);
 
-  // Reset inactivity timer on user interaction
+  // Reset inactivity timer on user interaction — DISABLED
   const resetInactivityTimer = () => {
-    if (inactivityTimer) clearTimeout(inactivityTimer);
-    if (currentView !== 'overview') {
-      const timer = setTimeout(() => {
-        setCurrentView('overview');
-        setSelectedFeedback(null);
-      }, 10000);
-      setInactivityTimer(timer);
-    }
+    // if (inactivityTimer) clearTimeout(inactivityTimer);
+    // if (currentView !== 'overview') {
+    //   const timer = setTimeout(() => {
+    //     setCurrentView('overview');
+    //     setSelectedFeedback(null);
+    //   }, 10000);
+    //   setInactivityTimer(timer);
+    // }
   };
 
   // Initial data load
@@ -118,7 +118,6 @@ const KioskPage = () => {
 
       const { width, height } = layoutRef.current.getBoundingClientRect();
 
-      // Only update items that still rely on percentages (x_px/y_px unset or 0) and have perc fields
       const needsUpdate = tables.some(
         (t) =>
           (t.x_px === 0 && t.y_px === 0) &&
@@ -143,7 +142,6 @@ const KioskPage = () => {
       );
     };
 
-    // Run when floorplan is showing (non-overview) and on resize
     convertPercentToPx();
     window.addEventListener('resize', convertPercentToPx);
     return () => window.removeEventListener('resize', convertPercentToPx);
@@ -170,10 +168,8 @@ const KioskPage = () => {
       const table = entry.table_number;
       if (!table) continue;
 
-      // Left sidebar shows individual rows; KioskFeedbackList will group into 1 per session
       feedbackItems.push(entry);
 
-      // Build latest session per table for visual indicators
       if (!latestSession[table]) {
         latestSession[table] = entry.session_id;
         sessionMap[table] = [entry];
@@ -182,7 +178,6 @@ const KioskPage = () => {
       }
     }
 
-    // Calculate average rating per table (for floorplan borders/alerts)
     for (const table in sessionMap) {
       const valid = sessionMap[table].filter((e) => e.rating !== null && e.rating !== undefined);
       ratings[table] =
@@ -196,27 +191,25 @@ const KioskPage = () => {
   // Event handlers
   const handleZoneSelect = (zoneId) => {
     setCurrentView(zoneId);
-    resetInactivityTimer();
+    resetInactivityTimer(); // no-op while disabled
   };
 
   const handleFeedbackClick = (feedback) => {
     setSelectedFeedback(feedback);
 
-    // Find the zone for this table and switch view
     const table = tables.find((t) => t.table_number === feedback.table_number);
     if (table && table.zone_id) {
       setCurrentView(table.zone_id);
     }
-    resetInactivityTimer();
+    resetInactivityTimer(); // no-op while disabled
   };
 
   const handleTableClick = (tableNumber) => {
-    // Highlight the table and show its most recent feedback
     const tableFeedback = feedbackList.filter((f) => f.table_number === tableNumber);
     if (tableFeedback.length > 0) {
-      setSelectedFeedback(tableFeedback[0]); // Show the most recent
+      setSelectedFeedback(tableFeedback[0]);
     }
-    resetInactivityTimer();
+    resetInactivityTimer(); // no-op while disabled
   };
 
   const handleBackToOverview = () => {
@@ -228,14 +221,12 @@ const KioskPage = () => {
     }
   };
 
-  // Exit kiosk mode
   const handleExitKiosk = () => {
     if (window.confirm('Exit kiosk mode?')) {
       window.close();
     }
   };
 
-  // Loading state
   if (venueLoading || !venueId) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -288,7 +279,7 @@ const KioskPage = () => {
               >
                 ← Back to Overview
               </button>
-              <div className="text-sm text-gray-600">Auto-return in 10s</div>
+              {/* <div className="text-sm text-gray-600">Auto-return in 10s</div> */}
             </div>
           </div>
         )}
@@ -305,7 +296,7 @@ const KioskPage = () => {
             />
           ) : (
             <KioskFloorPlan
-              ref={layoutRef}                  // ← attached; used for % → px conversion
+              ref={layoutRef}                  // used for % → px conversion
               tables={tables}
               selectedZoneId={currentView}
               feedbackMap={feedbackMap}
