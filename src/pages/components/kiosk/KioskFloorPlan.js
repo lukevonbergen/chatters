@@ -66,7 +66,7 @@ const KioskFloorPlan = forwardRef(({
       maxY: -Infinity 
     });
 
-    if (bounds.minX === Infinity) return;
+    if (tableBounds.minX === Infinity) return;
 
     const contentWidth = tableBounds.maxX - tableBounds.minX;
     const contentHeight = tableBounds.maxY - tableBounds.minY;
