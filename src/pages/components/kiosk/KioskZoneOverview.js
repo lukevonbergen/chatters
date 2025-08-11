@@ -1,12 +1,12 @@
 import React from 'react';
 
-// Subtle alert pulse for unhappy tables
+// Subtle pulse for unhappy tables
 const slowPulseStyle = { animation: 'slow-pulse 3s cubic-bezier(0.4,0,0.6,1) infinite' };
 const pulseKeyframes = `
 @keyframes slow-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 `;
 
-// --- Grouping helpers (same as sidebar semantics) ---
+/* ---------- helpers: match sidebar semantics ---------- */
 const getRowRating = (row) => {
   const cand = row.session_rating ?? row.rating ?? row.score ?? null;
   const num = typeof cand === 'number' ? cand : Number(cand);
@@ -33,8 +33,7 @@ const groupBySession = (rows) => {
     }
     const rating = getRowRating(r);
     if (rating !== null) entry.ratings.push(rating);
-    const comment = r.additional_feedback?.trim();
-    if (comment) entry.has_comment = true;
+    if (r.additional_feedback?.trim()) entry.has_comment = true;
 
     map.set(sid, entry);
   }
@@ -50,17 +49,16 @@ const groupBySession = (rows) => {
   }));
 };
 
+/* ---------- main ---------- */
 const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSelect }) => {
-  // Pre-group to 1 alert per session (not per question)
   const sessions = React.useMemo(() => groupBySession(feedbackList), [feedbackList]);
 
-  // Build zone metrics and sort by priority
+  // Attach meta + priority and sort
   const zonesWithMeta = React.useMemo(() => {
     return (zones || [])
       .map((zone) => {
         const zoneTables = tables.filter((t) => t.zone_id === zone.id);
         const tableNumbers = new Set(zoneTables.map((t) => t.table_number));
-
         const zoneSessions = sessions.filter((s) => tableNumbers.has(s.table_number));
 
         const urgentCount = zoneSessions.filter((s) => s.session_rating != null && s.session_rating <= 2).length;
@@ -72,7 +70,10 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
         const priority = urgentCount > 0 ? 2 : totalAlerts > 0 ? 1 : 0;
         const latestAt =
           zoneSessions.length > 0
-            ? zoneSessions.reduce((max, s) => (new Date(s.created_at) > new Date(max) ? s.created_at : max), zoneSessions[0].created_at)
+            ? zoneSessions.reduce(
+                (max, s) => (new Date(s.created_at) > new Date(max) ? s.created_at : max),
+                zoneSessions[0].created_at
+              )
             : null;
 
         return { zone, zoneTables, urgentCount, attentionCount, totalAlerts, priority, latestAt };
@@ -85,7 +86,7 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
       });
   }, [zones, tables, sessions]);
 
-  // Status color styles
+  // Status styles
   const getZoneAccent = (urgentCount, totalAlerts) =>
     urgentCount > 0 ? 'bg-red-500' : totalAlerts > 0 ? 'bg-amber-500' : 'bg-emerald-500';
 
@@ -96,15 +97,19 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
     return { border: 'border-red-500', bg: 'bg-gray-700', status: 'unhappy' };
   };
 
-  // Denser, B2B-friendly table chips
+  // Denser chips; "long" is auto-width (padding), so spacing stays clean
   const getTableShapeClasses = (shape, feedbackStatus) => {
-    const base = `text-white flex items-center justify-center font-medium border-2 transition-colors duration-150 cursor-pointer ${feedbackStatus.bg} ${feedbackStatus.border}`;
+    const base =
+      `inline-flex items-center justify-center shrink-0
+       text-white font-medium border-2 transition-colors duration-150 cursor-pointer
+       ${feedbackStatus.bg} ${feedbackStatus.border}`;
     const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
+
     switch (shape) {
       case 'circle':
         return { className: `${base} w-9 h-9 text-[11px] rounded-full hover:bg-gray-600`, style: pulseStyle };
       case 'long':
-        return { className: `${base} w-16 h-7 text-[11px] rounded-md hover:bg-gray-600`, style: pulseStyle };
+        return { className: `${base} h-9 px-4 text-[11px] rounded-md hover:bg-gray-600`, style: pulseStyle };
       default:
         return { className: `${base} w-9 h-9 text-[11px] rounded-md hover:bg-gray-600`, style: pulseStyle };
     }
@@ -141,15 +146,13 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
       <style>{pulseKeyframes}</style>
 
       <div className="h-full p-4 md:p-6 bg-gray-50">
-        {/* Top bar */}
+        {/* Header */}
         <div className="mb-6 md:mb-8">
           <div className="flex items-end justify-between">
             <div>
               <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Zone Overview</h1>
-              <p className="text-sm text-gray-600 mt-1">Click a table to jump into its zone view.</p>
+              <p className="text-sm text-gray-600 mt-1">Click a table to jump into its zone.</p>
             </div>
-            {/* Room for a future filter/sort if you want */}
-            {/* <div className="text-sm text-gray-500">Sorted by priority</div> */}
           </div>
         </div>
 
@@ -178,7 +181,6 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
                   {/* Accent bar */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl ${accent}`} />
 
-                  {/* Card body */}
                   <div className="p-5 md:p-6">
                     {/* Header row */}
                     <div className="flex items-center justify-between mb-4">
@@ -211,25 +213,22 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
                       </div>
                     </div>
 
-                    {/* Tables grid (dense, responsive) */}
+                    {/* Tables (flex wrap so long chips don't bunch) */}
                     {zoneTables.length === 0 ? (
                       <div className="py-10 text-center text-gray-500 border border-dashed border-gray-200 rounded-lg bg-gray-50">
                         <div className="text-sm">No tables configured in this zone</div>
                       </div>
                     ) : (
-                      <div className="rounded-lg border border-gray-100 p-3 md:p-4 bg-white">
-                        <div
-                          className="grid gap-1.5 md:gap-2"
-                          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(2.25rem, 1fr))' }}
-                        >
+                      <div className="rounded-lg border border-gray-100 p-4 bg-white">
+                        <div className="flex flex-wrap gap-3 md:gap-3">
                           {zoneTables.map((table) => renderTable(table))}
                         </div>
                       </div>
                     )}
 
-                    {/* Meta footer (subtle) */}
+                    {/* Subtle footer meta */}
                     <div className="mt-3 flex items-center justify-between text-[11px] md:text-xs text-gray-500">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <span className="inline-flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Urgent
                         </span>
