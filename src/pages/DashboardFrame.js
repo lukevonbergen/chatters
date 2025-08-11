@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../context/VenueContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown } from 'react-icons/fi';
+import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown, FiExternalLink } from 'react-icons/fi';
 
 import { Button } from '../components/ui/button';
 import {
@@ -86,6 +86,38 @@ const UpdatedDashboardFrame = ({ children }) => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  const handleOpenKiosk = () => {
+    // Open near-fullscreen popup window
+    const w = window.screen?.availWidth ?? window.innerWidth;
+    const h = window.screen?.availHeight ?? window.innerHeight;
+    const features = `popup=yes,toolbar=0,location=0,menubar=0,scrollbars=1,status=0,resizable=1,left=0,top=0,width=${w},height=${h}`;
+    const win = window.open('/kiosk', 'kioskWindow', features);
+    if (!win) return;
+
+    // Attempt fullscreen on the new window (best-effort)
+    try {
+      win.focus();
+      const tryFullscreen = () => {
+        const doc = win.document;
+        const el = doc?.documentElement || doc?.body;
+        if (!el) return;
+        const req =
+          el.requestFullscreen ||
+          el.webkitRequestFullscreen ||
+          el.mozRequestFullScreen ||
+          el.msRequestFullscreen;
+        req?.call(el).catch(() => {});
+      };
+      win.addEventListener('load', tryFullscreen);
+      // Fallback attempt after a short delay
+      setTimeout(() => {
+        try { tryFullscreen(); } catch {}
+      }, 800);
+    } catch {
+      // Ignore cross-window access issues; window still opened
+    }
+  };
+
   if (!userInfo) {
     return (
       <div className="flex items-center justify-center h-screen bg-muted">
@@ -164,8 +196,20 @@ const UpdatedDashboardFrame = ({ children }) => {
           </nav>
         </div>
 
-        {/* Right: Venue Switcher + Avatar + Mobile Menu Button */}
+        {/* Right: Kiosk link + Venue Switcher + Avatar + Mobile Menu Button */}
         <div className="flex items-center gap-2 md:gap-4">
+          {/* Open Kiosk (desktop only) — to the LEFT of the venue switcher */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenKiosk}
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-xl text-gray-700 border-gray-300 bg-white hover:bg-gray-50"
+            title="Open Kiosk Mode (opens in a new window)"
+          >
+            <span className="text-sm">Open Kiosk Mode</span>
+            <FiExternalLink className="w-4 h-4" />
+          </Button>
+
           {/* Venue Switcher - Desktop */}
           <div className="hidden sm:block">
             {userRole === 'master' || allVenues.length > 1 ? (
