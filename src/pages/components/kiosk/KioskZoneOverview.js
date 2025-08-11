@@ -1,15 +1,12 @@
 import React from 'react';
 
-// Custom slow pulse animation
+// Subtle alert pulse for unhappy tables
 const slowPulseStyle = { animation: 'slow-pulse 3s cubic-bezier(0.4,0,0.6,1) infinite' };
 const pulseKeyframes = `
-@keyframes slow-pulse {
-  0%,100% { opacity: 1; }
-  50% { opacity: .3; }
-}
+@keyframes slow-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 `;
 
-// --- helpers (same idea as sidebar) ---
+// --- Grouping helpers (same as sidebar semantics) ---
 const getRowRating = (row) => {
   const cand = row.session_rating ?? row.rating ?? row.score ?? null;
   const num = typeof cand === 'number' ? cand : Number(cand);
@@ -36,7 +33,6 @@ const groupBySession = (rows) => {
     }
     const rating = getRowRating(r);
     if (rating !== null) entry.ratings.push(rating);
-
     const comment = r.additional_feedback?.trim();
     if (comment) entry.has_comment = true;
 
@@ -54,216 +50,204 @@ const groupBySession = (rows) => {
   }));
 };
 
-// --- main component ---
 const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSelect }) => {
-  // Pre-group the entire feedback list once (like sidebar)
+  // Pre-group to 1 alert per session (not per question)
   const sessions = React.useMemo(() => groupBySession(feedbackList), [feedbackList]);
 
-  // Build per-zone metrics and sort zones by priority
+  // Build zone metrics and sort by priority
   const zonesWithMeta = React.useMemo(() => {
-    return (zones || []).map((zone) => {
-      const zoneTables = tables.filter((t) => t.zone_id === zone.id);
-      const tableNumbers = new Set(zoneTables.map((t) => t.table_number));
+    return (zones || [])
+      .map((zone) => {
+        const zoneTables = tables.filter((t) => t.zone_id === zone.id);
+        const tableNumbers = new Set(zoneTables.map((t) => t.table_number));
 
-      // sessions that belong to this zone (match on table_number)
-      const zoneSessions = sessions.filter((s) => tableNumbers.has(s.table_number));
+        const zoneSessions = sessions.filter((s) => tableNumbers.has(s.table_number));
 
-      // derive counts like sidebar urgency rules
-      const urgentCount = zoneSessions.filter((s) => s.session_rating != null && s.session_rating <= 2).length;
-      const attentionCount = zoneSessions.filter(
-        (s) => s.session_rating != null && s.session_rating <= 3 && s.has_comment
-      ).length;
-      const totalAlerts = zoneSessions.length;
+        const urgentCount = zoneSessions.filter((s) => s.session_rating != null && s.session_rating <= 2).length;
+        const attentionCount = zoneSessions.filter(
+          (s) => s.session_rating != null && s.session_rating <= 3 && s.has_comment
+        ).length;
+        const totalAlerts = zoneSessions.length;
 
-      // priority band: 2 (urgent) > 1 (has alerts) > 0 (all good)
-      const priority =
-        urgentCount > 0 ? 2 : totalAlerts > 0 ? 1 : 0;
+        const priority = urgentCount > 0 ? 2 : totalAlerts > 0 ? 1 : 0;
+        const latestAt =
+          zoneSessions.length > 0
+            ? zoneSessions.reduce((max, s) => (new Date(s.created_at) > new Date(max) ? s.created_at : max), zoneSessions[0].created_at)
+            : null;
 
-      return {
-        zone,
-        zoneTables,
-        totalAlerts,
-        urgentCount,
-        attentionCount,
-        priority,
-      };
-    })
-    // sort by priority desc, then urgent desc, then total desc, then name asc
-    .sort((a, b) => {
-      if (b.priority !== a.priority) return b.priority - a.priority;
-      if (b.urgentCount !== a.urgentCount) return b.urgentCount - a.urgentCount;
-      if (b.totalAlerts !== a.totalAlerts) return b.totalAlerts - a.totalAlerts;
-      return (a.zone.name || '').localeCompare(b.zone.name || '');
-    });
+        return { zone, zoneTables, urgentCount, attentionCount, totalAlerts, priority, latestAt };
+      })
+      .sort((a, b) => {
+        if (b.priority !== a.priority) return b.priority - a.priority;
+        if (b.urgentCount !== a.urgentCount) return b.urgentCount - a.urgentCount;
+        if (b.totalAlerts !== a.totalAlerts) return b.totalAlerts - a.totalAlerts;
+        return (a.zone.name || '').localeCompare(b.zone.name || '');
+      });
   }, [zones, tables, sessions]);
 
+  // Status color styles
+  const getZoneAccent = (urgentCount, totalAlerts) =>
+    urgentCount > 0 ? 'bg-red-500' : totalAlerts > 0 ? 'bg-amber-500' : 'bg-emerald-500';
+
   const getFeedbackStatus = (avg) => {
-    if (avg === null || avg === undefined) {
-      return { borderColor: 'border-gray-300', bgColor: 'bg-gray-700', status: 'no-feedback' };
-    }
-    if (avg > 4) return { borderColor: 'border-green-500', bgColor: 'bg-gray-700', status: 'happy' };
-    if (avg >= 2.5) return { borderColor: 'border-yellow-500', bgColor: 'bg-gray-700', status: 'attention' };
-    return { borderColor: 'border-red-500', bgColor: 'bg-gray-700', status: 'unhappy' };
+    if (avg == null) return { border: 'border-gray-300', bg: 'bg-gray-700', status: 'no-feedback' };
+    if (avg > 4) return { border: 'border-green-500', bg: 'bg-gray-700', status: 'happy' };
+    if (avg >= 2.5) return { border: 'border-yellow-500', bg: 'bg-gray-700', status: 'attention' };
+    return { border: 'border-red-500', bg: 'bg-gray-700', status: 'unhappy' };
   };
 
-  // Clean, professional table design
+  // Denser, B2B-friendly table chips
   const getTableShapeClasses = (shape, feedbackStatus) => {
-    const baseClasses = 'text-white flex items-center justify-center font-semibold border-2 transition-all duration-200 cursor-pointer hover:scale-105';
+    const base = `text-white flex items-center justify-center font-medium border-2 transition-colors duration-150 cursor-pointer ${feedbackStatus.bg} ${feedbackStatus.border}`;
     const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
-
-    const statusColors = `${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
-
     switch (shape) {
       case 'circle':
-        return { 
-          className: `${baseClasses} ${statusColors} w-10 h-10 text-xs rounded-full shadow-sm`, 
-          style: pulseStyle 
-        };
+        return { className: `${base} w-9 h-9 text-[11px] rounded-full hover:bg-gray-600`, style: pulseStyle };
       case 'long':
-        return { 
-          className: `${baseClasses} ${statusColors} w-16 h-6 text-xs rounded`, 
-          style: pulseStyle 
-        };
+        return { className: `${base} w-16 h-7 text-[11px] rounded-md hover:bg-gray-600`, style: pulseStyle };
       default:
-        return { 
-          className: `${baseClasses} ${statusColors} w-10 h-10 text-xs rounded`, 
-          style: pulseStyle 
-        };
+        return { className: `${base} w-9 h-9 text-[11px] rounded-md hover:bg-gray-600`, style: pulseStyle };
     }
   };
 
   const renderTable = (table) => {
-    const avgRating = feedbackMap[table.table_number];
-    const feedbackStatus = getFeedbackStatus(avgRating);
-    const cfg = getTableShapeClasses(table.shape, feedbackStatus);
+    const avg = feedbackMap[table.table_number];
+    const status = getFeedbackStatus(avg);
+    const cfg = getTableShapeClasses(table.shape, status);
 
     const statusText =
-      feedbackStatus.status === 'happy' ? 'Table Happy' :
-      feedbackStatus.status === 'attention' ? 'Table Needs Attention' :
-      feedbackStatus.status === 'unhappy' ? 'Table Unhappy' :
-      'No Feedback Submitted';
+      status.status === 'happy'
+        ? 'Table Happy'
+        : status.status === 'attention'
+        ? 'Table Needs Attention'
+        : status.status === 'unhappy'
+        ? 'Table Unhappy'
+        : 'No Feedback Submitted';
 
     return (
-      <div
+      <button
         key={table.id}
-        className="relative"
         onClick={() => onZoneSelect(table.zone_id)}
-        title={`Table ${table.table_number} — ${statusText} — Click to view zone`}
+        className="relative focus:outline-none"
+        title={`Table ${table.table_number} — ${statusText}`}
       >
-        <div className={cfg.className} style={cfg.style}>
-          {table.table_number}
-        </div>
-      </div>
+        <div className={cfg.className} style={cfg.style}>{table.table_number}</div>
+      </button>
     );
-  };
-
-  const getZoneCardBorder = (urgentCount, totalAlerts) => {
-    if (urgentCount > 0) return 'border-red-200 bg-red-50';
-    if (totalAlerts > 0) return 'border-yellow-200 bg-yellow-50';
-    return 'border-gray-200 bg-white';
   };
 
   return (
     <>
       <style>{pulseKeyframes}</style>
 
-      <div className="h-full bg-gray-50 p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Zone Overview</h1>
-          <p className="text-gray-600">Monitor all zones and click any table to view detailed feedback</p>
+      <div className="h-full p-4 md:p-6 bg-gray-50">
+        {/* Top bar */}
+        <div className="mb-6 md:mb-8">
+          <div className="flex items-end justify-between">
+            <div>
+              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Zone Overview</h1>
+              <p className="text-sm text-gray-600 mt-1">Click a table to jump into its zone view.</p>
+            </div>
+            {/* Room for a future filter/sort if you want */}
+            {/* <div className="text-sm text-gray-500">Sorted by priority</div> */}
+          </div>
         </div>
 
         {zonesWithMeta.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
-              </svg>
+          <div className="grid place-items-center h-[60vh]">
+            <div className="text-center text-gray-600">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-lg bg-white border border-gray-200 grid place-items-center">
+                <svg className="w-7 h-7 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+              </div>
+              <div className="font-medium">No zones configured</div>
+              <div className="text-sm text-gray-500 mt-1">Ask an admin to set up your floor plan.</div>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No zones configured</h3>
-            <p className="text-gray-500">Contact your administrator to configure floor plan zones</p>
           </div>
         ) : (
-          <div className="space-y-4 max-w-6xl">
-            {zonesWithMeta.map(({ zone, zoneTables, totalAlerts, urgentCount }) => (
-              <div 
-                key={zone.id} 
-                className={`rounded-lg border p-6 transition-all duration-200 ${getZoneCardBorder(urgentCount, totalAlerts)}`}
-              >
-                {/* Zone Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{zone.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {zoneTables.length} table{zoneTables.length !== 1 ? 's' : ''}
-                      </p>
+          <div className="space-y-4">
+            {zonesWithMeta.map(({ zone, zoneTables, totalAlerts, urgentCount, latestAt }) => {
+              const accent = getZoneAccent(urgentCount, totalAlerts);
+
+              return (
+                <section
+                  key={zone.id}
+                  className="relative rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
+                >
+                  {/* Accent bar */}
+                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl ${accent}`} />
+
+                  {/* Card body */}
+                  <div className="p-5 md:p-6">
+                    {/* Header row */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <h2 className="text-base md:text-lg font-semibold text-gray-900">{zone.name}</h2>
+                        <span className="text-xs md:text-sm text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                          {zoneTables.length} table{zoneTables.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 md:gap-3">
+                        {urgentCount > 0 && (
+                          <span className="inline-flex items-center gap-1 bg-red-600 text-white text-[11px] md:text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
+                            {urgentCount} Urgent
+                          </span>
+                        )}
+                        {urgentCount === 0 && totalAlerts > 0 && (
+                          <span className="inline-flex items-center gap-1 bg-amber-500 text-white text-[11px] md:text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
+                            {totalAlerts} Alert{totalAlerts > 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {totalAlerts === 0 && (
+                          <span className="inline-flex items-center gap-1 bg-emerald-600 text-white text-[11px] md:text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
+                            Operational
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Tables grid (dense, responsive) */}
+                    {zoneTables.length === 0 ? (
+                      <div className="py-10 text-center text-gray-500 border border-dashed border-gray-200 rounded-lg bg-gray-50">
+                        <div className="text-sm">No tables configured in this zone</div>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-gray-100 p-3 md:p-4 bg-white">
+                        <div
+                          className="grid gap-1.5 md:gap-2"
+                          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(2.25rem, 1fr))' }}
+                        >
+                          {zoneTables.map((table) => renderTable(table))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Meta footer (subtle) */}
+                    <div className="mt-3 flex items-center justify-between text-[11px] md:text-xs text-gray-500">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Urgent
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Alert
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> OK
+                        </span>
+                      </div>
+                      {latestAt && <span>Last activity: {new Date(latestAt).toLocaleString()}</span>}
                     </div>
                   </div>
-
-                  {/* Status Indicators */}
-                  <div className="flex items-center gap-3">
-                    {urgentCount > 0 && (
-                      <div className="bg-red-600 text-white text-sm font-medium px-3 py-1 rounded">
-                        {urgentCount} Urgent
-                      </div>
-                    )}
-                    {urgentCount === 0 && totalAlerts > 0 && (
-                      <div className="bg-yellow-600 text-white text-sm font-medium px-3 py-1 rounded">
-                        {totalAlerts} Alert{totalAlerts > 1 ? 's' : ''}
-                      </div>
-                    )}
-                    {totalAlerts === 0 && (
-                      <div className="bg-green-600 text-white text-sm font-medium px-3 py-1 rounded">
-                        Operational
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Tables Grid */}
-                {zoneTables.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-100 rounded border-2 border-dashed border-gray-300">
-                    <p className="text-gray-500">No tables configured in this zone</p>
-                  </div>
-                ) : (
-                  <div className="bg-white rounded border p-4">
-                    <div
-                      className="grid gap-2"
-                      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(2.5rem, 1fr))' }}
-                    >
-                      {zoneTables.map((table) => renderTable(table))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                </section>
+              );
+            })}
           </div>
         )}
-
-        {/* Status Legend */}
-        <div className="fixed bottom-6 right-6 bg-white rounded-lg shadow-lg border border-gray-200 p-4 w-64">
-          <h4 className="text-sm font-semibold text-gray-900 mb-3">Status Legend</h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 bg-gray-700 border-2 border-red-500 rounded"></div>
-              <span className="text-gray-700">Unhappy (≤2.0)</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 bg-gray-700 border-2 border-yellow-500 rounded"></div>
-              <span className="text-gray-700">Needs Attention (2.5-3.0)</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 bg-gray-700 border-2 border-green-500 rounded"></div>
-              <span className="text-gray-700">Satisfied (+4.0)</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 bg-gray-700 border-2 border-gray-300 rounded"></div>
-              <span className="text-gray-700">No Recent Feedback</span>
-            </div>
-          </div>
-        </div>
       </div>
     </>
   );
