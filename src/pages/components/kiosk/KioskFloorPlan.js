@@ -57,7 +57,7 @@ const KioskFloorPlan = forwardRef(({
       {/* Zone header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Zone: {selectedZone} {/* You should pass zone name here */}
+          Zone Details
         </h2>
         <p className="text-gray-600">
           Click on a table to view its feedback details
