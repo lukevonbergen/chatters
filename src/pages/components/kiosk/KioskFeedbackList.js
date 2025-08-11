@@ -2,22 +2,12 @@ import React from 'react';
 import dayjs from 'dayjs';
 
 const KioskFeedbackList = ({ feedbackList, selectedFeedback, onFeedbackClick }) => {
-  // Group feedback by table
-  const groupedFeedback = feedbackList.reduce((acc, feedback) => {
-    const table = feedback.table_number;
-    if (!acc[table]) {
-      acc[table] = [];
-    }
-    acc[table].push(feedback);
-    return acc;
-  }, {});
-
-  // Sort tables by most recent feedback first
-  const sortedTables = Object.keys(groupedFeedback).sort((a, b) => {
-    const aLatest = Math.max(...groupedFeedback[a].map(f => new Date(f.created_at).getTime()));
-    const bLatest = Math.max(...groupedFeedback[b].map(f => new Date(f.created_at).getTime()));
-    return bLatest - aLatest;
-  });
+  // feedbackList now contains one item per session (already grouped)
+  
+  // Sort by most recent feedback first
+  const sortedFeedback = feedbackList.sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   const getRatingColor = (rating) => {
     if (rating <= 2) return 'text-red-600 bg-red-50 border-red-200';
@@ -59,19 +49,15 @@ const KioskFeedbackList = ({ feedbackList, selectedFeedback, onFeedbackClick }) 
             </span>
           </div>
 
-          {sortedTables.map(tableNumber => {
-            const tableFeedback = groupedFeedback[tableNumber];
-            const latestFeedback = tableFeedback.reduce((latest, current) => 
-              new Date(current.created_at) > new Date(latest.created_at) ? current : latest
-            );
-            const urgency = getUrgencyIndicator(latestFeedback);
+          {sortedFeedback.map(feedback => {
+            const urgency = getUrgencyIndicator(feedback);
 
             return (
               <div
-                key={tableNumber}
-                onClick={() => onFeedbackClick(latestFeedback)}
+                key={feedback.session_id}
+                onClick={() => onFeedbackClick(feedback)}
                 className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
-                  selectedFeedback?.table_number === tableNumber
+                  selectedFeedback?.session_id === feedback.session_id
                     ? 'border-blue-500 bg-blue-50 shadow-md'
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
@@ -80,42 +66,42 @@ const KioskFeedbackList = ({ feedbackList, selectedFeedback, onFeedbackClick }) 
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-lg text-gray-900">
-                      Table {tableNumber}
+                      Table {feedback.table_number}
                     </span>
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${urgency.color}`}>
                       {urgency.label}
                     </span>
                   </div>
                   <span className="text-xs text-gray-500">
-                    {dayjs(latestFeedback.created_at).fromNow()}
+                    {dayjs(feedback.created_at).fromNow()}
                   </span>
                 </div>
 
                 {/* Rating */}
-                {latestFeedback.rating && (
-                  <div className={`inline-block px-2 py-1 rounded border text-sm font-medium mb-2 ${getRatingColor(latestFeedback.rating)}`}>
-                    Rating: {latestFeedback.rating}/5
+                {feedback.session_rating && (
+                  <div className={`inline-block px-2 py-1 rounded border text-sm font-medium mb-2 ${getRatingColor(feedback.session_rating)}`}>
+                    Rating: {feedback.session_rating.toFixed(1)}/5
                   </div>
                 )}
 
                 {/* Question */}
-                {latestFeedback.questions?.question && (
+                {feedback.questions?.question && (
                   <p className="text-sm font-medium text-gray-700 mb-1">
-                    {latestFeedback.questions.question}
+                    {feedback.questions.question}
                   </p>
                 )}
 
                 {/* Additional feedback */}
-                {latestFeedback.additional_feedback && (
+                {feedback.additional_feedback && (
                   <p className="text-sm text-gray-600 italic">
-                    "{latestFeedback.additional_feedback}"
+                    "{feedback.additional_feedback}"
                   </p>
                 )}
 
-                {/* Multiple alerts indicator */}
-                {tableFeedback.length > 1 && (
+                {/* Multiple items indicator */}
+                {feedback.items_count > 1 && (
                   <div className="mt-2 text-xs text-gray-500">
-                    +{tableFeedback.length - 1} more alert{tableFeedback.length > 2 ? 's' : ''}
+                    +{feedback.items_count - 1} more item{feedback.items_count > 2 ? 's' : ''} in this session
                   </div>
                 )}
 
