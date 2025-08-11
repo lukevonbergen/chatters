@@ -150,28 +150,6 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
             })}
           </div>
         )}
-
-        <div className="fixed bottom-6 right-6 bg-white rounded-lg shadow-lg p-4 border">
-          <h4 className="text-sm font-semibold text-gray-900 mb-2">Status Legend</h4>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gray-700 border-4 border-red-500 rounded animate-pulse"></div>
-              <span>Table Unhappy (≤2★)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gray-700 border-4 border-yellow-500 rounded"></div>
-              <span>Table Needs Attention (2.5-3★)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gray-700 border-4 border-green-500 rounded"></div>
-              <span>Table Happy (4-5★)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gray-700 border-4 border-gray-800 rounded"></div>
-              <span>No Feedback Submitted</span>
-            </div>
-          </div>
-        </div>
       </div>
     </>
   );

@@ -32,16 +32,13 @@ const KioskPage = () => {
         setSelectedFeedback(null);
       }, 10000);
       setInactivityTimer(timer);
-      
       return () => clearTimeout(timer);
     }
   }, [currentView]);
 
   // Reset inactivity timer on user interaction
   const resetInactivityTimer = () => {
-    if (inactivityTimer) {
-      clearTimeout(inactivityTimer);
-    }
+    if (inactivityTimer) clearTimeout(inactivityTimer);
     if (currentView !== 'overview') {
       const timer = setTimeout(() => {
         setCurrentView('overview');
@@ -51,16 +48,14 @@ const KioskPage = () => {
     }
   };
 
-  // Main data loading effect
+  // Initial data load
   useEffect(() => {
     if (!venueId || venueLoading) return;
-
     const load = async () => {
       await loadZones(venueId);
       await loadTables(venueId);
       await fetchFeedback(venueId);
     };
-
     load();
   }, [venueId, venueLoading]);
 
@@ -89,42 +84,70 @@ const KioskPage = () => {
     };
   }, [venueId]);
 
-  // Data loading functions (simplified from main Floorplan)
+  // Data loading functions
   const loadZones = async (venueId) => {
-    const { data } = await supabase.from('zones').select('*').eq('venue_id', venueId).order('order');
+    const { data } = await supabase
+      .from('zones')
+      .select('*')
+      .eq('venue_id', venueId)
+      .order('order');
     setZones(data || []);
   };
 
   const loadTables = async (venueId) => {
-    const { data } = await supabase.from('table_positions').select('*').eq('venue_id', venueId);
+    const { data } = await supabase
+      .from('table_positions')
+      .select('*')
+      .eq('venue_id', venueId);
     if (!data) return;
-    
-    // Set tables with percentage positions first, then convert to pixels after layout is ready
-    setTables(data.map(t => ({
-      ...t,
-      x_px: 0, // Will be calculated later
-      y_px: 0  // Will be calculated later
-    })));
+
+    // Initialise with px placeholders; real px set after measuring the floorplan container
+    setTables(
+      data.map((t) => ({
+        ...t,
+        x_px: 0,
+        y_px: 0,
+      }))
+    );
   };
 
-  // Convert percentage positions to pixels after layout ref is available
+  // Convert percentage positions -> pixels when floorplan is visible and on resize
   useEffect(() => {
-    if (!layoutRef.current || tables.length === 0) return;
-    
-    const container = layoutRef.current;
-    const { width, height } = container.getBoundingClientRect();
-    
-    // Only update if we don't have pixel positions yet
-    const needsUpdate = tables.some(t => t.x_px === 0 && t.y_px === 0 && (t.x_percent || t.y_percent));
-    
-    if (needsUpdate) {
-      setTables(prev => prev.map(t => ({
-        ...t,
-        x_px: (t.x_percent / 100) * width,
-        y_px: (t.y_percent / 100) * height
-      })));
-    }
-  }, [tables, layoutRef.current]);
+    const convertPercentToPx = () => {
+      if (!layoutRef.current || tables.length === 0) return;
+
+      const { width, height } = layoutRef.current.getBoundingClientRect();
+
+      // Only update items that still rely on percentages (x_px/y_px unset or 0) and have perc fields
+      const needsUpdate = tables.some(
+        (t) =>
+          (t.x_px === 0 && t.y_px === 0) &&
+          (t.x_percent != null && t.y_percent != null)
+      );
+      if (!needsUpdate) return;
+
+      setTables((prev) =>
+        prev.map((t) => {
+          if (
+            (t.x_px === 0 && t.y_px === 0) &&
+            (t.x_percent != null && t.y_percent != null)
+          ) {
+            return {
+              ...t,
+              x_px: (t.x_percent / 100) * width,
+              y_px: (t.y_percent / 100) * height,
+            };
+          }
+          return t;
+        })
+      );
+    };
+
+    // Run when floorplan is showing (non-overview) and on resize
+    convertPercentToPx();
+    window.addEventListener('resize', convertPercentToPx);
+    return () => window.removeEventListener('resize', convertPercentToPx);
+  }, [currentView, tables.length]);
 
   const fetchFeedback = async (venueId) => {
     const now = dayjs();
@@ -138,17 +161,19 @@ const KioskPage = () => {
       .gt('created_at', cutoff)
       .order('created_at', { ascending: false });
 
-    const sessionMap = {}, latestSession = {}, ratings = {};
+    const sessionMap = {};
+    const latestSession = {};
+    const ratings = {};
     const feedbackItems = [];
 
     for (const entry of data || []) {
       const table = entry.table_number;
       if (!table) continue;
-      
-      // Add to feedback list for left sidebar
+
+      // Left sidebar shows individual rows; KioskFeedbackList will group into 1 per session
       feedbackItems.push(entry);
-      
-      // Calculate average rating per table (existing logic)
+
+      // Build latest session per table for visual indicators
       if (!latestSession[table]) {
         latestSession[table] = entry.session_id;
         sessionMap[table] = [entry];
@@ -157,10 +182,11 @@ const KioskPage = () => {
       }
     }
 
-    // Calculate ratings for visual indicators
+    // Calculate average rating per table (for floorplan borders/alerts)
     for (const table in sessionMap) {
-      const valid = sessionMap[table].filter(e => e.rating !== null);
-      ratings[table] = valid.length > 0 ? valid.reduce((a, b) => a + b.rating, 0) / valid.length : null;
+      const valid = sessionMap[table].filter((e) => e.rating !== null && e.rating !== undefined);
+      ratings[table] =
+        valid.length > 0 ? valid.reduce((a, b) => a + Number(b.rating || 0), 0) / valid.length : null;
     }
 
     setFeedbackMap(ratings);
@@ -175,19 +201,18 @@ const KioskPage = () => {
 
   const handleFeedbackClick = (feedback) => {
     setSelectedFeedback(feedback);
-    
-    // Find the zone for this table
-    const table = tables.find(t => t.table_number === feedback.table_number);
+
+    // Find the zone for this table and switch view
+    const table = tables.find((t) => t.table_number === feedback.table_number);
     if (table && table.zone_id) {
       setCurrentView(table.zone_id);
     }
-    
     resetInactivityTimer();
   };
 
   const handleTableClick = (tableNumber) => {
-    // Highlight the table and show its feedback
-    const tableFeedback = feedbackList.filter(f => f.table_number === tableNumber);
+    // Highlight the table and show its most recent feedback
+    const tableFeedback = feedbackList.filter((f) => f.table_number === tableNumber);
     if (tableFeedback.length > 0) {
       setSelectedFeedback(tableFeedback[0]); // Show the most recent
     }
@@ -252,7 +277,7 @@ const KioskPage = () => {
       </div>
 
       {/* Right Side - Floor Plan */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col">
         {/* Zone Navigation */}
         {currentView !== 'overview' && (
           <div className="p-4 bg-white border-b border-gray-200">
@@ -263,9 +288,7 @@ const KioskPage = () => {
               >
                 ← Back to Overview
               </button>
-              <div className="text-sm text-gray-600">
-                Auto-return in 10s
-              </div>
+              <div className="text-sm text-gray-600">Auto-return in 10s</div>
             </div>
           </div>
         )}
@@ -282,7 +305,7 @@ const KioskPage = () => {
             />
           ) : (
             <KioskFloorPlan
-              ref={layoutRef}
+              ref={layoutRef}                  // ← attached; used for % → px conversion
               tables={tables}
               selectedZoneId={currentView}
               feedbackMap={feedbackMap}

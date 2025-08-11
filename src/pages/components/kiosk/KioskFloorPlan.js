@@ -1,4 +1,4 @@
-import React, { forwardRef, useRef, useState, useEffect } from 'react';
+import React, { forwardRef, useMemo, useRef, useState, useEffect } from 'react';
 
 // Custom slow pulse animation
 const slowPulseStyle = {
@@ -7,14 +7,14 @@ const slowPulseStyle = {
 
 const pulseKeyframes = `
 @keyframes slow-pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 `;
+
+const PADDING = 120;       // padding around world bounds
+const TABLE_W = 64;        // base table width used for bounds
+const TABLE_H = 64;        // base table height used for bounds
 
 const KioskFloorPlan = forwardRef(({ 
   tables, 
@@ -22,255 +22,161 @@ const KioskFloorPlan = forwardRef(({
   feedbackMap, 
   selectedFeedback,
   onTableClick 
-}, ref) => {
-  
-  const scrollContainerRef = useRef(null);
-  const canvasRef = useRef(null);
+}, outerRef) => {
+  const scrollRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  const [tableScale, setTableScale] = useState(1);
-  
-  const filteredTables = tables.filter(t => t.zone_id === selectedZoneId);
-  
-  // Calculate canvas size based on viewport
+
+  const filtered = useMemo(() => tables.filter(t => t.zone_id === selectedZoneId), [tables, selectedZoneId]);
+
+  // Compute world bounds from table coords
+  const world = useMemo(() => {
+    if (!filtered.length) {
+      return { minX: 0, minY: 0, width: 1000, height: 700, norm: [] };
+    }
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const t of filtered) {
+      const w = t.shape === 'long' ? 128 : TABLE_W;
+      const h = t.shape === 'long' ? 48  : TABLE_H;
+      minX = Math.min(minX, t.x_px);
+      minY = Math.min(minY, t.y_px);
+      maxX = Math.max(maxX, t.x_px + w);
+      maxY = Math.max(maxY, t.y_px + h);
+    }
+    const width  = Math.max(1, (maxX - minX) + PADDING * 2);
+    const height = Math.max(1, (maxY - minY) + PADDING * 2);
+
+    // Normalize each table to world coords so (minX,minY) sits at PADDING
+    const norm = filtered.map(t => ({
+      ...t,
+      normX: (t.x_px - minX) + PADDING,
+      normY: (t.y_px - minY) + PADDING
+    }));
+
+    return { minX, minY, width, height, norm };
+  }, [filtered]);
+
+  // Pan/zoom handlers
   useEffect(() => {
-    const updateCanvasSize = () => {
-      if (scrollContainerRef.current) {
-        const rect = scrollContainerRef.current.getBoundingClientRect();
-        setCanvasSize({ width: rect.width, height: rect.height });
-      }
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const onWheel = (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      setZoom(z => Math.max(0.2, Math.min(3, z * delta)));
     };
 
-    updateCanvasSize();
-    window.addEventListener('resize', updateCanvasSize);
-    return () => window.removeEventListener('resize', updateCanvasSize);
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
-  // Calculate scale to fit all tables within canvas
-  useEffect(() => {
-    if (filteredTables.length === 0 || canvasSize.width === 0) return;
-
-    // Find the bounds of all tables
-    const tableBounds = filteredTables.reduce((bounds, table) => ({
-      minX: Math.min(bounds.minX, table.x_px),
-      maxX: Math.max(bounds.maxX, table.x_px + 64), // Add table width
-      minY: Math.min(bounds.minY, table.y_px),
-      maxY: Math.max(bounds.maxY, table.y_px + 64), // Add table height
-    }), { 
-      minX: Infinity, 
-      maxX: -Infinity, 
-      minY: Infinity, 
-      maxY: -Infinity 
-    });
-
-    if (tableBounds.minX === Infinity) return;
-
-    const contentWidth = tableBounds.maxX - tableBounds.minX;
-    const contentHeight = tableBounds.maxY - tableBounds.minY;
-
-    // Calculate scale to fit content in canvas with some padding
-    const padding = 100;
-    const scaleX = (canvasSize.width - padding) / contentWidth;
-    const scaleY = (canvasSize.height - padding) / contentHeight;
-    const scale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
-
-    setTableScale(scale);
-  }, [filteredTables, canvasSize]);
-
-  // Zoom and scroll with mouse wheel
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleWheel = (e) => {
-      e.preventDefault();
-      
-      if (e.ctrlKey || e.metaKey) {
-        // Zoom with Ctrl/Cmd + wheel
-        const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
-        const newZoom = Math.max(0.1, Math.min(3, zoom * zoomDelta));
-        setZoom(newZoom);
-      } else if (e.shiftKey) {
-        // Horizontal scroll with Shift + wheel
-        container.scrollLeft += e.deltaY;
-      } else {
-        // Normal scroll
-        container.scrollTop += e.deltaY;
-        container.scrollLeft += e.deltaX;
-      }
-    };
-
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
-  }, [zoom]);
-
-  // Drag scrolling
-  const handleMouseDown = (e) => {
-    if (e.target.classList.contains('floor-plan-canvas') || 
-        e.target.classList.contains('grid-pattern')) {
+  const startDrag = (e) => {
+    // only when dragging background
+    if (e.target === e.currentTarget) {
       setIsDragging(true);
       setDragStart({ x: e.clientX, y: e.clientY });
-      setScrollStart({
-        x: scrollContainerRef.current.scrollLeft,
-        y: scrollContainerRef.current.scrollTop
-      });
+      setScrollStart({ x: scrollRef.current.scrollLeft, y: scrollRef.current.scrollTop });
       document.body.style.cursor = 'grabbing';
-      e.preventDefault();
     }
   };
-
-  const handleMouseMove = (e) => {
+  const onDrag = (e) => {
     if (!isDragging) return;
-    e.preventDefault();
-
-    const deltaX = e.clientX - dragStart.x;
-    const deltaY = e.clientY - dragStart.y;
-
-    scrollContainerRef.current.scrollLeft = scrollStart.x - deltaX;
-    scrollContainerRef.current.scrollTop = scrollStart.y - deltaY;
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    scrollRef.current.scrollLeft = scrollStart.x - dx;
+    scrollRef.current.scrollTop  = scrollStart.y - dy;
   };
-
-  const handleMouseUp = () => {
+  const endDrag = () => {
     if (isDragging) {
       setIsDragging(false);
       document.body.style.cursor = 'default';
     }
   };
-
-  // Add mouse event listeners
   useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
+    if (!isDragging) return;
+    const mm = (e) => onDrag(e);
+    const mu = () => endDrag();
+    document.addEventListener('mousemove', mm);
+    document.addEventListener('mouseup', mu);
+    return () => {
+      document.removeEventListener('mousemove', mm);
+      document.removeEventListener('mouseup', mu);
+    };
   }, [isDragging, dragStart, scrollStart]);
 
   const getFeedbackStatus = (avg) => {
-    if (avg === null || avg === undefined) {
-      return {
-        borderColor: 'border-gray-800', // No feedback submitted
-        bgColor: 'bg-gray-700',
-        status: 'no-feedback'
-      };
-    }
-    if (avg > 4) {
-      return {
-        borderColor: 'border-green-500', // Table Happy
-        bgColor: 'bg-gray-700',
-        status: 'happy'
-      };
-    }
-    if (avg >= 2.5) {
-      return {
-        borderColor: 'border-yellow-500', // Table Needs Attention
-        bgColor: 'bg-gray-700',
-        status: 'attention'
-      };
-    }
-    return {
-      borderColor: 'border-red-500', // Table Unhappy
-      bgColor: 'bg-gray-700',
-      status: 'unhappy'
-    };
+    if (avg == null) return { borderColor: 'border-gray-800', bgColor: 'bg-gray-700', status: 'no-feedback' };
+    if (avg > 4) return { borderColor: 'border-green-500', bgColor: 'bg-gray-700', status: 'happy' };
+    if (avg >= 2.5) return { borderColor: 'border-yellow-500', bgColor: 'bg-gray-700', status: 'attention' };
+    return { borderColor: 'border-red-500', bgColor: 'bg-gray-700', status: 'unhappy' };
   };
 
   const getTableShapeClasses = (shape, feedbackStatus, isSelected) => {
-    const baseClasses = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-300 cursor-pointer ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
-    
-    // Selection and alert styling
-    const selectionClass = isSelected ? 'scale-110 shadow-xl ring-4 ring-blue-300' : '';
+    const base = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-300 cursor-pointer ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
+    const selection = isSelected ? 'scale-110 shadow-xl ring-4 ring-blue-300' : '';
     const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
-    
     switch (shape) {
       case 'circle':
-        return {
-          className: `${baseClasses} w-16 h-16 rounded-full hover:bg-gray-600 hover:scale-105 ${selectionClass}`,
-          style: pulseStyle
-        };
+        return { className: `${base} w-16 h-16 rounded-full hover:bg-gray-600 hover:scale-105 ${selection}`, style: pulseStyle };
       case 'long':
-        return {
-          className: `${baseClasses} w-32 h-12 rounded-lg hover:bg-gray-600 hover:scale-105 text-sm ${selectionClass}`,
-          style: pulseStyle
-        };
-      default: // square
-        return {
-          className: `${baseClasses} w-16 h-16 rounded-lg hover:bg-gray-600 hover:scale-105 ${selectionClass}`,
-          style: pulseStyle
-        };
+        return { className: `${base} w-32 h-12 rounded-lg hover:bg-gray-600 hover:scale-105 text-sm ${selection}`, style: pulseStyle };
+      default:
+        return { className: `${base} w-16 h-16 rounded-lg hover:bg-gray-600 hover:scale-105 ${selection}`, style: pulseStyle };
     }
   };
 
-  const isTableSelected = (tableNumber) => {
-    return selectedFeedback?.table_number === tableNumber;
-  };
-
-  const hasTableAlert = (tableNumber) => {
-    const rating = feedbackMap[tableNumber];
-    return rating !== null && rating !== undefined && rating <= 3;
-  };
+  const isSelected = (n) => selectedFeedback?.table_number === n;
 
   return (
     <>
-      {/* Inject keyframes */}
       <style>{pulseKeyframes}</style>
-      
-      <div className="h-screen w-screen flex flex-col bg-gray-100">
-        {/* Compact Header */}
-        <div className="flex-shrink-0 p-4 bg-white border-b">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Zone Details</h2>
-            <div className="flex items-center gap-4">
-              <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                💡 Ctrl+scroll to zoom • Drag to pan
-              </div>
-              <div className="text-sm text-gray-600">
-                Zoom: {Math.round(zoom * 100)}%
-              </div>
-            </div>
+
+      {/* Root fills available space; ref is attached here so KioskPage can measure it */}
+      <div
+        ref={outerRef}
+        className="flex-1 min-h-0 flex flex-col bg-gray-100 rounded-lg border border-gray-200"
+      >
+        {/* Top bar (compact) */}
+        <div className="flex-shrink-0 px-4 py-2 bg-white border-b flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-900">Zone Details</h2>
+          <div className="flex items-center gap-4 text-xs text-gray-600">
+            <span>Ctrl/Cmd + Scroll to zoom</span>
+            <span>Zoom: {Math.round(zoom * 100)}%</span>
           </div>
         </div>
 
-        {/* Full Screen Canvas */}
-        <div 
-          ref={scrollContainerRef}
-          className={`flex-1 overflow-auto ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'} relative`}
-          onMouseDown={handleMouseDown}
-          style={{ 
-            scrollBehavior: 'smooth',
-            WebkitOverflowScrolling: 'touch'
-          }}
+        {/* Scroll/pan container */}
+        <div
+          ref={scrollRef}
+          className={`flex-1 overflow-auto relative ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+          onMouseDown={startDrag}
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          <div 
-            ref={canvasRef}
-            className="floor-plan-canvas bg-gray-50 relative w-full h-full"
-            style={{ 
-              transform: `scale(${zoom})`,
-              transformOrigin: '0 0',
-              minWidth: '100%',
-              minHeight: '100%'
+          {/* World canvas sized to bounds */}
+          <div
+            className="relative bg-gray-50"
+            style={{
+              width: world.width * zoom,
+              height: world.height * zoom,
+              transformOrigin: '0 0'
             }}
           >
-            {/* Grid pattern */}
-            <div 
-              className="absolute inset-0 opacity-10 pointer-events-none grid-pattern"
+            {/* Grid */}
+            <div
+              className="absolute inset-0 opacity-10 pointer-events-none"
               style={{
-                backgroundImage: `
-                  radial-gradient(circle, #94a3b8 2px, transparent 2px)
-                `,
-                backgroundSize: '30px 30px',
+                backgroundImage: `radial-gradient(circle, #94a3b8 2px, transparent 2px)`,
+                backgroundSize: '30px 30px'
               }}
             />
-            
+
             {/* Empty state */}
-            {filteredTables.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {!filtered.length && (
+              <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center text-gray-500">
                   <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -278,59 +184,41 @@ const KioskFloorPlan = forwardRef(({
                     </svg>
                   </div>
                   <p className="text-lg font-medium">No tables in this zone</p>
-                  <p className="text-sm text-gray-400">
-                    Contact your administrator to add tables to this zone
-                  </p>
                 </div>
               </div>
             )}
 
-            {/* Tables - Auto-scaled and centered */}
-            {filteredTables.length > 0 && (
-              <div 
-                className="absolute"
-                style={{
-                  transform: `scale(${tableScale})`,
-                  transformOrigin: '0 0',
-                  left: '50%',
-                  top: '50%',
-                  marginLeft: `-${(Math.max(...filteredTables.map(t => t.x_px)) + Math.min(...filteredTables.map(t => t.x_px))) / 2 * tableScale}px`,
-                  marginTop: `-${(Math.max(...filteredTables.map(t => t.y_px)) + Math.min(...filteredTables.map(t => t.y_px))) / 2 * tableScale}px`
-                }}
-              >
-                {filteredTables.map((table) => {
-                  const avgRating = feedbackMap[table.table_number];
-                  const feedbackStatus = getFeedbackStatus(avgRating);
-                  const isSelected = isTableSelected(table.table_number);
-                  const tableShapeConfig = getTableShapeClasses(table.shape, feedbackStatus, isSelected);
+            {/* Tables */}
+            {world.norm.map((t) => {
+              const avg = feedbackMap[t.table_number];
+              const feedbackStatus = getFeedbackStatus(avg);
+              const cfg = getTableShapeClasses(t.shape, feedbackStatus, isSelected(t.table_number));
+              return (
+                <div
+                  key={t.id}
+                  className="absolute"
+                  style={{
+                    left: t.normX * zoom,
+                    top: t.normY * zoom
+                  }}
+                >
+                  <div
+                    className={cfg.className}
+                    style={cfg.style}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTableClick(t.table_number);
+                    }}
+                  >
+                    {t.table_number}
+                  </div>
 
-                  return (
-                    <div 
-                      key={table.id} 
-                      className="absolute table-element" 
-                      style={{ left: table.x_px, top: table.y_px }}
-                    >
-                      <div
-                        className={tableShapeConfig.className}
-                        style={tableShapeConfig.style}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onTableClick(table.table_number);
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                      >
-                        {table.table_number}
-                      </div>
-
-                      {/* Selection highlight */}
-                      {isSelected && (
-                        <div className="absolute -inset-4 border-4 border-blue-400 rounded-lg opacity-50 pointer-events-none animate-pulse" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                  {isSelected(t.table_number) && (
+                    <div className="absolute -inset-4 border-4 border-blue-400 rounded-lg opacity-50 pointer-events-none animate-pulse" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -339,5 +227,4 @@ const KioskFloorPlan = forwardRef(({
 });
 
 KioskFloorPlan.displayName = 'KioskFloorPlan';
-
 export default KioskFloorPlan;
