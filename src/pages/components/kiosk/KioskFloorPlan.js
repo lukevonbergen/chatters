@@ -30,17 +30,55 @@ const KioskFloorPlan = forwardRef(({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [tableScale, setTableScale] = useState(1);
   
   const filteredTables = tables.filter(t => t.zone_id === selectedZoneId);
   
-  // Debug logging
-  console.log('KioskFloorPlan Debug:', {
-    totalTables: tables.length,
-    filteredTables: filteredTables.length,
-    selectedZoneId,
-    firstTable: filteredTables[0],
-    allZoneIds: [...new Set(tables.map(t => t.zone_id))]
-  });
+  // Calculate canvas size based on viewport
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (scrollContainerRef.current) {
+        const rect = scrollContainerRef.current.getBoundingClientRect();
+        setCanvasSize({ width: rect.width, height: rect.height });
+      }
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, []);
+
+  // Calculate scale to fit all tables within canvas
+  useEffect(() => {
+    if (filteredTables.length === 0 || canvasSize.width === 0) return;
+
+    // Find the bounds of all tables
+    const tableBounds = filteredTables.reduce((bounds, table) => ({
+      minX: Math.min(bounds.minX, table.x_px),
+      maxX: Math.max(bounds.maxX, table.x_px + 64), // Add table width
+      minY: Math.min(bounds.minY, table.y_px),
+      maxY: Math.max(bounds.maxY, table.y_px + 64), // Add table height
+    }), { 
+      minX: Infinity, 
+      maxX: -Infinity, 
+      minY: Infinity, 
+      maxY: -Infinity 
+    });
+
+    if (bounds.minX === Infinity) return;
+
+    const contentWidth = tableBounds.maxX - tableBounds.minX;
+    const contentHeight = tableBounds.maxY - tableBounds.minY;
+
+    // Calculate scale to fit content in canvas with some padding
+    const padding = 100;
+    const scaleX = (canvasSize.width - padding) / contentWidth;
+    const scaleY = (canvasSize.height - padding) / contentHeight;
+    const scale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
+
+    setTableScale(scale);
+  }, [filteredTables, canvasSize]);
 
   // Zoom and scroll with mouse wheel
   useEffect(() => {
@@ -183,19 +221,14 @@ const KioskFloorPlan = forwardRef(({
       {/* Inject keyframes */}
       <style>{pulseKeyframes}</style>
       
-      <div className="h-full flex flex-col">
-        {/* Fixed Header */}
-        <div className="flex-shrink-0 mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Zone Details
-          </h2>
+      <div className="h-screen w-screen flex flex-col bg-gray-100">
+        {/* Compact Header */}
+        <div className="flex-shrink-0 p-4 bg-white border-b">
           <div className="flex items-center justify-between">
-            <p className="text-gray-600">
-              Click on a table to view its feedback details
-            </p>
+            <h2 className="text-xl font-bold text-gray-900">Zone Details</h2>
             <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                💡 Ctrl+scroll to zoom • Drag to pan • Shift+scroll for horizontal
+              <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                💡 Ctrl+scroll to zoom • Drag to pan
               </div>
               <div className="text-sm text-gray-600">
                 Zoom: {Math.round(zoom * 100)}%
@@ -204,10 +237,10 @@ const KioskFloorPlan = forwardRef(({
           </div>
         </div>
 
-        {/* Full Height Scrollable Floor Plan */}
+        {/* Full Screen Canvas */}
         <div 
           ref={scrollContainerRef}
-          className={`flex-1 overflow-auto ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'} bg-gray-100`}
+          className={`flex-1 overflow-auto ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'} relative`}
           onMouseDown={handleMouseDown}
           style={{ 
             scrollBehavior: 'smooth',
@@ -216,14 +249,12 @@ const KioskFloorPlan = forwardRef(({
         >
           <div 
             ref={canvasRef}
-            className="floor-plan-canvas bg-gray-50 relative"
+            className="floor-plan-canvas bg-gray-50 relative w-full h-full"
             style={{ 
-              width: '2000px',  // Large fixed canvas
-              height: '1500px',
               transform: `scale(${zoom})`,
               transformOrigin: '0 0',
-              border: '2px solid #e5e7eb',
-              borderRadius: '12px'
+              minWidth: '100%',
+              minHeight: '100%'
             }}
           >
             {/* Grid pattern */}
@@ -254,38 +285,52 @@ const KioskFloorPlan = forwardRef(({
               </div>
             )}
 
-            {/* Tables */}
-            {filteredTables.map((table) => {
-              const avgRating = feedbackMap[table.table_number];
-              const feedbackStatus = getFeedbackStatus(avgRating);
-              const isSelected = isTableSelected(table.table_number);
-              const tableShapeConfig = getTableShapeClasses(table.shape, feedbackStatus, isSelected);
+            {/* Tables - Auto-scaled and centered */}
+            {filteredTables.length > 0 && (
+              <div 
+                className="absolute"
+                style={{
+                  transform: `scale(${tableScale})`,
+                  transformOrigin: '0 0',
+                  left: '50%',
+                  top: '50%',
+                  marginLeft: `-${(Math.max(...filteredTables.map(t => t.x_px)) + Math.min(...filteredTables.map(t => t.x_px))) / 2 * tableScale}px`,
+                  marginTop: `-${(Math.max(...filteredTables.map(t => t.y_px)) + Math.min(...filteredTables.map(t => t.y_px))) / 2 * tableScale}px`
+                }}
+              >
+                {filteredTables.map((table) => {
+                  const avgRating = feedbackMap[table.table_number];
+                  const feedbackStatus = getFeedbackStatus(avgRating);
+                  const isSelected = isTableSelected(table.table_number);
+                  const tableShapeConfig = getTableShapeClasses(table.shape, feedbackStatus, isSelected);
 
-              return (
-                <div 
-                  key={table.id} 
-                  className="absolute table-element" 
-                  style={{ left: table.x_px, top: table.y_px }}
-                >
-                  <div
-                    className={tableShapeConfig.className}
-                    style={tableShapeConfig.style}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onTableClick(table.table_number);
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                  >
-                    {table.table_number}
-                  </div>
+                  return (
+                    <div 
+                      key={table.id} 
+                      className="absolute table-element" 
+                      style={{ left: table.x_px, top: table.y_px }}
+                    >
+                      <div
+                        className={tableShapeConfig.className}
+                        style={tableShapeConfig.style}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTableClick(table.table_number);
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
+                        {table.table_number}
+                      </div>
 
-                  {/* Selection highlight */}
-                  {isSelected && (
-                    <div className="absolute -inset-4 border-4 border-blue-400 rounded-lg opacity-50 pointer-events-none animate-pulse" />
-                  )}
-                </div>
-              );
-            })}
+                      {/* Selection highlight */}
+                      {isSelected && (
+                        <div className="absolute -inset-4 border-4 border-blue-400 rounded-lg opacity-50 pointer-events-none animate-pulse" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
