@@ -64,7 +64,9 @@ const KioskFloorPlan = forwardRef(({
   // Figma-style drag scrolling
   const handleMouseDown = (e) => {
     // Only start dragging if clicking on the canvas background, not on tables
-    if (e.target === scrollContainerRef.current || e.target.closest('.floor-plan-canvas')) {
+    if (e.target.classList.contains('floor-plan-canvas') || 
+        e.target.classList.contains('grid-pattern') ||
+        (e.target === scrollContainerRef.current && !e.target.closest('.table-element'))) {
       setIsDragging(true);
       setDragStart({ x: e.clientX, y: e.clientY });
       setScrollStart({
@@ -205,15 +207,15 @@ const KioskFloorPlan = forwardRef(({
             ref={ref} 
             className="relative bg-gray-50 border-2 border-gray-200 rounded-xl shadow-inner floor-plan-canvas"
             style={{ 
-              width: '200vw', // Make canvas larger than viewport
-              height: '200vh',
-              minWidth: '1500px',
-              minHeight: '1000px'
+              width: 'max(100%, 1200px)', // At least viewport width or 1200px
+              height: 'max(100%, 800px)',  // At least viewport height or 800px
+              minWidth: '1200px',
+              minHeight: '800px'
             }}
           >
             {/* Grid pattern */}
             <div 
-              className="absolute inset-0 opacity-10 pointer-events-none"
+              className="absolute inset-0 opacity-10 pointer-events-none grid-pattern"
               style={{
                 backgroundImage: `
                   radial-gradient(circle, #94a3b8 2px, transparent 2px)
@@ -224,7 +226,7 @@ const KioskFloorPlan = forwardRef(({
             
             {/* Empty state */}
             {filteredTables.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center text-gray-500">
                   <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,10 +261,10 @@ const KioskFloorPlan = forwardRef(({
               return (
                 <div 
                   key={table.id} 
-                  className="absolute group" 
+                  className="absolute group table-element" 
                   style={{ left: table.x_px, top: table.y_px }}
                 >
-                  <div className="relative">
+                  <div className="relative pointer-events-auto">
                     <div
                       className={tableShapeConfig.className}
                       style={tableShapeConfig.style}
@@ -270,6 +272,7 @@ const KioskFloorPlan = forwardRef(({
                         e.stopPropagation();
                         onTableClick(table.table_number);
                       }}
+                      onMouseDown={(e) => e.stopPropagation()} // Prevent dragging when clicking tables
                       title={`Table ${table.table_number} - ${getStatusText(feedbackStatus.status)} ${avgRating !== null && avgRating !== undefined ? `(${avgRating.toFixed(1)}/5)` : ''}`}
                     >
                       {table.table_number}
