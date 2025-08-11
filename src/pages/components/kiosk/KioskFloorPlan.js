@@ -25,9 +25,11 @@ const KioskFloorPlan = forwardRef(({
 }, ref) => {
   
   const scrollContainerRef = useRef(null);
+  const canvasRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
   
   const filteredTables = tables.filter(t => t.zone_id === selectedZoneId);
   
@@ -40,7 +42,7 @@ const KioskFloorPlan = forwardRef(({
     allZoneIds: [...new Set(tables.map(t => t.zone_id))]
   });
 
-  // Figma-style scrolling with mouse wheel
+  // Zoom and scroll with mouse wheel
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -48,25 +50,29 @@ const KioskFloorPlan = forwardRef(({
     const handleWheel = (e) => {
       e.preventDefault();
       
-      // Horizontal scroll with Shift + wheel or trackpad horizontal
-      if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-        container.scrollLeft += e.deltaX || e.deltaY;
+      if (e.ctrlKey || e.metaKey) {
+        // Zoom with Ctrl/Cmd + wheel
+        const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = Math.max(0.1, Math.min(3, zoom * zoomDelta));
+        setZoom(newZoom);
+      } else if (e.shiftKey) {
+        // Horizontal scroll with Shift + wheel
+        container.scrollLeft += e.deltaY;
       } else {
-        // Vertical scroll
+        // Normal scroll
         container.scrollTop += e.deltaY;
+        container.scrollLeft += e.deltaX;
       }
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
-  }, []);
+  }, [zoom]);
 
-  // Figma-style drag scrolling
+  // Drag scrolling
   const handleMouseDown = (e) => {
-    // Only start dragging if clicking on the canvas background, not on tables
     if (e.target.classList.contains('floor-plan-canvas') || 
-        e.target.classList.contains('grid-pattern') ||
-        (e.target === scrollContainerRef.current && !e.target.closest('.table-element'))) {
+        e.target.classList.contains('grid-pattern')) {
       setIsDragging(true);
       setDragStart({ x: e.clientX, y: e.clientY });
       setScrollStart({
@@ -137,7 +143,7 @@ const KioskFloorPlan = forwardRef(({
     };
   };
 
-  const getTableShapeClasses = (shape, feedbackStatus, isSelected, hasAlert) => {
+  const getTableShapeClasses = (shape, feedbackStatus, isSelected) => {
     const baseClasses = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-300 cursor-pointer ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
     
     // Selection and alert styling
@@ -179,7 +185,7 @@ const KioskFloorPlan = forwardRef(({
       
       <div className="h-full flex flex-col">
         {/* Fixed Header */}
-        <div className="flex-shrink-0 mb-6">
+        <div className="flex-shrink-0 mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Zone Details
           </h2>
@@ -187,16 +193,21 @@ const KioskFloorPlan = forwardRef(({
             <p className="text-gray-600">
               Click on a table to view its feedback details
             </p>
-            <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              💡 Scroll to navigate • Drag to pan • Shift+scroll for horizontal
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                💡 Ctrl+scroll to zoom • Drag to pan • Shift+scroll for horizontal
+              </div>
+              <div className="text-sm text-gray-600">
+                Zoom: {Math.round(zoom * 100)}%
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Scrollable Floor Plan Canvas */}
+        {/* Full Height Scrollable Floor Plan */}
         <div 
           ref={scrollContainerRef}
-          className={`flex-1 overflow-auto ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'} relative`}
+          className={`flex-1 overflow-auto ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'} bg-gray-100`}
           onMouseDown={handleMouseDown}
           style={{ 
             scrollBehavior: 'smooth',
@@ -204,13 +215,15 @@ const KioskFloorPlan = forwardRef(({
           }}
         >
           <div 
-            ref={ref} 
-            className="relative bg-gray-50 border-2 border-gray-200 rounded-xl shadow-inner floor-plan-canvas"
+            ref={canvasRef}
+            className="floor-plan-canvas bg-gray-50 relative"
             style={{ 
-              width: 'max(100%, 1200px)', // At least viewport width or 1200px
-              height: 'max(100%, 800px)',  // At least viewport height or 800px
-              minWidth: '1200px',
-              minHeight: '800px'
+              width: '2000px',  // Large fixed canvas
+              height: '1500px',
+              transform: `scale(${zoom})`,
+              transformOrigin: '0 0',
+              border: '2px solid #e5e7eb',
+              borderRadius: '12px'
             }}
           >
             {/* Grid pattern */}
@@ -246,86 +259,34 @@ const KioskFloorPlan = forwardRef(({
               const avgRating = feedbackMap[table.table_number];
               const feedbackStatus = getFeedbackStatus(avgRating);
               const isSelected = isTableSelected(table.table_number);
-              const hasAlert = avgRating !== null && avgRating !== undefined && avgRating <= 3;
-              const tableShapeConfig = getTableShapeClasses(table.shape, feedbackStatus, isSelected, hasAlert);
-
-              const getStatusText = (status) => {
-                switch (status) {
-                  case 'happy': return 'Table Happy';
-                  case 'attention': return 'Table Needs Attention';
-                  case 'unhappy': return 'Table Unhappy';
-                  default: return 'No Feedback Submitted';
-                }
-              };
+              const tableShapeConfig = getTableShapeClasses(table.shape, feedbackStatus, isSelected);
 
               return (
                 <div 
                   key={table.id} 
-                  className="absolute group table-element" 
+                  className="absolute table-element" 
                   style={{ left: table.x_px, top: table.y_px }}
                 >
-                  <div className="relative pointer-events-auto">
-                    <div
-                      className={tableShapeConfig.className}
-                      style={tableShapeConfig.style}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onTableClick(table.table_number);
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()} // Prevent dragging when clicking tables
-                      title={`Table ${table.table_number} - ${getStatusText(feedbackStatus.status)} ${avgRating !== null && avgRating !== undefined ? `(${avgRating.toFixed(1)}/5)` : ''}`}
-                    >
-                      {table.table_number}
-                    </div>
-
-                    {/* Selection highlight */}
-                    {isSelected && (
-                      <div className="absolute -inset-4 border-4 border-blue-400 rounded-lg opacity-50 pointer-events-none animate-pulse" />
-                    )}
-
-                    {/* Hover tooltip */}
-                    <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                      Table {table.table_number} - {getStatusText(feedbackStatus.status)}
-                      {avgRating !== null && avgRating !== undefined && (
-                        <span> ({avgRating.toFixed(1)}/5)</span>
-                      )}
-                    </div>
+                  <div
+                    className={tableShapeConfig.className}
+                    style={tableShapeConfig.style}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTableClick(table.table_number);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    {table.table_number}
                   </div>
+
+                  {/* Selection highlight */}
+                  {isSelected && (
+                    <div className="absolute -inset-4 border-4 border-blue-400 rounded-lg opacity-50 pointer-events-none animate-pulse" />
+                  )}
                 </div>
               );
             })}
           </div>
-        </div>
-
-        {/* Fixed Legend */}
-        <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 border z-20">
-          <h4 className="text-sm font-semibold text-gray-900 mb-2">Status Legend</h4>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gray-700 border-4 border-red-500 rounded"></div>
-              <span>Table Unhappy (≤2★)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gray-700 border-4 border-yellow-500 rounded"></div>
-              <span>Table Needs Attention (2.5-3★)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gray-700 border-4 border-green-500 rounded"></div>
-              <span>Table Happy (4-5★)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gray-700 border-4 border-gray-800 rounded"></div>
-              <span>No Feedback Submitted</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Fixed Instructions */}
-        <div className="absolute top-4 right-4 bg-blue-50 border border-blue-200 rounded-lg p-3 max-w-xs z-20">
-          <p className="text-sm text-blue-800">
-            <strong>Pan & Zoom:</strong> Drag to move around the floor plan. 
-            Use scroll wheel to navigate. Pulsing red borders show urgent issues.
-          </p>
         </div>
       </div>
     </>
