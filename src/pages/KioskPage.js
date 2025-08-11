@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 import { useVenue } from '../context/VenueContext';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
-// Import kiosk-specific components
+// Kiosk components
 import KioskFloorPlan from './components/kiosk/KioskFloorPlan';
 import KioskFeedbackList from './components/kiosk/KioskFeedbackList';
 import KioskZoneOverview from './components/kiosk/KioskZoneOverview';
@@ -13,7 +13,6 @@ dayjs.extend(relativeTime);
 
 const KioskPage = () => {
   const { venueId, venueName, loading: venueLoading } = useVenue();
-  const layoutRef = useRef(null);
 
   // State
   const [zones, setZones] = useState([]);
@@ -67,15 +66,8 @@ const KioskPage = () => {
       .channel('kiosk_feedback_updates')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'feedback',
-          filter: `venue_id=eq.${venueId}`,
-        },
-        () => {
-          fetchFeedback(venueId);
-        }
+        { event: '*', schema: 'public', table: 'feedback', filter: `venue_id=eq.${venueId}` },
+        () => fetchFeedback(venueId)
       )
       .subscribe();
 
@@ -84,7 +76,7 @@ const KioskPage = () => {
     };
   }, [venueId]);
 
-  // Data loading functions
+  // Data loading
   const loadZones = async (venueId) => {
     const { data } = await supabase
       .from('zones')
@@ -101,51 +93,10 @@ const KioskPage = () => {
       .eq('venue_id', venueId);
     if (!data) return;
 
-    // Initialise with px placeholders; real px set after measuring the floorplan container
-    setTables(
-      data.map((t) => ({
-        ...t,
-        x_px: 0,
-        y_px: 0,
-      }))
-    );
+    // Keep whatever coords exist; KioskFloorPlan will use x_percent/y_percent
+    // against a fixed world, or fallback to x_px/y_px.
+    setTables(data);
   };
-
-  // Convert percentage positions -> pixels when floorplan is visible and on resize
-  useEffect(() => {
-    const convertPercentToPx = () => {
-      if (!layoutRef.current || tables.length === 0) return;
-
-      const { width, height } = layoutRef.current.getBoundingClientRect();
-
-      const needsUpdate = tables.some(
-        (t) =>
-          (t.x_px === 0 && t.y_px === 0) &&
-          (t.x_percent != null && t.y_percent != null)
-      );
-      if (!needsUpdate) return;
-
-      setTables((prev) =>
-        prev.map((t) => {
-          if (
-            (t.x_px === 0 && t.y_px === 0) &&
-            (t.x_percent != null && t.y_percent != null)
-          ) {
-            return {
-              ...t,
-              x_px: (t.x_percent / 100) * width,
-              y_px: (t.y_percent / 100) * height,
-            };
-          }
-          return t;
-        })
-      );
-    };
-
-    convertPercentToPx();
-    window.addEventListener('resize', convertPercentToPx);
-    return () => window.removeEventListener('resize', convertPercentToPx);
-  }, [currentView, tables.length]);
 
   const fetchFeedback = async (venueId) => {
     const now = dayjs();
@@ -168,8 +119,10 @@ const KioskPage = () => {
       const table = entry.table_number;
       if (!table) continue;
 
+      // Sidebar list shows raw rows; KioskFeedbackList groups per session
       feedbackItems.push(entry);
 
+      // Build latest session per table for the map
       if (!latestSession[table]) {
         latestSession[table] = entry.session_id;
         sessionMap[table] = [entry];
@@ -178,6 +131,7 @@ const KioskPage = () => {
       }
     }
 
+    // Average rating per table (visual indicator on floorplan)
     for (const table in sessionMap) {
       const valid = sessionMap[table].filter((e) => e.rating !== null && e.rating !== undefined);
       ratings[table] =
@@ -207,7 +161,7 @@ const KioskPage = () => {
   const handleTableClick = (tableNumber) => {
     const tableFeedback = feedbackList.filter((f) => f.table_number === tableNumber);
     if (tableFeedback.length > 0) {
-      setSelectedFeedback(tableFeedback[0]);
+      setSelectedFeedback(tableFeedback[0]); // most recent
     }
     resetInactivityTimer(); // no-op while disabled
   };
@@ -227,6 +181,7 @@ const KioskPage = () => {
     }
   };
 
+  // Loading state
   if (venueLoading || !venueId) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -296,7 +251,6 @@ const KioskPage = () => {
             />
           ) : (
             <KioskFloorPlan
-              ref={layoutRef}                  // used for % → px conversion
               tables={tables}
               selectedZoneId={currentView}
               feedbackMap={feedbackMap}
