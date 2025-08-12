@@ -31,171 +31,153 @@ const SignInPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 w-20 h-20 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
-        <div className="absolute top-32 right-20 w-16 h-16 bg-teal-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-1000"></div>
-        <div className="absolute bottom-32 left-20 w-24 h-24 bg-cyan-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-500"></div>
-        <div className="absolute bottom-10 right-10 w-18 h-18 bg-emerald-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-700"></div>
-      </div>
-
-      <div className="w-full max-w-md relative z-10">
-        {/* Main card */}
-        <div className="bg-white/80 backdrop-blur-lg shadow-2xl border border-white/20 rounded-3xl p-8 relative animate-fadeIn">
-          {/* Logo or Back */}
-          <div className="absolute top-6 left-6">
-            <a
-              href="https://www.getchatters.com"
-              className="text-sm text-gray-500 hover:text-emerald-600 flex items-center transition-all duration-200 hover:transform hover:translate-x-[-2px]"
-            >
-              <ArrowRight className="h-4 w-4 rotate-180 mr-1" />
-              Back
-            </a>
-          </div>
-
-          {/* Brand */}
-          <div className="text-center mb-8 pt-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl mb-4 shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex min-h-[600px]">
+          {/* Left Panel - Brand */}
+          <div className="w-1/2 bg-gray-900 p-12 flex flex-col justify-center relative">
+            {/* Back link */}
+            <div className="absolute top-6 left-6">
+              <a
+                href="https://www.getchatters.com"
+                className="text-gray-400 hover:text-white flex items-center transition-colors text-sm"
+              >
+                <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+                Back to website
+              </a>
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2">
-              Welcome back
-            </h1>
-            <p className="text-gray-600 text-sm">Sign in to your Chatters dashboard</p>
-          </div>
 
-          {/* Error */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50/80 backdrop-blur border border-red-200/50 text-red-600 rounded-xl text-sm animate-slideDown">
-              <div className="flex items-start">
-                <svg className="w-5 h-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {error}
-              </div>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSignIn} className="space-y-5">
-            <div className="space-y-1">
-              <label htmlFor="email" className="text-sm font-semibold text-gray-700 block">
-                Email address
-              </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200/60 bg-white/50 backdrop-blur shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 text-sm transition-all duration-200 placeholder:text-gray-400"
-                  placeholder="you@yourvenue.com"
+            {/* Logo */}
+            <div className="mb-8">
+              <div className="flex items-center mb-6">
+                <img 
+                  src="https://www.getchatters.com/img/Logo.svg" 
+                  alt="Chatters Logo" 
+                  className="h-8 w-auto filter brightness-0 invert"
                 />
               </div>
+              
+              <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
+                Get access to real-time customer insights
+              </h1>
+              <p className="text-gray-300 text-lg leading-relaxed">
+                Transform your customer feedback into actionable insights. Monitor satisfaction in real-time and prevent negative reviews before they happen.
+              </p>
             </div>
 
-            <div className="space-y-1">
-              <label htmlFor="password" className="text-sm font-semibold text-gray-700 block">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-3.5 pr-12 rounded-xl border border-gray-200/60 bg-white/50 backdrop-blur shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 text-sm transition-all duration-200 placeholder:text-gray-400"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+            {/* Features */}
+            <div className="space-y-4">
+              <div className="flex items-center text-gray-300">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                <span>Real-time feedback monitoring</span>
+              </div>
+              <div className="flex items-center text-gray-300">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                <span>Custom branded QR codes</span>
+              </div>
+              <div className="flex items-center text-gray-300">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                <span>Analytics dashboard</span>
               </div>
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-xl flex justify-center items-center gap-2 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <>
-                  <span>Sign In</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </>
+          {/* Right Panel - Form */}
+          <div className="w-1/2 p-12 flex flex-col justify-center">
+            <div className="max-w-sm mx-auto w-full">
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  Login to your account
+                </h2>
+                <p className="text-gray-600">
+                  Don't have an account? <Link to="/signup" className="text-gray-900 font-semibold hover:underline">Sign up here</Link>
+                </p>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                  {error}
+                </div>
               )}
-            </button>
-          </form>
 
-          {/* Forgot Password Link */}
-          <div className="mt-6 text-center">
-            <Link 
-              to="/forgot-password" 
-              className="text-sm text-gray-500 hover:text-emerald-600 transition-colors duration-200 font-medium"
-            >
-              Forgot your password?
-            </Link>
-          </div>
+              {/* Form */}
+              <form onSubmit={handleSignIn} className="space-y-6">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
+                    placeholder="Enter your email"
+                  />
+                </div>
 
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200/50 text-center">
-            <p className="text-xs text-gray-500">
-              Protected by industry-standard encryption
-            </p>
-          </div>
-        </div>
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
 
-        {/* Trust indicators */}
-        <div className="mt-6 flex justify-center items-center space-x-4 text-xs text-gray-500">
-          <div className="flex items-center">
-            <svg className="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Secure Login
-          </div>
-          <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
-          <div className="flex items-center">
-            <svg className="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            SSL Protected
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <input
+                      id="remember"
+                      name="remember"
+                      type="checkbox"
+                      className="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded"
+                    />
+                    <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
+                      Remember me
+                    </label>
+                  </div>
+                  <Link to="/forgot-password" className="text-sm font-medium text-gray-900 hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-gray-900 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign in'
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.6s ease-out;
-        }
-        
-        .animate-slideDown {
-          animation: slideDown 0.3s ease-out;
-        }
-      `}</style>
     </div>
   );
 };

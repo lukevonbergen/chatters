@@ -18,25 +18,10 @@ export const VenueProvider = ({ children }) => {
 
     const init = async () => {
       try {
-        // Wait for auth session to be ready
-        let session = null;
-        let retries = 0;
-        const maxRetries = 5;
-        
-        while (!session && retries < maxRetries) {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData.session) {
-            session = sessionData.session;
-            break;
-          }
-          
-          // Wait a bit before retrying
-          await new Promise(resolve => setTimeout(resolve, 200));
-          retries++;
-        }
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          console.error('No valid session found after retries');
+          console.log('No session found, waiting for auth state change');
           return;
         }
 
@@ -138,17 +123,40 @@ export const VenueProvider = ({ children }) => {
     // Add auth state change listener to handle login
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session ? 'session exists' : 'no session');
+        
         if (event === 'SIGNED_IN' && session && !initialized) {
-          // Wait a moment for everything to settle, then initialize
+          console.log('User signed in, initializing venue context...');
+          // Small delay to ensure everything is ready
           setTimeout(() => {
             init();
           }, 100);
         }
+        
+        if (event === 'SIGNED_OUT') {
+          // Reset state on sign out
+          setVenueId('');
+          setVenueName('');
+          setAllVenues([]);
+          setUserRole(null);
+          setInitialized(false);
+          setLoading(false);
+        }
       }
     );
 
-    // Also try to initialize immediately if already logged in
-    init();
+    // Try to initialize if already logged in
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('Existing session found, initializing...');
+        init();
+      } else {
+        setLoading(false); // No session, stop loading
+      }
+    };
+
+    checkExistingSession();
 
     return () => {
       subscription.unsubscribe();
