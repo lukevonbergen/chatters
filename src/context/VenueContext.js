@@ -10,7 +10,7 @@ export const VenueProvider = ({ children }) => {
   const [allVenues, setAllVenues] = useState([]);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false); // Track if already initialized
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     // Only run initialization once
@@ -18,13 +18,29 @@ export const VenueProvider = ({ children }) => {
 
     const init = async () => {
       try {
-        const { data: auth, error: authError } = await supabase.auth.getUser();
-        if (authError || !auth?.user) {
-          console.error('Supabase auth error:', authError);
+        // Wait for auth session to be ready
+        let session = null;
+        let retries = 0;
+        const maxRetries = 5;
+        
+        while (!session && retries < maxRetries) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session) {
+            session = sessionData.session;
+            break;
+          }
+          
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 200));
+          retries++;
+        }
+        
+        if (!session) {
+          console.error('No valid session found after retries');
           return;
         }
 
-        const userId = auth.user.id;
+        const userId = session.user.id;
 
         const { data: userRow, error: userFetchError } = await supabase
           .from('users')
@@ -115,12 +131,29 @@ export const VenueProvider = ({ children }) => {
         console.error('VenueContext initialization error:', error);
       } finally {
         setLoading(false);
-        setInitialized(true); // Mark as initialized regardless of success/failure
+        setInitialized(true);
       }
     };
 
+    // Add auth state change listener to handle login
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session && !initialized) {
+          // Wait a moment for everything to settle, then initialize
+          setTimeout(() => {
+            init();
+          }, 100);
+        }
+      }
+    );
+
+    // Also try to initialize immediately if already logged in
     init();
-  }, [initialized]); // Only depend on initialized flag
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [initialized]);
 
   const setCurrentVenue = (id) => {
     const found = allVenues.find((v) => v.id === id);
