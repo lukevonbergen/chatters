@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import { AlertTriangle, CheckCircle, Clock, MapPin, Calendar, Timer, User } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, MapPin, Calendar, Timer, User, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -41,7 +41,11 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
       const lowScore = items.some(i => i.rating !== null && i.rating <= 2);
       const rated = items.filter(i => i.rating !== null);
       const avgRating = rated.length > 0 ? rated.reduce((a, b) => a + b.rating, 0) / rated.length : null;
-      return { session_id, items, isActioned, lowScore, isExpired, createdAt, avgRating };
+      
+      // Check if it was dismissed (marked as no action needed)
+      const isDismissed = items.every(i => i.dismissed === true);
+      
+      return { session_id, items, isActioned, lowScore, isExpired, createdAt, avgRating, isDismissed };
     });
     setSessionFeedback(sessions);
     setLoading(false);
@@ -80,6 +84,11 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
     }
   };
 
+  // Helper function to determine if feedback is positive (green)
+  const isPositiveFeedback = (session) => {
+    return session.avgRating !== null && session.avgRating > 3;
+  };
+
   const markSessionAsActioned = async (session) => {
     if (!selectedStaffId) return alert('Please select a staff member');
     const ids = session.items.map(i => i.id);
@@ -87,6 +96,7 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
       is_actioned: true,
       resolved_by: selectedStaffId,
       resolved_at: new Date(),
+      resolution_type: 'staff_resolved'
     }).in('id', ids);
     setSelectedStaffId('');
     setShowModal(false);
@@ -94,18 +104,46 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
     loadFeedback();
   };
 
+  // New function to clear positive feedback
+  const clearPositiveFeedback = async (session) => {
+    const ids = session.items.map(i => i.id);
+    await supabase.from('feedback').update({
+      is_actioned: true,
+      resolved_by: null, // No staff member needed for positive feedback
+      resolved_at: new Date(),
+      resolution_type: 'positive_feedback_cleared'
+    }).in('id', ids);
+    setShowModal(false);
+    setSelectedSession(null);
+    loadFeedback();
+  };
+
+  // New function to mark as no action needed from modal
+  const markAsNoActionNeeded = async (session) => {
+    const ids = session.items.map(i => i.id);
+    await supabase.from('feedback').update({
+      dismissed: true,
+      dismissed_at: new Date(),
+      dismissed_reason: 'No action needed',
+      resolution_type: 'dismissed'
+    }).in('id', ids);
+    setShowModal(false);
+    setSelectedSession(null);
+    loadFeedback();
+  };
+
   const filteredSessions = sessionFeedback.filter(session => {
     if (tableFilter && session.items[0]?.table_number !== tableFilter) return false;
-    if (activeTab === 'alerts') return session.lowScore && !session.isActioned && !session.isExpired;
-    if (activeTab === 'actioned') return session.isActioned;
-    if (activeTab === 'expired') return session.isExpired && !session.isActioned;
+    if (activeTab === 'alerts') return session.lowScore && !session.isActioned && !session.isExpired && !session.isDismissed;
+    if (activeTab === 'actioned') return session.isActioned || session.isDismissed;
+    if (activeTab === 'expired') return session.isExpired && !session.isActioned && !session.isDismissed;
     return true;
   }).sort((a, b) => sortOrder === 'desc' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt);
 
   const getTabCounts = () => {
-    const alerts = sessionFeedback.filter(s => s.lowScore && !s.isActioned && !s.isExpired).length;
-    const actioned = sessionFeedback.filter(s => s.isActioned).length;
-    const expired = sessionFeedback.filter(s => s.isExpired && !s.isActioned).length;
+    const alerts = sessionFeedback.filter(s => s.lowScore && !s.isActioned && !s.isExpired && !s.isDismissed).length;
+    const actioned = sessionFeedback.filter(s => s.isActioned || s.isDismissed).length;
+    const expired = sessionFeedback.filter(s => s.isExpired && !s.isActioned && !s.isDismissed).length;
     const all = sessionFeedback.length;
     return { alerts, actioned, expired, all };
   };
@@ -212,9 +250,9 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
             <div
               key={session.session_id}
               className={`relative rounded-lg lg:rounded-xl border-2 transition-all duration-200 hover:shadow-md cursor-pointer ${
-                session.lowScore && !session.isActioned && !session.isExpired
+                session.lowScore && !session.isActioned && !session.isExpired && !session.isDismissed
                   ? 'border-red-200 bg-red-50 hover:bg-red-100'
-                  : session.isActioned
+                  : session.isActioned || session.isDismissed
                   ? 'border-green-200 bg-green-50 hover:bg-green-100'
                   : session.isExpired
                   ? 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100'
@@ -224,19 +262,21 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
             >
               {/* Mobile Status Indicator */}
               <div className="absolute top-3 right-3 lg:top-4 lg:right-4">
-                {session.lowScore && !session.isActioned && !session.isExpired && (
+                {session.lowScore && !session.isActioned && !session.isExpired && !session.isDismissed && (
                   <div className="flex items-center text-red-600">
                     <AlertTriangle className="w-4 h-4 lg:w-5 lg:h-5 mr-1" />
                     <span className="text-xs font-medium hidden sm:inline">Needs Attention</span>
                   </div>
                 )}
-                {session.isActioned && (
+                {(session.isActioned || session.isDismissed) && (
                   <div className="flex items-center text-green-600">
                     <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5 mr-1" />
-                    <span className="text-xs font-medium hidden sm:inline">Resolved</span>
+                    <span className="text-xs font-medium hidden sm:inline">
+                      {session.isDismissed ? 'Dismissed' : 'Resolved'}
+                    </span>
                   </div>
                 )}
-                {session.isExpired && !session.isActioned && (
+                {session.isExpired && !session.isActioned && !session.isDismissed && (
                   <div className="flex items-center text-yellow-600">
                     <Clock className="w-4 h-4 lg:w-5 lg:h-5 mr-1" />
                     <span className="text-xs font-medium hidden sm:inline">Expired</span>
@@ -314,7 +354,7 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                     <span className="truncate">View on Floor Plan</span>
                   </button>
 
-                  {!session.isActioned && !session.isExpired && (
+                  {!session.isActioned && !session.isExpired && !session.isDismissed && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -324,7 +364,7 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                       className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs lg:text-sm font-medium rounded-lg transition-colors"
                     >
                       <User className="w-3 h-3 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
-                      Resolve
+                      {isPositiveFeedback(session) ? 'View & Clear' : 'Resolve'}
                     </button>
                   )}
                 </div>
@@ -342,7 +382,7 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0 mr-4">
                   <h2 className="text-lg lg:text-xl font-semibold text-gray-900 break-words">
-                    Resolve Feedback - Table {selectedSession.items[0].table_number}
+                    {isPositiveFeedback(selectedSession) ? 'View Feedback' : 'Resolve Feedback'} - Table {selectedSession.items[0].table_number}
                   </h2>
                 </div>
                 <button
@@ -353,62 +393,65 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                 </button>
               </div>
               
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assign to Team Member
-                </label>
-                <select
-                  value={selectedStaffId}
-                  onChange={e => setSelectedStaffId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select Team Member</option>
-                  
-                  {staffList.some(person => person.source === 'staff') && (
-                    <optgroup label="Managers & Staff">
-                      {staffList
-                        .filter(person => person.source === 'staff')
-                        .map(staff => (
-                          <option key={`staff-${staff.id}`} value={staff.id}>
-                            {staff.display_name} ({staff.role_display})
-                          </option>
-                        ))
-                      }
-                    </optgroup>
-                  )}
-                  
-                  {staffList.some(person => person.source === 'employee') && (
-                    <optgroup label="Employees">
-                      {staffList
-                        .filter(person => person.source === 'employee')
-                        .map(employee => (
-                          <option key={`employee-${employee.id}`} value={employee.id}>
-                            {employee.display_name} ({employee.role_display})
-                          </option>
-                        ))
-                      }
-                    </optgroup>
-                  )}
-                  
-                  {!staffList.some(person => person.source === 'staff') || 
-                   !staffList.some(person => person.source === 'employee') ? (
-                    staffList.map(person => (
-                      <option key={person.id} value={person.id}>
-                        {person.display_name} ({person.role_display})
-                      </option>
-                    ))
-                  ) : null}
-                </select>
-                
-                {selectedStaffMember && (
-                  <div className="mt-2 text-xs text-gray-600">
-                    Selected: {selectedStaffMember.display_name} - {selectedStaffMember.role_display}
-                    {selectedStaffMember.source === 'employee' && (
-                      <span className="ml-1 text-blue-600">(Employee)</span>
+              {/* Only show staff assignment for feedback that needs resolving */}
+              {!isPositiveFeedback(selectedSession) && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Assign to Team Member
+                  </label>
+                  <select
+                    value={selectedStaffId}
+                    onChange={e => setSelectedStaffId(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Team Member</option>
+                    
+                    {staffList.some(person => person.source === 'staff') && (
+                      <optgroup label="Managers & Staff">
+                        {staffList
+                          .filter(person => person.source === 'staff')
+                          .map(staff => (
+                            <option key={`staff-${staff.id}`} value={staff.id}>
+                              {staff.display_name} ({staff.role_display})
+                            </option>
+                          ))
+                        }
+                      </optgroup>
                     )}
-                  </div>
-                )}
-              </div>
+                    
+                    {staffList.some(person => person.source === 'employee') && (
+                      <optgroup label="Employees">
+                        {staffList
+                          .filter(person => person.source === 'employee')
+                          .map(employee => (
+                            <option key={`employee-${employee.id}`} value={employee.id}>
+                              {employee.display_name} ({employee.role_display})
+                            </option>
+                          ))
+                        }
+                      </optgroup>
+                    )}
+                    
+                    {!staffList.some(person => person.source === 'staff') || 
+                     !staffList.some(person => person.source === 'employee') ? (
+                      staffList.map(person => (
+                        <option key={person.id} value={person.id}>
+                          {person.display_name} ({person.role_display})
+                        </option>
+                      ))
+                    ) : null}
+                  </select>
+                  
+                  {selectedStaffMember && (
+                    <div className="mt-2 text-xs text-gray-600">
+                      Selected: {selectedStaffMember.display_name} - {selectedStaffMember.role_display}
+                      {selectedStaffMember.source === 'employee' && (
+                        <span className="ml-1 text-blue-600">(Employee)</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="p-4 lg:p-6">
@@ -443,22 +486,45 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
                 ))}
               </div>
 
-              <button
-                onClick={() => markSessionAsActioned(selectedSession)}
-                disabled={!selectedStaffId}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-colors text-sm lg:text-base ${
-                  selectedStaffId
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5 inline mr-2" />
-                {selectedStaffMember ? (
-                  `Mark Resolved by ${selectedStaffMember.display_name}`
-                ) : (
-                  'Select Team Member to Resolve'
-                )}
-              </button>
+              {/* Action Buttons - Different based on feedback type */}
+              {isPositiveFeedback(selectedSession) ? (
+                // For positive feedback - just show clear button
+                <button
+                  onClick={() => clearPositiveFeedback(selectedSession)}
+                  className="w-full py-3 px-4 rounded-lg font-medium transition-colors text-sm lg:text-base bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5 inline mr-2" />
+                  Clear Feedback
+                </button>
+              ) : (
+                // For negative feedback - show resolve and dismiss options
+                <div className="space-y-2">
+                  <button
+                    onClick={() => markSessionAsActioned(selectedSession)}
+                    disabled={!selectedStaffId}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors text-sm lg:text-base ${
+                      selectedStaffId
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5 inline mr-2" />
+                    {selectedStaffMember ? (
+                      `Mark Resolved by ${selectedStaffMember.display_name}`
+                    ) : (
+                      'Select Team Member to Resolve'
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => markAsNoActionNeeded(selectedSession)}
+                    className="w-full py-3 px-4 rounded-lg font-medium transition-colors text-sm lg:text-base bg-gray-500 hover:bg-gray-600 text-white border-2 border-transparent"
+                  >
+                    <X className="w-4 h-4 lg:w-5 lg:h-5 inline mr-2" />
+                    No Action Needed
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
