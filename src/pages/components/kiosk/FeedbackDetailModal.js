@@ -67,38 +67,44 @@ const groupBySession = (feedbackItems) => {
 };
 
 const getRatingColor = (rating) => {
-  if (rating == null) return 'text-gray-600';
+  if (rating == null) return 'text-slate-500';
   if (rating <= 2) return 'text-red-600';
-  if (rating <= 3) return 'text-yellow-600';
-  return 'text-green-600';
+  if (rating <= 3) return 'text-amber-600';
+  return 'text-emerald-600';
 };
 
 const StarRating = ({ rating, className = '' }) => {
-  if (rating == null) return <span className="text-gray-400 text-sm">No rating</span>;
+  if (rating == null) return (
+    <div className="flex items-center gap-1">
+      <span className="text-slate-400 text-sm font-medium">No rating provided</span>
+    </div>
+  );
   
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <svg
-          key={star}
-          className={`w-4 h-4 ${
-            star <= rating 
-              ? 'text-yellow-400 fill-current' 
-              : 'text-gray-300'
-          }`}
-          fill={star <= rating ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-          />
-        </svg>
-      ))}
-      <span className={`ml-1 text-sm font-medium ${getRatingColor(rating)}`}>
+    <div className={`flex items-center gap-1.5 ${className}`}>
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <svg
+            key={star}
+            className={`w-4 h-4 ${
+              star <= rating 
+                ? 'text-amber-400 fill-current' 
+                : 'text-slate-200'
+            }`}
+            fill={star <= rating ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={star <= rating ? 0 : 1.5}
+              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+            />
+          </svg>
+        ))}
+      </div>
+      <span className={`text-sm font-semibold ${getRatingColor(rating)}`}>
         {rating.toFixed(1)}
       </span>
     </div>
@@ -219,9 +225,39 @@ const FeedbackDetailModal = ({
                       session.avg_rating <= 3 && session.has_comments ? 'attention' : 'info';
   
   const urgencyConfig = {
-    urgent: { label: 'URGENT', color: 'bg-red-600 text-white', icon: '🚨' },
-    attention: { label: 'ATTENTION', color: 'bg-yellow-500 text-white', icon: '⚠️' },
-    info: { label: 'INFO', color: 'bg-blue-500 text-white', icon: 'ℹ️' }
+    urgent: { 
+      label: 'URGENT', 
+      color: 'bg-red-600 text-white', 
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.95-.833-2.72 0L4.094 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      )
+    },
+    attention: { 
+      label: 'ATTENTION', 
+      color: 'bg-amber-600 text-white', 
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      )
+    },
+    info: { 
+      label: 'INFORMATIONAL', 
+      color: 'bg-blue-600 text-white', 
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      )
+    }
   };
   
   const urgency = urgencyConfig[urgencyLevel];
@@ -232,192 +268,285 @@ const FeedbackDetailModal = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Feedback Details - Table ${session.table_number}`}
+      title=""
       size="lg"
+      className="overflow-hidden"
     >
-      <div className="space-y-6">
-        {/* Header Info */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900">
-                Table {session.table_number}
-              </h4>
-              <p className="text-sm text-gray-600">
-                Submitted {dayjs(session.created_at).fromNow()} • {session.items.length} question{session.items.length !== 1 ? 's' : ''}
-              </p>
+      <div className="space-y-0">
+        {/* Professional Header */}
+        <div className={`${urgency.bgColor} ${urgency.borderColor} border-b px-6 py-5 -mx-4 -mt-4 mb-6`}>
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border">
+                  <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0v8a2 2 0 002 2h6a2 2 0 002-2V8M9 12h6" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-1">
+                  Table {session.table_number} Feedback
+                </h3>
+                <div className="flex items-center gap-4 text-sm text-slate-600">
+                  <div className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Submitted {dayjs(session.created_at).fromNow()}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {session.items.length} response{session.items.length !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${urgency.color}`}>
-                {urgency.icon} {urgency.label}
-              </span>
               {session.avg_rating && (
-                <StarRating rating={session.avg_rating} />
+                <div className="bg-white rounded-lg px-3 py-2 shadow-sm border">
+                  <StarRating rating={session.avg_rating} />
+                </div>
               )}
+              <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${urgency.color} shadow-sm`}>
+                {urgency.icon}
+                {urgency.label}
+              </span>
             </div>
           </div>
         </div>
         
-        {/* Feedback Items */}
-        <div className="space-y-4">
-          <h5 className="font-medium text-gray-900">Customer Responses</h5>
+        {/* Customer Responses */}
+        <div className="space-y-5">
+          <div className="flex items-center gap-2">
+            <h4 className="text-lg font-semibold text-slate-900">Customer Responses</h4>
+            <div className="h-px bg-slate-200 flex-1"></div>
+          </div>
           
-          {session.items.map((item, index) => {
-            const rating = getRowRating(item);
-            const question = item.questions?.question || `Question ${index + 1}`;
-            
-            return (
-              <div key={item.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h6 className="font-medium text-gray-900 flex-1 pr-4">
-                    {question}
-                  </h6>
-                  {rating && (
-                    <StarRating rating={rating} className="flex-shrink-0" />
+          <div className="space-y-4">
+            {session.items.map((item, index) => {
+              const rating = getRowRating(item);
+              const question = item.questions?.question || `Question ${index + 1}`;
+              
+              return (
+                <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 pr-4">
+                      <h6 className="font-semibold text-slate-900 mb-1">
+                        {question}
+                      </h6>
+                      <div className="text-xs text-slate-500 font-medium">
+                        Response {index + 1} • {dayjs(item.created_at).format('MMM D, YYYY [at] h:mm A')}
+                      </div>
+                    </div>
+                    {rating && (
+                      <div className="flex-shrink-0">
+                        <StarRating rating={rating} />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {item.additional_feedback && item.additional_feedback.trim() && (
+                    <div className="mt-4 bg-slate-50 border-l-4 border-blue-400 rounded-r-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        <div>
+                          <div className="text-xs font-semibold text-slate-700 mb-1">Customer Comment</div>
+                          <p className="text-sm text-slate-700 leading-relaxed">
+                            "{item.additional_feedback.trim()}"
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
-                
-                {item.additional_feedback && item.additional_feedback.trim() && (
-                  <div className="mt-3 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <p className="text-sm text-gray-700 italic">
-                      "{item.additional_feedback.trim()}"
-                    </p>
-                  </div>
-                )}
-                
-                <div className="mt-2 text-xs text-gray-500">
-                  Answered {dayjs(item.created_at).format('MMM D, YYYY [at] h:mm A')}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
         
-        {/* Multiple Sessions Notice */}
+        {/* Multiple Sessions Alert */}
         {sessions.length > 1 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-sm text-amber-800">
-                <strong>Multiple feedback sessions found.</strong> This table has {sessions.length} separate feedback submissions. 
-                Resolving will mark all sessions as handled.
-              </p>
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <h5 className="font-semibold text-amber-900 mb-1">Multiple Feedback Sessions</h5>
+                <p className="text-sm text-amber-800 leading-relaxed">
+                  This table has submitted <strong>{sessions.length} separate feedback sessions</strong>. 
+                  Taking action will resolve all related sessions simultaneously.
+                </p>
+              </div>
             </div>
           </div>
         )}
         
-        {/* Resolution Section */}
-        <div className="border-t pt-6">
-          <h5 className="font-medium text-gray-900 mb-4">Resolution Actions</h5>
+        {/* Professional Resolution Section */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 mt-8">
+          <div className="flex items-center gap-2 mb-6">
+            <h4 className="text-lg font-semibold text-slate-900">Resolution Actions</h4>
+            <div className="h-px bg-slate-300 flex-1"></div>
+          </div>
           
-          <div className="space-y-4">
-            {/* Resolution Type */}
+          <div className="space-y-6">
+            {/* Action Type Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Action Type
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
+                Select Action Type
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label className={`relative flex items-start p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                  resolutionType === 'resolved' 
+                    ? 'border-emerald-500 bg-emerald-50' 
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}>
                   <input
                     type="radio"
                     name="resolutionType"
                     value="resolved"
                     checked={resolutionType === 'resolved'}
                     onChange={(e) => setResolutionType(e.target.value)}
-                    className="mr-3"
+                    className="mt-1 mr-3 text-emerald-600 focus:ring-emerald-500"
                   />
-                  <div>
-                    <div className="font-medium text-green-700">✅ Resolved</div>
-                    <div className="text-xs text-gray-600">Issue addressed and fixed</div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-emerald-900">Mark as Resolved</div>
+                      <div className="text-sm text-emerald-700 mt-1">Issue has been addressed and corrected</div>
+                    </div>
                   </div>
                 </label>
-                <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <label className={`relative flex items-start p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                  resolutionType === 'dismissed' 
+                    ? 'border-amber-500 bg-amber-50' 
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}>
                   <input
                     type="radio"
                     name="resolutionType"
                     value="dismissed"
                     checked={resolutionType === 'dismissed'}
                     onChange={(e) => setResolutionType(e.target.value)}
-                    className="mr-3"
+                    className="mt-1 mr-3 text-amber-600 focus:ring-amber-500"
                   />
-                  <div>
-                    <div className="font-medium text-orange-700">🗂️ Dismiss</div>
-                    <div className="text-xs text-gray-600">Mark as seen but no action needed</div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-amber-900">Acknowledge & Dismiss</div>
+                      <div className="text-sm text-amber-700 mt-1">Reviewed but no action required</div>
+                    </div>
                   </div>
                 </label>
               </div>
             </div>
             
-            {/* Dismissal Reason (if dismissing) */}
+            {/* Dismissal Reason */}
             {resolutionType === 'dismissed' && (
-              <div>
-                <label htmlFor="dismissalReason" className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason for Dismissal
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <label htmlFor="dismissalReason" className="block text-sm font-semibold text-amber-900 mb-2">
+                  Reason for Dismissal <span className="text-amber-600">*</span>
                 </label>
                 <textarea
                   id="dismissalReason"
                   value={dismissalReason}
                   onChange={(e) => setDismissalReason(e.target.value)}
-                  placeholder="Why is this feedback being dismissed? (e.g., 'Customer complaint resolved separately', 'Not actionable', etc.)"
+                  placeholder="Please provide a clear reason for dismissing this feedback (e.g., 'Issue resolved through direct customer contact', 'Not actionable - outside our control', etc.)"
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-3 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white placeholder-amber-500 text-sm"
                 />
               </div>
             )}
             
             {/* Staff Member Selection */}
             <div>
-              <label htmlFor="staffMember" className="block text-sm font-medium text-gray-700 mb-2">
-                Staff Member Handling This
+              <label htmlFor="staffMember" className="block text-sm font-semibold text-slate-700 mb-3">
+                Responsible Staff Member <span className="text-red-500">*</span>
               </label>
               <select
                 id="staffMember"
                 value={selectedStaffMember}
                 onChange={(e) => setSelectedStaffMember(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium"
               >
-                <option value="">Select staff member...</option>
+                <option value="">Choose staff member...</option>
                 {staffMembers.map((staff) => (
                   <option key={staff.id} value={staff.id}>
-                    {staff.first_name} {staff.last_name} {staff.role && `(${staff.role})`}
+                    {staff.first_name} {staff.last_name}{staff.role && ` • ${staff.role}`}
                   </option>
                 ))}
               </select>
               {selectedStaff && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Selected: {selectedStaff.first_name} {selectedStaff.last_name}
-                </p>
+                <div className="mt-2 flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span className="text-slate-600">
+                    <strong>{selectedStaff.first_name} {selectedStaff.last_name}</strong> will be recorded as responsible for this action
+                  </span>
+                </div>
               )}
             </div>
             
-            <div className="flex gap-3 pt-4">
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t border-slate-200">
               <button
                 onClick={handleMarkResolved}
-                disabled={isResolving || !selectedStaffMember}
-                className={`flex-1 px-4 py-2 rounded-md font-medium transition-colors ${
+                disabled={isResolving || !selectedStaffMember || (resolutionType === 'dismissed' && !dismissalReason.trim())}
+                className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all shadow-sm ${
                   resolutionType === 'resolved' 
-                    ? 'bg-green-600 hover:bg-green-700 text-white' 
-                    : 'bg-orange-600 hover:bg-orange-700 text-white'
-                } disabled:bg-gray-400 disabled:cursor-not-allowed`}
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
+                    : 'bg-amber-600 hover:bg-amber-700 text-white'
+                } disabled:bg-slate-400 disabled:cursor-not-allowed disabled:shadow-none`}
               >
                 {isResolving ? (
                   <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     {resolutionType === 'resolved' ? 'Resolving...' : 'Dismissing...'}
                   </span>
                 ) : (
-                  resolutionType === 'resolved' ? 'Mark as Resolved' : 'Dismiss Feedback'
+                  <>
+                    {resolutionType === 'resolved' ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Mark as Resolved
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Dismiss Feedback
+                      </span>
+                    )}
+                  </>
                 )}
               </button>
               
               <button
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 border-2 border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
