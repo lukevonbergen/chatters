@@ -1,7 +1,7 @@
 // /pages/admin/AdminFrame.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Plus, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 
 const AdminFrame = ({ children }) => {
@@ -22,8 +22,6 @@ const AdminFrame = ({ children }) => {
       }
 
       const email = (user.email || '').toLowerCase();
-
-      // Pull role from your public.users table
       const { data: userRow, error } = await supabase
         .from('users')
         .select('role')
@@ -37,8 +35,7 @@ const AdminFrame = ({ children }) => {
       const isAdminByDomain = email.endsWith('@getchatters.com');
 
       if (!isAdminByRole && !isAdminByDomain) {
-        // Not allowed in admin — send to normal app
-        navigate('/', { replace: true });
+        navigate('/dashboard', { replace: true });
         return;
       }
 
@@ -72,10 +69,11 @@ const AdminFrame = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <div className="bg-white border-b shadow-sm">
+      <header className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="text-lg font-bold text-gray-800">Chatters Admin</div>
-
+          <div className="text-lg font-bold text-gray-800">
+            Chatters Admin Center
+          </div>
           <div className="relative" ref={dropdownRef}>
             <button onClick={() => setDropdownOpen(prev => !prev)}>
               <img
@@ -85,7 +83,7 @@ const AdminFrame = ({ children }) => {
               />
             </button>
             {dropdownOpen && (
-              <div className="absolute right-0 top-10 bg-white border rounded shadow w-48 z-50">
+              <div className="absolute right-0 top-10 bg-white border rounded shadow w-56 z-50">
                 <div className="px-4 py-3 text-sm text-gray-700 border-b">
                   <div className="font-medium">{userInfo.email}</div>
                   <div className="text-xs text-gray-500">{userInfo.role}</div>
@@ -101,21 +99,7 @@ const AdminFrame = ({ children }) => {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Navigation */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex gap-4">
-          <Link to="/admin" className="text-sm text-gray-700 hover:text-blue-600">
-            <User className="inline-block w-4 h-4 mr-1" />
-            Admin Home
-          </Link>
-          <Link to="/admin/create-user" className="text-sm text-gray-700 hover:text-blue-600">
-            <Plus className="inline-block w-4 h-4 mr-1" />
-            Create User
-          </Link>
-        </div>
-      </div>
+      </header>
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 py-8">{children}</main>
