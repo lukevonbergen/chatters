@@ -41,7 +41,9 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     
     const update = () => {
       const rect = el.getBoundingClientRect();
-      setContainerSize({ width: rect.width, height: rect.height });
+      const newSize = { width: rect.width, height: rect.height };
+      console.log('Container size updated:', newSize);
+      setContainerSize(newSize);
     };
     
     update();
@@ -84,6 +86,13 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
 
   // Simple fit to screen
   const fitToScreen = useCallback(() => {
+    console.log('fitToScreen called with:', {
+      tablesLength: processedTables.length,
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+      containerSize
+    });
+    
     if (!processedTables.length || !containerSize.width || !containerSize.height) {
       console.log('Cannot fit - no tables or container size');
       return;
