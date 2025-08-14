@@ -6,10 +6,9 @@ const pulseKeyframes = `@keyframes slow-pulse{0%,100%{opacity:1}50%{opacity:.3}}
 // Logical design space for % coords
 const WORLD_WIDTH = 1600;
 const WORLD_HEIGHT = 1000;
-const PADDING = 50;
 
 // Zoom constraints
-const MIN_ZOOM = 0.1;
+const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.2;
 
@@ -17,8 +16,8 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
   const containerRef = useRef(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   
-  // Map-style state
-  const [zoom, setZoom] = useState(1);
+  // Simplified map state
+  const [zoom, setZoom] = useState(0.5);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -46,100 +45,77 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     };
   }, []);
 
-  // Process tables for rendering
+  // Process tables with simpler coordinate system
   const processedTables = useMemo(() => {
-    if (!filtered.length) return { items: [], bounds: { minX: 0, minY: 0, maxX: WORLD_WIDTH, maxY: WORLD_HEIGHT } };
-    
-    const items = filtered.map(t => {
-      const baseX = t.x_percent != null ? (t.x_percent / 100) * WORLD_WIDTH : (t.x_px ?? 0);
-      const baseY = t.y_percent != null ? (t.y_percent / 100) * WORLD_HEIGHT : (t.y_px ?? 0);
+    return filtered.map(t => {
+      // Convert percentages to world coordinates
+      const worldX = t.x_percent != null ? (t.x_percent / 100) * WORLD_WIDTH : (t.x_px ?? 0);
+      const worldY = t.y_percent != null ? (t.y_percent / 100) * WORLD_HEIGHT : (t.y_px ?? 0);
       const w = t.width || 56;
       const h = t.height || 56;
       
-      return { ...t, baseX, baseY, w, h };
+      return { ...t, worldX, worldY, w, h };
     });
-
-    // Calculate bounds
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const it of items) {
-      minX = Math.min(minX, it.baseX);
-      minY = Math.min(minY, it.baseY);
-      maxX = Math.max(maxX, it.baseX + it.w);
-      maxY = Math.max(maxY, it.baseY + it.h);
-    }
-    
-    // Add padding
-    minX -= PADDING;
-    minY -= PADDING;
-    maxX += PADDING;
-    maxY += PADDING;
-
-    return { items, bounds: { minX, minY, maxX, maxY } };
   }, [filtered]);
 
-  // Fit all tables to screen
+  // Simple fit to screen
   const fitToScreen = useCallback(() => {
-    if (!processedTables.items.length || !containerSize.width || !containerSize.height) {
-      console.log('fitToScreen skipped:', { 
-        itemsLength: processedTables.items.length, 
-        containerWidth: containerSize.width, 
-        containerHeight: containerSize.height 
-      });
+    if (!processedTables.length || !containerSize.width || !containerSize.height) {
+      console.log('Cannot fit - no tables or container size');
       return;
     }
     
-    const { bounds } = processedTables;
-    const contentWidth = bounds.maxX - bounds.minX;
-    const contentHeight = bounds.maxY - bounds.minY;
+    // Find bounds of all tables
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     
-    console.log('fitToScreen:', { bounds, contentWidth, contentHeight, containerSize });
+    for (const table of processedTables) {
+      minX = Math.min(minX, table.worldX);
+      minY = Math.min(minY, table.worldY);
+      maxX = Math.max(maxX, table.worldX + table.w);
+      maxY = Math.max(maxY, table.worldY + table.h);
+    }
     
-    // Calculate zoom to fit content in container
-    const zoomX = containerSize.width / contentWidth;
-    const zoomY = containerSize.height / contentHeight;
-    const newZoom = Math.min(zoomX, zoomY, MAX_ZOOM);
+    // Add some padding
+    const padding = 100;
+    minX -= padding;
+    minY -= padding;
+    maxX += padding;
+    maxY += padding;
+    
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+    
+    // Calculate zoom to fit
+    const scaleX = containerSize.width / contentWidth;
+    const scaleY = containerSize.height / contentHeight;
+    const newZoom = Math.min(scaleX, scaleY, MAX_ZOOM);
     
     // Center the content
-    const scaledWidth = contentWidth * newZoom;
-    const scaledHeight = contentHeight * newZoom;
-    const centerX = (containerSize.width - scaledWidth) / 2 - bounds.minX * newZoom;
-    const centerY = (containerSize.height - scaledHeight) / 2 - bounds.minY * newZoom;
+    const scaledContentWidth = contentWidth * newZoom;
+    const scaledContentHeight = contentHeight * newZoom;
     
-    console.log('Setting zoom/pan:', { newZoom, centerX, centerY });
+    const centerX = (containerSize.width - scaledContentWidth) / 2 - minX * newZoom;
+    const centerY = (containerSize.height - scaledContentHeight) / 2 - minY * newZoom;
+    
+    console.log('fitToScreen calculation:', {
+      bounds: { minX, minY, maxX, maxY },
+      contentSize: { contentWidth, contentHeight },
+      containerSize,
+      newZoom,
+      centerOffset: { centerX, centerY }
+    });
     
     setZoom(newZoom);
     setPanOffset({ x: centerX, y: centerY });
   }, [processedTables, containerSize]);
 
-  // Auto-fit when zone changes
+  // Auto-fit when data changes
   useEffect(() => {
-    if (processedTables.items.length > 0 && containerSize.width > 0 && containerSize.height > 0) {
-      console.log('Auto-fit triggered:', { 
-        itemsLength: processedTables.items.length, 
-        containerSize, 
-        currentZoom: zoom, 
-        currentPan: panOffset 
-      });
-      
-      // Add a small delay to ensure container is properly rendered
-      setTimeout(() => {
-        fitToScreen();
-      }, 100);
+    if (processedTables.length > 0 && containerSize.width > 0) {
+      console.log('Auto-fitting with', processedTables.length, 'tables');
+      setTimeout(fitToScreen, 100);
     }
-  }, [selectedZoneId, containerSize, processedTables.items.length, fitToScreen]);
-
-  // Fallback: If we have tables but no proper zoom/pan after 500ms, force fit
-  useEffect(() => {
-    if (processedTables.items.length > 0 && panOffset.x === 0 && panOffset.y === 0 && zoom === 1) {
-      console.log('Fallback auto-fit triggered');
-      const timer = setTimeout(() => {
-        if (containerSize.width > 0 && containerSize.height > 0) {
-          fitToScreen();
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [processedTables.items.length, panOffset, zoom, containerSize, fitToScreen]);
+  }, [selectedZoneId, processedTables.length, containerSize.width, fitToScreen]);
 
   // Zoom controls
   const handleZoomIn = () => setZoom(prev => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
@@ -152,7 +128,6 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom + delta));
     
     if (newZoom !== zoom) {
-      // Zoom towards mouse position
       const rect = containerRef.current.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
@@ -189,7 +164,6 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     document.body.style.cursor = 'default';
   }, []);
 
-  // Mouse event handlers
   useEffect(() => {
     if (!isDragging) return;
     document.addEventListener('mousemove', onPan);
@@ -212,24 +186,21 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     const baseClass = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-200 cursor-pointer ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
     const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
     
-    const width = table.w;
-    const height = table.h;
-    
     switch (table.shape) {
       case 'circle': 
         return { 
           className: `${baseClass} rounded-full hover:bg-gray-600`, 
-          style: { width: `${width}px`, height: `${height}px`, ...pulseStyle }
+          style: pulseStyle
         };
       case 'long':   
         return { 
           className: `${baseClass} rounded-lg hover:bg-gray-600 text-sm`, 
-          style: { width: `${width}px`, height: `${height}px`, ...pulseStyle }
+          style: pulseStyle
         };
       default:       
         return { 
           className: `${baseClass} rounded-lg hover:bg-gray-600`, 
-          style: { width: `${width}px`, height: `${height}px`, ...pulseStyle }
+          style: pulseStyle
         };
     }
   };
@@ -282,24 +253,10 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
           </button>
         </div>
 
-        {/* Debug Panel (temporary) */}
-        <div className="absolute top-16 left-4 z-20 bg-white rounded-lg border border-gray-300 shadow-lg p-2 text-xs">
-          <div>Container: {containerSize.width}x{containerSize.height}</div>
-          <div>Tables: {processedTables.items.length}</div>
-          <div>Zoom: {zoom.toFixed(2)}</div>
-          <div>Pan: {panOffset.x.toFixed(0)}, {panOffset.y.toFixed(0)}</div>
-          <button 
-            onClick={fitToScreen}
-            className="mt-1 px-2 py-1 bg-blue-500 text-white rounded text-xs"
-          >
-            Manual Fit
-          </button>
-        </div>
-
         {/* Map Container */}
         <div
           ref={containerRef}
-          className="flex-1 relative overflow-hidden bg-gray-50 cursor-grab"
+          className="flex-1 relative overflow-hidden bg-gray-50"
           onMouseDown={startPan}
           onWheel={handleWheel}
           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
@@ -315,7 +272,7 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
           />
 
           {/* Empty State */}
-          {processedTables.items.length === 0 && (
+          {processedTables.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
@@ -330,53 +287,41 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
           )}
 
           {/* Tables */}
-          {processedTables.items.map((table) => {
+          {processedTables.map((table) => {
             const avg = feedbackMap[table.table_number];
             const feedbackStatus = getFeedbackStatus(avg);
             const cfg = getTableShapeClasses(table, feedbackStatus);
             
             const isSelectedTable = selectedFeedback?.table_number === table.table_number;
             
-            const tableX = table.baseX * zoom + panOffset.x;
-            const tableY = table.baseY * zoom + panOffset.y;
-            const tableWidth = table.w * zoom;
-            const tableHeight = table.h * zoom;
-            
-            // Debug: log first table position
-            if (table === processedTables.items[0]) {
-              console.log('First table render:', {
-                tableNumber: table.table_number,
-                baseX: table.baseX,
-                baseY: table.baseY,
-                zoom,
-                panOffset,
-                finalX: tableX,
-                finalY: tableY,
-                visible: tableX > -tableWidth && tableX < containerSize.width && tableY > -tableHeight && tableY < containerSize.height
-              });
-            }
+            // Calculate screen position
+            const screenX = table.worldX * zoom + panOffset.x;
+            const screenY = table.worldY * zoom + panOffset.y;
+            const screenWidth = table.w * zoom;
+            const screenHeight = table.h * zoom;
             
             return (
               <div
                 key={table.id}
                 className="absolute select-none"
                 style={{
-                  left: tableX,
-                  top: tableY,
+                  left: screenX,
+                  top: screenY,
+                  width: screenWidth,
+                  height: screenHeight,
                   transform: isSelectedTable ? 'scale(1.1)' : 'scale(1)',
                   zIndex: isSelectedTable ? 10 : 1,
                   filter: isSelectedTable ? 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))' : 'none',
-                  fontSize: `${Math.max(0.6, Math.min(1.2, zoom))}rem`
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <div
                   className={cfg.className}
                   style={{
-                    width: `${tableWidth}px`,
-                    height: `${tableHeight}px`,
-                    ...cfg.style,
-                    fontSize: 'inherit'
+                    width: '100%',
+                    height: '100%',
+                    fontSize: `${Math.max(8, Math.min(16, screenWidth * 0.3))}px`,
+                    ...cfg.style
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
