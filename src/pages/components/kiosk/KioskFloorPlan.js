@@ -80,17 +80,29 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
   // Auto-fit when zone changes
   useEffect(() => {
     if (processedTables.items.length > 0 && containerSize.width > 0 && containerSize.height > 0) {
-      fitToScreen();
+      // Add a small delay to ensure container is properly rendered
+      setTimeout(() => {
+        fitToScreen();
+      }, 100);
     }
   }, [selectedZoneId, containerSize, processedTables.items.length]);
 
   // Fit all tables to screen
   const fitToScreen = useCallback(() => {
-    if (!processedTables.items.length || !containerSize.width || !containerSize.height) return;
+    if (!processedTables.items.length || !containerSize.width || !containerSize.height) {
+      console.log('fitToScreen skipped:', { 
+        itemsLength: processedTables.items.length, 
+        containerWidth: containerSize.width, 
+        containerHeight: containerSize.height 
+      });
+      return;
+    }
     
     const { bounds } = processedTables;
     const contentWidth = bounds.maxX - bounds.minX;
     const contentHeight = bounds.maxY - bounds.minY;
+    
+    console.log('fitToScreen:', { bounds, contentWidth, contentHeight, containerSize });
     
     // Calculate zoom to fit content in container
     const zoomX = containerSize.width / contentWidth;
@@ -102,6 +114,8 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     const scaledHeight = contentHeight * newZoom;
     const centerX = (containerSize.width - scaledWidth) / 2 - bounds.minX * newZoom;
     const centerY = (containerSize.height - scaledHeight) / 2 - bounds.minY * newZoom;
+    
+    console.log('Setting zoom/pan:', { newZoom, centerX, centerY });
     
     setZoom(newZoom);
     setPanOffset({ x: centerX, y: centerY });
@@ -289,13 +303,32 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
             
             const isSelectedTable = selectedFeedback?.table_number === table.table_number;
             
+            const tableX = table.baseX * zoom + panOffset.x;
+            const tableY = table.baseY * zoom + panOffset.y;
+            const tableWidth = table.w * zoom;
+            const tableHeight = table.h * zoom;
+            
+            // Debug: log first table position
+            if (table === processedTables.items[0]) {
+              console.log('First table render:', {
+                tableNumber: table.table_number,
+                baseX: table.baseX,
+                baseY: table.baseY,
+                zoom,
+                panOffset,
+                finalX: tableX,
+                finalY: tableY,
+                visible: tableX > -tableWidth && tableX < containerSize.width && tableY > -tableHeight && tableY < containerSize.height
+              });
+            }
+            
             return (
               <div
                 key={table.id}
                 className="absolute select-none"
                 style={{
-                  left: table.baseX * zoom + panOffset.x,
-                  top: table.baseY * zoom + panOffset.y,
+                  left: tableX,
+                  top: tableY,
                   transform: isSelectedTable ? 'scale(1.1)' : 'scale(1)',
                   zIndex: isSelectedTable ? 10 : 1,
                   filter: isSelectedTable ? 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))' : 'none',
@@ -306,8 +339,8 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
                 <div
                   className={cfg.className}
                   style={{
-                    width: `${table.w * zoom}px`,
-                    height: `${table.h * zoom}px`,
+                    width: `${tableWidth}px`,
+                    height: `${tableHeight}px`,
                     ...cfg.style,
                     fontSize: 'inherit'
                   }}
