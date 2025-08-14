@@ -26,7 +26,7 @@ const EditControls = ({
       return;
     }
     
-    if (tables.find(t => t.table_number === number)) {
+    if (tables.find(t => String(t.table_number) === number)) {
       alert('Table number already exists. Please choose a different number.');
       return;
     }
@@ -53,7 +53,7 @@ const EditControls = ({
       {/* Edit Mode Toggle */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-600">
-          {editMode ? 'Drag tables to reposition them' : 'Click tables to view customer feedback'}
+          {editMode ? 'Drag tables to reposition them' : 'Switch to edit mode to modify the layout'}
         </p>
         
         <button

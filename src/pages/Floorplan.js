@@ -161,7 +161,6 @@ const Floorplan = () => {
 
     if (error) {
       alert('Error saving layout. Check console for details.');
-      // eslint-disable-next-line no-console
       console.error(error);
     } else {
       setEditMode(true); // keep in design mode

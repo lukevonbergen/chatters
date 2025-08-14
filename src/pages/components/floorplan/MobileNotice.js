@@ -18,7 +18,7 @@ const MobileNotice = () => {
 
         {/* Description */}
         <p className="text-gray-600 mb-6 leading-relaxed">
-          Floor Plan editing works best on desktop and tablet devices. Please use a larger screen to manage your table layout and view customer feedback.
+          Floor plan editing works best on desktop and tablet devices. Please use a larger screen to design your layout.
         </p>
 
         {/* Features list */}
@@ -33,13 +33,13 @@ const MobileNotice = () => {
             <svg className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Real-time feedback visualisation
+            Multi-zone layout management
           </div>
           <div className="flex items-center text-sm text-gray-700">
             <svg className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Multi-zone layout management
+            Save and load layouts from your account
           </div>
         </div>
 
