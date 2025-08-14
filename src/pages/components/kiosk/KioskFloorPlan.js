@@ -80,12 +80,32 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
   // Auto-fit when zone changes
   useEffect(() => {
     if (processedTables.items.length > 0 && containerSize.width > 0 && containerSize.height > 0) {
+      console.log('Auto-fit triggered:', { 
+        itemsLength: processedTables.items.length, 
+        containerSize, 
+        currentZoom: zoom, 
+        currentPan: panOffset 
+      });
+      
       // Add a small delay to ensure container is properly rendered
       setTimeout(() => {
         fitToScreen();
       }, 100);
     }
   }, [selectedZoneId, containerSize, processedTables.items.length]);
+
+  // Fallback: If we have tables but no proper zoom/pan after 500ms, force fit
+  useEffect(() => {
+    if (processedTables.items.length > 0 && panOffset.x === 0 && panOffset.y === 0 && zoom === 1) {
+      console.log('Fallback auto-fit triggered');
+      const timer = setTimeout(() => {
+        if (containerSize.width > 0 && containerSize.height > 0) {
+          fitToScreen();
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [processedTables.items.length, panOffset, zoom, containerSize, fitToScreen]);
 
   // Fit all tables to screen
   const fitToScreen = useCallback(() => {
@@ -259,6 +279,20 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
             </svg>
+          </button>
+        </div>
+
+        {/* Debug Panel (temporary) */}
+        <div className="absolute top-16 left-4 z-20 bg-white rounded-lg border border-gray-300 shadow-lg p-2 text-xs">
+          <div>Container: {containerSize.width}x{containerSize.height}</div>
+          <div>Tables: {processedTables.items.length}</div>
+          <div>Zoom: {zoom.toFixed(2)}</div>
+          <div>Pan: {panOffset.x.toFixed(0)}, {panOffset.y.toFixed(0)}</div>
+          <button 
+            onClick={fitToScreen}
+            className="mt-1 px-2 py-1 bg-blue-500 text-white rounded text-xs"
+          >
+            Manual Fit
           </button>
         </div>
 
