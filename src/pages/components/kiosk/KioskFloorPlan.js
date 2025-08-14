@@ -154,10 +154,16 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
   const handleZoomIn = () => setZoom(prev => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - ZOOM_STEP, MIN_ZOOM));
   
-  // Mouse wheel zoom
+  // Mouse wheel zoom with trackpad sensitivity adjustment
   const handleWheel = useCallback((e) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+    
+    // Detect trackpad vs mouse wheel based on deltaY magnitude
+    // Trackpads typically send smaller, more frequent deltas
+    const isTrackpad = Math.abs(e.deltaY) < 50;
+    const sensitivity = isTrackpad ? 0.002 : 0.01; // Much less sensitive for trackpad
+    
+    const delta = e.deltaY > 0 ? -sensitivity : sensitivity;
     const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom + delta));
     
     if (newZoom !== zoom) {
