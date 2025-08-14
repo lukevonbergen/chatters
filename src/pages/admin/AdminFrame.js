@@ -6,19 +6,49 @@ import { supabase } from '../../utils/supabase';
 
 const AdminFrame = ({ children }) => {
   const navigate = useNavigate();
-
-  const [userInfo, setUserInfo] = useState({ email: '' });
+  const [userInfo, setUserInfo] = useState({ email: '', role: null });
+  const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
+    let mounted = true;
     const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data?.user) return navigate('/signin');
-      setUserInfo({ email: data.user.email });
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth?.user;
+      if (!user) {
+        navigate('/signin', { replace: true });
+        return;
+      }
+
+      const email = (user.email || '').toLowerCase();
+
+      // Pull role from your public.users table
+      const { data: userRow, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (!mounted) return;
+
+      const role = userRow?.role ?? null;
+      const isAdminByRole = role === 'admin';
+      const isAdminByDomain = email.endsWith('@getchatters.com');
+
+      if (!isAdminByRole && !isAdminByDomain) {
+        // Not allowed in admin — send to normal app
+        navigate('/', { replace: true });
+        return;
+      }
+
+      setUserInfo({ email, role: role || (isAdminByDomain ? 'admin' : null) });
+      setLoading(false);
     };
+
     fetchUser();
-  }, []);
+    return () => { mounted = false; };
+  }, [navigate]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -32,8 +62,12 @@ const AdminFrame = ({ children }) => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/signin');
+    navigate('/signin', { replace: true });
   };
+
+  if (loading) {
+    return <div className="p-6">Loading admin…</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -45,7 +79,7 @@ const AdminFrame = ({ children }) => {
           <div className="relative" ref={dropdownRef}>
             <button onClick={() => setDropdownOpen(prev => !prev)}>
               <img
-                src={`https://ui-avatars.com/api/?name=${userInfo.email}`}
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo.email || 'A')}`}
                 className="w-8 h-8 rounded-full border"
                 alt="avatar"
               />
@@ -54,6 +88,7 @@ const AdminFrame = ({ children }) => {
               <div className="absolute right-0 top-10 bg-white border rounded shadow w-48 z-50">
                 <div className="px-4 py-3 text-sm text-gray-700 border-b">
                   <div className="font-medium">{userInfo.email}</div>
+                  <div className="text-xs text-gray-500">{userInfo.role}</div>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -71,17 +106,11 @@ const AdminFrame = ({ children }) => {
       {/* Navigation */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 flex gap-4">
-          <Link
-            to="/admin"
-            className="text-sm text-gray-700 hover:text-blue-600"
-          >
+          <Link to="/admin" className="text-sm text-gray-700 hover:text-blue-600">
             <User className="inline-block w-4 h-4 mr-1" />
             Admin Home
           </Link>
-          <Link
-            to="/admin/create-user"
-            className="text-sm text-gray-700 hover:text-blue-600"
-          >
+          <Link to="/admin/create-user" className="text-sm text-gray-700 hover:text-blue-600">
             <Plus className="inline-block w-4 h-4 mr-1" />
             Create User
           </Link>
