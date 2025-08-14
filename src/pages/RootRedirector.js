@@ -1,46 +1,39 @@
-// RootRedirector.tsx
-import { useEffect, useMemo, useState } from 'react';
-import { useSessionContext } from '@supabase/auth-helpers-react';
-import DashboardPage from './Dashboard';
-import AdminDashboard from './admin/AdminDashboard';
-import DashboardFrame from './DashboardFrame';
-import AdminFrame from './admin/AdminFrame';
-import { supabase } from '../utils/supabase';
-
 export default function RootRedirector() {
   const { session, isLoading } = useSessionContext();
-  const user = session?.user;
-  const [role, setRole] = useState<string | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
+  const [role, setRole] = useState(null);
+  const [loadingRole, setLoadingRole] = useState(true);
 
-  // Fetch role from your public users table
   useEffect(() => {
-    const load = async () => {
-      if (!user?.id) return;
-      setProfileLoading(true);
+    const fetchRole = async () => {
+      if (!session?.user) {
+        setLoadingRole(false);
+        return;
+      }
       const { data, error } = await supabase
         .from('users')
         .select('role')
-        .eq('id', user.id)
+        .eq('id', session.user.id)
         .single();
-      if (!error) setRole(data?.role ?? null);
-      setProfileLoading(false);
+
+      if (!error) setRole(data?.role || null);
+      setLoadingRole(false);
     };
-    load();
-  }, [user?.id]);
+    fetchRole();
+  }, [session?.user]);
 
-  if (isLoading || profileLoading) return <div className="p-4">Loading...</div>;
+  if (isLoading || loadingRole) {
+    return <div className="p-4">Loading...</div>;
+  }
 
-  const email = (user?.email ?? '').toLowerCase();
-  const isAdminByDomain = email.endsWith('@getchatters.com');
-  const isAdminByRole = role === 'admin';
-  const isAdmin = isAdminByRole || isAdminByDomain;
+  if (role === 'admin') {
+    return (
+      <AdminFrame>
+        <AdminDashboard />
+      </AdminFrame>
+    );
+  }
 
-  return isAdmin ? (
-    <AdminFrame>
-      <AdminDashboard />
-    </AdminFrame>
-  ) : (
+  return (
     <DashboardFrame>
       <DashboardPage />
     </DashboardFrame>
