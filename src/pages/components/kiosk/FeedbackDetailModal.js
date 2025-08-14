@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../common/Modal';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { supabase } from '../../../utils/supabase';
