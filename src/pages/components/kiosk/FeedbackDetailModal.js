@@ -146,18 +146,38 @@ const FeedbackDetailModal = ({
           setCurrentUser(userProfile);
         }
         
-        // Get staff members for this venue
+        // Get staff members for this venue (same approach as FeedbackTabs)
         if (venueId) {
-          const { data: staff } = await supabase
+          const { data: staffData } = await supabase
             .from('staff')
             .select('id, first_name, last_name, role, user_id')
             .eq('venue_id', venueId);
-          
-          setStaffMembers(staff || []);
+
+          const { data: employeesData } = await supabase
+            .from('employees')
+            .select('id, first_name, last_name, role')
+            .eq('venue_id', venueId);
+
+          const combinedStaffList = [
+            ...(staffData || []).map(person => ({
+              ...person,
+              source: 'staff',
+              display_name: `${person.first_name} ${person.last_name}`,
+              role_display: person.role || 'Staff Member'
+            })),
+            ...(employeesData || []).map(person => ({
+              ...person,
+              source: 'employee',
+              display_name: `${person.first_name} ${person.last_name}`,
+              role_display: person.role || 'Employee'
+            }))
+          ].sort((a, b) => a.display_name.localeCompare(b.display_name));
+
+          setStaffMembers(combinedStaffList);
           
           // Auto-select current user if they're staff at this venue
-          if (user && staff) {
-            const currentStaff = staff.find(s => s.user_id === user.id);
+          if (user && staffData) {
+            const currentStaff = staffData.find(s => s.user_id === user.id);
             if (currentStaff) {
               setSelectedStaffMember(currentStaff.id);
             }
@@ -488,17 +508,54 @@ const FeedbackDetailModal = ({
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium"
               >
                 <option value="">Choose staff member...</option>
-                {staffMembers.map((staff) => (
-                  <option key={staff.id} value={staff.id}>
-                    {staff.first_name} {staff.last_name}{staff.role && ` • ${staff.role}`}
-                  </option>
-                ))}
+                
+                {staffMembers.some(person => person.source === 'staff') && (
+                  <optgroup label="Managers & Staff">
+                    {staffMembers
+                      .filter(person => person.source === 'staff')
+                      .map(staff => (
+                        <option key={`staff-${staff.id}`} value={staff.id}>
+                          {staff.display_name} ({staff.role_display})
+                        </option>
+                      ))
+                    }
+                  </optgroup>
+                )}
+                
+                {staffMembers.some(person => person.source === 'employee') && (
+                  <optgroup label="Employees">
+                    {staffMembers
+                      .filter(person => person.source === 'employee')
+                      .map(employee => (
+                        <option key={`employee-${employee.id}`} value={employee.id}>
+                          {employee.display_name} ({employee.role_display})
+                        </option>
+                      ))
+                    }
+                  </optgroup>
+                )}
+                
+                {/* Fallback for mixed lists */}
+                {(!staffMembers.some(person => person.source === 'staff') && 
+                  !staffMembers.some(person => person.source === 'employee')) && 
+                  staffMembers.map(person => (
+                    <option key={person.id} value={person.id}>
+                      {person.display_name} ({person.role_display})
+                    </option>
+                  ))
+                }
               </select>
               {selectedStaff && (
                 <div className="mt-2 flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                   <span className="text-slate-600">
-                    <strong>{selectedStaff.first_name} {selectedStaff.last_name}</strong> will be recorded as responsible for this action
+                    <strong>{selectedStaff.display_name}</strong> ({selectedStaff.role_display})
+                    {selectedStaff.source === 'employee' && (
+                      <span className="ml-1 text-blue-600">• Employee</span>
+                    )}
+                    {selectedStaff.source === 'staff' && (
+                      <span className="ml-1 text-emerald-600">• Staff</span>
+                    )}
                   </span>
                 </div>
               )}
