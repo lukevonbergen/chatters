@@ -10,10 +10,7 @@ const WORLD_HEIGHT = 1000;
 // Uniform padding on both axes so X and Y behave identically
 const PADDING = 24;
 
-const TABLE_W = 64;
-const TABLE_H = 64;
-
-const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTableClick }, outerRef) => {
+const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, selectedFeedback, onTableClick }, outerRef) => {
   const scrollRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -34,7 +31,7 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
     return () => { ro.disconnect(); window.removeEventListener('resize', update); };
   }, []);
 
-  // Compute content bounds in logical space
+  // Compute content bounds in logical space - using actual database dimensions
   const base = useMemo(() => {
     if (!filtered.length) {
       return { minX: 0, minY: 0, maxX: WORLD_WIDTH, maxY: WORLD_HEIGHT, items: [] };
@@ -42,8 +39,11 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
     const items = filtered.map(t => {
       const baseX = t.x_percent != null ? (t.x_percent / 100) * WORLD_WIDTH : (t.x_px ?? 0);
       const baseY = t.y_percent != null ? (t.y_percent / 100) * WORLD_HEIGHT : (t.y_px ?? 0);
-      const w = t.shape === 'long' ? 128 : TABLE_W;
-      const h = t.shape === 'long' ?  48 : TABLE_H;
+      
+      // Use actual stored dimensions from database, with fallbacks
+      const w = t.width || 56;
+      const h = t.height || 56;
+      
       return { ...t, baseX, baseY, w, h };
     });
 
@@ -123,13 +123,30 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
     return           { borderColor: 'border-red-500',   bgColor: 'bg-gray-700', status: 'unhappy' };
   };
 
-  const getTableShapeClasses = (shape, feedbackStatus) => {
+  const getTableShapeClasses = (table, feedbackStatus) => {
     const baseClass = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-200 cursor-pointer ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
     const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
-    switch (shape) {
-      case 'circle': return { className: `${baseClass} w-16 h-16 rounded-full hover:bg-gray-600`, style: pulseStyle };
-      case 'long':   return { className: `${baseClass} w-32 h-12 rounded-lg hover:bg-gray-600 text-sm`, style: pulseStyle };
-      default:       return { className: `${baseClass} w-16 h-16 rounded-lg hover:bg-gray-600`, style: pulseStyle };
+    
+    // Use actual table dimensions and shape
+    const width = table.w;
+    const height = table.h;
+    
+    switch (table.shape) {
+      case 'circle': 
+        return { 
+          className: `${baseClass} rounded-full hover:bg-gray-600`, 
+          style: { width: `${width}px`, height: `${height}px`, ...pulseStyle }
+        };
+      case 'long':   
+        return { 
+          className: `${baseClass} rounded-lg hover:bg-gray-600 text-sm`, 
+          style: { width: `${width}px`, height: `${height}px`, ...pulseStyle }
+        };
+      default:       
+        return { 
+          className: `${baseClass} rounded-lg hover:bg-gray-600`, 
+          style: { width: `${width}px`, height: `${height}px`, ...pulseStyle }
+        };
     }
   };
 
@@ -167,22 +184,51 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, onTabl
                 style={{ backgroundImage: 'radial-gradient(circle,#94a3b8 2px,transparent 2px)', backgroundSize: '30px 30px' }}
               />
 
+              {/* Empty state */}
+              {normItems.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-medium">No tables in this zone</p>
+                    <p className="text-xs text-gray-400">Tables will appear here when added to this zone</p>
+                  </div>
+                </div>
+              )}
+
               {/* Tables */}
               {normItems.map((t) => {
                 const avg = feedbackMap[t.table_number];
                 const feedbackStatus = getFeedbackStatus(avg);
-                const cfg = getTableShapeClasses(t.shape, feedbackStatus);
+                const cfg = getTableShapeClasses(t, feedbackStatus);
+                
+                // Highlight selected feedback
+                const isSelectedTable = selectedFeedback?.table_number === t.table_number;
+                const selectedStyles = isSelectedTable ? {
+                  transform: 'scale(1.1)',
+                  zIndex: 10,
+                  filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))'
+                } : {};
+                
                 return (
                   <div
                     key={t.id}
                     className="absolute"
-                    style={{ left: t.normX, top: t.normY }}
+                    style={{ 
+                      left: t.normX, 
+                      top: t.normY,
+                      ...selectedStyles
+                    }}
                     onMouseDown={(e) => e.stopPropagation()} // don't start drag when clicking tables
                   >
                     <div
                       className={cfg.className}
                       style={cfg.style}
                       onClick={(e) => { e.stopPropagation(); onTableClick(t.table_number); }}
+                      title={`Table ${t.table_number}${avg ? ` - Rating: ${avg.toFixed(1)}/5` : ' - No feedback'}`}
                     >
                       {t.table_number}
                     </div>
