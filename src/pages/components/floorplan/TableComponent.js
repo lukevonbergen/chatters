@@ -1,9 +1,9 @@
 // File: components/floorplan/TableComponent.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 
 const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
   const [isResizing, setIsResizing] = useState(false);
-  const resizeTimeoutRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseDown = (e, direction) => {
     e.stopPropagation();
@@ -99,10 +99,15 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
   const currentWidth = table.width || 56;
   const currentHeight = table.height || 56;
 
+  // Show handles when hovered OR when resizing
+  const showHandles = isHovered || isResizing;
+
   return (
     <div 
-      className="relative group select-none"
+      className="relative select-none"
       style={{ width: currentWidth, height: currentHeight }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => !isResizing && setIsHovered(false)}
     >
       <div
         className={getShapeClasses()}
@@ -117,7 +122,9 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
           {/* Remove button */}
           <button
             onClick={handleRemoveClick}
-            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs font-bold shadow-lg transition-colors duration-200 opacity-0 group-hover:opacity-100 z-10"
+            className={`absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs font-bold shadow-lg transition-all duration-200 z-10 ${
+              showHandles ? 'opacity-100' : 'opacity-0'
+            }`}
             title="Remove table"
             type="button"
           >
@@ -125,56 +132,58 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
           </button>
 
           {/* Resize handles - only show for non-circle shapes */}
-          {table.shape !== 'circle' && (
+          {table.shape !== 'circle' && showHandles && (
             <>
               {/* Corner handles */}
               <div
-                className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-nw-resize opacity-0 group-hover:opacity-100"
+                className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-nw-resize"
                 onMouseDown={(e) => handleMouseDown(e, 'top-left')}
               />
               <div
-                className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-ne-resize opacity-0 group-hover:opacity-100"
+                className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-ne-resize"
                 onMouseDown={(e) => handleMouseDown(e, 'top-right')}
               />
               <div
-                className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-sw-resize opacity-0 group-hover:opacity-100"
+                className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-sw-resize"
                 onMouseDown={(e) => handleMouseDown(e, 'bottom-left')}
               />
               <div
-                className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize opacity-0 group-hover:opacity-100"
+                className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
                 onMouseDown={(e) => handleMouseDown(e, 'bottom-right')}
               />
 
               {/* Edge handles */}
               <div
-                className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-n-resize opacity-0 group-hover:opacity-100"
+                className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-n-resize"
                 onMouseDown={(e) => handleMouseDown(e, 'top')}
               />
               <div
-                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-s-resize opacity-0 group-hover:opacity-100"
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-s-resize"
                 onMouseDown={(e) => handleMouseDown(e, 'bottom')}
               />
               <div
-                className="absolute -left-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-w-resize opacity-0 group-hover:opacity-100"
+                className="absolute -left-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-w-resize"
                 onMouseDown={(e) => handleMouseDown(e, 'left')}
               />
               <div
-                className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-e-resize opacity-0 group-hover:opacity-100"
+                className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-e-resize"
                 onMouseDown={(e) => handleMouseDown(e, 'right')}
               />
             </>
           )}
 
           {/* For circles, only show a uniform scale handle */}
-          {table.shape === 'circle' && (
+          {table.shape === 'circle' && showHandles && (
             <div
-              className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize opacity-0 group-hover:opacity-100"
+              className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
               onMouseDown={handleCircleResize}
             />
           )}
 
           {/* Hover outline */}
-          <div className="absolute inset-0 border-2 border-dashed border-blue-300 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+          {showHandles && (
+            <div className="absolute inset-0 border-2 border-dashed border-blue-300 rounded-lg pointer-events-none" />
+          )}
         </>
       )}
     </div>
