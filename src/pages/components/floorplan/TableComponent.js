@@ -1,3 +1,4 @@
+// File: components/floorplan/TableComponent.jsx
 import React, { useState, useEffect } from 'react';
 
 const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
@@ -52,7 +53,7 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       
-      // Call the resize callback to save to parent state
+      // Call the resize callback to save to parent state and mark as unsaved
       if (onTableResize) {
         onTableResize(table.id, dimensions.width, dimensions.height);
       }
@@ -61,6 +62,13 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
+
+  // Update parent whenever dimensions change (this ensures unsaved changes are tracked)
+  useEffect(() => {
+    if (isResizing && onTableResize) {
+      onTableResize(table.id, dimensions.width, dimensions.height);
+    }
+  }, [dimensions, isResizing, table.id, onTableResize]);
 
   const handleRemoveClick = (e) => {
     e.stopPropagation();
@@ -165,6 +173,7 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
                   document.removeEventListener('mousemove', handleMouseMove);
                   document.removeEventListener('mouseup', handleMouseUp);
                   
+                  // Ensure parent is notified of final size
                   if (onTableResize) {
                     onTableResize(table.id, dimensions.width, dimensions.height);
                   }
