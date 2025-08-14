@@ -129,21 +129,11 @@ const FeedbackDetailModal = ({
   
   // Load current user and staff members
   useEffect(() => {
-    console.log('useEffect triggered - isOpen:', isOpen, 'venueId:', venueId);
-    
     const loadData = async () => {
       try {
-        console.log('Starting loadData function...');
-        console.log('Loading staff data for venue:', venueId);
-        
         // Get current authenticated user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          console.error('User error:', userError);
-          throw userError;
-        }
-        
-        console.log('Current user:', user);
+        if (userError) throw userError;
         
         if (user) {
           // Get user profile from your users table
@@ -153,27 +143,20 @@ const FeedbackDetailModal = ({
             .eq('id', user.id)
             .single();
           
-          console.log('User profile:', userProfile);
           setCurrentUser(userProfile);
         }
         
         // Get staff members for this venue (same approach as FeedbackTabs)
         if (venueId) {
-          console.log('Fetching staff from staff table for venue:', venueId);
-          const { data: staffData, error: staffError } = await supabase
+          const { data: staffData } = await supabase
             .from('staff')
             .select('id, first_name, last_name, role, user_id')
             .eq('venue_id', venueId);
 
-          console.log('Staff query result - data:', staffData, 'error:', staffError);
-
-          console.log('Fetching staff from employees table for venue:', venueId);
-          const { data: employeesData, error: employeesError } = await supabase
+          const { data: employeesData } = await supabase
             .from('employees')
             .select('id, first_name, last_name, role')
             .eq('venue_id', venueId);
-
-          console.log('Employees query result - data:', employeesData, 'error:', employeesError);
 
           const combinedStaffList = [
             ...(staffData || []).map(person => ({
@@ -190,19 +173,15 @@ const FeedbackDetailModal = ({
             }))
           ].sort((a, b) => a.display_name.localeCompare(b.display_name));
 
-          console.log('Combined staff list:', combinedStaffList);
           setStaffMembers(combinedStaffList);
           
           // Auto-select current user if they're staff at this venue
           if (user && staffData) {
             const currentStaff = staffData.find(s => s.user_id === user.id);
-            console.log('Current staff match:', currentStaff);
             if (currentStaff) {
               setSelectedStaffMember(currentStaff.id);
             }
           }
-        } else {
-          console.log('No venueId provided');
         }
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -210,10 +189,7 @@ const FeedbackDetailModal = ({
     };
     
     if (isOpen) {
-      console.log('Modal is open, running loadData...');
       loadData();
-    } else {
-      console.log('Modal is not open, skipping loadData');
     }
   }, [isOpen, venueId]);
   
@@ -525,13 +501,6 @@ const FeedbackDetailModal = ({
               <label htmlFor="staffMember" className="block text-sm font-semibold text-slate-700 mb-3">
                 Responsible Staff Member <span className="text-red-500">*</span>
               </label>
-              
-              {/* Debug info */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="text-xs text-gray-500 mb-2">
-                  Debug: {staffMembers.length} staff members found for venue {venueId}
-                </div>
-              )}
               
               <select
                 id="staffMember"

@@ -19,13 +19,11 @@ export const VenueProvider = ({ children }) => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          console.log('No session found, waiting for auth state change');
           return;
         }
 
         const userId = session.user.id;
 
-        // IMPORTANT: no venue_id here
         const { data: userRow, error: userFetchError } = await supabase
           .from('users')
           .select('id, role, account_id')
@@ -33,7 +31,6 @@ export const VenueProvider = ({ children }) => {
           .single();
 
         if (userFetchError || !userRow) {
-          console.error('User fetch error:', userFetchError);
           return;
         }
 
@@ -43,14 +40,12 @@ export const VenueProvider = ({ children }) => {
 
         // Admins should not load VenueContext at all; bail out
         if (role === 'admin') {
-          console.log('Admin user detected – skipping VenueContext venue fetch.');
           return;
         }
 
         // MASTER: require account_id; otherwise fallback via staff membership
         if (role === 'master') {
           if (!accountId) {
-            console.warn('Master user missing account_id – attempting staff-based fallback.');
             const { data: staffRow, error: staffErr } = await supabase
               .from('staff')
               .select('venue_id, venues!inner(id, name)')
@@ -59,7 +54,6 @@ export const VenueProvider = ({ children }) => {
               .single();
 
             if (staffErr || !staffRow?.venues?.id) {
-              console.error('No fallback venue for master without account_id.');
               setAllVenues([]);
               return;
             }
@@ -77,7 +71,6 @@ export const VenueProvider = ({ children }) => {
             .eq('account_id', accountId);
 
           if (venueError) {
-            console.error('Venue fetch error (master):', venueError);
             return;
           }
 
@@ -106,22 +99,13 @@ export const VenueProvider = ({ children }) => {
                 account_id
               )
             `)
-            .eq('user_id', userId); // <- no eq on venues.account_id when it's null
-
-          console.log('Manager staff query result:', {
-            staffRows,
-            staffError,
-            userId,
-            accountId: accountId
-          });
+            .eq('user_id', userId);
 
           if (staffError) {
-            console.error('Staff row error:', staffError);
             return;
           }
 
           if (!staffRows || staffRows.length === 0) {
-            console.warn('Manager has no venue assignments in staff table');
             setAllVenues([]);
             return;
           }
@@ -162,7 +146,6 @@ export const VenueProvider = ({ children }) => {
           .single();
 
         if (staffErr || !staffRow?.venues?.id) {
-          console.error('No venue found for this user.');
           setAllVenues([]);
           return;
         }
@@ -172,7 +155,7 @@ export const VenueProvider = ({ children }) => {
         setVenueName(staffRow.venues.name);
         localStorage.setItem('chatters_currentVenueId', staffRow.venues.id);
       } catch (error) {
-        console.error('VenueContext initialization error:', error);
+        // Silent error handling
       } finally {
         setLoading(false);
         setInitialized(true);
@@ -181,10 +164,7 @@ export const VenueProvider = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session ? 'session exists' : 'no session');
-
         if (event === 'SIGNED_IN' && session && !initialized) {
-          console.log('User signed in, initializing venue context...');
           setTimeout(() => { init(); }, 100);
         }
 
@@ -202,7 +182,6 @@ export const VenueProvider = ({ children }) => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        console.log('Existing session found, initializing...');
         init();
       } else {
         setLoading(false);
@@ -217,7 +196,6 @@ export const VenueProvider = ({ children }) => {
   const setCurrentVenue = (id) => {
     const found = allVenues.find(v => v.id === id);
     if (!found) return;
-    console.log('[Chatters] Switching to venue:', found);
     setVenueId(found.id);
     setVenueName(found.name);
     localStorage.setItem('chatters_currentVenueId', found.id);
