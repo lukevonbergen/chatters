@@ -161,7 +161,7 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     // Detect trackpad vs mouse wheel based on deltaY magnitude
     // Trackpads typically send smaller, more frequent deltas
     const isTrackpad = Math.abs(e.deltaY) < 50;
-    const sensitivity = isTrackpad ? 0.002 : 0.01; // Much less sensitive for trackpad
+    const sensitivity = isTrackpad ? 0.005 : 0.01; // Increased trackpad sensitivity from 0.002 to 0.005
     
     const delta = e.deltaY > 0 ? -sensitivity : sensitivity;
     const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom + delta));
@@ -292,7 +292,7 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
           </button>
         </div>
 
-        {/* Map Container - FIXED HEIGHT */}
+        {/* Map Container - LONGER HEIGHT */}
         <div
           ref={containerRef}
           className="flex-1 relative overflow-hidden bg-gray-50"
@@ -300,8 +300,8 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
           onWheel={handleWheel}
           style={{ 
             cursor: isDragging ? 'grabbing' : 'grab',
-            minHeight: '400px',
-            height: 'calc(100vh - 200px)' // Fallback height calculation
+            minHeight: '600px', // Increased from 400px
+            height: 'calc(100vh - 120px)' // Reduced offset from 200px to 120px for more space
           }}
         >
           {/* Grid Background */}
