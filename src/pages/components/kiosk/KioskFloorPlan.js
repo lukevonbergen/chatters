@@ -286,13 +286,17 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
           </button>
         </div>
 
-        {/* Map Container */}
+        {/* Map Container - FIXED HEIGHT */}
         <div
           ref={containerRef}
           className="flex-1 relative overflow-hidden bg-gray-50"
           onMouseDown={startPan}
           onWheel={handleWheel}
-          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+          style={{ 
+            cursor: isDragging ? 'grabbing' : 'grab',
+            minHeight: '400px',
+            height: 'calc(100vh - 200px)' // Fallback height calculation
+          }}
         >
           {/* Grid Background */}
           <div
