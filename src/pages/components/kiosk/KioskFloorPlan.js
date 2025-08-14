@@ -77,36 +77,6 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     return { items, bounds: { minX, minY, maxX, maxY } };
   }, [filtered]);
 
-  // Auto-fit when zone changes
-  useEffect(() => {
-    if (processedTables.items.length > 0 && containerSize.width > 0 && containerSize.height > 0) {
-      console.log('Auto-fit triggered:', { 
-        itemsLength: processedTables.items.length, 
-        containerSize, 
-        currentZoom: zoom, 
-        currentPan: panOffset 
-      });
-      
-      // Add a small delay to ensure container is properly rendered
-      setTimeout(() => {
-        fitToScreen();
-      }, 100);
-    }
-  }, [selectedZoneId, containerSize, processedTables.items.length]);
-
-  // Fallback: If we have tables but no proper zoom/pan after 500ms, force fit
-  useEffect(() => {
-    if (processedTables.items.length > 0 && panOffset.x === 0 && panOffset.y === 0 && zoom === 1) {
-      console.log('Fallback auto-fit triggered');
-      const timer = setTimeout(() => {
-        if (containerSize.width > 0 && containerSize.height > 0) {
-          fitToScreen();
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [processedTables.items.length, panOffset, zoom, containerSize, fitToScreen]);
-
   // Fit all tables to screen
   const fitToScreen = useCallback(() => {
     if (!processedTables.items.length || !containerSize.width || !containerSize.height) {
@@ -140,6 +110,36 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     setZoom(newZoom);
     setPanOffset({ x: centerX, y: centerY });
   }, [processedTables, containerSize]);
+
+  // Auto-fit when zone changes
+  useEffect(() => {
+    if (processedTables.items.length > 0 && containerSize.width > 0 && containerSize.height > 0) {
+      console.log('Auto-fit triggered:', { 
+        itemsLength: processedTables.items.length, 
+        containerSize, 
+        currentZoom: zoom, 
+        currentPan: panOffset 
+      });
+      
+      // Add a small delay to ensure container is properly rendered
+      setTimeout(() => {
+        fitToScreen();
+      }, 100);
+    }
+  }, [selectedZoneId, containerSize, processedTables.items.length, fitToScreen]);
+
+  // Fallback: If we have tables but no proper zoom/pan after 500ms, force fit
+  useEffect(() => {
+    if (processedTables.items.length > 0 && panOffset.x === 0 && panOffset.y === 0 && zoom === 1) {
+      console.log('Fallback auto-fit triggered');
+      const timer = setTimeout(() => {
+        if (containerSize.width > 0 && containerSize.height > 0) {
+          fitToScreen();
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [processedTables.items.length, panOffset, zoom, containerSize, fitToScreen]);
 
   // Zoom controls
   const handleZoomIn = () => setZoom(prev => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
