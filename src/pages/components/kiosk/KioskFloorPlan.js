@@ -248,7 +248,7 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     <>
       <style>{pulseKeyframes}</style>
 
-      <div ref={outerRef} className="flex-1 min-h-0 flex flex-col bg-gray-100 rounded-lg border border-gray-200 relative overflow-hidden">
+      <div ref={outerRef} className="flex-1 min-h-0 flex flex-col bg-gray-100 rounded-lg border border-gray-200 relative overflow-hidden h-full">
         {/* Header */}
         <div className="flex-shrink-0 px-4 py-2 bg-white border-b flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-900">Zone Details</h2>
@@ -292,10 +292,10 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
           </button>
         </div>
 
-        {/* Map Container - FULL VIEWPORT HEIGHT */}
+        {/* Map Container - PROPER FLEX HEIGHT */}
         <div
           ref={containerRef}
-          className="flex-1 relative overflow-hidden bg-gray-50"
+          className="flex-1 min-h-0 relative overflow-hidden bg-gray-50"
           onMouseDown={startPan}
           onWheel={handleWheel}
           style={{ 
