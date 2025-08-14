@@ -255,6 +255,7 @@ const KioskPage = () => {
           selectedFeedback={selectedFeedback}
           onFeedbackClick={handleFeedbackClick}
           onMarkResolved={handleMarkResolved}
+          venueId={venueId}
         />
       </div>
 
