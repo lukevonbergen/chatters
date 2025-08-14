@@ -131,6 +131,8 @@ const FeedbackDetailModal = ({
   useEffect(() => {
     const loadData = async () => {
       try {
+        console.log('Loading staff data for venue:', venueId);
+        
         // Get current authenticated user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError) throw userError;
@@ -148,15 +150,21 @@ const FeedbackDetailModal = ({
         
         // Get staff members for this venue (same approach as FeedbackTabs)
         if (venueId) {
-          const { data: staffData } = await supabase
+          console.log('Fetching staff from staff table...');
+          const { data: staffData, error: staffError } = await supabase
             .from('staff')
             .select('id, first_name, last_name, role, user_id')
             .eq('venue_id', venueId);
 
-          const { data: employeesData } = await supabase
+          console.log('Staff data:', staffData, 'Error:', staffError);
+
+          console.log('Fetching staff from employees table...');
+          const { data: employeesData, error: employeesError } = await supabase
             .from('employees')
             .select('id, first_name, last_name, role')
             .eq('venue_id', venueId);
+
+          console.log('Employees data:', employeesData, 'Error:', employeesError);
 
           const combinedStaffList = [
             ...(staffData || []).map(person => ({
@@ -173,6 +181,7 @@ const FeedbackDetailModal = ({
             }))
           ].sort((a, b) => a.display_name.localeCompare(b.display_name));
 
+          console.log('Combined staff list:', combinedStaffList);
           setStaffMembers(combinedStaffList);
           
           // Auto-select current user if they're staff at this venue
@@ -188,7 +197,7 @@ const FeedbackDetailModal = ({
       }
     };
     
-    if (isOpen) {
+    if (isOpen && venueId) {
       loadData();
     }
   }, [isOpen, venueId]);
@@ -501,6 +510,14 @@ const FeedbackDetailModal = ({
               <label htmlFor="staffMember" className="block text-sm font-semibold text-slate-700 mb-3">
                 Responsible Staff Member <span className="text-red-500">*</span>
               </label>
+              
+              {/* Debug info */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="text-xs text-gray-500 mb-2">
+                  Debug: {staffMembers.length} staff members found for venue {venueId}
+                </div>
+              )}
+              
               <select
                 id="staffMember"
                 value={selectedStaffMember}
@@ -508,6 +525,10 @@ const FeedbackDetailModal = ({
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium"
               >
                 <option value="">Choose staff member...</option>
+                
+                {staffMembers.length === 0 && (
+                  <option value="" disabled>No staff members found for this venue</option>
+                )}
                 
                 {staffMembers.some(person => person.source === 'staff') && (
                   <optgroup label="Managers & Staff">
