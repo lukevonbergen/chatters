@@ -292,16 +292,14 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
           </button>
         </div>
 
-        {/* Map Container - LONGER HEIGHT */}
+        {/* Map Container - FULL VIEWPORT HEIGHT */}
         <div
           ref={containerRef}
           className="flex-1 relative overflow-hidden bg-gray-50"
           onMouseDown={startPan}
           onWheel={handleWheel}
           style={{ 
-            cursor: isDragging ? 'grabbing' : 'grab',
-            minHeight: '600px', // Increased from 400px
-            height: 'calc(100vh - 120px)' // Reduced offset from 200px to 120px for more space
+            cursor: isDragging ? 'grabbing' : 'grab'
           }}
         >
           {/* Grid Background */}
