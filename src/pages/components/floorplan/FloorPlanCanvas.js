@@ -20,7 +20,7 @@ const FloorPlanCanvas = forwardRef(
     return (
       <div
         ref={ref}
-        className="relative w-full h-[600px] bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg overflow-hidden"
+        className="relative w-full h-[500px] bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg overflow-hidden"
       >
         {/* Grid pattern for better visual alignment */}
         <div

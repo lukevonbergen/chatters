@@ -24,7 +24,7 @@ const Floorplan = () => {
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [tables, setTables] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [editMode, setEditMode] = useState(true); // design-only: default to true
+  const [editMode, setEditMode] = useState(false); // default to view mode
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Check for mobile on mount
@@ -163,7 +163,7 @@ const Floorplan = () => {
       alert('Error saving layout. Check console for details.');
       console.error(error);
     } else {
-      setEditMode(true); // keep in design mode
+      setEditMode(false); // return to view mode after saving
       setHasUnsavedChanges(false);
       await loadTables(venueId); // Reload to get persisted IDs/positions
     }
@@ -219,9 +219,8 @@ const Floorplan = () => {
 
   return (
     <PageContainer>
-      <div className="mb-6 lg:mb-8">
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Floor Plan</h1>
-        <p className="text-gray-600 text-sm lg:text-base">Design your table layout. No live feedback shown here.</p>
+      <div className="mb-4">
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Floor Plan</h1>
       </div>
 
       <EditControls
@@ -235,7 +234,7 @@ const Floorplan = () => {
         onClearAllTables={handleClearAllTables}
       />
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
         <ZoneSelector
           zones={zones}
           selectedZoneId={selectedZoneId}
