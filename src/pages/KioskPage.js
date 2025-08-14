@@ -8,6 +8,8 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import KioskFloorPlan from './components/kiosk/KioskFloorPlan';
 import KioskFeedbackList from './components/kiosk/KioskFeedbackList';
 import KioskZoneOverview from './components/kiosk/KioskZoneOverview';
+import FeedbackDetailModal from './components/kiosk/FeedbackDetailModal';
+import Modal from './components/common/Modal';
 
 dayjs.extend(relativeTime);
 
@@ -142,6 +144,39 @@ const KioskPage = () => {
     setFeedbackList(feedbackItems);
   };
 
+  // Mark feedback as resolved
+  const handleMarkResolved = async (sessionIds, staffMember) => {
+    try {
+      // Update all feedback items for the given session IDs
+      const { error } = await supabase
+        .from('feedback')
+        .update({
+          is_actioned: true,
+          actioned_by: staffMember,
+          actioned_at: new Date().toISOString()
+        })
+        .in('session_id', sessionIds);
+
+      if (error) {
+        console.error('Error marking feedback as resolved:', error);
+        throw error;
+      }
+
+      // Refresh feedback data
+      await fetchFeedback(venueId);
+      
+      // Clear selected feedback if it was resolved
+      if (selectedFeedback && sessionIds.includes(selectedFeedback.session_id)) {
+        setSelectedFeedback(null);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to resolve feedback:', error);
+      throw error;
+    }
+  };
+
   // Event handlers
   const handleZoneSelect = (zoneId) => {
     setCurrentView(zoneId);
@@ -219,6 +254,7 @@ const KioskPage = () => {
           feedbackList={feedbackList}
           selectedFeedback={selectedFeedback}
           onFeedbackClick={handleFeedbackClick}
+          onMarkResolved={handleMarkResolved}
         />
       </div>
 
