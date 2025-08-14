@@ -23,7 +23,16 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
-  const filtered = useMemo(() => tables.filter(t => t.zone_id === selectedZoneId), [tables, selectedZoneId]);
+  const filtered = useMemo(() => {
+    const result = tables.filter(t => t.zone_id === selectedZoneId);
+    console.log('Filtering tables:', {
+      totalTables: tables.length,
+      selectedZoneId,
+      filteredCount: result.length,
+      allZoneIds: tables.map(t => ({ id: t.id, zone_id: t.zone_id, table_number: t.table_number }))
+    });
+    return result;
+  }, [tables, selectedZoneId]);
 
   // Measure container
   useEffect(() => {
@@ -47,6 +56,21 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
 
   // Process tables with simpler coordinate system
   const processedTables = useMemo(() => {
+    console.log('Processing tables:', {
+      filteredCount: filtered.length,
+      sampleTable: filtered[0] ? {
+        id: filtered[0].id,
+        table_number: filtered[0].table_number,
+        zone_id: filtered[0].zone_id,
+        x_percent: filtered[0].x_percent,
+        y_percent: filtered[0].y_percent,
+        x_px: filtered[0].x_px,
+        y_px: filtered[0].y_px,
+        width: filtered[0].width,
+        height: filtered[0].height
+      } : 'No tables'
+    });
+    
     return filtered.map(t => {
       // Convert percentages to world coordinates
       const worldX = t.x_percent != null ? (t.x_percent / 100) * WORLD_WIDTH : (t.x_px ?? 0);
