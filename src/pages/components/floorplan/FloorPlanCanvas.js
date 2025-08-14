@@ -12,6 +12,7 @@ const FloorPlanCanvas = forwardRef(
       editMode,
       onTableDrag,
       onRemoveTable,
+      onTableResize, // Add this prop
     },
     ref
   ) => {
@@ -56,6 +57,7 @@ const FloorPlanCanvas = forwardRef(
               table={table}
               editMode={editMode}
               onRemoveTable={onRemoveTable}
+              onTableResize={onTableResize} // Pass the resize handler
             />
           );
 
