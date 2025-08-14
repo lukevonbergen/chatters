@@ -12,7 +12,7 @@ const FloorPlanCanvas = forwardRef(
       editMode,
       onTableDrag,
       onRemoveTable,
-      onTableResize, // Add this prop
+      onTableResize,
     },
     ref
   ) => {
@@ -57,7 +57,8 @@ const FloorPlanCanvas = forwardRef(
               table={table}
               editMode={editMode}
               onRemoveTable={onRemoveTable}
-              onTableResize={onTableResize} // Pass the resize handler
+              onTableResize={onTableResize}
+              onTableMove={onTableDrag} // Pass the move handler for resize positioning
             />
           );
 
@@ -70,8 +71,15 @@ const FloorPlanCanvas = forwardRef(
               onStop={(e, data) => {
                 onTableDrag(table.id, data.x, data.y);
               }}
+              // Disable dragging when resizing
+              disabled={false} // We'll handle this in TableComponent
             >
-              <div className="absolute cursor-move">
+              <div 
+                className="absolute cursor-move"
+                style={{ 
+                  pointerEvents: 'auto' // Ensure pointer events work
+                }}
+              >
                 {tableComponent}
               </div>
             </Draggable>

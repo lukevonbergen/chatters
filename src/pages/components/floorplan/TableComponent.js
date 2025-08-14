@@ -1,4 +1,3 @@
-// File: components/floorplan/TableComponent.jsx
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 const MIN_SIZE = 40;
@@ -9,7 +8,7 @@ const TableComponent = ({
   editMode,
   onRemoveTable,
   onTableResize, // (id, width, height) -> parent persists immutably
-  onTableMove,   // OPTIONAL: (id, dx, dy) to adjust x/y when resizing from left/top
+  onTableMove,   // (id, dx, dy) to adjust x/y when resizing from left/top
 }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -34,6 +33,18 @@ const TableComponent = ({
     return () => { document.body.style.userSelect = prev; };
   }, [isResizing]);
 
+  // Disable parent draggable when resizing
+  useEffect(() => {
+    const parent = document.querySelector(`[data-table-id="${table.id}"]`)?.closest('.react-draggable');
+    if (parent) {
+      if (isResizing) {
+        parent.style.pointerEvents = 'none';
+      } else {
+        parent.style.pointerEvents = 'auto';
+      }
+    }
+  }, [isResizing, table.id]);
+
   const dragRef = useRef({
     startX: 0,
     startY: 0,
@@ -50,6 +61,7 @@ const TableComponent = ({
 
   const startResize = useCallback((e, direction, circle = false) => {
     e.stopPropagation();
+    e.preventDefault();
 
     captureElRef.current = e.currentTarget;
     pointerIdRef.current = e.pointerId;
@@ -103,14 +115,31 @@ const TableComponent = ({
       const dx = lastX - startX;
       const dy = lastY - startY;
 
-      // Final size = live size at release, then snap once
-      let finalW = roundToGrid(Math.max(MIN_SIZE, liveWidth));
-      let finalH = roundToGrid(Math.max(MIN_SIZE, liveHeight));
+      // Calculate final dimensions
+      let finalW, finalH;
+      
+      if (circle) {
+        const delta = Math.max(dx, dy);
+        const newSize = Math.max(MIN_SIZE, startW + delta);
+        finalW = finalH = roundToGrid(newSize);
+      } else {
+        finalW = startW;
+        finalH = startH;
+        
+        if (dir.includes('right')) finalW = Math.max(MIN_SIZE, startW + dx);
+        if (dir.includes('left'))  finalW = Math.max(MIN_SIZE, startW - dx);
+        if (dir.includes('bottom')) finalH = Math.max(MIN_SIZE, startH + dy);
+        if (dir.includes('top'))    finalH = Math.max(MIN_SIZE, startH - dy);
+        
+        finalW = roundToGrid(finalW);
+        finalH = roundToGrid(finalH);
+      }
 
-      // Optional: if caller supports moving, anchor opposite edge when resizing from left/top
-      if (onTableMove) {
+      // Handle position adjustments for left/top resizing
+      if (onTableMove && !circle) {
         let moveDx = 0;
         let moveDy = 0;
+        
         if (dir.includes('left')) {
           const oldW = roundToGrid(startW);
           moveDx = -(finalW - oldW);
@@ -119,18 +148,23 @@ const TableComponent = ({
           const oldH = roundToGrid(startH);
           moveDy = -(finalH - oldH);
         }
-        if (moveDx || moveDy) onTableMove(table.id, moveDx, moveDy);
+        
+        if (moveDx !== 0 || moveDy !== 0) {
+          onTableMove(table.id, moveDx, moveDy);
+        }
       }
 
-      // Persist once
+      // Persist the new size
       onTableResize?.(table.id, finalW, finalH);
 
+      // Clean up pointer capture
       captureElRef.current?.releasePointerCapture?.(pointerIdRef.current);
       captureElRef.current = null;
       pointerIdRef.current = null;
 
       setIsResizing(false);
 
+      // Remove event listeners
       window.removeEventListener('pointermove', trackLast);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', cleanUp);
@@ -143,7 +177,7 @@ const TableComponent = ({
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('pointerup', cleanUp, { passive: true });
     window.addEventListener('pointercancel', cleanUp, { passive: true });
-  }, [onTableResize, onTableMove, table.id, table.width, table.height, liveWidth, liveHeight]);
+  }, [onTableResize, onTableMove, table.id, table.width, table.height]);
 
   const handleRemoveClick = (e) => {
     e.stopPropagation();
@@ -165,6 +199,7 @@ const TableComponent = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => !isResizing && setIsHovered(false)}
       title={`Table ${table.table_number}`}
+      data-table-id={table.id} // Add this for parent draggable detection
     >
       <div className={getShapeClasses()} style={{ width: '100%', height: '100%' }}>
         {table.table_number}
@@ -186,29 +221,29 @@ const TableComponent = ({
           {table.shape !== 'circle' && showHandles && (
             <>
               {/* Corners */}
-              <div className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-nw-resize"
+              <div className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-nw-resize z-20"
                    onPointerDown={(e) => startResize(e, 'top-left')} />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-ne-resize"
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-ne-resize z-20"
                    onPointerDown={(e) => startResize(e, 'top-right')} />
-              <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-sw-resize"
+              <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-sw-resize z-20"
                    onPointerDown={(e) => startResize(e, 'bottom-left')} />
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize z-20"
                    onPointerDown={(e) => startResize(e, 'bottom-right')} />
               {/* Edges */}
-              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-n-resize"
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-n-resize z-20"
                    onPointerDown={(e) => startResize(e, 'top')} />
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-s-resize"
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-s-resize z-20"
                    onPointerDown={(e) => startResize(e, 'bottom')} />
-              <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-w-resize"
+              <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-w-resize z-20"
                    onPointerDown={(e) => startResize(e, 'left')} />
-              <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-e-resize"
+              <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-e-resize z-20"
                    onPointerDown={(e) => startResize(e, 'right')} />
             </>
           )}
 
           {/* Circle: uniform scale from bottom-right */}
           {table.shape === 'circle' && showHandles && (
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize z-20"
                  onPointerDown={(e) => startResize(e, 'circle', true)} />
           )}
 
