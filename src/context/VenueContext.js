@@ -25,10 +25,10 @@ export const VenueProvider = ({ children }) => {
 
         const userId = session.user.id;
 
-        // Fetch role + links from your users table (add venue_id for manager fast-path)
+        // IMPORTANT: no venue_id here
         const { data: userRow, error: userFetchError } = await supabase
           .from('users')
-          .select('id, role, account_id, venue_id')
+          .select('id, role, account_id')
           .eq('id', userId)
           .single();
 
@@ -39,16 +39,15 @@ export const VenueProvider = ({ children }) => {
 
         const role = userRow.role;
         const accountId = userRow.account_id ?? null;
-        const directVenueId = userRow.venue_id ?? null;
         setUserRole(role);
 
-        // 1) Admins should not mount VenueContext at all; bail out gracefully
+        // Admins should not load VenueContext at all; bail out
         if (role === 'admin') {
           console.log('Admin user detected – skipping VenueContext venue fetch.');
           return;
         }
 
-        // 2) Masters: require a valid account_id; never .eq('account_id', null)
+        // MASTER: require account_id; otherwise fallback via staff membership
         if (role === 'master') {
           if (!accountId) {
             console.warn('Master user missing account_id – attempting staff-based fallback.');
@@ -83,7 +82,6 @@ export const VenueProvider = ({ children }) => {
           }
 
           setAllVenues(venues || []);
-
           const cachedId = localStorage.getItem('chatters_currentVenueId');
           const validCached = (venues || []).find(v => v.id === cachedId);
           const selected = validCached || (venues || [])[0];
@@ -93,29 +91,11 @@ export const VenueProvider = ({ children }) => {
             setVenueName(selected.name);
             localStorage.setItem('chatters_currentVenueId', selected.id);
           }
-
           return;
         }
 
-        // 3) Managers: prefer direct user.venue_id if set, else staff join
+        // MANAGER: resolve via staff membership
         if (role === 'manager') {
-          if (directVenueId) {
-            const { data: v, error: vErr } = await supabase
-              .from('venues')
-              .select('id, name, account_id')
-              .eq('id', directVenueId)
-              .single();
-
-            if (!vErr && v) {
-              setAllVenues([{ id: v.id, name: v.name }]);
-              setVenueId(v.id);
-              setVenueName(v.name);
-              localStorage.setItem('chatters_currentVenueId', v.id);
-              return;
-            }
-          }
-
-          // No direct venue link; get via staff membership
           const { data: staffRows, error: staffError } = await supabase
             .from('staff')
             .select(`
@@ -126,7 +106,7 @@ export const VenueProvider = ({ children }) => {
                 account_id
               )
             `)
-            .eq('user_id', userId); // NOTE: removed .eq('venues.account_id', accountId)
+            .eq('user_id', userId); // <- no eq on venues.account_id when it's null
 
           console.log('Manager staff query result:', {
             staffRows,
@@ -146,7 +126,7 @@ export const VenueProvider = ({ children }) => {
             return;
           }
 
-          // If we DO know accountId, optionally constrain client-side
+          // If we know accountId, constrain client-side
           const filtered = accountId
             ? staffRows.filter(r => r.venues?.account_id === accountId)
             : staffRows;
@@ -170,11 +150,10 @@ export const VenueProvider = ({ children }) => {
             setVenueName(selected.name);
             localStorage.setItem('chatters_currentVenueId', selected.id);
           }
-
           return;
         }
 
-        // 4) Unknown role – conservative staff fallback
+        // UNKNOWN ROLE: conservative staff fallback
         const { data: staffRow, error: staffErr } = await supabase
           .from('staff')
           .select('venue_id, venues!inner(id, name)')
@@ -220,7 +199,6 @@ export const VenueProvider = ({ children }) => {
       }
     );
 
-    // Initialise immediately if already logged in
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
