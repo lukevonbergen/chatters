@@ -1,4 +1,3 @@
-// DashboardRoutes.jsx
 import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
@@ -25,10 +24,10 @@ import FeedbackFeed from './pages/FeedbackFeed';
 // Kiosk (venue‑aware, no dashboard frame)
 import KioskPage from './pages/KioskPage';
 
-// Public / guest routes (no venue context required)
+// Public / guest routes (no venue context)
 import CustomerFeedbackPage from './pages/CustomerFeedback';
 
-// Testing (decide per‑route if it needs venue/provider)
+// Testing (outside venue context unless you need it)
 import TestDashboardPage from './pages/admin/TestDashboardPage';
 
 // Frames & context
@@ -54,9 +53,6 @@ const KioskShell = () => (
 const DashboardRoutes = () => {
   return (
     <Routes>
-      {/* Root → Dashboard */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
       {/* Auth (no VenueProvider, no DashboardFrame) */}
       <Route path="/signin" element={<SignInPage />} />
       <Route path="/signup" element={<SignUpPage />} />
@@ -88,13 +84,14 @@ const DashboardRoutes = () => {
         <Route path="/settings/billing" element={<BillingPage />} />
       </Route>
 
-      {/* Testing: leave outside unless it needs venue context */}
-      <Route path="/lvb" element={<TestDashboardPage />} />
-
-      {/* Catch‑alls / legacy */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      {/* Default / legacy */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/overview" element={<Navigate to="/dashboard" replace />} />
       <Route path="/home" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+      {/* Testing (leave outside unless venue context needed) */}
+      <Route path="/lvb" element={<TestDashboardPage />} />
     </Routes>
   );
 };

@@ -19,12 +19,31 @@ const SignInPage = () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw new Error(error.message);
-      
-      // Wait for auth state to settle before navigating
-      await new Promise(resolve => setTimeout(resolve, 500));
-      navigate('/');
-    } catch (error) {
-      setError(error.message);
+
+      // fetch current user + role
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth?.user;
+      if (!user) throw new Error('No authenticated user returned');
+
+      const { data: row, error: roleErr } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (roleErr) throw new Error(roleErr.message);
+
+      const role = row?.role || null;
+      const isAdminByEmail = (user.email || '').toLowerCase().endsWith('@getchatters.com');
+
+      // route by role
+      if (role === 'admin' || isAdminByEmail) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (err) {
+      setError(err.message || 'Sign-in failed');
     } finally {
       setIsLoading(false);
     }
@@ -36,7 +55,6 @@ const SignInPage = () => {
         <div className="flex min-h-[600px]">
           {/* Left Panel - Brand */}
           <div className="w-1/2 bg-white p-12 flex flex-col justify-center relative">
-            {/* Back link */}
             <div className="absolute top-6 left-6">
               <a
                 href="https://www.getchatters.com"
@@ -47,7 +65,6 @@ const SignInPage = () => {
               </a>
             </div>
 
-            {/* Logo */}
             <div className="mb-8">
               <div className="flex items-center mb-6">
                 <img 
@@ -65,7 +82,6 @@ const SignInPage = () => {
               </p>
             </div>
 
-            {/* Features */}
             <div className="space-y-4">
               <div className="flex items-center text-gray-600">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
@@ -91,14 +107,12 @@ const SignInPage = () => {
                 </h2>
               </div>
 
-              {/* Error */}
               {error && (
                 <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 text-red-400 rounded-lg text-sm">
                   {error}
                 </div>
               )}
 
-              {/* Form */}
               <form onSubmit={handleSignIn} className="space-y-6">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
