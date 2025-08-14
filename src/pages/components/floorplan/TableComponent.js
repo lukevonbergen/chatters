@@ -1,11 +1,11 @@
-// File: components/floorplan/TableComponent.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 
 const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseDown = (e, direction) => {
+    console.log('Mouse down on handle:', direction); // Debug log
     e.stopPropagation();
     e.preventDefault();
     setIsResizing(true);
@@ -15,7 +15,10 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
     const startWidth = table.width || 56;
     const startHeight = table.height || 56;
 
+    console.log('Starting resize:', { startWidth, startHeight, startX, startY }); // Debug log
+
     const handleMouseMove = (e) => {
+      console.log('Mouse move:', e.clientX, e.clientY); // Debug log
       let newWidth = startWidth;
       let newHeight = startHeight;
 
@@ -36,6 +39,8 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
       newWidth = Math.round(newWidth / 10) * 10;
       newHeight = Math.round(newHeight / 10) * 10;
 
+      console.log('New dimensions:', { newWidth, newHeight }); // Debug log
+
       // Immediately update parent state
       if (onTableResize) {
         onTableResize(table.id, newWidth, newHeight);
@@ -43,6 +48,7 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
     };
 
     const handleMouseUp = () => {
+      console.log('Mouse up - ending resize'); // Debug log
       setIsResizing(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -53,6 +59,7 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
   };
 
   const handleCircleResize = (e) => {
+    console.log('Circle resize started'); // Debug log
     e.stopPropagation();
     e.preventDefault();
     setIsResizing(true);
@@ -68,6 +75,8 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
       
       const newSize = Math.max(40, Math.round((startSize + delta) / 10) * 10);
       
+      console.log('Circle new size:', newSize); // Debug log
+      
       // Immediately update parent state
       if (onTableResize) {
         onTableResize(table.id, newSize, newSize);
@@ -75,6 +84,7 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
     };
 
     const handleMouseUp = () => {
+      console.log('Circle resize ended'); // Debug log
       setIsResizing(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -136,38 +146,46 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
             <>
               {/* Corner handles */}
               <div
-                className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-nw-resize"
+                className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-nw-resize z-20"
                 onMouseDown={(e) => handleMouseDown(e, 'top-left')}
+                title="Resize top-left"
               />
               <div
-                className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-ne-resize"
+                className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-ne-resize z-20"
                 onMouseDown={(e) => handleMouseDown(e, 'top-right')}
+                title="Resize top-right"
               />
               <div
-                className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-sw-resize"
+                className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-sw-resize z-20"
                 onMouseDown={(e) => handleMouseDown(e, 'bottom-left')}
+                title="Resize bottom-left"
               />
               <div
-                className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
+                className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize z-20"
                 onMouseDown={(e) => handleMouseDown(e, 'bottom-right')}
+                title="Resize bottom-right"
               />
 
               {/* Edge handles */}
               <div
-                className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-n-resize"
+                className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-n-resize z-20"
                 onMouseDown={(e) => handleMouseDown(e, 'top')}
+                title="Resize top"
               />
               <div
-                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-s-resize"
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-s-resize z-20"
                 onMouseDown={(e) => handleMouseDown(e, 'bottom')}
+                title="Resize bottom"
               />
               <div
-                className="absolute -left-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-w-resize"
+                className="absolute -left-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-w-resize z-20"
                 onMouseDown={(e) => handleMouseDown(e, 'left')}
+                title="Resize left"
               />
               <div
-                className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-e-resize"
+                className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-e-resize z-20"
                 onMouseDown={(e) => handleMouseDown(e, 'right')}
+                title="Resize right"
               />
             </>
           )}
@@ -175,8 +193,9 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
           {/* For circles, only show a uniform scale handle */}
           {table.shape === 'circle' && showHandles && (
             <div
-              className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
+              className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize z-20"
               onMouseDown={handleCircleResize}
+              title="Resize circle"
             />
           )}
 
@@ -186,8 +205,69 @@ const TableComponent = ({ table, editMode, onRemoveTable, onTableResize }) => {
           )}
         </>
       )}
+
+      {/* Debug info */}
+      {editMode && (
+        <div className="absolute -bottom-8 left-0 text-xs text-gray-500 bg-white px-1 rounded">
+          {currentWidth}×{currentHeight} | Hovering: {isHovered ? 'Y' : 'N'} | Resizing: {isResizing ? 'Y' : 'N'}
+        </div>
+      )}
     </div>
   );
 };
 
-export default TableComponent;
+// Demo component to test the TableComponent
+const TableDemo = () => {
+  const [tables, setTables] = useState([
+    { id: 1, table_number: 'T1', width: 80, height: 60, shape: 'rectangle' },
+    { id: 2, table_number: 'T2', width: 70, height: 70, shape: 'circle' }
+  ]);
+  const [editMode, setEditMode] = useState(true);
+
+  const handleTableResize = (tableId, newWidth, newHeight) => {
+    console.log('Parent received resize:', { tableId, newWidth, newHeight });
+    setTables(prevTables => 
+      prevTables.map(table => 
+        table.id === tableId 
+          ? { ...table, width: newWidth, height: newHeight }
+          : table
+      )
+    );
+  };
+
+  const handleRemoveTable = (tableId) => {
+    setTables(prevTables => prevTables.filter(table => table.id !== tableId));
+  };
+
+  return (
+    <div className="p-8 bg-gray-100 min-h-screen">
+      <div className="mb-4">
+        <button 
+          onClick={() => setEditMode(!editMode)}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          {editMode ? 'Exit Edit Mode' : 'Enter Edit Mode'}
+        </button>
+      </div>
+      
+      <div className="relative bg-white border-2 border-gray-300 rounded-lg" style={{ width: 600, height: 400 }}>
+        {tables.map(table => (
+          <div
+            key={table.id}
+            className="absolute"
+            style={{ left: table.id * 120, top: table.id * 80 }}
+          >
+            <TableComponent
+              table={table}
+              editMode={editMode}
+              onTableResize={handleTableResize}
+              onRemoveTable={handleRemoveTable}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default TableDemo;
