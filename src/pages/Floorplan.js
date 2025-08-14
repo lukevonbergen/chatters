@@ -1,3 +1,4 @@
+// File: Floorplan.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../utils/supabase';
 import PageContainer from '../components/PageContainer';
@@ -75,6 +76,8 @@ const Floorplan = () => {
         ...t,
         x_px: (t.x_percent / 100) * width,
         y_px: (t.y_percent / 100) * height,
+        width: t.width || 56,  // Default width if not set
+        height: t.height || 56, // Default height if not set
       }))
     );
   };
@@ -91,6 +94,16 @@ const Floorplan = () => {
     if (!container) return;
 
     const { width, height } = container.getBoundingClientRect();
+    
+    // Set default dimensions based on shape
+    const defaultDimensions = {
+      square: { width: 56, height: 56 },
+      circle: { width: 56, height: 56 },
+      long: { width: 112, height: 40 }
+    };
+    
+    const dims = defaultDimensions[shape] || defaultDimensions.square;
+    
     setTables((prev) => [
       ...prev,
       {
@@ -99,6 +112,8 @@ const Floorplan = () => {
         x_px: Math.round(width / 2),
         y_px: Math.round(height / 2),
         shape,
+        width: dims.width,
+        height: dims.height,
         venue_id: venueId,
         zone_id: selectedZoneId,
       },
@@ -108,6 +123,17 @@ const Floorplan = () => {
 
   const handleTableDrag = (tableId, x, y) => {
     setTables((prev) => prev.map((tab) => (tab.id === tableId ? { ...tab, x_px: x, y_px: y } : tab)));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleTableResize = (tableId, width, height) => {
+    setTables((prev) => 
+      prev.map((tab) => 
+        tab.id === tableId 
+          ? { ...tab, width, height } 
+          : tab
+      )
+    );
     setHasUnsavedChanges(true);
   };
 
@@ -141,6 +167,8 @@ const Floorplan = () => {
       x_percent: (t.x_px / width) * 100,
       y_percent: (t.y_px / height) * 100,
       shape: t.shape,
+      width: t.width || 56,
+      height: t.height || 56,
       zone_id: t.zone_id ?? null,
     }));
 
@@ -252,6 +280,7 @@ const Floorplan = () => {
           editMode={editMode}
           onTableDrag={handleTableDrag}
           onRemoveTable={handleRemoveTable}
+          onTableResize={handleTableResize}  // Add this line
         />
       </div>
     </PageContainer>
