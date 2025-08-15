@@ -14,3 +14,4 @@ root.render(
     </SessionContextProvider>
   </BrowserRouter>
 );
+console.log('ENV URL:', process.env.REACT_APP_SUPABASE_URL)
