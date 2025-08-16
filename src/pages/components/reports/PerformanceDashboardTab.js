@@ -4,6 +4,7 @@ import React from 'react';
 import ActionCompletionRateTile from '../../../components/reports/ActionCompletionRateTile';
 import SatisfactionTrendTile from '../../../components/reports/SatisfactionTrendTile';
 import AverageResolutionTimeTile from '../../../components/reports/AverageResolutionTimeTile';
+import ResponseTimeAnalyticsTile from '../../../components/reports/ResponseTimeAnalyticsTile';
 
 const PerformanceDashboardTab = ({
   venueId,
@@ -20,17 +21,23 @@ const PerformanceDashboardTab = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-        <ActionCompletionRateTile 
-          actionedCount={actionedCount} 
-          totalCount={totalCount} 
-        />
-        
-        <SatisfactionTrendTile 
-          satisfactionTrend={satisfactionTrend} 
-        />
-        
-        <AverageResolutionTimeTile 
+      <div className="space-y-6 lg:space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          <ActionCompletionRateTile 
+            actionedCount={actionedCount} 
+            totalCount={totalCount} 
+          />
+          
+          <SatisfactionTrendTile 
+            satisfactionTrend={satisfactionTrend} 
+          />
+          
+          <AverageResolutionTimeTile 
+            venueId={venueId} 
+          />
+        </div>
+
+        <ResponseTimeAnalyticsTile 
           venueId={venueId} 
         />
       </div>

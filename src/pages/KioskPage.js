@@ -152,8 +152,8 @@ const KioskPage = () => {
         .from('feedback')
         .update({
           is_actioned: true,
-          actioned_by: staffMember,
-          actioned_at: new Date().toISOString()
+          resolved_by: staffMember,
+          resolved_at: new Date().toISOString()
         })
         .in('session_id', sessionIds);
 

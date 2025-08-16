@@ -3,6 +3,7 @@
 import React from 'react';
 import RevenueProjection from '../../../components/reports/RevenueProjection';
 import PerformanceSummaryTile from '../../../components/reports/PerformanceSummaryTile';
+import PeakHoursAnalysisTile from '../../../components/reports/PeakHoursAnalysisTile';
 
 const BusinessImpactTab = ({
   venueId,
@@ -22,6 +23,10 @@ const BusinessImpactTab = ({
 
       <div className="space-y-6 lg:space-y-8">
         <RevenueProjection 
+          venueId={venueId} 
+        />
+
+        <PeakHoursAnalysisTile 
           venueId={venueId} 
         />
 

@@ -146,7 +146,7 @@ const FeedbackDetailModal = ({
           setCurrentUser(userProfile);
         }
         
-        // Get staff members for this venue (same approach as FeedbackTabs)
+        // Get staff members and employees for this venue
         if (venueId) {
           const { data: staffData } = await supabase
             .from('staff')
@@ -179,7 +179,7 @@ const FeedbackDetailModal = ({
           if (user && staffData) {
             const currentStaff = staffData.find(s => s.user_id === user.id);
             if (currentStaff) {
-              setSelectedStaffMember(currentStaff.id);
+              setSelectedStaffMember(`staff-${currentStaff.id}`);
             }
           }
         }
@@ -209,11 +209,40 @@ const FeedbackDetailModal = ({
     try {
       const sessionIds = sessions.map(s => s.session_id);
       
-      // Use your existing database fields
+      // Parse the selected staff member
+      let resolvedById = null;
+      let resolverInfo = '';
+      
+      if (selectedStaffMember.startsWith('staff-')) {
+        // Staff member selected - can use their ID directly
+        resolvedById = selectedStaffMember.replace('staff-', '');
+        resolverInfo = selectedStaff ? selectedStaff.display_name : '';
+      } else if (selectedStaffMember.startsWith('employee-')) {
+        // Employee selected - need to handle differently since they're not in staff table
+        // For now, we'll need to either:
+        // 1. Create a staff entry for the employee, or 
+        // 2. Use a different approach
+        
+        // Let's use the current user (who must be staff to access kiosk) as resolved_by
+        // and store employee info in dismissal_reason or create a new field
+        const currentStaffMember = staffMembers.find(s => s.source === 'staff' && s.user_id === currentUser?.id);
+        if (currentStaffMember) {
+          resolvedById = currentStaffMember.id;
+          resolverInfo = `Resolved by ${selectedStaff?.display_name} (Employee) via ${currentStaffMember.display_name}`;
+        } else {
+          throw new Error('No staff member found to attribute resolution to. Employees cannot directly resolve feedback.');
+        }
+      }
+      
+      if (!resolvedById) {
+        throw new Error('Invalid staff member selection');
+      }
+      
+      // Use correct Supabase database fields
       const updateData = {
         is_actioned: true,
         resolved_at: new Date().toISOString(),
-        resolved_by: selectedStaffMember,
+        resolved_by: resolvedById,
         resolution_type: resolutionType
       };
       
@@ -222,6 +251,16 @@ const FeedbackDetailModal = ({
         updateData.dismissed = true;
         updateData.dismissed_at = new Date().toISOString();
         updateData.dismissed_reason = dismissalReason.trim() || 'No reason provided';
+        if (resolverInfo) {
+          updateData.dismissed_reason += ` (${resolverInfo})`;
+        }
+      } else {
+        // Set resolution type to staff_resolved for resolved feedback
+        updateData.resolution_type = 'staff_resolved';
+        // Store resolver info if it's an employee resolution
+        if (resolverInfo && selectedStaffMember.startsWith('employee-')) {
+          updateData.resolution_notes = resolverInfo;
+        }
       }
       
       const { error } = await supabase
@@ -231,7 +270,8 @@ const FeedbackDetailModal = ({
       
       if (error) throw error;
       
-      await onMarkResolved(sessionIds, selectedStaffMember);
+      // Pass the actual staff ID (without prefix) to the parent function
+      await onMarkResolved(sessionIds, resolvedById);
       onClose();
     } catch (error) {
       console.error('Error marking feedback as resolved:', error);
@@ -282,7 +322,14 @@ const FeedbackDetailModal = ({
   
   const urgency = urgencyConfig[urgencyLevel];
   
-  const selectedStaff = staffMembers.find(s => s.id === selectedStaffMember);
+  const selectedStaff = staffMembers.find(s => {
+    if (selectedStaffMember.startsWith('staff-')) {
+      return s.source === 'staff' && s.id === selectedStaffMember.replace('staff-', '');
+    } else if (selectedStaffMember.startsWith('employee-')) {
+      return s.source === 'employee' && s.id === selectedStaffMember.replace('employee-', '');
+    }
+    return false;
+  });
   
   return (
     <Modal
@@ -519,7 +566,7 @@ const FeedbackDetailModal = ({
                     {staffMembers
                       .filter(person => person.source === 'staff')
                       .map(staff => (
-                        <option key={`staff-${staff.id}`} value={staff.id}>
+                        <option key={`staff-${staff.id}`} value={`staff-${staff.id}`}>
                           {staff.display_name} ({staff.role_display})
                         </option>
                       ))
@@ -532,34 +579,24 @@ const FeedbackDetailModal = ({
                     {staffMembers
                       .filter(person => person.source === 'employee')
                       .map(employee => (
-                        <option key={`employee-${employee.id}`} value={employee.id}>
+                        <option key={`employee-${employee.id}`} value={`employee-${employee.id}`}>
                           {employee.display_name} ({employee.role_display})
                         </option>
                       ))
                     }
                   </optgroup>
                 )}
-                
-                {/* Fallback for mixed lists */}
-                {(!staffMembers.some(person => person.source === 'staff') && 
-                  !staffMembers.some(person => person.source === 'employee')) && 
-                  staffMembers.map(person => (
-                    <option key={person.id} value={person.id}>
-                      {person.display_name} ({person.role_display})
-                    </option>
-                  ))
-                }
               </select>
               {selectedStaff && (
                 <div className="mt-2 flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <div className={`w-2 h-2 rounded-full ${selectedStaff.source === 'staff' ? 'bg-emerald-500' : 'bg-blue-500'}`}></div>
                   <span className="text-slate-600">
                     <strong>{selectedStaff.display_name}</strong> ({selectedStaff.role_display})
                     {selectedStaff.source === 'employee' && (
                       <span className="ml-1 text-blue-600">• Employee</span>
                     )}
                     {selectedStaff.source === 'staff' && (
-                      <span className="ml-1 text-emerald-600">• Staff</span>
+                      <span className="ml-1 text-emerald-600">• Staff Member</span>
                     )}
                   </span>
                 </div>

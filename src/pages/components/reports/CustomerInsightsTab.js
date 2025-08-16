@@ -3,6 +3,8 @@
 import React from 'react';
 import RatingDistributionTile from '../../../components/reports/RatingDistributionTile';
 import TablePerformanceRankingTile from '../../../components/reports/TablePerformanceRankingTile';
+import SentimentTrendsTile from '../../../components/reports/SentimentTrendsTile';
+import QuestionEffectivenessTile from '../../../components/reports/QuestionEffectivenessTile';
 
 const CustomerInsightsTab = ({ venueId }) => {
   return (
@@ -14,12 +16,22 @@ const CustomerInsightsTab = ({ venueId }) => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-        <RatingDistributionTile 
+      <div className="space-y-6 lg:space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          <RatingDistributionTile 
+            venueId={venueId} 
+          />
+          
+          <TablePerformanceRankingTile 
+            venueId={venueId} 
+          />
+        </div>
+
+        <SentimentTrendsTile 
           venueId={venueId} 
         />
-        
-        <TablePerformanceRankingTile 
+
+        <QuestionEffectivenessTile 
           venueId={venueId} 
         />
       </div>

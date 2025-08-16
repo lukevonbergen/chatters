@@ -5,52 +5,8 @@ import { Plus, Search, Edit3, Trash2, GripVertical, Archive, RotateCcw } from 'l
 import { Draggable, Droppable } from 'react-beautiful-dnd';
 import ReplaceModal from '../../../components/ReplaceModal';
 
-const QuestionManagementTab = ({
-  questions,
-  newQuestion,
-  editingQuestionId,
-  editingQuestionText,
-  inactiveQuestions,
-  searchTerm,
-  isReplaceModalOpen,
-  selectedInactiveQuestion,
-  pendingNewQuestion,
-  replacementSource,
-  duplicateError,
-  filteredSuggestedQuestions,
-  setNewQuestion,
-  setSearchTerm,
-  setIsReplaceModalOpen,
-  setSelectedInactiveQuestion,
-  setReplacementSource,
-  handleAddQuestion,
-  handleNewQuestionChange,
-  startEditingQuestion,
-  handleDeleteQuestion,
-  saveEditedQuestion,
-  cancelEditingQuestion,
-  handleEditTextChange,
-  handleAddInactiveQuestion,
-  handleReplaceQuestion,
-}) => {
-  const [view, setView] = useState('active'); // 'active', 'create', 'archive'
-  
-  const handleAddInactive = (question) => {
-    if (questions.length >= 5) {
-      setSelectedInactiveQuestion(question);
-      setReplacementSource('inactive');
-      setIsReplaceModalOpen(true);
-    } else {
-      handleAddInactiveQuestion(question);
-    }
-  };
-
-  const filteredInactiveQuestions = inactiveQuestions.filter(q =>
-    q.question.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Suggested Questions Component
-  const SuggestedQuestionsSection = () => (
+// Suggested Questions Component - moved outside to prevent re-creation
+const SuggestedQuestionsSection = ({ filteredSuggestedQuestions, setNewQuestion }) => (
     <div className="mb-8">
       <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
@@ -80,8 +36,14 @@ const QuestionManagementTab = ({
     </div>
   );
 
-  // Create New Question Component
-  const CreateQuestionSection = () => (
+// Create New Question Component - moved outside to prevent re-creation
+const CreateQuestionSection = ({ 
+  newQuestion, 
+  handleNewQuestionChange, 
+  questions, 
+  duplicateError, 
+  handleAddQuestion 
+}) => (
     <div className="mb-8">
       <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
@@ -101,7 +63,7 @@ const QuestionManagementTab = ({
                 type="text"
                 placeholder="Enter your custom question..."
                 value={newQuestion}
-                onChange={handleNewQuestionChange}
+                onChange={(e) => handleNewQuestionChange(e)}
                 className="w-full px-4 py-3 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 maxLength={100}
               />
@@ -141,8 +103,17 @@ const QuestionManagementTab = ({
     </div>
   );
 
-  // Active Questions Component
-  const ActiveQuestionsSection = () => (
+// Active Questions Component - moved outside to prevent re-creation
+const ActiveQuestionsSection = ({ 
+  questions, 
+  editingQuestionId, 
+  editingQuestionText, 
+  handleEditTextChange, 
+  cancelEditingQuestion, 
+  saveEditedQuestion, 
+  startEditingQuestion, 
+  handleDeleteQuestion 
+}) => (
     <div className="mb-8">
       <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
@@ -273,8 +244,14 @@ const QuestionManagementTab = ({
     </div>
   );
 
-  // Archive Section Component
-  const ArchiveSection = () => (
+// Archive Section Component - moved outside to prevent re-creation
+const ArchiveSection = ({ 
+  inactiveQuestions, 
+  searchTerm, 
+  setSearchTerm, 
+  filteredInactiveQuestions, 
+  handleAddInactive 
+}) => (
     <div>
       <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
@@ -352,6 +329,50 @@ const QuestionManagementTab = ({
     </div>
   );
 
+const QuestionManagementTab = ({
+  questions,
+  newQuestion,
+  editingQuestionId,
+  editingQuestionText,
+  inactiveQuestions,
+  searchTerm,
+  isReplaceModalOpen,
+  selectedInactiveQuestion,
+  pendingNewQuestion,
+  replacementSource,
+  duplicateError,
+  filteredSuggestedQuestions,
+  setNewQuestion,
+  setSearchTerm,
+  setIsReplaceModalOpen,
+  setSelectedInactiveQuestion,
+  setReplacementSource,
+  handleAddQuestion,
+  handleNewQuestionChange,
+  startEditingQuestion,
+  handleDeleteQuestion,
+  saveEditedQuestion,
+  cancelEditingQuestion,
+  handleEditTextChange,
+  handleAddInactiveQuestion,
+  handleReplaceQuestion,
+}) => {
+  const [view, setView] = useState('active'); // 'active', 'create', 'archive'
+  
+  const handleAddInactive = (question) => {
+    if (questions.length >= 5) {
+      setSelectedInactiveQuestion(question);
+      setReplacementSource('inactive');
+      setIsReplaceModalOpen(true);
+    } else {
+      handleAddInactiveQuestion(question);
+    }
+  };
+
+  const filteredInactiveQuestions = inactiveQuestions.filter(q =>
+    q.question.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="max-w-none">
       <div className="mb-6">
@@ -362,10 +383,34 @@ const QuestionManagementTab = ({
       </div>
 
       <div className="space-y-8">
-        <SuggestedQuestionsSection />
-        <CreateQuestionSection />
-        <ActiveQuestionsSection />
-        <ArchiveSection />
+        <SuggestedQuestionsSection 
+          filteredSuggestedQuestions={filteredSuggestedQuestions}
+          setNewQuestion={setNewQuestion}
+        />
+        <CreateQuestionSection 
+          newQuestion={newQuestion}
+          handleNewQuestionChange={handleNewQuestionChange}
+          questions={questions}
+          duplicateError={duplicateError}
+          handleAddQuestion={handleAddQuestion}
+        />
+        <ActiveQuestionsSection 
+          questions={questions}
+          editingQuestionId={editingQuestionId}
+          editingQuestionText={editingQuestionText}
+          handleEditTextChange={handleEditTextChange}
+          cancelEditingQuestion={cancelEditingQuestion}
+          saveEditedQuestion={saveEditedQuestion}
+          startEditingQuestion={startEditingQuestion}
+          handleDeleteQuestion={handleDeleteQuestion}
+        />
+        <ArchiveSection 
+          inactiveQuestions={inactiveQuestions}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filteredInactiveQuestions={filteredInactiveQuestions}
+          handleAddInactive={handleAddInactive}
+        />
       </div>
 
       <ReplaceModal

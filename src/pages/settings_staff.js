@@ -108,7 +108,7 @@ const StaffPage = () => {
       `)
       .in('venue_id', venueIds);
 
-    const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
+    const managersData = staffData?.filter(staff => staff.role === 'manager') || [];
     const employeesFromTable = employeesData || [];
 
     setManagers(managersData);
@@ -148,7 +148,7 @@ const StaffPage = () => {
       `)
       .eq('venue_id', venueId);
 
-    const managersData = staffData?.filter(staff => staff.users?.role === 'manager') || [];
+    const managersData = staffData?.filter(staff => staff.role === 'manager') || [];
     const employeesFromTable = employeesData || [];
 
     setManagers(managersData);
