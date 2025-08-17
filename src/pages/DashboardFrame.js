@@ -56,15 +56,29 @@ const UpdatedDashboardFrame = ({ children }) => {
       
       setUserInfo(user);
 
-      // Fetch trial info if user is master
-      if (user.role === 'master' && user.account_id) {
+      // Fetch trial info for all users (masters directly, managers via venue)
+      let accountIdToCheck = user.account_id;
+      
+      // For managers, get account_id through their venue
+      if (user.role === 'manager' && !accountIdToCheck) {
+        const { data: staffRow } = await supabase
+          .from('staff')
+          .select('venues!inner(account_id)')
+          .eq('user_id', userId)
+          .limit(1)
+          .single();
+          
+        accountIdToCheck = staffRow?.venues?.account_id;
+      }
+
+      if (accountIdToCheck) {
         const { data: account } = await supabase
           .from('accounts')
-          .select('trial_ends_at')
-          .eq('id', user.account_id)
+          .select('trial_ends_at, is_paid')
+          .eq('id', accountIdToCheck)
           .single();
 
-        if (account?.trial_ends_at) {
+        if (account?.trial_ends_at && !account.is_paid) {
           const trialEndDate = new Date(account.trial_ends_at);
           const daysLeft = Math.max(
             0,
@@ -74,7 +88,9 @@ const UpdatedDashboardFrame = ({ children }) => {
           setTrialInfo({
             endsAt: trialEndDate,
             daysLeft: daysLeft,
-            isActive: daysLeft > 0
+            isActive: daysLeft > 0,
+            isExpired: daysLeft <= 0,
+            isPaid: account.is_paid
           });
         }
       }
@@ -85,6 +101,15 @@ const UpdatedDashboardFrame = ({ children }) => {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // For expired trials, redirect to billing page
+  const isOnBillingRoute = location.pathname === '/settings/billing' || location.pathname.startsWith('/settings/billing');
+  
+  useEffect(() => {
+    if (trialInfo?.isExpired && !isOnBillingRoute) {
+      navigate('/settings/billing');
+    }
+  }, [trialInfo?.isExpired, isOnBillingRoute, navigate]);
 
   const handleOpenKiosk = () => {
     // Open near-fullscreen popup window

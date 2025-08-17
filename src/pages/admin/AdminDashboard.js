@@ -1,7 +1,20 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../utils/supabase';
-import { Plus, Trash2, ChevronDown, Loader2, Image as ImageIcon } from 'lucide-react';
+import { 
+  Plus, 
+  Trash2, 
+  ChevronDown, 
+  Loader2, 
+  Image as ImageIcon,
+  Building2,
+  Users,
+  TrendingUp,
+  Upload,
+  Download,
+  Eye,
+  CheckCircle
+} from 'lucide-react';
 
 const emptyVenue = () => ({
   name: '',
@@ -13,12 +26,39 @@ const emptyVenue = () => ({
   logo: null,
   _open: true,           // UI only
   _previewUrl: null,     // UI only
+  _csvFile: null,        // CSV file for employees
+  _csvPreview: null,     // Parsed CSV data
 });
 
 const in30Days = () => {
   const d = new Date();
   d.setDate(d.getDate() + 30);
   return d.toISOString().slice(0, 10); // yyyy-mm-dd for input[type=date]
+};
+
+// CSV parsing helper
+const parseCSV = (text) => {
+  const lines = text.split('\n').filter(line => line.trim());
+  if (lines.length < 2) return null;
+  
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+  const requiredHeaders = ['first_name', 'last_name', 'role'];
+  const hasRequired = requiredHeaders.every(h => headers.includes(h));
+  
+  if (!hasRequired) {
+    throw new Error(`CSV must include columns: ${requiredHeaders.join(', ')}`);
+  }
+  
+  const rows = lines.slice(1).map(line => {
+    const values = line.split(',').map(v => v.trim());
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] || '';
+    });
+    return row;
+  }).filter(row => row.first_name && row.last_name);
+  
+  return { headers, rows };
 };
 
 export default function AdminDashboard() {
@@ -35,6 +75,16 @@ export default function AdminDashboard() {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  
+  // Account statistics state
+  const [accountStats, setAccountStats] = useState({
+    totalAccounts: 0,
+    activeAccounts: 0,
+    trialAccounts: 0,
+    totalVenues: 0,
+    totalUsers: 0,
+    loading: true
+  });
 
   const totalTables = useMemo(
     () =>
@@ -44,6 +94,50 @@ export default function AdminDashboard() {
       ),
     [formData.venues]
   );
+
+  // Load account statistics
+  useEffect(() => {
+    const loadAccountStats = async () => {
+      try {
+        // Get account counts
+        const { data: accounts } = await supabase
+          .from('accounts')
+          .select('id, is_paid, trial_ends_at');
+        
+        const { data: venues } = await supabase
+          .from('venues')
+          .select('id');
+          
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, role')
+          .neq('role', 'admin');
+
+        const now = new Date();
+        const activeAccounts = accounts?.filter(a => 
+          a.is_paid || (a.trial_ends_at && new Date(a.trial_ends_at) > now)
+        ).length || 0;
+        
+        const trialAccounts = accounts?.filter(a => 
+          !a.is_paid && a.trial_ends_at && new Date(a.trial_ends_at) > now
+        ).length || 0;
+
+        setAccountStats({
+          totalAccounts: accounts?.length || 0,
+          activeAccounts,
+          trialAccounts,
+          totalVenues: venues?.length || 0,
+          totalUsers: users?.length || 0,
+          loading: false
+        });
+      } catch (error) {
+        console.error('Error loading account stats:', error);
+        setAccountStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    loadAccountStats();
+  }, []);
 
   const setField = (name, value) =>
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -88,6 +182,51 @@ export default function AdminDashboard() {
     }
     setVenueField(index, 'logo', file);
     setVenueField(index, '_previewUrl', URL.createObjectURL(file));
+  };
+
+  // CSV employee upload handling
+  const onCSVChange = (index, file) => {
+    if (!file) {
+      setVenueField(index, '_csvFile', null);
+      setVenueField(index, '_csvPreview', null);
+      return;
+    }
+    
+    if (!file.name.endsWith('.csv')) {
+      toast.error('Employee file must be a CSV.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvData = parseCSV(e.target.result);
+        setVenueField(index, '_csvFile', file);
+        setVenueField(index, '_csvPreview', csvData);
+        toast.success(`${csvData.rows.length} employees found in CSV`);
+      } catch (error) {
+        toast.error(error.message);
+        setVenueField(index, '_csvFile', null);
+        setVenueField(index, '_csvPreview', null);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Download CSV template
+  const downloadCSVTemplate = () => {
+    const csvContent = 'first_name,last_name,role,email,phone\n' +
+                      'John,Smith,Server,john@example.com,07123456789\n' +
+                      'Jane,Doe,Manager,jane@example.com,07987654321\n' +
+                      'Mike,Johnson,Chef,,07555123456';
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'employee-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const validate = () => {
@@ -157,6 +296,7 @@ export default function AdminDashboard() {
               city: venue.city,
               postcode: venue.postcode.toUpperCase(),
             },
+            employees: venue._csvPreview?.rows || [],
           };
         })
       );
@@ -194,6 +334,10 @@ export default function AdminDashboard() {
         venues: [emptyVenue()],
       });
       setErrors({});
+      
+      // Refresh account stats
+      setAccountStats(prev => ({ ...prev, loading: true }));
+      // Stats will be reloaded by useEffect dependency change
     } catch (err) {
       console.error('[AdminDashboard] submit error', err);
       toast.error(err.message || 'Something went wrong');
@@ -211,6 +355,73 @@ export default function AdminDashboard() {
           Create a master user, company, and one or more locations. You can add more locations later.
         </p>
       </div>
+
+      {/* Account Statistics */}
+      <section className="bg-white rounded-2xl shadow p-6 mb-8">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5" />
+          System Overview
+        </h2>
+        
+        {accountStats.loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Loading statistics...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-600 text-sm font-medium">Total Accounts</p>
+                  <p className="text-2xl font-bold text-blue-900">{accountStats.totalAccounts}</p>
+                </div>
+                <Building2 className="w-8 h-8 text-blue-500" />
+              </div>
+            </div>
+            
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-600 text-sm font-medium">Active Accounts</p>
+                  <p className="text-2xl font-bold text-green-900">{accountStats.activeAccounts}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+            </div>
+            
+            <div className="bg-yellow-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-yellow-600 text-sm font-medium">Trial Accounts</p>
+                  <p className="text-2xl font-bold text-yellow-900">{accountStats.trialAccounts}</p>
+                </div>
+                <Users className="w-8 h-8 text-yellow-500" />
+              </div>
+            </div>
+            
+            <div className="bg-purple-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-600 text-sm font-medium">Total Venues</p>
+                  <p className="text-2xl font-bold text-purple-900">{accountStats.totalVenues}</p>
+                </div>
+                <Building2 className="w-8 h-8 text-purple-500" />
+              </div>
+            </div>
+            
+            <div className="bg-indigo-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-indigo-600 text-sm font-medium">Total Users</p>
+                  <p className="text-2xl font-bold text-indigo-900">{accountStats.totalUsers}</p>
+                </div>
+                <Users className="w-8 h-8 text-indigo-500" />
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Account & Master User */}
@@ -312,11 +523,27 @@ export default function AdminDashboard() {
 
         {/* Locations */}
         <section className="bg-white rounded-2xl shadow p-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Locations</h2>
-            <button type="button" onClick={addVenue} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">
-              <Plus className="w-4 h-4" /> Add Location
-            </button>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              Venues & Staff
+            </h2>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={downloadCSVTemplate}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm"
+              >
+                <Download className="w-4 h-4" /> CSV Template
+              </button>
+              <button 
+                type="button" 
+                onClick={addVenue} 
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4" /> Add Venue
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -329,8 +556,14 @@ export default function AdminDashboard() {
                   className="w-full flex items-center justify-between px-4 py-3 bg-gray-50"
                 >
                   <div className="text-left">
-                    <div className="font-medium">
-                      {venue.name?.trim() ? venue.name : `Location ${index + 1}`}
+                    <div className="font-medium flex items-center gap-2">
+                      <Building2 className="w-4 h-4" />
+                      {venue.name?.trim() ? venue.name : `Venue ${index + 1}`}
+                      {venue._csvPreview && (
+                        <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                          {venue._csvPreview.rows.length} employees
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-gray-500">
                       {Number(venue.tableCount || 0)} tables
@@ -419,16 +652,17 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                    {/* Logo and Employee Upload */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Logo Upload */}
                       <div>
-                        <label className="block text-sm font-medium">Logo</label>
+                        <label className="block text-sm font-medium mb-2">Logo</label>
                         <div className="flex items-center gap-3">
                           <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer bg-white hover:bg-gray-50">
                             <ImageIcon className="w-4 h-4" />
-                            <span>Upload</span>
+                            <span>Upload Logo</span>
                             <input
                               type="file"
-                              name="logo"
                               accept="image/*"
                               className="hidden"
                               onChange={(e) => onLogoChange(index, e.target.files?.[0] || null)}
@@ -449,17 +683,67 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex justify-end">
-                        {formData.venues.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeVenue(index)}
-                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
-                          >
-                            <Trash2 className="w-4 h-4" /> Remove Location
-                          </button>
-                        )}
+                      {/* Employee CSV Upload */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Employee List (CSV)</label>
+                        <div className="space-y-2">
+                          <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer bg-white hover:bg-gray-50">
+                            <Upload className="w-4 h-4" />
+                            <span>Upload CSV</span>
+                            <input
+                              type="file"
+                              accept=".csv"
+                              className="hidden"
+                              onChange={(e) => onCSVChange(index, e.target.files?.[0] || null)}
+                            />
+                          </label>
+                          {venue._csvFile && (
+                            <div className="text-sm text-gray-600 flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                              {venue._csvFile.name} ({venue._csvPreview?.rows.length} employees)
+                            </div>
+                          )}
+                        </div>
                       </div>
+                    </div>
+
+                    {/* CSV Preview */}
+                    {venue._csvPreview && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Eye className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-800">Employee Preview</span>
+                        </div>
+                        <div className="max-h-32 overflow-y-auto">
+                          <div className="text-xs text-green-700 space-y-1">
+                            {venue._csvPreview.rows.slice(0, 5).map((row, i) => (
+                              <div key={i} className="flex gap-4">
+                                <span className="font-medium">{row.first_name} {row.last_name}</span>
+                                <span>{row.role}</span>
+                                <span className="text-green-600">{row.email}</span>
+                              </div>
+                            ))}
+                            {venue._csvPreview.rows.length > 5 && (
+                              <div className="text-green-600 italic">
+                                ...and {venue._csvPreview.rows.length - 5} more
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Remove Venue */}
+                    <div className="flex justify-end pt-2">
+                      {formData.venues.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeVenue(index)}
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                        >
+                          <Trash2 className="w-4 h-4" /> Remove Venue
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -467,34 +751,63 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* Summary footer */}
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-            <div>Total locations: <span className="font-medium">{formData.venues.length}</span></div>
-            <div>Total tables: <span className="font-medium">{totalTables}</span></div>
+          {/* Enhanced Summary */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="text-center">
+                <p className="text-gray-600">Venues</p>
+                <p className="font-semibold text-lg">{formData.venues.length}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-600">Total Tables</p>
+                <p className="font-semibold text-lg">{totalTables}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-600">Total Employees</p>
+                <p className="font-semibold text-lg">
+                  {formData.venues.reduce((acc, v) => acc + (v._csvPreview?.rows.length || 0), 0)}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-600">Logos</p>
+                <p className="font-semibold text-lg">
+                  {formData.venues.filter(v => v.logo).length}
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-3">
+        {/* Enhanced Actions */}
+        <div className="flex items-center justify-between">
           <button
             type="button"
             onClick={() => {
-              setFormData({ email: '', firstName: '', lastName: '', phone: '', accountPhone: '', companyName: '', trialEndsAt: in30Days(), venues: [emptyVenue()] });
+              setFormData({ 
+                email: '', 
+                firstName: '', 
+                lastName: '', 
+                phone: '', 
+                accountPhone: '', 
+                companyName: '', 
+                trialEndsAt: in30Days(), 
+                venues: [emptyVenue()] 
+              });
               setErrors({});
               toast('Form cleared');
             }}
             className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-50"
             disabled={loading}
           >
-            Clear
+            Clear Form
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 font-medium"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {loading ? 'Creating…' : 'Create Account'}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+            {loading ? 'Creating Account...' : 'Create Account & Venues'}
           </button>
         </div>
       </form>

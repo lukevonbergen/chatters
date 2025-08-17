@@ -75,6 +75,7 @@ export default async function handler(req, res) {
         secondary_color = '#ffffff',
         tripadvisor_link = '',
         google_review_link = '',
+        employees = [],
       } = venue;
 
       if (!name || typeof table_count !== 'number') continue;
@@ -114,6 +115,28 @@ export default async function handler(req, res) {
         },
       ]);
       if (staffError) throw staffError;
+
+      // 7. Add employees from CSV if provided
+      if (employees && employees.length > 0) {
+        const employeeInserts = employees.map(emp => ({
+          venue_id: venueId,
+          first_name: emp.first_name?.trim() || '',
+          last_name: emp.last_name?.trim() || '',
+          role: emp.role?.trim() || 'Staff',
+          email: emp.email?.trim() || '',
+          phone: emp.phone?.trim() || '',
+        })).filter(emp => emp.first_name && emp.last_name);
+
+        if (employeeInserts.length > 0) {
+          const { error: employeesError } = await supabase
+            .from('employees')
+            .insert(employeeInserts);
+          if (employeesError) {
+            console.error('Error inserting employees for venue', venueId, ':', employeesError);
+            // Don't fail the entire operation for employee insertion errors
+          }
+        }
+      }
     }
 
     return res.status(200).json({ success: true });

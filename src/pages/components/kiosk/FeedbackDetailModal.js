@@ -127,6 +127,11 @@ const FeedbackDetailModal = ({
   
   const sessions = useMemo(() => groupBySession(feedbackItems), [feedbackItems]);
   
+  // Helper function to determine if feedback is positive (rating > 3)
+  const isPositiveFeedback = (session) => {
+    return session.avg_rating !== null && session.avg_rating > 3;
+  };
+  
   // Load current user and staff members
   useEffect(() => {
     const loadData = async () => {
@@ -198,6 +203,38 @@ const FeedbackDetailModal = ({
   // For now, show the first (most recent) session
   const session = sessions[0];
   
+  // New function to clear positive feedback (no staff assignment needed)
+  const clearPositiveFeedback = async () => {
+    setIsResolving(true);
+    
+    try {
+      const sessionIds = sessions.map(s => s.session_id);
+      
+      const updateData = {
+        is_actioned: true,
+        resolved_by: null, // No staff member needed for positive feedback
+        resolved_at: new Date().toISOString(),
+        resolution_type: 'positive_feedback_cleared'
+      };
+      
+      const { error } = await supabase
+        .from('feedback')
+        .update(updateData)
+        .in('session_id', sessionIds);
+      
+      if (error) throw error;
+      
+      // Pass null for staff ID since no staff assignment needed
+      await onMarkResolved(sessionIds, null);
+      onClose();
+    } catch (error) {
+      console.error('Error clearing positive feedback:', error);
+      alert('Failed to clear feedback. Please try again.');
+    } finally {
+      setIsResolving(false);
+    }
+  };
+
   const handleMarkResolved = async () => {
     if (!selectedStaffMember) {
       alert('Please select the staff member who resolved this feedback.');
@@ -353,7 +390,7 @@ const FeedbackDetailModal = ({
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-slate-900 mb-1">
-                  Table {session.table_number} Feedback
+                  {isPositiveFeedback(session) ? 'View Feedback' : 'Resolve Feedback'} - Table {session.table_number}
                 </h3>
                 <div className="flex items-center gap-4 text-sm text-slate-600">
                   <div className="flex items-center gap-1">
@@ -461,17 +498,70 @@ const FeedbackDetailModal = ({
         {/* Professional Resolution Section */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 mt-8">
           <div className="flex items-center gap-2 mb-6">
-            <h4 className="text-lg font-semibold text-slate-900">Resolution Actions</h4>
+            <h4 className="text-lg font-semibold text-slate-900">
+              {isPositiveFeedback(session) ? 'Acknowledgment' : 'Resolution Actions'}
+            </h4>
             <div className="h-px bg-slate-300 flex-1"></div>
           </div>
           
-          <div className="space-y-6">
-            {/* Action Type Selection */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-3">
-                Select Action Type
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {isPositiveFeedback(session) ? (
+            // For positive feedback - just show clear button
+            <div className="space-y-4">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-emerald-900 mb-1">Positive Feedback Received</h5>
+                    <p className="text-sm text-emerald-800">
+                      This customer had a great experience! Simply acknowledge that you've seen this feedback.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={clearPositiveFeedback}
+                disabled={isResolving}
+                className="w-full px-6 py-3 rounded-lg font-semibold transition-all shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white disabled:bg-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
+              >
+                {isResolving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Acknowledging...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Acknowledge & Clear Feedback
+                  </span>
+                )}
+              </button>
+              
+              <button
+                onClick={onClose}
+                className="w-full px-6 py-3 border-2 border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            // For negative feedback - show full resolution workflow
+            <div className="space-y-6">
+              {/* Action Type Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
+                  Select Action Type
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className={`relative flex items-start p-4 border-2 rounded-xl cursor-pointer transition-all ${
                   resolutionType === 'resolved' 
                     ? 'border-emerald-500 bg-emerald-50' 
@@ -650,7 +740,8 @@ const FeedbackDetailModal = ({
                 Cancel
               </button>
             </div>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </Modal>

@@ -8,8 +8,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import KioskFloorPlan from './components/kiosk/KioskFloorPlan';
 import KioskFeedbackList from './components/kiosk/KioskFeedbackList';
 import KioskZoneOverview from './components/kiosk/KioskZoneOverview';
-import FeedbackDetailModal from './components/kiosk/FeedbackDetailModal';
-import Modal from './components/common/Modal';
+import KioskAssistanceList from './components/kiosk/KioskAssistanceList';
 
 dayjs.extend(relativeTime);
 
@@ -21,6 +20,7 @@ const KioskPage = () => {
   const [tables, setTables] = useState([]);
   const [feedbackMap, setFeedbackMap] = useState({});
   const [feedbackList, setFeedbackList] = useState([]);
+  const [assistanceRequests, setAssistanceRequests] = useState([]);
   const [currentView, setCurrentView] = useState('overview'); // 'overview' or zone id
   const [inactivityTimer, setInactivityTimer] = useState(null); // kept for easy re-enable
   const [selectedFeedback, setSelectedFeedback] = useState(null);
@@ -56,20 +56,26 @@ const KioskPage = () => {
       await loadZones(venueId);
       await loadTables(venueId);
       await fetchFeedback(venueId);
+      await fetchAssistanceRequests(venueId);
     };
     load();
   }, [venueId, venueLoading]);
 
-  // Real-time feedback updates
+  // Real-time feedback and assistance updates
   useEffect(() => {
     if (!venueId) return;
 
     const channel = supabase
-      .channel('kiosk_feedback_updates')
+      .channel('kiosk_updates')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'feedback', filter: `venue_id=eq.${venueId}` },
         () => fetchFeedback(venueId)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'assistance_requests', filter: `venue_id=eq.${venueId}` },
+        () => fetchAssistanceRequests(venueId)
       )
       .subscribe();
 
@@ -104,13 +110,18 @@ const KioskPage = () => {
     const now = dayjs();
     const cutoff = now.subtract(2, 'hour').toISOString();
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('feedback')
       .select('*, questions(question)')
       .eq('venue_id', venueId)
       .eq('is_actioned', false) // Only show unresolved feedback
       .gt('created_at', cutoff)
       .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching feedback:', error);
+      return;
+    }
 
     const sessionMap = {};
     const latestSession = {};
@@ -124,11 +135,12 @@ const KioskPage = () => {
       // Sidebar list shows raw rows; KioskFeedbackList groups per session
       feedbackItems.push(entry);
 
-      // Build latest session per table for the map
-      if (!latestSession[table]) {
-        latestSession[table] = entry.session_id;
+      // Build latest session per table for the map (only track most recent session per table)
+      if (!latestSession[table] || new Date(entry.created_at) > new Date(latestSession[table])) {
+        latestSession[table] = entry.created_at;
         sessionMap[table] = [entry];
-      } else if (entry.session_id === latestSession[table]) {
+      } else if (entry.session_id === sessionMap[table][0]?.session_id) {
+        // Add to current latest session if same session_id
         sessionMap[table].push(entry);
       }
     }
@@ -142,6 +154,21 @@ const KioskPage = () => {
 
     setFeedbackMap(ratings);
     setFeedbackList(feedbackItems);
+  };
+
+  const fetchAssistanceRequests = async (venueId) => {
+    const now = dayjs();
+    const cutoff = now.subtract(2, 'hour').toISOString();
+
+    const { data } = await supabase
+      .from('assistance_requests')
+      .select('*')
+      .eq('venue_id', venueId)
+      .in('status', ['pending', 'acknowledged']) // Only show unresolved requests
+      .gt('created_at', cutoff)
+      .order('created_at', { ascending: false });
+
+    setAssistanceRequests(data || []);
   };
 
   // Mark feedback as resolved
@@ -173,6 +200,33 @@ const KioskPage = () => {
       return true;
     } catch (error) {
       console.error('Failed to resolve feedback:', error);
+      throw error;
+    }
+  };
+
+  // Handle assistance request actions
+  const handleAssistanceAction = async (requestId, action) => {
+    try {
+      const updates = {
+        [`${action}_at`]: new Date().toISOString(),
+        status: action === 'acknowledge' ? 'acknowledged' : 'resolved'
+      };
+
+      const { error } = await supabase
+        .from('assistance_requests')
+        .update(updates)
+        .eq('id', requestId);
+
+      if (error) {
+        console.error('Error updating assistance request:', error);
+        throw error;
+      }
+
+      // Refresh assistance requests
+      await fetchAssistanceRequests(venueId);
+      return true;
+    } catch (error) {
+      console.error('Failed to update assistance request:', error);
       throw error;
     }
   };
@@ -248,6 +302,12 @@ const KioskPage = () => {
             </button>
           </div>
         </div>
+
+        {/* Assistance Requests */}
+        <KioskAssistanceList
+          assistanceRequests={assistanceRequests}
+          onAssistanceAction={handleAssistanceAction}
+        />
 
         {/* Feedback List */}
         <KioskFeedbackList

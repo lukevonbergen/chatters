@@ -1,33 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../utils/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useVenue } from '../context/VenueContext';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const BillingPage = () => {
+  const { userRole } = useVenue();
+  const location = useLocation();
   const [subscriptionType, setSubscriptionType] = useState('monthly');
   const [userEmail, setUserEmail] = useState('');
   const [trialEndsAt, setTrialEndsAt] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [trialInfo, setTrialInfo] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTrialInfo = async () => {
       const { data: authData } = await supabase.auth.getUser();
       const email = authData?.user?.email;
+      const userId = authData?.user?.id;
 
-      if (!email) {
+      if (!email || !userId) {
         navigate('/signin');
         return;
       }
 
       setUserEmail(email);
 
+      // Get user info
       const { data: userRow } = await supabase
         .from('users')
-        .select('account_id')
-        .eq('email', email)
+        .select('account_id, role')
+        .eq('id', userId)
         .single();
 
       if (!userRow) {
@@ -35,14 +41,37 @@ const BillingPage = () => {
         return;
       }
 
-      const { data: account } = await supabase
-        .from('accounts')
-        .select('trial_ends_at')
-        .eq('id', userRow.account_id)
-        .single();
+      // For managers, get account_id through their venue
+      let accountIdToCheck = userRow.account_id;
+      if (userRow.role === 'manager' && !accountIdToCheck) {
+        const { data: staffRow } = await supabase
+          .from('staff')
+          .select('venues!inner(account_id)')
+          .eq('user_id', userId)
+          .limit(1)
+          .single();
+          
+        accountIdToCheck = staffRow?.venues?.account_id;
+      }
 
-      if (account?.trial_ends_at) {
-        setTrialEndsAt(account.trial_ends_at);
+      if (accountIdToCheck) {
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('trial_ends_at, is_paid')
+          .eq('id', accountIdToCheck)
+          .single();
+
+        if (account?.trial_ends_at) {
+          setTrialEndsAt(account.trial_ends_at);
+          
+          const trialEndDate = new Date(account.trial_ends_at);
+          const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+          
+          setTrialInfo({
+            isExpired: daysLeft <= 0 && !account.is_paid,
+            daysLeft
+          });
+        }
       }
     };
 
@@ -75,12 +104,53 @@ const BillingPage = () => {
       )
     : null;
 
+  // Allow access if user is master OR if trial is expired (special billing access)
+  if (userRole !== 'master' && !trialInfo?.isExpired) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
+        <div className="bg-white max-w-xl w-full rounded-2xl shadow-xl p-8">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.95-.833-2.72 0L4.094 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Restricted</h1>
+            <p className="text-gray-600 mb-6">
+              Only account owners can access billing information and manage subscriptions.
+            </p>
+            <p className="text-sm text-gray-500 mb-8">
+              Contact your account owner if you need access to billing details or want to upgrade your plan.
+            </p>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
       <div className="bg-white max-w-xl w-full rounded-2xl shadow-xl p-8">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h1>
-          {daysLeft !== null && (
+          
+          {/* Expired trial banner */}
+          {trialInfo?.isExpired && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-red-800 text-sm font-medium">
+                ⚠️ Your trial has expired. Please upgrade to continue using Chatters.
+              </p>
+            </div>
+          )}
+          
+          {/* Active trial banner */}
+          {daysLeft !== null && !trialInfo?.isExpired && (
             <p className="text-gray-600 text-sm">
               Your free trial ends in <strong>{daysLeft}</strong> day{daysLeft !== 1 && 's'}.
             </p>

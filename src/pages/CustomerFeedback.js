@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { HandHeart, Clock } from 'lucide-react';
 
 const CustomerFeedbackPage = () => {
   const { venueId } = useParams();
@@ -17,6 +18,8 @@ const CustomerFeedbackPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [feedbackUnavailable, setFeedbackUnavailable] = useState(false);
+  const [assistanceLoading, setAssistanceLoading] = useState(false);
+  const [assistanceRequested, setAssistanceRequested] = useState(false);
 
   // Utility function to check if current time is within feedback hours
   const isFeedbackTimeAllowed = (feedbackHours) => {
@@ -204,6 +207,36 @@ const CustomerFeedbackPage = () => {
     }
   };
 
+  const handleAssistanceRequest = async () => {
+    if (assistanceLoading || !tableNumber) return;
+
+    setAssistanceLoading(true);
+    
+    try {
+      const { error: insertError } = await supabase
+        .from('assistance_requests')
+        .insert([{
+          venue_id: venueId,
+          table_number: parseInt(tableNumber),
+          status: 'pending',
+          message: 'Just need assistance - Our team will be right with you'
+        }]);
+
+      if (insertError) {
+        console.error('Error requesting assistance:', insertError);
+        alert('Failed to request assistance. Please try again.');
+        return;
+      }
+
+      setAssistanceRequested(true);
+    } catch (err) {
+      console.error('Error requesting assistance:', err);
+      alert('Failed to request assistance. Please try again.');
+    } finally {
+      setAssistanceLoading(false);
+    }
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -273,6 +306,40 @@ const CustomerFeedbackPage = () => {
     );
   }
 
+  // Assistance requested state
+  if (assistanceRequested) {
+    const primary = venue?.primary_color || '#111827';
+    const secondary = venue?.secondary_color || '#f3f4f6';
+    
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: secondary }}>
+        <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 text-center" style={{ color: primary }}>
+          {venue?.logo && (
+            <div className="mb-6">
+              <img src={venue.logo} alt="Venue Logo" className="h-14 mx-auto" />
+            </div>
+          )}
+          
+          <HandHeart className="w-16 h-16 text-orange-500 mx-auto mb-6" />
+          <h2 className="text-xl font-semibold mb-4">Help is on the way!</h2>
+          <p className="text-gray-600 text-sm mb-6">
+            We've notified our team that Table {tableNumber} needs assistance. 
+            Someone will be with you shortly.
+          </p>
+          
+          <div className="flex items-center justify-center text-orange-600 mb-4">
+            <Clock className="w-5 h-5 mr-2" />
+            <span className="font-medium text-sm">Expected response time: 2-5 minutes</span>
+          </div>
+          
+          <div className="text-xs text-gray-400">
+            You can close this page now.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const primary = venue.primary_color || '#111827';
   const secondary = venue.secondary_color || '#f3f4f6';
 
@@ -335,7 +402,7 @@ const CustomerFeedbackPage = () => {
             <h2 className="text-lg font-semibold mb-6">{questions[current].question}</h2>
             
             {/* Mobile-optimized emoji layout */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="grid grid-cols-5 gap-2 px-2">
                 {['😠', '😞', '😐', '😊', '😍'].map((emoji, index) => (
                   <div key={emoji} className="flex flex-col items-center">
@@ -354,6 +421,31 @@ const CustomerFeedbackPage = () => {
                     </span>
                   </div>
                 ))}
+              </div>
+
+              {/* Assistance Request Button */}
+              <div className="border-t pt-4 mt-6">
+                <p className="text-gray-600 text-sm mb-3 text-center">Don't want to leave feedback right now?</p>
+                <button
+                  onClick={handleAssistanceRequest}
+                  disabled={assistanceLoading}
+                  className="w-full bg-orange-100 hover:bg-orange-200 border-2 border-orange-300 text-orange-800 py-3 px-4 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {assistanceLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
+                      Requesting...
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center">
+                      <HandHeart className="w-4 h-4 mr-2" />
+                      <div className="text-center">
+                        <div className="font-bold text-sm">Just need assistance?</div>
+                        <div className="text-xs">Our team will be right with you</div>
+                      </div>
+                    </div>
+                  )}
+                </button>
               </div>
             </div>
           </div>
