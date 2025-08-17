@@ -65,23 +65,87 @@ const KioskPage = () => {
   useEffect(() => {
     if (!venueId) return;
 
+    console.log('Setting up real-time subscription for venue:', venueId);
+
     const channel = supabase
-      .channel('kiosk_updates')
+      .channel(`kiosk_updates_${venueId}`) // More specific channel name
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'feedback', filter: `venue_id=eq.${venueId}` },
-        () => fetchFeedback(venueId)
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'feedback', 
+          filter: `venue_id=eq.${venueId}` 
+        },
+        (payload) => {
+          console.log('New feedback detected:', payload);
+          fetchFeedback(venueId);
+        }
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'assistance_requests', filter: `venue_id=eq.${venueId}` },
-        () => fetchAssistanceRequests(venueId)
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'feedback', 
+          filter: `venue_id=eq.${venueId}` 
+        },
+        (payload) => {
+          console.log('Feedback updated:', payload);
+          fetchFeedback(venueId);
+        }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'assistance_requests', 
+          filter: `venue_id=eq.${venueId}` 
+        },
+        (payload) => {
+          console.log('New assistance request:', payload);
+          fetchAssistanceRequests(venueId);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'assistance_requests', 
+          filter: `venue_id=eq.${venueId}` 
+        },
+        (payload) => {
+          console.log('Assistance request updated:', payload);
+          fetchAssistanceRequests(venueId);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to real-time updates');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Real-time subscription error - falling back to polling');
+        }
+      });
 
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
+  }, [venueId]);
+
+  // Fallback polling in case real-time doesn't work
+  useEffect(() => {
+    if (!venueId) return;
+
+    const pollInterval = setInterval(() => {
+      fetchFeedback(venueId);
+      fetchAssistanceRequests(venueId);
+    }, 30000); // Poll every 30 seconds as fallback
+
+    return () => clearInterval(pollInterval);
   }, [venueId]);
 
   // Data loading
@@ -207,10 +271,19 @@ const KioskPage = () => {
   // Handle assistance request actions
   const handleAssistanceAction = async (requestId, action) => {
     try {
+      const now = new Date().toISOString();
       const updates = {
-        [`${action}_at`]: new Date().toISOString(),
         status: action === 'acknowledge' ? 'acknowledged' : 'resolved'
       };
+
+      // Set the correct timestamp field based on action
+      if (action === 'acknowledge') {
+        updates.acknowledged_at = now;
+        // You might want to add acknowledged_by with staff ID here
+      } else if (action === 'resolve') {
+        updates.resolved_at = now;
+        // You might want to add resolved_by with staff ID here
+      }
 
       const { error } = await supabase
         .from('assistance_requests')
