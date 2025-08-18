@@ -1,44 +1,90 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import { supabase } from '../../utils/supabase';
+import { MetricCard } from '../ui/metric-card';
+import { CheckCircle2 } from 'lucide-react';
 
-const ActionCompletionRateTile = ({ actionedCount, totalCount }) => {
+const ActionCompletionRateTile = ({ venueId, actionedCount: propActionedCount, totalCount: propTotalCount }) => {
+  const [actionedCount, setActionedCount] = useState(propActionedCount || 0);
+  const [totalCount, setTotalCount] = useState(propTotalCount || 0);
+  const [loading, setLoading] = useState(!propActionedCount && !propTotalCount);
+
+  useEffect(() => {
+    if (!propActionedCount && !propTotalCount && venueId) {
+      loadActionCompletionData();
+    }
+  }, [venueId, propActionedCount, propTotalCount]);
+
+  const loadActionCompletionData = async () => {
+    setLoading(true);
+    try {
+      // Get all feedback for this venue
+      const { data: allFeedback, error } = await supabase
+        .from('feedback')
+        .select('id, session_id, is_actioned, dismissed')
+        .eq('venue_id', venueId);
+
+      if (error) throw error;
+
+      // Group by session_id to count sessions, not individual feedback items
+      const sessions = {};
+      allFeedback.forEach(feedback => {
+        if (!sessions[feedback.session_id]) {
+          sessions[feedback.session_id] = [];
+        }
+        sessions[feedback.session_id].push(feedback);
+      });
+
+      // Count sessions where all feedback items are actioned OR dismissed
+      let actionedSessions = 0;
+      const totalSessions = Object.keys(sessions).length;
+
+      Object.values(sessions).forEach(sessionFeedback => {
+        const allActioned = sessionFeedback.every(item => item.is_actioned === true);
+        const allDismissed = sessionFeedback.every(item => item.dismissed === true);
+        
+        if (allActioned || allDismissed) {
+          actionedSessions++;
+        }
+      });
+
+      setActionedCount(actionedSessions);
+      setTotalCount(totalSessions);
+    } catch (error) {
+      console.error('Error loading action completion data:', error);
+      setActionedCount(0);
+      setTotalCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const completionRate = totalCount > 0 ? ((actionedCount / totalCount) * 100).toFixed(1) : 0;
 
+  const getVariant = (rate) => {
+    if (rate >= 90) return "success";
+    if (rate >= 70) return "warning";
+    if (rate >= 50) return "info";
+    return "danger";
+  };
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8">
-      <div className="flex flex-col items-center space-y-6">
-        <div className="flex-shrink-0">
-          <div className="w-32 h-32 lg:w-40 lg:h-40">
-            <CircularProgressbar
-              value={completionRate}
-              text={`${completionRate}%`}
-              styles={{
-                path: { stroke: '#000000', strokeWidth: 3 },
-                text: { fill: '#111827', fontSize: '16px', fontWeight: 'bold' },
-                trail: { stroke: '#f3f4f6', strokeWidth: 3 }
-              }}
-            />
-          </div>
-        </div>
-        <div className="text-center">
-          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Action Completion Rate</h2>
-          <p className="text-gray-600 text-sm mb-4">
-            {actionedCount} of {totalCount} feedback sessions have been actioned by your team.
-          </p>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-500">Completed:</span>
-              <span className="ml-2 font-medium text-green-600">{actionedCount}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">Pending:</span>
-              <span className="ml-2 font-medium text-gray-900">{totalCount - actionedCount}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <MetricCard
+      title="Completion Rate"
+      value={`${completionRate}%`}
+      description={`${actionedCount || 0}/${totalCount || 0} sessions resolved`}
+      icon={CheckCircle2}
+      variant={getVariant(parseFloat(completionRate))}
+      loading={loading}
+      trend={
+        totalCount > 0 ? {
+          text: parseFloat(completionRate) >= 80 ? "Great performance" : "Room for improvement",
+          direction: parseFloat(completionRate) >= 80 ? "up" : "down",
+          positive: parseFloat(completionRate) >= 80
+        } : null
+      }
+    />
   );
 };
 

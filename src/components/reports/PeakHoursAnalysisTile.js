@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
 import { Clock, TrendingUp, Users, AlertCircle, BarChart3 } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 
 const PeakHoursAnalysisTile = ({ venueId }) => {
   const [hourlyData, setHourlyData] = useState([]);
@@ -92,32 +93,29 @@ const PeakHoursAnalysisTile = ({ venueId }) => {
 
   const getIntensityColor = (count, maxCount) => {
     const intensity = maxCount > 0 ? count / maxCount : 0;
-    if (intensity >= 0.8) return 'bg-red-500';
-    if (intensity >= 0.6) return 'bg-orange-500';
-    if (intensity >= 0.4) return 'bg-yellow-500';
-    if (intensity >= 0.2) return 'bg-green-500';
-    return 'bg-gray-200';
+    if (intensity >= 0.8) return 'bg-slate-900';
+    if (intensity >= 0.6) return 'bg-slate-700';
+    if (intensity >= 0.4) return 'bg-slate-500';
+    if (intensity >= 0.2) return 'bg-slate-300';
+    return 'bg-slate-100';
   };
 
   const maxHourlyCount = Math.max(...hourlyData.map(h => h.count));
   const maxDailyCount = Math.max(...weeklyData.map(d => d.count));
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center mb-2">
-            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-              <Clock className="w-4 h-4 text-purple-600" />
-            </div>
-            Peak Hours Analysis
-          </h3>
-          <p className="text-sm text-gray-600">
-            When customers are most likely to leave feedback
-          </p>
-        </div>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="w-5 h-5 text-slate-600" />
+          Peak Hours Analysis
+        </CardTitle>
+        <CardDescription>
+          When customers are most likely to leave feedback
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
 
       {loading ? (
         <div className="space-y-4">
@@ -254,7 +252,8 @@ const PeakHoursAnalysisTile = ({ venueId }) => {
           </div>
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
