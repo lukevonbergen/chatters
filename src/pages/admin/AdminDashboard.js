@@ -13,7 +13,15 @@ import {
   Upload,
   Download,
   Eye,
-  CheckCircle
+  CheckCircle,
+  Search,
+  Edit,
+  Calendar,
+  Phone,
+  Mail,
+  MapPin,
+  Filter,
+  X
 } from 'lucide-react';
 
 const emptyVenue = () => ({
@@ -82,9 +90,19 @@ export default function AdminDashboard() {
     activeAccounts: 0,
     trialAccounts: 0,
     totalVenues: 0,
-    totalUsers: 0,
     loading: true
   });
+
+  // Account management state
+  const [accounts, setAccounts] = useState([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all'); // all, trial, paid, expired
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [editingAccountData, setEditingAccountData] = useState(null);
+  const [isSavingAccount, setIsSavingAccount] = useState(false);
 
   const totalTables = useMemo(
     () =>
@@ -95,48 +113,70 @@ export default function AdminDashboard() {
     [formData.venues]
   );
 
-  // Load account statistics
+  // Load account statistics and detailed accounts
   useEffect(() => {
-    const loadAccountStats = async () => {
+    const loadDetailedAccounts = async () => {
       try {
-        // Get account counts
-        const { data: accounts } = await supabase
-          .from('accounts')
-          .select('id, is_paid, trial_ends_at');
+        setAccountsLoading(true);
         
-        const { data: venues } = await supabase
-          .from('venues')
-          .select('id');
-          
-        const { data: users } = await supabase
-          .from('users')
-          .select('id, role')
-          .neq('role', 'admin');
+        // Load accounts
+        const { data: accountsData, error } = await supabase
+          .from('accounts')
+          .select('*')
+          .order('created_at', { ascending: false });
 
+        if (error) {
+          console.error('Error loading accounts:', error);
+          throw error;
+        }
+
+        // Load venues and link to accounts
+        const { data: venuesData, error: venuesError } = await supabase
+          .from('venues')
+          .select('id, name, table_count, address, account_id');
+
+        if (venuesError) {
+          console.error('Error loading venues:', venuesError);
+        }
+
+        // Link venues to accounts
+        const accountsWithVenues = (accountsData || []).map(account => {
+          const accountVenues = (venuesData || []).filter(venue => venue.account_id === account.id);
+          return { ...account, venues: accountVenues };
+        });
+
+        setAccounts(accountsWithVenues);
+
+        // Calculate statistics
         const now = new Date();
-        const activeAccounts = accounts?.filter(a => 
+        const totalVenues = accountsWithVenues?.reduce((total, account) => 
+          total + (account.venues?.length || 0), 0) || 0;
+        
+        const activeAccounts = accountsWithVenues?.filter(a => 
           a.is_paid || (a.trial_ends_at && new Date(a.trial_ends_at) > now)
         ).length || 0;
         
-        const trialAccounts = accounts?.filter(a => 
+        const trialAccounts = accountsWithVenues?.filter(a => 
           !a.is_paid && a.trial_ends_at && new Date(a.trial_ends_at) > now
         ).length || 0;
 
         setAccountStats({
-          totalAccounts: accounts?.length || 0,
+          totalAccounts: accountsWithVenues?.length || 0,
           activeAccounts,
           trialAccounts,
-          totalVenues: venues?.length || 0,
-          totalUsers: users?.length || 0,
+          totalVenues,
           loading: false
         });
       } catch (error) {
-        console.error('Error loading account stats:', error);
+        console.error('Error loading accounts:', error);
+        toast.error('Failed to load accounts');
         setAccountStats(prev => ({ ...prev, loading: false }));
+      } finally {
+        setAccountsLoading(false);
       }
     };
 
-    loadAccountStats();
+    loadDetailedAccounts();
   }, []);
 
   const setField = (name, value) =>
@@ -335,15 +375,116 @@ export default function AdminDashboard() {
       });
       setErrors({});
       
-      // Refresh account stats
+      // Refresh account stats and accounts list
       setAccountStats(prev => ({ ...prev, loading: true }));
-      // Stats will be reloaded by useEffect dependency change
+      // Refresh accounts list by re-running the useEffect
+      window.location.reload();
     } catch (err) {
       console.error('[AdminDashboard] submit error', err);
       toast.error(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Filter and search accounts
+  const filteredAccounts = useMemo(() => {
+    if (!accounts) return [];
+    
+    return accounts.filter(account => {
+      // Search filter
+      const matchesSearch = searchTerm === '' || 
+        account.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        account.venues?.some(venue => 
+          venue.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+      // Status filter  
+      const now = new Date();
+      const isTrialActive = account.trial_ends_at && new Date(account.trial_ends_at) > now;
+      const isExpired = account.trial_ends_at && new Date(account.trial_ends_at) <= now && !account.is_paid;
+      
+      const matchesStatus = filterStatus === 'all' || 
+        (filterStatus === 'trial' && !account.is_paid && isTrialActive) ||
+        (filterStatus === 'paid' && account.is_paid) ||
+        (filterStatus === 'expired' && isExpired);
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [accounts, searchTerm, filterStatus]);
+
+  const openAccountModal = (account) => {
+    setSelectedAccount(account);
+    setShowAccountModal(true);
+  };
+
+  const closeAccountModal = () => {
+    setSelectedAccount(null);
+    setShowAccountModal(false);
+    setIsEditingAccount(false);
+    setEditingAccountData(null);
+  };
+
+  const startEditingAccount = () => {
+    setIsEditingAccount(true);
+    setEditingAccountData({
+      name: selectedAccount.name || '',
+      is_paid: selectedAccount.is_paid || false,
+      trial_ends_at: selectedAccount.trial_ends_at ? selectedAccount.trial_ends_at.split('T')[0] : '',
+      phone: selectedAccount.phone || ''
+    });
+  };
+
+  const cancelEditingAccount = () => {
+    setIsEditingAccount(false);
+    setEditingAccountData(null);
+  };
+
+  const saveAccountChanges = async () => {
+    if (!editingAccountData || !selectedAccount) return;
+    
+    setIsSavingAccount(true);
+    try {
+      const { error } = await supabase
+        .from('accounts')
+        .update({
+          name: editingAccountData.name,
+          is_paid: editingAccountData.is_paid,
+          trial_ends_at: editingAccountData.trial_ends_at || null,
+          phone: editingAccountData.phone
+        })
+        .eq('id', selectedAccount.id);
+
+      if (error) throw error;
+
+      // Update the account in our local state
+      const updatedAccount = {
+        ...selectedAccount,
+        ...editingAccountData
+      };
+      setSelectedAccount(updatedAccount);
+      setAccounts(prev => prev.map(acc => 
+        acc.id === selectedAccount.id ? updatedAccount : acc
+      ));
+
+      setIsEditingAccount(false);
+      setEditingAccountData(null);
+      toast.success('Account updated successfully!');
+    } catch (error) {
+      console.error('Error updating account:', error);
+      toast.error('Failed to update account: ' + error.message);
+    } finally {
+      setIsSavingAccount(false);
+    }
+  };
+
+  const getAccountStatus = (account) => {
+    const now = new Date();
+    if (account.is_paid) return { status: 'paid', color: 'green', label: 'Paid' };
+    if (account.trial_ends_at && new Date(account.trial_ends_at) > now) {
+      return { status: 'trial', color: 'blue', label: 'Trial' };
+    }
+    return { status: 'expired', color: 'red', label: 'Expired' };
   };
 
   return (
@@ -369,7 +510,7 @@ export default function AdminDashboard() {
             <span className="ml-2 text-gray-600">Loading statistics...</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -409,16 +550,146 @@ export default function AdminDashboard() {
                 <Building2 className="w-8 h-8 text-purple-500" />
               </div>
             </div>
-            
-            <div className="bg-indigo-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-indigo-600 text-sm font-medium">Total Users</p>
-                  <p className="text-2xl font-bold text-indigo-900">{accountStats.totalUsers}</p>
+          </div>
+        )}
+      </section>
+
+      {/* Account Management Section */}
+      <section className="bg-white rounded-2xl shadow p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Account Management
+          </h2>
+          <div className="text-sm text-gray-500">
+            {filteredAccounts.length} of {accounts.length} accounts
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search accounts, users, or venues..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Accounts</option>
+              <option value="trial">Trial Accounts</option>
+              <option value="paid">Paid Accounts</option>
+              <option value="expired">Expired Accounts</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Accounts List */}
+        {accountsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Loading accounts...</span>
+          </div>
+        ) : filteredAccounts.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {searchTerm || filterStatus !== 'all' ? 'No accounts match your search' : 'No accounts found'}
+            </h3>
+            <p className="text-gray-500">
+              {searchTerm || filterStatus !== 'all' 
+                ? 'Try adjusting your search terms or filters' 
+                : 'Create your first account using the form below'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredAccounts.map((account) => {
+              const status = getAccountStatus(account);
+              const masterUser = account.users?.find(u => u.role === 'master');
+              const venueCount = account.venues?.length || 0;
+              const totalTables = account.venues?.reduce((sum, v) => sum + (v.table_count || 0), 0) || 0;
+
+              return (
+                <div
+                  key={account.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => openAccountModal(account)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-gray-900">
+                          {account.name || 'Unnamed Account'}
+                        </h3>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          status.color === 'green' ? 'bg-green-100 text-green-800' :
+                          status.color === 'blue' ? 'bg-blue-100 text-blue-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {status.label}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          <span>{masterUser?.email || 'No master user'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4" />
+                          <span>{venueCount} venue{venueCount !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          <span>{totalTables} tables</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>
+                            {account.trial_ends_at 
+                              ? `Trial ends ${new Date(account.trial_ends_at).toLocaleDateString()}`
+                              : 'No trial date'
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 ml-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openAccountModal(account);
+                        }}
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit account"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <Users className="w-8 h-8 text-indigo-500" />
-              </div>
-            </div>
+              );
+            })}
           </div>
         )}
       </section>
@@ -811,6 +1082,201 @@ export default function AdminDashboard() {
           </button>
         </div>
       </form>
+
+      {/* Account Edit Modal */}
+      {showAccountModal && selectedAccount && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                {isEditingAccount ? 'Edit Account' : 'Account Details'}: {selectedAccount.name}
+              </h2>
+              <button
+                onClick={closeAccountModal}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Account Info */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
+                    {isEditingAccount ? (
+                      <input
+                        type="text"
+                        value={editingAccountData?.name || ''}
+                        onChange={(e) => setEditingAccountData(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter account name"
+                      />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded border text-sm">
+                        {selectedAccount.name || 'Not set'}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    {isEditingAccount ? (
+                      <div className="flex items-center gap-2">
+                        <label className="inline-flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={editingAccountData?.is_paid || false}
+                            onChange={(e) => setEditingAccountData(prev => ({ ...prev, is_paid: e.target.checked }))}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm">Paid Account</span>
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded border text-sm">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          getAccountStatus(selectedAccount).color === 'green' ? 'bg-green-100 text-green-800' :
+                          getAccountStatus(selectedAccount).color === 'blue' ? 'bg-blue-100 text-blue-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {getAccountStatus(selectedAccount).label}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Trial End Date</label>
+                    {isEditingAccount ? (
+                      <input
+                        type="date"
+                        value={editingAccountData?.trial_ends_at || ''}
+                        onChange={(e) => setEditingAccountData(prev => ({ ...prev, trial_ends_at: e.target.value }))}
+                        className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded border text-sm">
+                        {selectedAccount.trial_ends_at 
+                          ? new Date(selectedAccount.trial_ends_at).toLocaleDateString()
+                          : 'No trial date set'
+                        }
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    {isEditingAccount ? (
+                      <input
+                        type="tel"
+                        value={editingAccountData?.phone || ''}
+                        onChange={(e) => setEditingAccountData(prev => ({ ...prev, phone: e.target.value }))}
+                        className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter phone number"
+                      />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded border text-sm">
+                        {selectedAccount.phone || 'Not set'}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
+                    <div className="p-2 bg-gray-50 rounded border text-sm">
+                      {new Date(selectedAccount.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Venues */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Venues ({selectedAccount.venues?.length || 0})
+              </h3>
+              <div className="space-y-3">
+                {selectedAccount.venues?.length ? (
+                  selectedAccount.venues.map((venue) => (
+                    <div key={venue.id} className="p-4 bg-gray-50 rounded border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-gray-900">{venue.name}</div>
+                          <div className="text-sm text-gray-600">
+                            {venue.table_count || 0} tables
+                          </div>
+                          {venue.address && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {typeof venue.address === 'string' ? venue.address : 
+                               venue.address.line1 ? `${venue.address.line1}, ${venue.address.city} ${venue.address.postcode}` :
+                               'No address'
+                              }
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-gray-500">No venues found</div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end gap-3">
+              {isEditingAccount ? (
+                <>
+                  <button
+                    onClick={cancelEditingAccount}
+                    disabled={isSavingAccount}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveAccountChanges}
+                    disabled={isSavingAccount}
+                    className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSavingAccount ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={closeAccountModal}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={startEditingAccount}
+                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+                  >
+                    Edit Account
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

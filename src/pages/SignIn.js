@@ -1,5 +1,5 @@
 // src/pages/SignIn.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { supabase } from '../utils/supabase';
@@ -38,9 +38,21 @@ const SignInPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Load remembered email on component mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('chatters_remember_email');
+    const rememberMeEnabled = localStorage.getItem('chatters_remember_me') === 'true';
+    
+    if (rememberMeEnabled && rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -48,9 +60,30 @@ const SignInPage = () => {
     setError('');
 
     try {
-      // 1) Auth
-      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      // 1) Auth with remember me preference
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password,
+        options: {
+          // If remember me is checked, use a longer session
+          // Otherwise use default session length
+          ...(rememberMe && { 
+            redirectTo: undefined, // Prevent redirect
+            // Note: Supabase handles session persistence automatically
+            // The remember me mainly affects UI behavior
+          })
+        }
+      });
       if (signInErr) throw new Error(signInErr.message);
+
+      // Store remember me preference in localStorage
+      if (rememberMe) {
+        localStorage.setItem('chatters_remember_email', email);
+        localStorage.setItem('chatters_remember_me', 'true');
+      } else {
+        localStorage.removeItem('chatters_remember_email');
+        localStorage.removeItem('chatters_remember_me');
+      }
 
       // 2) Get user
       const { data: auth } = await supabase.auth.getUser();
@@ -75,12 +108,12 @@ const SignInPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex min-h-[600px]">
+        <div className="flex flex-col lg:flex-row min-h-[600px]">
           {/* Left Panel - Brand */}
-          <div className="w-1/2 bg-white p-12 flex flex-col justify-center relative">
-            <div className="absolute top-6 left-6">
+          <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 lg:p-12 flex flex-col justify-center relative">
+            <div className="absolute top-4 sm:top-6 left-4 sm:left-6">
               <a
                 href="https://www.getchatters.com"
                 className="text-gray-600 hover:text-gray-900 flex items-center transition-colors text-sm"
@@ -90,44 +123,44 @@ const SignInPage = () => {
               </a>
             </div>
 
-            <div className="mb-8">
-              <div className="flex items-center mb-6">
+            <div className="mb-6 lg:mb-8">
+              <div className="flex items-center mb-4 lg:mb-6">
                 <img
                   src="https://www.getchatters.com/img/Logo.svg"
                   alt="Chatters Logo"
-                  className="h-8 w-auto"
+                  className="h-6 sm:h-8 w-auto"
                 />
               </div>
 
-              <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 lg:mb-4 leading-tight">
                 Get access to real-time customer insights
               </h1>
-              <p className="text-gray-600 text-lg leading-relaxed">
+              <p className="text-gray-600 text-base lg:text-lg leading-relaxed">
                 Transform your customer feedback into actionable insights. Monitor satisfaction in real-time and prevent negative reviews before they happen.
               </p>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center text-gray-600">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+            <div className="space-y-3 lg:space-y-4">
+              <div className="flex items-center text-gray-600 text-sm lg:text-base">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
                 <span>Real-time feedback monitoring</span>
               </div>
-              <div className="flex items-center text-gray-600">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+              <div className="flex items-center text-gray-600 text-sm lg:text-base">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
                 <span>Custom branded QR codes</span>
               </div>
-              <div className="flex items-center text-gray-600">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+              <div className="flex items-center text-gray-600 text-sm lg:text-base">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
                 <span>Analytics dashboard</span>
               </div>
             </div>
           </div>
 
           {/* Right Panel - Form */}
-          <div className="w-1/2 bg-gray-900 p-12 flex flex-col justify-center">
+          <div className="w-full lg:w-1/2 bg-gray-900 p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
             <div className="max-w-sm mx-auto w-full">
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">
+              <div className="mb-6 lg:mb-8">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                   Login to your account
                 </h2>
               </div>
@@ -138,7 +171,7 @@ const SignInPage = () => {
                 </div>
               )}
 
-              <form onSubmit={handleSignIn} className="space-y-6">
+              <form onSubmit={handleSignIn} className="space-y-4 lg:space-y-6">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                     Email
@@ -185,6 +218,8 @@ const SignInPage = () => {
                       id="remember"
                       name="remember"
                       type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
                       className="h-4 w-4 text-white focus:ring-white border-gray-600 bg-gray-800 rounded"
                     />
                     <label htmlFor="remember" className="ml-2 block text-sm text-gray-300">
