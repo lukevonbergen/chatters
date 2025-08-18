@@ -18,6 +18,8 @@ import CustomBranding_Feature from './pages/Features_CustomBranding';
 import CustomQuestions_Feature from './pages/Features_CustomQuestions';
 import Dashboards_Feature from './pages/Features_Dashboards';
 
+import RestaurantSolution from './pages/solutions/RestaurantSolution';
+
 const MarketingRoutes = () => {
   return (
     <Routes>
@@ -39,6 +41,9 @@ const MarketingRoutes = () => {
       <Route path="/features/custom-branding" element={<CustomBranding_Feature />} />
       <Route path="/features/custom-questions" element={<CustomQuestions_Feature />} />
       <Route path="/features/dashboards" element={<Dashboards_Feature />} />
+
+      {/* 🏢 Solutions Pages */}
+      <Route path="/solutions/restaurants" element={<RestaurantSolution />} />
 
     </Routes>
   );
