@@ -4,7 +4,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Geist', 'Gilroy', 'ui-sans-serif', 'system-ui'],
+        sans: ['var(--font-dashboard)', 'ui-sans-serif', 'system-ui'],
+        'marketing': ['var(--font-marketing)', 'ui-sans-serif', 'system-ui'],
       },
     },
   },

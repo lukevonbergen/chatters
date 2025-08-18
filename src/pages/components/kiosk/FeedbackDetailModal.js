@@ -123,7 +123,18 @@ const FeedbackDetailModal = ({
   const [selectedStaffMember, setSelectedStaffMember] = useState('');
   const [resolutionType, setResolutionType] = useState('resolved');
   const [dismissalReason, setDismissalReason] = useState('');
+  const [resolutionMessage, setResolutionMessage] = useState('');
   const [isResolving, setIsResolving] = useState(false);
+  
+  // Clear form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedStaffMember('');
+      setResolutionType('resolved');
+      setDismissalReason('');
+      setResolutionMessage('');
+    }
+  }, [isOpen]);
   
   const sessions = useMemo(() => groupBySession(feedbackItems), [feedbackItems]);
   
@@ -297,6 +308,15 @@ const FeedbackDetailModal = ({
         // Store resolver info if it's an employee resolution
         if (resolverInfo && selectedStaffMember.startsWith('employee-')) {
           updateData.resolution_notes = resolverInfo;
+        }
+      }
+
+      // Add resolution message if provided
+      if (resolutionMessage.trim()) {
+        if (updateData.resolution_notes) {
+          updateData.resolution_notes += ` | Resolution: ${resolutionMessage.trim()}`;
+        } else {
+          updateData.resolution_notes = resolutionMessage.trim();
         }
       }
       
@@ -691,6 +711,34 @@ const FeedbackDetailModal = ({
                   </span>
                 </div>
               )}
+            </div>
+
+            {/* Resolution Message (Optional) */}
+            <div>
+              <label htmlFor="resolutionMessage" className="block text-sm font-semibold text-slate-700 mb-3">
+                Resolution Details <span className="text-slate-500">(Optional)</span>
+              </label>
+              <textarea
+                id="resolutionMessage"
+                value={resolutionMessage}
+                onChange={(e) => setResolutionMessage(e.target.value)}
+                placeholder={resolutionType === 'resolved' 
+                  ? "Describe how the issue was resolved (e.g., 'Spoke with kitchen manager, implemented new temperature checks', 'Provided fresh meal and discount coupon', etc.)"
+                  : "Add any additional context for the dismissal..."
+                }
+                rows={3}
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder-slate-400 text-sm resize-none"
+                maxLength={500}
+              />
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <span>
+                  {resolutionType === 'resolved' 
+                    ? "Help track what actions were taken to resolve similar issues in the future" 
+                    : "Provide context for why this feedback was dismissed"
+                  }
+                </span>
+                <span>{resolutionMessage.length}/500</span>
+              </div>
             </div>
             
             {/* Action Buttons */}

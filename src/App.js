@@ -41,14 +41,16 @@ function App() {
   }, []);
 
   return (
-    <ModalProvider>
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-      <Sentry.ErrorBoundary fallback={<p>Something went wrong!</p>} showDialog>
-        {isDashboardDomain ? <AppRoutes /> : <MarketingRoutes />}
-      </Sentry.ErrorBoundary>
-      <Analytics />
-      <SpeedInsights />
-    </ModalProvider>
+    <div className={isDashboardDomain ? 'font-sans' : 'font-marketing'}>
+      <ModalProvider>
+        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+        <Sentry.ErrorBoundary fallback={<p>Something went wrong!</p>} showDialog>
+          {isDashboardDomain ? <AppRoutes /> : <MarketingRoutes />}
+        </Sentry.ErrorBoundary>
+        <Analytics />
+        <SpeedInsights />
+      </ModalProvider>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, RotateCcw, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { supabase } from '../../../utils/supabase';
 
 const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchStaffData }) => {
   const [actionLoading, setActionLoading] = useState({});
@@ -12,7 +13,20 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchS
     const fetchInvitationData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/admin/get-pending-invitations');
+        
+        // Get current session token
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) {
+          throw new Error('No valid session found');
+        }
+
+        const response = await fetch('/api/admin/get-pending-invitations', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        });
         
         // Check if we got HTML (404) instead of JSON
         const contentType = response.headers.get('content-type');

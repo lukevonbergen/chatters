@@ -280,7 +280,7 @@ const Floorplan = () => {
           editMode={editMode}
           onTableDrag={handleTableDrag}
           onRemoveTable={handleRemoveTable}
-          onTableResize={handleTableResize}  // Add this line
+          onTableResize={handleTableResize}
         />
       </div>
     </PageContainer>

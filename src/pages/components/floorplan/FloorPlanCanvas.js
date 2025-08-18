@@ -1,8 +1,17 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import Draggable from 'react-draggable';
 import TableComponent from './TableComponent';
 
 const GRID_SIZE = 20;
+
+// Logical design space for % coords
+const WORLD_WIDTH = 1600;
+const WORLD_HEIGHT = 1000;
+
+// Zoom constraints
+const MIN_ZOOM = 0.2;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.3; // Increased for more responsive button clicks
 
 const FloorPlanCanvas = forwardRef(
   (
@@ -16,83 +25,325 @@ const FloorPlanCanvas = forwardRef(
     },
     ref
   ) => {
-    const filteredTables = tables.filter((t) => t.zone_id === selectedZoneId);
+    const internalRef = useRef(null);
+    const containerRef = ref || internalRef;
+    const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+    
+    // Map state for scaling and panning
+    const [zoom, setZoom] = useState(0.8);
+    const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+
+    const filteredTables = useMemo(() => {
+      return tables.filter((t) => t.zone_id === selectedZoneId);
+    }, [tables, selectedZoneId]);
+
+    // Measure container
+    useEffect(() => {
+      const el = containerRef.current;
+      if (!el) return;
+      
+      const update = () => {
+        const rect = el.getBoundingClientRect();
+        setContainerSize({ width: rect.width, height: rect.height });
+      };
+      
+      update();
+      const ro = new ResizeObserver(update);
+      ro.observe(el);
+      window.addEventListener('resize', update);
+      return () => { 
+        ro.disconnect(); 
+        window.removeEventListener('resize', update); 
+      };
+    }, [containerRef]);
+
+    // Process tables - use pixel coordinates directly for now
+    const processedTables = useMemo(() => {
+      return filteredTables.map(t => {
+        // Use pixel coordinates directly since that's what the floorplan editor uses
+        const worldX = t.x_px ?? 0;
+        const worldY = t.y_px ?? 0;
+        const w = t.width || 56;
+        const h = t.height || 56;
+        
+        return { ...t, worldX, worldY, w, h };
+      });
+    }, [filteredTables]);
+
+    // Fit to screen function
+    const fitToScreen = useCallback(() => {
+      if (!processedTables.length || !containerSize.width || !containerSize.height) {
+        return;
+      }
+      
+      // Find bounds of all tables in pixel coordinates
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      
+      for (const table of processedTables) {
+        minX = Math.min(minX, table.worldX);
+        minY = Math.min(minY, table.worldY);
+        maxX = Math.max(maxX, table.worldX + table.w);
+        maxY = Math.max(maxY, table.worldY + table.h);
+      }
+      
+      // Add padding (smaller since we're in pixel coordinates now)
+      const padding = 50;
+      minX -= padding;
+      minY -= padding;
+      maxX += padding;
+      maxY += padding;
+      
+      const contentWidth = maxX - minX;
+      const contentHeight = maxY - minY;
+      
+      // Calculate zoom to fit
+      const scaleX = containerSize.width / contentWidth;
+      const scaleY = containerSize.height / contentHeight;
+      const newZoom = Math.min(scaleX, scaleY, MAX_ZOOM);
+      
+      // Center the content
+      const scaledContentWidth = contentWidth * newZoom;
+      const scaledContentHeight = contentHeight * newZoom;
+      
+      const centerX = (containerSize.width - scaledContentWidth) / 2 - minX * newZoom;
+      const centerY = (containerSize.height - scaledContentHeight) / 2 - minY * newZoom;
+      
+      setZoom(newZoom);
+      setPanOffset({ x: centerX, y: centerY });
+    }, [processedTables, containerSize]);
+
+    // Auto-fit when zone changes or initial load
+    useEffect(() => {
+      if (processedTables.length > 0 && containerSize.width > 0) {
+        setTimeout(fitToScreen, 100);
+      }
+    }, [selectedZoneId, fitToScreen]); // Only when zone changes, not when tables change
+
+    // Zoom controls
+    const handleZoomIn = () => setZoom(prev => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - ZOOM_STEP, MIN_ZOOM));
+    
+    // Mouse wheel zoom with improved trackpad handling
+    const handleWheel = useCallback((e) => {
+      // Always prevent default to stop browser zoom
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Better trackpad detection - trackpads send smaller, more frequent events
+      const absDeltaY = Math.abs(e.deltaY);
+      const isTrackpad = absDeltaY < 50 || e.deltaMode === 0;
+      
+      // Much more responsive sensitivity
+      let sensitivity;
+      if (isTrackpad) {
+        // Higher sensitivity for trackpads, with acceleration for large movements
+        sensitivity = absDeltaY > 10 ? 0.02 : 0.015;
+      } else {
+        // Mouse wheel - even more sensitive
+        sensitivity = 0.1;
+      }
+      
+      const delta = e.deltaY > 0 ? -sensitivity : sensitivity;
+      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom + delta));
+      
+      if (newZoom !== zoom) {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const zoomRatio = newZoom / zoom;
+        const newPanX = mouseX - (mouseX - panOffset.x) * zoomRatio;
+        const newPanY = mouseY - (mouseY - panOffset.y) * zoomRatio;
+        
+        setZoom(newZoom);
+        setPanOffset({ x: newPanX, y: newPanY });
+      }
+    }, [zoom, panOffset]);
+
+    // Pan controls
+    const startPan = (e) => {
+      if (editMode) return; // Don't pan in edit mode
+      setIsDragging(true);
+      setDragStart({ x: e.clientX, y: e.clientY });
+      setPanStart({ x: panOffset.x, y: panOffset.y });
+      document.body.style.cursor = 'grabbing';
+    };
+
+    const onPan = useCallback((e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStart.x;
+      const dy = e.clientY - dragStart.y;
+      setPanOffset({
+        x: panStart.x + dx,
+        y: panStart.y + dy
+      });
+    }, [isDragging, dragStart, panStart]);
+
+    const endPan = useCallback(() => {
+      setIsDragging(false);
+      document.body.style.cursor = 'default';
+    }, []);
+
+    useEffect(() => {
+      if (!isDragging) return;
+      document.addEventListener('mousemove', onPan);
+      document.addEventListener('mouseup', endPan);
+      return () => {
+        document.removeEventListener('mousemove', onPan);
+        document.removeEventListener('mouseup', endPan);
+      };
+    }, [isDragging, onPan, endPan]);
+
+    // Handle table drag - convert screen coordinates back to container pixel coordinates
+    const handleTableDragEnd = (tableId, screenX, screenY) => {
+      // Convert screen coordinates back to container pixel coordinates
+      const containerX = (screenX - panOffset.x) / zoom;
+      const containerY = (screenY - panOffset.y) / zoom;
+      
+      onTableDrag(tableId, containerX, containerY);
+    };
 
     return (
-      <div
-        ref={ref}
-        className="relative w-full h-[500px] bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg overflow-hidden"
-      >
-        {/* Grid pattern for better visual alignment */}
-        <div
-          className="absolute inset-0 opacity-20 pointer-events-none"
-          style={{
-            backgroundImage: `radial-gradient(circle, #94a3b8 1px, transparent 1px)`,
-            backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
-          }}
-        />
-
-        {/* Empty state */}
-        {filteredTables.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-gray-500">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium">No tables in this zone</p>
-              <p className="text-xs text-gray-400">
-                {editMode ? 'Add a table to get started' : 'Switch to edit mode to add tables'}
-              </p>
-            </div>
+      <div className="relative">
+        {/* Zoom Controls */}
+        <div className="absolute top-2 right-2 z-20 flex flex-col gap-1 bg-white rounded-lg border border-gray-300 shadow-lg">
+          <button
+            onClick={handleZoomIn}
+            disabled={zoom >= MAX_ZOOM}
+            className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border-b border-gray-200"
+            title="Zoom In"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </button>
+          <button
+            onClick={handleZoomOut}
+            disabled={zoom <= MIN_ZOOM}
+            className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border-b border-gray-200"
+            title="Zoom Out"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
+            </svg>
+          </button>
+          <button
+            onClick={fitToScreen}
+            className="p-2 hover:bg-gray-100"
+            title="Fit to Screen"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+            </svg>
+          </button>
+          <div className="px-2 py-1 text-xs text-gray-500 border-t border-gray-200">
+            {Math.round(zoom * 100)}%
           </div>
-        )}
+        </div>
 
-        {/* Tables */}
-        {filteredTables.map((table) => {
-          const tableComponent = (
-            <TableComponent
-              key={table.id}
-              table={table}
-              editMode={editMode}
-              onRemoveTable={onRemoveTable}
-              onTableResize={onTableResize}
-              onTableMove={onTableDrag} // Pass the move handler for resize positioning
-            />
-          );
+        <div
+          ref={containerRef}
+          className="relative w-full h-[600px] bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg overflow-hidden"
+          onMouseDown={startPan}
+          onWheel={handleWheel}
+          style={{ 
+            cursor: isDragging ? 'grabbing' : (editMode ? 'default' : 'grab')
+          }}
+        >
+          {/* Grid pattern for better visual alignment */}
+          <div
+            className="absolute inset-0 opacity-20 pointer-events-none"
+            style={{
+              backgroundImage: 'radial-gradient(circle, #94a3b8 1px, transparent 1px)',
+              backgroundSize: `${30 * zoom}px ${30 * zoom}px`,
+              backgroundPosition: `${panOffset.x % (30 * zoom)}px ${panOffset.y % (30 * zoom)}px`
+            }}
+          />
 
-          return editMode ? (
-            <Draggable
-              key={table.id}
-              position={{ x: table.x_px, y: table.y_px }}
-              bounds="parent"
-              grid={[GRID_SIZE, GRID_SIZE]}
-              onStop={(e, data) => {
-                onTableDrag(table.id, data.x, data.y);
-              }}
-              // Disable dragging when resizing
-              disabled={false} // We'll handle this in TableComponent
-            >
-              <div 
-                className="absolute cursor-move"
-                style={{ 
-                  pointerEvents: 'auto' // Ensure pointer events work
+          {/* Empty state */}
+          {processedTables.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <p className="text-sm font-medium">No tables in this zone</p>
+                <p className="text-xs text-gray-400">
+                  {editMode ? 'Add a table to get started' : 'Switch to edit mode to add tables'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Tables */}
+          {processedTables.map((table) => {
+            // Calculate screen position from world coordinates
+            const screenX = table.worldX * zoom + panOffset.x;
+            const screenY = table.worldY * zoom + panOffset.y;
+            const screenWidth = table.w * zoom;
+            const screenHeight = table.h * zoom;
+
+            const tableComponent = (
+              <TableComponent
+                key={table.id}
+                table={{
+                  ...table,
+                  width: screenWidth,
+                  height: screenHeight
                 }}
+                editMode={editMode}
+                onRemoveTable={onRemoveTable}
+                onTableResize={onTableResize}
+                onTableMove={handleTableDragEnd}
+              />
+            );
+
+            return editMode ? (
+              <Draggable
+                key={table.id}
+                position={{ x: screenX, y: screenY }}
+                bounds="parent"
+                grid={[GRID_SIZE * zoom, GRID_SIZE * zoom]}
+                onStop={(e, data) => {
+                  handleTableDragEnd(table.id, data.x, data.y);
+                }}
+                disabled={false}
+              >
+                <div 
+                  className="absolute cursor-move"
+                  style={{ 
+                    pointerEvents: 'auto',
+                    width: screenWidth,
+                    height: screenHeight
+                  }}
+                >
+                  {tableComponent}
+                </div>
+              </Draggable>
+            ) : (
+              <div
+                key={table.id}
+                className="absolute"
+                style={{ 
+                  left: screenX, 
+                  top: screenY,
+                  width: screenWidth,
+                  height: screenHeight
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
               >
                 {tableComponent}
               </div>
-            </Draggable>
-          ) : (
-            <div
-              key={table.id}
-              className="absolute"
-              style={{ left: table.x_px, top: table.y_px }}
-            >
-              {tableComponent}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   }

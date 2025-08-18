@@ -8,7 +8,7 @@ const TestDashboardPage = () => {
 
   return (
     <UpdatedDashboardFrame>
-      <div style={{ fontFamily: 'Inter, sans-serif' }}>
+      <div>
         <h1 className="text-2xl font-bold mb-4">Test Dashboard Page</h1>
 
         <div className="space-y-2 text-muted-foreground">

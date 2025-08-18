@@ -70,7 +70,7 @@ const UpdatedDashboardFrame = ({ children }) => {
   const allNavLinks = [...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])];
 
   return (
-    <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="min-h-screen bg-background text-foreground">
       {/* Top nav */}
       <header className="border-b bg-white px-4 md:px-6 py-4 flex items-center justify-between shadow-sm relative z-50">
         {/* Left: Logo + Desktop Nav */}

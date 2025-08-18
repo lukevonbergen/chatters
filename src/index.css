@@ -2,7 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dashboard/Kiosk Font Configuration - Change here to switch fonts */
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,301,701,300,501,401,901,400&display=swap');
+
+/* Marketing Font Configuration */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Previous font was DM Sans: */
+/* @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap'); */
 
 /* Add Gilroy Font */
 @font-face {
@@ -40,9 +47,28 @@
   font-style: normal;
 }
 
-/* Apply Gilroy as the default font */
+/* 🎨 FONT CONFIGURATION - Change fonts here! */
+:root {
+  --font-dashboard: 'Satoshi', 'Geist', 'Gilroy', sans-serif;
+  --font-marketing: 'Geist', 'Gilroy', sans-serif;
+}
+
+/* Previous font was DM Sans: */
+/* --font-dashboard: 'DM Sans', 'Geist', 'Gilroy', sans-serif; */
+
+/* Apply dashboard font globally */
 body {
-  font-family: 'Gilroy', sans-serif;
+  font-family: var(--font-dashboard) !important;
+}
+
+/* Ensure all elements inherit the font */
+* {
+  font-family: inherit;
+}
+
+/* Marketing site specific font (applied conditionally) */
+.font-marketing {
+  font-family: var(--font-marketing);
 }
 
 /* Modal Styles */

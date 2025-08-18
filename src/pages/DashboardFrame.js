@@ -155,7 +155,7 @@ const UpdatedDashboardFrame = ({ children }) => {
   const allNavLinks = navLinks;
 
   return (
-    <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="min-h-screen bg-background text-foreground">
       {/* Trial Banner */}
       {trialInfo && trialInfo.isActive && (
         <div className="bg-gray-100 border-b border-gray-200 px-4 py-3">
