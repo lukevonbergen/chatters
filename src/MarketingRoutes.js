@@ -18,12 +18,14 @@ import RealTimeStats_Feature from './pages/marketing/Features_RealTimeStats';
 import CustomBranding_Feature from './pages/marketing/Features_CustomBranding';
 import CustomQuestions_Feature from './pages/marketing/Features_CustomQuestions';
 import Dashboards_Feature from './pages/marketing/Features_Dashboards';
-import QuestionManagement_Feature from './pages/marketing/Features_QuestionManagement';
-import BusinessIntelligence_Feature from './pages/marketing/Features_BusinessIntelligence';
 import BlogPage from './pages/marketing/BlogPage';
 import BlogPost from './pages/marketing/BlogPost';
 
+import QuestionManagement_Feature from './pages/marketing/product/QuestionManagement';
+import BusinessIntelligence_Feature from './pages/marketing/product/BusinessIntelligence';
+
 import RestaurantSolution from './pages/marketing/solutions/RestaurantSolution';
+import HotelSolution from './pages/marketing/solutions/HotelSolutions';
 
 const MarketingRoutes = () => {
   return (
@@ -56,6 +58,7 @@ const MarketingRoutes = () => {
 
       {/* 🏢 Solutions Pages */}
       <Route path="/solutions/restaurants" element={<RestaurantSolution />} />
+      <Route path="/solutions/hotels" element={<HotelSolution />} />
 
     </Routes>
   );

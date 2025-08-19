@@ -1,7 +1,9 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import Navbar from '../../components/marketing/layout/Navbar';
+import Hero from '../../components/marketing/pages/LandingPage/Hero.js';
 import Footer from '../../components/marketing/layout/Footer';
+import CTA from '../../components/marketing/common/sections/CTA';
 
 const LandingPage = () => {
 
@@ -112,8 +114,16 @@ const LandingPage = () => {
         </script>
       </Helmet>
 
-      <Navbar />
+      <Navbar overlay/>
 
+      <Hero />
+
+      <CTA 
+        title="Ready to transform your customer feedback?"
+        subtitle="Join hundreds of venues already using Chatters to improve their customer experience."
+        buttonText="Book a Demo"
+        buttonLink="/demo"
+      />
 
       <Footer />
     </div>

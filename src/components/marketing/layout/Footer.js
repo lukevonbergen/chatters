@@ -43,7 +43,7 @@ const Footer = () => {
           <p className="text-gray-400 font-satoshi">&copy; 2025 Chatters. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 sm:mt-0">
             <a href="#" className="text-gray-400 hover:text-white transition-colors font-satoshi">Twitter</a>
-            <a href="#" className="text-gray-400 hover:text-white transition-colors font-satoshi">LinkedIn</a>
+            <a href="https://www.linkedin.com/company/getchatters/" className="text-gray-400 hover:text-white transition-colors font-satoshi" target='blank'>LinkedIn</a>
             <a href="#" className="text-gray-400 hover:text-white transition-colors font-satoshi">Facebook</a>
           </div>
         </div>

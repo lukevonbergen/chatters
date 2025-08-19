@@ -1,8 +1,10 @@
+// components/marketing/layout/Navbar.jsx
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, BarChart3, Settings, Utensils, Building, ShoppingBag, Calendar, BookOpen, HelpCircle, FileText, GraduationCap, Zap, Globe, Monitor, Bell } from 'lucide-react';
+import { Menu, X, ChevronDown, BarChart3, Utensils, Building, ShoppingBag, Calendar, BookOpen, HelpCircle, FileText, GraduationCap, Zap, Globe, Monitor, Bell } from 'lucide-react';
+import PrimaryButton from '../common/buttons/PrimaryButton';
 
-const Navbar = () => {
+const Navbar = ({ overlay = false }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [dropdownTimer, setDropdownTimer] = useState(null);
@@ -34,7 +36,6 @@ const Navbar = () => {
   ];
 
   const handleDropdownEnter = (dropdown) => {
-    // Clear any existing timer
     if (dropdownTimer) {
       clearTimeout(dropdownTimer);
       setDropdownTimer(null);
@@ -43,15 +44,11 @@ const Navbar = () => {
   };
 
   const handleDropdownLeave = () => {
-    // Set a delay before closing
-    const timer = setTimeout(() => {
-      setActiveDropdown(null);
-    }, 150);
+    const timer = setTimeout(() => setActiveDropdown(null), 150);
     setDropdownTimer(timer);
   };
 
   const handleDropdownContentEnter = () => {
-    // Clear the timer when entering the dropdown content
     if (dropdownTimer) {
       clearTimeout(dropdownTimer);
       setDropdownTimer(null);
@@ -59,142 +56,141 @@ const Navbar = () => {
   };
 
   const handleDropdownContentLeave = () => {
-    // Set delay when leaving dropdown content
-    const timer = setTimeout(() => {
-      setActiveDropdown(null);
-    }, 150);
+    const timer = setTimeout(() => setActiveDropdown(null), 150);
     setDropdownTimer(timer);
   };
 
-  const DropdownContent = ({ links, isVisible }) => (
-    <div 
-      className={`fixed left-4 right-4 top-20 z-40 transition-all duration-400 ease-out transform ${
-        isVisible 
-          ? 'opacity-100 visible translate-y-0 scale-100' 
-          : 'opacity-0 invisible -translate-y-4 scale-95'
-      }`}
-      onMouseEnter={handleDropdownContentEnter}
-      onMouseLeave={handleDropdownContentLeave}
-    >
-      <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 py-12 px-6">
-        <div className="grid grid-cols-2 gap-8">
-          {links.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className="group flex items-start space-x-4 p-6 rounded-xl hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
-              onClick={() => setActiveDropdown(null)}
-            >
-              <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-600 group-hover:text-white transition-all duration-200">
-                {link.icon}
-              </div>
-              <div className="flex-1">
-                <div className="font-satoshi font-semibold text-black group-hover:text-black transition-colors duration-200 text-lg">
-                  {link.name}
+  const DropdownContent = ({ links, isVisible, colorScheme = 'green' }) => {
+    const getColorClasses = () => {
+      switch (colorScheme) {
+        case 'purple':
+          return { bg: 'bg-purple-100', text: 'text-purple-600', hover: 'group-hover:bg-purple-600' };
+        case 'blue':
+          return { bg: 'bg-blue-100', text: 'text-blue-600', hover: 'group-hover:bg-blue-600' };
+        default:
+          return { bg: 'bg-green-100', text: 'text-green-600', hover: 'group-hover:bg-green-600' };
+      }
+    };
+    const colors = getColorClasses();
+
+    return (
+      <div
+        className={`fixed left-4 right-4 top-20 z-[60] transition-all duration-400 ease-out transform ${
+          isVisible ? 'opacity-100 visible translate-y-0 scale-100' : 'opacity-0 invisible -translate-y-4 scale-95'
+        }`}
+        onMouseEnter={handleDropdownContentEnter}
+        onMouseLeave={handleDropdownContentLeave}
+      >
+        <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 py-8 px-6">
+          <div className="grid grid-cols-2 gap-6">
+            {links.map((link) => (
+              <Link
+                key={link.name}
+                to={link.path}
+                className="group flex items-start space-x-3 p-4 rounded-xl hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+                onClick={() => setActiveDropdown(null)}
+              >
+                <div className={`flex-shrink-0 w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center ${colors.text} ${colors.hover} group-hover:text-white transition-all duration-200`}>
+                  {link.icon}
                 </div>
-                <div className="mt-2 text-sm text-gray-600 font-satoshi leading-relaxed">
-                  {link.description}
+                <div className="flex-1">
+                  <div className="font-satoshi font-semibold text-black transition-colors duration-200 text-lg">
+                    {link.name}
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600 font-satoshi leading-relaxed">
+                    {link.description}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <nav className="sticky top-0 z-50 font-satoshi p-4">
-      <div className="max-w-[1400px] mx-auto bg-gray-100 rounded-2xl shadow-lg border border-gray-200">
-        <div className="flex justify-between items-center h-16 px-6">
-          {/* Left Side - Logo + Navigation */}
-          <div className="flex items-center space-x-8">
-            {/* Logo */}
-            <Link to="/" className="flex-shrink-0">
-              <img src="/img/Logo.svg" alt="Chatters Logo" className="h-8" />
-            </Link>
+    <nav className={overlay ? 'fixed top-0 inset-x-0 z-50 font-satoshi' : 'sticky top-0 z-50 font-satoshi p-4'}>
+      <div className={overlay ? 'mx-auto max-w-[1400px] px-4' : 'max-w-[1400px] mx-auto bg-white rounded-2xl shadow-lg border border-gray-200'}>
+        <div className={overlay ? 'mt-4 rounded-2xl border border-gray-200/60 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50' : ''}>
+          <div className="flex justify-between items-center h-16 px-6">
+            {/* Left: Logo + Desktop Nav */}
+            <div className="flex items-center space-x-8">
+              <Link to="/" className="flex-shrink-0">
+                <img src="/img/Logo.svg" alt="Chatters Logo" className="h-8" />
+              </Link>
 
-            {/* Desktop Nav */}
-            <div className="hidden lg:flex lg:items-center lg:space-x-8 relative">
-              {/* Product Dropdown */}
-              <div 
-                className="relative"
-                onMouseEnter={() => handleDropdownEnter('product')}
-                onMouseLeave={handleDropdownLeave}
-              >
-                <div className="text-sm font-semibold text-black hover:text-green-600 flex items-center cursor-pointer transition-colors duration-200 font-satoshi">
-                  Product <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${activeDropdown === 'product' ? 'rotate-180' : ''}`} />
+              <div className="hidden lg:flex lg:items-center lg:space-x-8 relative">
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleDropdownEnter('product')}
+                  onMouseLeave={handleDropdownLeave}
+                >
+                  <div className="text-sm font-semibold text-black hover:text-green-600 flex items-center cursor-pointer transition-colors duration-200 font-satoshi">
+                    Product <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${activeDropdown === 'product' ? 'rotate-180' : ''}`} />
+                  </div>
+                  <DropdownContent links={productLinks} isVisible={activeDropdown === 'product'} colorScheme="green" />
                 </div>
-                <DropdownContent links={productLinks} isVisible={activeDropdown === 'product'} />
-              </div>
 
-              {/* Solutions Dropdown */}
-              <div 
-                className="relative"
-                onMouseEnter={() => handleDropdownEnter('solutions')}
-                onMouseLeave={handleDropdownLeave}
-              >
-                <div className="text-sm font-semibold text-black hover:text-green-600 flex items-center cursor-pointer transition-colors duration-200 font-satoshi">
-                  Solutions <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${activeDropdown === 'solutions' ? 'rotate-180' : ''}`} />
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleDropdownEnter('solutions')}
+                  onMouseLeave={handleDropdownLeave}
+                >
+                  <div className="text-sm font-semibold text-black hover:text-green-600 flex items-center cursor-pointer transition-colors duration-200 font-satoshi">
+                    Solutions <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${activeDropdown === 'solutions' ? 'rotate-180' : ''}`} />
+                  </div>
+                  <DropdownContent links={solutionsLinks} isVisible={activeDropdown === 'solutions'} colorScheme="purple" />
                 </div>
-                <DropdownContent links={solutionsLinks} isVisible={activeDropdown === 'solutions'} />
-              </div>
 
-              {/* Resources Dropdown */}
-              <div 
-                className="relative"
-                onMouseEnter={() => handleDropdownEnter('resources')}
-                onMouseLeave={handleDropdownLeave}
-              >
-                <div className="text-sm font-semibold text-black hover:text-green-600 flex items-center cursor-pointer transition-colors duration-200 font-satoshi">
-                  Resources <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${activeDropdown === 'resources' ? 'rotate-180' : ''}`} />
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleDropdownEnter('resources')}
+                  onMouseLeave={handleDropdownLeave}
+                >
+                  <div className="text-sm font-semibold text-black hover:text-green-600 flex items-center cursor-pointer transition-colors duration-200 font-satoshi">
+                    Resources <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${activeDropdown === 'resources' ? 'rotate-180' : ''}`} />
+                  </div>
+                  <DropdownContent links={resourcesLinks} isVisible={activeDropdown === 'resources'} colorScheme="blue" />
                 </div>
-                <DropdownContent links={resourcesLinks} isVisible={activeDropdown === 'resources'} />
-              </div>
 
-              {/* Pricing Link */}
+                <Link
+                  to="/pricing"
+                  className={`text-sm font-semibold transition-colors duration-200 font-satoshi ${isActive('/pricing') ? 'text-green-600' : 'text-black hover:text-green-600'}`}
+                >
+                  Pricing
+                </Link>
+              </div>
+            </div>
+
+            {/* Right: Auth */}
+            <div className="hidden lg:flex lg:items-center lg:space-x-4">
               <Link
-                to="/pricing"
+                to="https://my.getchatters.com/signin"
                 className="text-sm font-semibold text-black hover:text-green-600 transition-colors duration-200 font-satoshi"
               >
-                Pricing
+                Log in
               </Link>
+              <PrimaryButton text="Book a Demo" to="/demo" size="sm" />
             </div>
-          </div>
 
-          {/* Right Side - Auth Buttons */}
-          <div className="hidden lg:flex lg:items-center lg:space-x-4">
-            <Link 
-              to="https://my.getchatters.com/signin" 
-              className="text-sm font-semibold text-black hover:text-green-600 transition-colors duration-200 font-satoshi"
-            >
-              Log in
-            </Link>
-            <Link 
-              to="/demo" 
-              className="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-all duration-200 font-satoshi shadow-md hover:shadow-lg"
-            >
-              Book a Demo
-            </Link>
-          </div>
-
-          {/* Mobile Menu Toggle */}
-          <div className="lg:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-black focus:outline-none"
-            >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+            {/* Mobile toggle */}
+            <div className="lg:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-black focus:outline-none"
+              >
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Nav Menu */}
+      {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white mt-2 rounded-2xl border border-gray-200 shadow-2xl mx-4 max-h-[80vh] overflow-y-auto">
           <div className="px-4 pt-4 pb-6 space-y-4 font-satoshi">
-            {/* Product Section */}
             <div>
               <p className="text-sm font-semibold text-green-600 mb-2">Product</p>
               <div className="grid grid-cols-2 gap-2">
@@ -214,9 +210,8 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Solutions Section */}
             <div>
-              <p className="text-sm font-semibold text-green-600 mb-2">Solutions</p>
+              <p className="text-sm font-semibold text-purple-600 mb-2">Solutions</p>
               <div className="grid grid-cols-2 gap-2">
                 {solutionsLinks.map((link) => (
                   <Link
@@ -225,7 +220,7 @@ const Navbar = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex flex-col items-start space-y-2 p-3 rounded-lg hover:bg-gray-50"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
+                    <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
                       {link.icon}
                     </div>
                     <div className="text-xs font-medium text-black text-left">{link.name}</div>
@@ -234,20 +229,19 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Resources Section */}
             <div>
-              <p className="text-sm font-semibold text-green-600 mb-2">Resources</p>
+              <p className="text-sm font-semibold text-blue-600 mb-2">Resources</p>
               <div className="grid grid-cols-2 gap-2">
-                {resourcesLinks.map((link) => (
+                {resourcesLinks.map((link) =>
                   link.path.startsWith('http') ? (
                     <a
                       key={link.name}
                       href={link.path}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex flex-col items-start space-y-2 p-3 rounded-lg hover:bg-white/10"
+                      className="flex flex-col items-start space-y-2 p-3 rounded-lg hover:bg-gray-50"
                     >
-                      <div className="flex-shrink-0 w-8 h-8 bg-[#4ECDC4]/20 rounded-lg flex items-center justify-center text-[#4ECDC4]">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
                         {link.icon}
                       </div>
                       <div className="text-xs font-medium text-black text-left">{link.name}</div>
@@ -257,19 +251,18 @@ const Navbar = () => {
                       key={link.name}
                       to={link.path}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex flex-col items-start space-y-2 p-3 rounded-lg hover:bg-white/10"
+                      className="flex flex-col items-start space-y-2 p-3 rounded-lg hover:bg-gray-50"
                     >
-                      <div className="flex-shrink-0 w-8 h-8 bg-[#4ECDC4]/20 rounded-lg flex items-center justify-center text-[#4ECDC4]">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
                         {link.icon}
                       </div>
                       <div className="text-xs font-medium text-black text-left">{link.name}</div>
                     </Link>
                   )
-                ))}
+                )}
               </div>
             </div>
 
-            {/* Pricing & Auth Section */}
             <div className="pt-3 border-t border-gray-200 space-y-3">
               <Link
                 to="/pricing"
@@ -278,22 +271,18 @@ const Navbar = () => {
               >
                 Pricing
               </Link>
-              
+
               <div className="grid grid-cols-2 gap-3">
-                <Link 
-                  to="https://my.getchatters.com/signin" 
+                <Link
+                  to="https://my.getchatters.com/signin"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="text-center border border-gray-300 text-black px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
                 >
                   Log in
                 </Link>
-                <Link 
-                  to="/demo" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold text-center hover:bg-green-700 transition-colors shadow-md"
-                >
-                  Book Demo
-                </Link>
+                <div onClick={() => setIsMobileMenuOpen(false)}>
+                  <PrimaryButton text="Book Demo" to="/demo" size="sm" className="w-full justify-center" />
+                </div>
               </div>
             </div>
           </div>

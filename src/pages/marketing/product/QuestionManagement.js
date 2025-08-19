@@ -1,9 +1,10 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { ArrowRight, HelpCircle, CheckCircle, Star, Users, Globe, Zap, BarChart3, Settings } from 'lucide-react';
-import Navbar from '../../components/marketing/layout/Navbar';
-import Footer from '../../components/marketing/layout/Footer';
-import CTASection from '../../components/marketing/sections/CTASection';
+import Navbar from '../../../components/marketing/layout/Navbar';
+import Footer from '../../../components/marketing/layout/Footer';
+import CTASection from '../../../components/marketing/sections/CTASection';
+import PageHeader from '../../../components/marketing/common/sections/PageHeader';
 
 const QuestionManagementFeature = () => {
   const features = [
@@ -58,7 +59,7 @@ const QuestionManagementFeature = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#082524]">
+    <div className="min-h-screen bg-white">
       <Helmet>
         <title>Question Management | Chatters - Custom Feedback Forms</title>
         <meta 
@@ -75,43 +76,15 @@ const QuestionManagementFeature = () => {
         <link rel="canonical" href="https://getchatters.com/features/question-management" />
       </Helmet>
 
-      <Navbar />
+      <Navbar overlay />
 
-      {/* Hero Section */}
-      <section className="relative bg-[#082524] pt-32 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="flex justify-center mb-6">
-              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#4ECDC4]/20">
-                <HelpCircle className="h-8 w-8 text-[#4ECDC4]" />
-              </div>
-            </div>
-            <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 font-satoshi">
-              Intelligent
-              <span className="text-[#4ECDC4]"> Question Management</span>
-            </h1>
-            <p className="text-xl text-gray-200 mb-8 leading-relaxed font-satoshi">
-              Create dynamic feedback forms that adapt to your customers. Build intelligent question flows, use industry templates, and collect more meaningful feedback with our advanced Question Management system.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a 
-                href="/demo" 
-                className="group bg-[#4ECDC4] text-[#082524] px-8 py-4 rounded-xl text-lg font-semibold hover:bg-[#3db8b8] transition-all duration-300 font-satoshi shadow-lg hover:shadow-xl flex items-center justify-center"
-              >
-                Try Question Builder
-                <ArrowRight className="ml-2 w-5 h-5 transform transition-transform duration-300 group-hover:translate-x-1" />
-              </a>
-              <a 
-                href="/pricing" 
-                className="group border-2 border-[#4ECDC4] bg-transparent text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-[#4ECDC4] hover:text-[#082524] transition-all duration-300 font-satoshi flex items-center justify-center"
-              >
-                View Pricing
-                <ArrowRight className="ml-2 w-5 h-5 transform transition-transform duration-300 group-hover:translate-x-1" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        title="Intelligent Question Management"
+        description="Create dynamic feedback forms that adapt to your customers. Build intelligent question flows, use industry templates, and collect more meaningful feedback with our advanced Question Management system."
+        backgroundGradient="from-white to-green-100"
+        showSubtitle={true}
+        subtitle="Question Management"
+      />
 
       <div className="bg-white">
         {/* Features Section */}
