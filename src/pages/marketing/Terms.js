@@ -1,127 +1,117 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import Navbar from '../../components/marketing/layout/Navbar';
-import Footer from '../../components/marketing/layout/Footer';
+import React from "react";
+import { Helmet } from "react-helmet";
+import Navbar from "../../components/marketing/layout/Navbar";
+import PageHeader from "../../components/marketing/common/sections/PageHeader";
+import Footer from "../../components/marketing/layout/Footer";
 
-const TermsAndConditionsPage = () => {
+const TermsPage = () => {
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
-      <Navbar />
+    <div className="min-h-screen bg-white">
+      <Helmet>
+        <title>Terms & Conditions | Chatters</title>
+        <meta
+          name="description"
+          content="Read the Terms & Conditions for using Chatters real-time feedback software. Learn about eligibility, accounts, usage, intellectual property, and more."
+        />
+        <meta
+          name="keywords"
+          content="Chatters terms, Chatters conditions, Chatters legal, guest feedback software terms, hospitality software terms, Chatters agreement"
+        />
+        <meta property="og:title" content="Chatters Terms & Conditions" />
+        <meta
+          property="og:description"
+          content="Review the Terms & Conditions for using Chatters. Understand your rights, responsibilities, and legal obligations as a user of our feedback platform."
+        />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://getchatters.com/terms" />
+      </Helmet>
 
-      {/* Hero Section */}
-      <div className="relative pt-32 pb-16 sm:pt-40 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 space-y-3 tracking-tight">
-              <span className="block">Terms &</span>
-              <span className="block bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                Conditions
-              </span>
-            </h1>
-            <p className="mt-6 max-w-2xl mx-auto text-xl text-gray-600">
-              Please read these terms carefully before using getchatters.com.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Navbar overlay */}
+      <Navbar overlay />
 
-      {/* Content Section */}
-      <div className="bg-gradient-to-br from-slate-50 via-emerald-50 to-green-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Introduction</h2>
-            <p className="text-gray-600">
-              Welcome to getchatters.com! These Terms & Conditions govern your use of our platform. By accessing or using getchatters.com, you agree to these terms. If you do not agree, please do not use the platform.
-            </p>
-          </div>
+      <PageHeader
+        title="Terms & Conditions"
+        description="Please read these terms and conditions carefully before using Chatters."
+        backgroundGradient="from-white to-gray-100"
+        showSubtitle={true}
+        subtitle="Legal Information"
+      />
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Eligibility</h2>
-            <p className="text-gray-600">
-              To use getchatters.com, you must be at least 18 years old or the legal age of majority in your jurisdiction. By using the platform, you represent and warrant that you meet these requirements.
-            </p>
-          </div>
+      <section className="max-w-4xl mx-auto px-6 py-20 text-left">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">1. Introduction</h2>
+        <p className="text-gray-700 mb-10 leading-relaxed">
+          These Terms & Conditions govern your use of Chatters. By accessing or using our service,
+          you agree to be bound by these Terms. If you do not agree, you must not use the service.
+        </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">3. Account Registration</h2>
-            <p className="text-gray-600">
-              To access certain features, you must create an account. You agree to provide accurate and complete information and to keep your password secure. You are responsible for all activities under your account.
-            </p>
-          </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">2. Eligibility</h2>
+        <p className="text-gray-700 mb-10 leading-relaxed">
+          You must be at least 18 years old to use Chatters. By using the service, you represent and
+          warrant that you meet this requirement.
+        </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">4. User Responsibilities</h2>
-            <p className="text-gray-600">
-              You agree to use getchatters.com only for lawful purposes. Prohibited activities include:
-              <ul className="list-disc list-inside mt-2">
-                <li>Violating any laws or regulations.</li>
-                <li>Uploading malicious software or engaging in hacking.</li>
-                <li>Harassing or harming other users.</li>
-              </ul>
-            </p>
-          </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">3. Use of Service</h2>
+        <p className="text-gray-700 mb-10 leading-relaxed">
+          You agree to use Chatters only for lawful purposes and in accordance with these Terms.
+          You are responsible for ensuring that your use of the service does not violate any
+          applicable laws or regulations.
+        </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Intellectual Property</h2>
-            <p className="text-gray-600">
-              All content on getchatters.com, including text, graphics, and logos, is owned by us or our licensors. You may not use, copy, or distribute any content without our prior written consent.
-            </p>
-          </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">4. Accounts</h2>
+        <p className="text-gray-700 mb-10 leading-relaxed">
+          When you create an account, you must provide accurate and complete information. You are
+          responsible for maintaining the confidentiality of your account credentials and for all
+          activities under your account.
+        </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Payments and Billing</h2>
-            <p className="text-gray-600">
-              If you purchase a subscription, you agree to pay all applicable fees. Fees are non-refundable unless otherwise stated. We may change pricing at any time, with notice.
-            </p>
-          </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">5. Intellectual Property</h2>
+        <p className="text-gray-700 mb-10 leading-relaxed">
+          All content, features, and functionality of Chatters are and will remain the exclusive
+          property of Chatters Ltd. You may not copy, modify, distribute, or create derivative works
+          without prior written consent.
+        </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Termination</h2>
-            <p className="text-gray-600">
-              We reserve the right to terminate or suspend your account if you violate these terms. You may also terminate your account at any time by contacting us.
-            </p>
-          </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">6. Termination</h2>
+        <p className="text-gray-700 mb-10 leading-relaxed">
+          We may terminate or suspend your account and access to the service immediately, without
+          prior notice, if you breach these Terms.
+        </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Limitation of Liability</h2>
-            <p className="text-gray-600">
-              getchatters.com is not liable for any indirect, incidental, or consequential damages arising from your use of the platform. Our total liability is limited to the amount you paid us in the last 12 months.
-            </p>
-          </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">7. Limitation of Liability</h2>
+        <p className="text-gray-700 mb-10 leading-relaxed">
+          To the fullest extent permitted by law, Chatters shall not be liable for any indirect,
+          incidental, special, consequential, or punitive damages arising from your use of the
+          service.
+        </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Dispute Resolution</h2>
-            <p className="text-gray-600">
-              Any disputes will be resolved through binding arbitration in [Your Jurisdiction], in accordance with the rules of [Arbitration Organization].
-            </p>
-          </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">8. Governing Law</h2>
+        <p className="text-gray-700 mb-10 leading-relaxed">
+          These Terms are governed by and construed in accordance with the laws of England and
+          Wales. Any disputes shall be subject to the exclusive jurisdiction of the courts of
+          England and Wales.
+        </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Governing Law</h2>
-            <p className="text-gray-600">
-              These terms are governed by the laws of [Your Jurisdiction]. Any disputes will be resolved in the courts of [Your Jurisdiction].
-            </p>
-          </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">9. Changes</h2>
+        <p className="text-gray-700 mb-10 leading-relaxed">
+          We reserve the right to update or modify these Terms at any time. Changes will be posted
+          on this page with an updated revision date.
+        </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">11. Changes to Terms</h2>
-            <p className="text-gray-600">
-              We may update these terms from time to time. Continued use of the platform constitutes acceptance of the updated terms.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">12. Contact Information</h2>
-            <p className="text-gray-600">
-              If you have any questions about these terms, please contact us at <a href="mailto:support@getchatters.com" className="text-green-600">support@getchatters.com</a>.
-            </p>
-          </div>
-        </div>
-      </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">10. Contact Us</h2>
+        <p className="text-gray-700 leading-relaxed">
+          If you have any questions about these Terms, please contact us at:{" "}
+          <a
+            href="mailto:hello@getchatters.com"
+            className="text-purple-600 hover:underline"
+          >
+            hello@getchatters.com
+          </a>
+        </p>
+      </section>
 
       <Footer />
     </div>
   );
 };
 
-export default TermsAndConditionsPage;
+export default TermsPage;

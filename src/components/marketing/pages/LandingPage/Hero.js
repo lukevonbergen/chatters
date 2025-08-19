@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Check, ArrowRight} from "lucide-react";
 import PrimaryButton from "../../common/buttons/PrimaryButton";
@@ -16,6 +16,113 @@ const Hero = ({
   ],
   backgroundGradient = "from-white via-white to-purple-50",
 }) => {
+
+  // Animation state
+  const [stats, setStats] = useState({ alerts: 12, response: "3m", resolution: 84 });
+  const [feedbackItems, setFeedbackItems] = useState([
+    { id: 1, table: "Table 213", msg: "I'm still waiting for my food..", status: "Unresolved", isNew: false },
+    { id: 2, table: "Table 33", msg: "Just needs assistance", status: "Assistance Request", isNew: false },
+    { id: 3, table: "Table 801", msg: "Music is too loud!!", status: "Resolved", isNew: false },
+  ]);
+
+  // Pool of possible feedback messages
+  const feedbackPool = [
+    { table: "Table 15", msg: "Service is really slow today", status: "Unresolved" },
+    { table: "Table 8", msg: "Could we get some extra napkins?", status: "Assistance Request" },
+    { table: "Table 42", msg: "The food was cold when it arrived", status: "Unresolved" },
+    { table: "Table 23", msg: "WiFi password isn't working", status: "Assistance Request" },
+    { table: "Table 67", msg: "Table is a bit wobbly", status: "Assistance Request" },
+    { table: "Table 91", msg: "Really happy with the service!", status: "Resolved" },
+    { table: "Table 5", msg: "Missing cutlery at our table", status: "Unresolved" },
+    { table: "Table 12", msg: "Could we get the check please?", status: "Assistance Request" },
+    { table: "Table 34", msg: "The AC is too cold in here", status: "Assistance Request" },
+    { table: "Table 7", msg: "Our order is missing the side dish", status: "Unresolved" },
+    { table: "Table 19", msg: "Could you turn down the music please?", status: "Assistance Request" },
+    { table: "Table 28", msg: "The bathroom needs attention", status: "Unresolved" },
+    { table: "Table 56", msg: "We ordered medium but got well done", status: "Unresolved" },
+    { table: "Table 3", msg: "Absolutely loved the dessert!", status: "Resolved" },
+    { table: "Table 14", msg: "Water glasses need refilling", status: "Assistance Request" },
+    { table: "Table 45", msg: "Server was incredibly helpful", status: "Resolved" },
+    { table: "Table 22", msg: "Spilled drink on the floor", status: "Assistance Request" },
+    { table: "Table 11", msg: "Food took over 45 minutes", status: "Unresolved" },
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Random action: either add new feedback or resolve existing
+      const action = Math.random() < 0.6 ? 'add' : 'resolve';
+      
+      if (action === 'add') {
+        setFeedbackItems(prev => {
+          // Filter out feedback that's already showing
+          const currentTables = prev.map(item => item.table);
+          const availableFeedback = feedbackPool.filter(feedback => 
+            !currentTables.includes(feedback.table)
+          );
+          
+          // If no available feedback, skip this cycle
+          if (availableFeedback.length === 0) return prev;
+          
+          // Add new feedback
+          const newFeedback = availableFeedback[Math.floor(Math.random() * availableFeedback.length)];
+          const newItem = {
+            id: Date.now(),
+            ...newFeedback,
+            isNew: true
+          };
+
+          // Update stats
+          setStats(prevStats => ({
+            alerts: prevStats.alerts + (newFeedback.status !== 'Resolved' ? 1 : 0),
+            response: Math.random() < 0.5 ? "2m" : "3m",
+            resolution: Math.min(99, prevStats.resolution + Math.floor(Math.random() * 3))
+          }));
+
+          const updated = [newItem, ...prev];
+          // Keep only last 4 items
+          return updated.slice(0, 4);
+        });
+
+        // Remove isNew flag after animation
+        setTimeout(() => {
+          setFeedbackItems(prev => prev.map(item => ({ ...item, isNew: false })));
+        }, 500);
+
+      } else {
+        // Resolve existing unresolved feedback
+        setFeedbackItems(prev => {
+          const unresolved = prev.filter(item => item.status === 'Unresolved');
+          if (unresolved.length > 0) {
+            const itemToResolve = unresolved[0];
+            
+            // Update resolution rate
+            setStats(prevStats => ({
+              ...prevStats,
+              resolution: Math.min(99, prevStats.resolution + 1)
+            }));
+            
+            return prev.map(item => 
+              item.id === itemToResolve.id 
+                ? { ...item, status: 'Resolved', isResolved: true }
+                : item
+            );
+          }
+          return prev;
+        });
+      }
+    }, 3000); // Every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []); // Empty dependency array to prevent restarts
+
+  // Remove resolved items after a delay
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setFeedbackItems(prev => prev.filter(item => !item.isResolved));
+    }, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [feedbackItems]);
 
   return (
     <section className={`relative w-full bg-gradient-to-b ${backgroundGradient} overflow-hidden`}>
@@ -130,30 +237,32 @@ const Hero = ({
                 <div className="p-5">
                   <div className="grid grid-cols-3 gap-4 mb-5">
                     {[
-                      { label: "Today alerts", value: "12" },
-                      { label: "Avg. response", value: "3m" },
-                      { label: "Resolution rate", value: "84%" },
+                      { label: "Today alerts", value: stats.alerts },
+                      { label: "Avg. response", value: stats.response },
+                      { label: "Resolution rate", value: `${stats.resolution}%` },
                     ].map((s) => (
                       <div key={s.label} className="rounded-xl border border-gray-200 p-4 text-center">
-                        <div className="text-2xl font-bold text-gray-900">{s.value}</div>
+                        <div className="text-2xl font-bold text-gray-900 transition-all duration-300">{s.value}</div>
                         <div className="text-[11px] uppercase tracking-wider text-gray-500 mt-1">{s.label}</div>
                       </div>
                     ))}
                   </div>
 
                   <div className="space-y-3">
-                    {[
-                      { table: "Table 213", msg: "I'm still waiting for my food..", status: "Unresolved" },
-                      { table: "Table 33", msg: "Just needs assistance", status: "Assistance Request" },
-                      { table: "Table 801", msg: "Music is too loud!!", status: "Resolved" },
-                    ].map((a, i) => (
-                      <div key={i} className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+                    {feedbackItems.map((a) => (
+                      <div 
+                        key={a.id} 
+                        className={`flex items-center justify-between rounded-xl border border-gray-200 p-3 transition-all duration-500 ${
+                          a.isNew ? 'animate-pulse bg-blue-50 border-blue-200 scale-105' : 
+                          a.isResolved ? 'opacity-0 scale-95 -translate-x-4' : ''
+                        }`}
+                      >
                         <div>
                           <div className="text-sm font-semibold text-gray-900">{a.table}</div>
                           <div className="text-sm text-gray-600">{a.msg}</div>
                         </div>
                         <span
-                          className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg ${
+                          className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all duration-300 ${
                             a.status === "Resolved"
                               ? "bg-green-100 text-green-700"
                               : a.status === "Assistance Request"

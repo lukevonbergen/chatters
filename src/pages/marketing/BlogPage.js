@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar, Clock, User, Tag, Search, Filter } from 'lucide-react';
 import Navbar from '../../components/marketing/layout/Navbar';
+import PageHeader from '../../components/marketing/common/sections/PageHeader';
 import Footer from '../../components/marketing/layout/Footer';
 
 const BlogPage = () => {
@@ -128,36 +129,15 @@ const BlogPage = () => {
         <link rel="canonical" href="https://getchatters.com/blog" />
       </Helmet>
 
-      <Navbar />
+      <Navbar overlay/>
 
-      {/* Hero Section */}
-      <section className="relative bg-[#082524] pt-32 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 font-satoshi">
-              Insights & 
-              <span className="text-[#4ECDC4]"> Industry Trends</span>
-            </h1>
-            <p className="text-xl text-gray-200 mb-8 leading-relaxed font-satoshi">
-              Stay ahead with expert insights on customer feedback management, industry trends, and proven strategies to grow your business.
-            </p>
-            
-            {/* Search and Filter Bar */}
-            <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-4 mb-8">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search articles..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4ECDC4] focus:border-transparent font-satoshi"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        title="Chatters Blog"
+        description="The Chatters Blog is your go-to resource for the latest insights on customer feedback management, industry trends, and business growth strategies. Explore expert articles, case studies, and product updates to help you enhance your customer experience."
+        backgroundGradient="from-white to-blue-50"
+        showSubtitle={true}
+        subtitle="Support & Resources"
+      />
 
       <div className="bg-white">
         {/* Categories */}

@@ -2,6 +2,9 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 import Navbar from '../../components/marketing/layout/Navbar';
 import Hero from '../../components/marketing/pages/LandingPage/Hero.js';
+import AlternatingSections from '../../components/marketing/common/sections/AlternatingSections.js';
+import TestimonialsSection from '../../components/marketing/common/sections/Testimonials.js';
+import FAQSection from '../../components/marketing/common/sections/FAQSection.js';
 import Footer from '../../components/marketing/layout/Footer';
 import CTA from '../../components/marketing/common/sections/CTA';
 
@@ -118,11 +121,89 @@ const LandingPage = () => {
 
       <Hero />
 
+      <AlternatingSections
+        sections={[
+          {
+            title: "Tailored pricing for every venue",
+            description: "Whether you run a single pub or a multi-location group, our pricing adapts to your scale and needs.",
+            image: "/images/pricing-venue.jpg",
+            link: "/demo" // 👈 Learn More button will show only if you add this
+          },
+          {
+            title: "No per-user fees",
+            description: "Invite unlimited staff at no extra cost — focus on resolving guest feedback, not counting seats.",
+            image: "/images/pricing-staff.jpg",
+            link: "/features"
+          },
+          {
+            title: "Scale with your business",
+            description: "Start with one location and add more as you grow. Pricing scales seamlessly as you expand.",
+            image: "/images/pricing-scale.jpg",
+            link: "/pricing"
+          },
+        ]}
+      />
+
+      <TestimonialsSection
+        eyebrow="Testimonials"
+        title="Teams prevent bad reviews with Chatters"
+        description="A few words from managers and operators using Chatters every day."
+        cols={{ base: 1, sm: 1, md: 2, lg: 3 }}
+        dottedBackground
+        orbGlow
+        wavyBottom
+        items={[
+          {
+            quote: "We prevented 30+ negative reviews in our first month.",
+            author: "Sam Patel",
+            role: "GM, Harbour Grill",
+            avatar: "/img/avatars/sam.jpg",
+            logo: "/img/logos/harbour.svg",
+            rating: 5,
+          },
+          {
+            quote: "Staff resolve issues in minutes now, not after the shift.",
+            author: "Julia Kennedy",
+            role: "Ops Lead, North Lane Group",
+            avatar: "/img/avatars/julia.jpg",
+            logo: "/img/logos/northlane.svg",
+            rating: 4.5,
+          },
+          {
+            quote: "Our 5-star ratings jumped within weeks.",
+            author: "Craig Morton",
+            role: "Owner, The Market Tap",
+            avatar: "/img/avatars/craig.jpg",
+            logo: "/img/logos/markettap.svg",
+            rating: 5,
+          },
+        ]}
+      />
+
+
+
       <CTA 
         title="Ready to transform your customer feedback?"
         subtitle="Join hundreds of venues already using Chatters to improve their customer experience."
         buttonText="Book a Demo"
         buttonLink="/demo"
+      />
+
+       <FAQSection
+        eyebrow="Chatters FAQ"
+        title="Everything you need to know"
+        description="If you have a different question, contact us and we'll help."
+        dottedBackground
+        wavyBottom = {false}
+        backgroundGradient="from-white via-white to-orange-50"
+        gradientDirection="bg-gradient-to-b"
+        defaultOpenIndex={0}
+        faqs={[
+          { q: "How do customers leave feedback?", a: "QR codes at tables link to simple forms. Customers scan, rate, and comment in under 30 seconds." },
+          { q: "Does it work during busy service?", a: "Yes—alerts are designed for fast-paced restaurant environments with quick resolution flows." },
+          { q: "Can we use it across multiple restaurants?", a: "Absolutely. Multi-location management with location-specific insights and comparisons built-in." },
+          { q: "What if we get too many alerts?", a: "Smart filtering ensures only actionable issues reach staff, with automatic escalation for serious problems." },
+        ]}
       />
 
       <Footer />

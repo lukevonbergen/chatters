@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { HelpCircle, Play, Settings, Smartphone, Zap, BarChart3, Users, FileText, MessageSquare, AlertTriangle, Globe, Shield, Clock, CheckCircle, Code, ArrowRight, Search, BookOpen, Phone, Mail } from 'lucide-react';
 import Navbar from '../../components/marketing/layout/Navbar';
+import PageHeader from '../../components/marketing/common/sections/PageHeader';
 import Footer from '../../components/marketing/layout/Footer';
 
 const HelpPage = () => {
@@ -140,39 +141,16 @@ const HelpPage = () => {
         <link rel="canonical" href="https://getchatters.com/help" />
       </Helmet>
 
-      <Navbar />
+      <Navbar overlay/>
 
       {/* Hero Section */}
-      <section className="relative bg-gray-50 pt-32 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100">
-              <HelpCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
-          <h1 className="text-4xl lg:text-6xl font-bold text-primary leading-tight mb-6 font-satoshi">
-            Help 
-            <span className="text-brand"> Center</span>
-          </h1>
-          <p className="text-xl text-secondary mb-8 leading-relaxed font-satoshi max-w-4xl mx-auto">
-            Everything you need to know about using Chatters to collect customer feedback, manage your team, and improve your business operations.
-          </p>
-          
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search for help articles, troubleshooting, setup guides..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl text-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        title="Chatters Help Center"
+        description="Find answers, guides, and support to get the most out of Chatters. Browse our help articles or reach out to our team if you need assistance."
+        backgroundGradient="from-white to-blue-50"
+        showSubtitle={true}
+        subtitle="Support & Resources"
+      />
 
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -945,7 +923,7 @@ const HelpPage = () => {
                       <MessageSquare className="w-6 h-6 text-green-600" />
                     </div>
                     <h4 className="font-semibold text-primary mb-2 font-satoshi">Live Chat</h4>
-                    <p className="text-sm text-gray-700 mb-2 font-satoshi">Monday-Friday, 9 AM - 6 PM EST</p>
+                    <p className="text-sm text-gray-700 mb-2 font-satoshi">Monday-Friday, 9 AM - 6 PM GMT</p>
                     <p className="text-sm text-gray-700 mb-2 font-satoshi">Response Time: Under 5 minutes</p>
                     <p className="text-sm text-gray-700 font-satoshi">Best for: Quick questions, urgent issues</p>
                   </div>
@@ -956,7 +934,7 @@ const HelpPage = () => {
                     </div>
                     <h4 className="font-semibold text-primary mb-2 font-satoshi">Phone Support</h4>
                     <p className="text-sm text-gray-700 mb-2 font-satoshi">Enterprise customers only</p>
-                    <p className="text-sm text-gray-700 mb-2 font-satoshi">Monday-Friday, 9 AM - 5 PM EST</p>
+                    <p className="text-sm text-gray-700 mb-2 font-satoshi">Monday-Friday, 9 AM - 5 PM GMT</p>
                     <p className="text-sm text-gray-700 font-satoshi">Best for: Critical issues, training</p>
                   </div>
                 </div>
@@ -976,10 +954,10 @@ const HelpPage = () => {
                 <div className="border-t-2 border-gray-200 pt-8 mt-16">
                   <div className="bg-gray-50 rounded-xl p-6">
                     <div className="text-center text-gray-600 font-satoshi">
-                      <p className="mb-2"><strong>Help Center Version:</strong> 2.0</p>
-                      <p className="mb-2"><strong>Last Updated:</strong> December 2024</p>
-                      <p className="mb-2"><strong>Review Schedule:</strong> Monthly</p>
-                      <p><strong>Next Review:</strong> January 2025</p>
+                      <p className="mb-2"><strong>Help Center Version:</strong> 1.0</p>
+                      <p className="mb-2"><strong>Last Updated:</strong> August 2025</p>
+                      <p className="mb-2"><strong>Review Schedule:</strong> Bi-monthly</p>
+                      <p><strong>Next Review:</strong> October 2025</p>
                     </div>
                   </div>
                 </div>

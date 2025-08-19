@@ -25,7 +25,9 @@ import QuestionManagement_Feature from './pages/marketing/product/QuestionManage
 import BusinessIntelligence_Feature from './pages/marketing/product/BusinessIntelligence';
 
 import RestaurantSolution from './pages/marketing/solutions/RestaurantSolution';
-import HotelSolution from './pages/marketing/solutions/HotelSolutions';
+import HotelSolution from './pages/marketing/solutions/HotelSolution';
+import RetailSolution from './pages/marketing/solutions/RetailSolution';
+import EventSolution from './pages/marketing/solutions/EventSolution';
 
 const MarketingRoutes = () => {
   return (
@@ -49,8 +51,8 @@ const MarketingRoutes = () => {
       <Route path="/features/custom-branding" element={<CustomBranding_Feature />} />
       <Route path="/features/custom-questions" element={<CustomQuestions_Feature />} />
       <Route path="/features/dashboards" element={<Dashboards_Feature />} />
-      <Route path="/features/question-management" element={<QuestionManagement_Feature />} />
-      <Route path="/features/business-intelligence" element={<BusinessIntelligence_Feature />} />
+      <Route path="/product/question-management" element={<QuestionManagement_Feature />} />
+      <Route path="/product/business-intelligence" element={<BusinessIntelligence_Feature />} />
 
       {/* 📝 Blog Pages */}
       <Route path="/blog" element={<BlogPage />} />
@@ -59,6 +61,8 @@ const MarketingRoutes = () => {
       {/* 🏢 Solutions Pages */}
       <Route path="/solutions/restaurants" element={<RestaurantSolution />} />
       <Route path="/solutions/hotels" element={<HotelSolution />} />
+      <Route path="/solutions/retail" element={<RetailSolution />} />
+      <Route path="/solutions/events" element={<EventSolution />} />
 
     </Routes>
   );
