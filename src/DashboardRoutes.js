@@ -2,36 +2,36 @@ import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 // Auth
-import SignInPage from './pages/SignIn';
-import SignUpPage from './pages/SignUp';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import SetPasswordPage from './pages/set-password';
+import SignInPage from './pages/auth/SignIn';
+import SignUpPage from './pages/auth/SignUp';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
+import SetPasswordPage from './pages/auth/set-password';
 
 // Venue‑aware app pages
-import DashboardPage from './pages/Dashboard';
-import ManageQuestions from './pages/ManageQuestions';
-import Floorplan from './pages/Floorplan';
-import TablesDashboard from './pages/Dashboard_Tables';
-import SettingsPage from './pages/SettingsPage';
-import TemplatesPage from './pages/QRTemplates';
-import ReportsPage from './pages/ReportsPage';
-import Settings_Staff from './pages/settings_staff';
-import StaffLeaderboard from './pages/Staff_Leaderboard';
-import BillingPage from './pages/Billing';
-import FeedbackFeed from './pages/FeedbackFeed';
+import DashboardPage from './pages/dashboard/Dashboard';
+import ManageQuestions from './pages/dashboard/ManageQuestions';
+import Floorplan from './pages/dashboard/Floorplan';
+import TablesDashboard from './pages/dashboard/Dashboard_Tables';
+import SettingsPage from './pages/dashboard/SettingsPage';
+import TemplatesPage from './pages/dashboard/QRTemplates';
+import ReportsPage from './pages/dashboard/ReportsPage';
+import Settings_Staff from './pages/dashboard/settings_staff';
+import StaffLeaderboard from './pages/dashboard/Staff_Leaderboard';
+import BillingPage from './pages/dashboard/Billing';
+import FeedbackFeed from './pages/dashboard/FeedbackFeed';
 
 // Kiosk (venue‑aware, no dashboard frame)
-import KioskPage from './pages/KioskPage';
+import KioskPage from './pages/dashboard/KioskPage';
 
 // Public / guest routes (no venue context)
-import CustomerFeedbackPage from './pages/CustomerFeedback';
+import CustomerFeedbackPage from './pages/dashboard/CustomerFeedback';
 
 // Testing (outside venue context unless you need it)
 import TestDashboardPage from './pages/admin/TestDashboardPage';
 
 // Frames & context
-import DashboardFrame from './pages/DashboardFrame';
+import DashboardFrame from './pages/dashboard/DashboardFrame';
 import { VenueProvider } from './context/VenueContext';
 
 // Wrap all authenticated dashboard pages once: VenueProvider + DashboardFrame

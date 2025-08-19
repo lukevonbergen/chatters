@@ -1,25 +1,25 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useVenue } from '../../../context/VenueContext';
+import { useVenue } from '../../context/VenueContext';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../../utils/supabase';
-import { Cog, Menu, X } from 'lucide-react';
+import { supabase } from '../../utils/supabase';
+import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown, FiExternalLink } from 'react-icons/fi';
 
-import { Button } from '../../ui/button';
+import { Button } from '../../components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from '../../ui/dropdown-menu';
+} from '../../components/ui/dropdown-menu';
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from '../../ui/popover';
+} from '../../components/ui/popover';
 
 const navLinks = [
-  { to: '/', label: 'Overview' },
+  { to: '/dashboard', label: 'Overview' },
   { to: '/questions', label: 'Feedback' },
   { to: '/reports', label: 'Reports' },
   { to: '/floorplan', label: 'Floor Plan' },
@@ -34,30 +34,114 @@ const UpdatedDashboardFrame = ({ children }) => {
   const navigate = useNavigate();
   const { venueId, venueName, allVenues, setCurrentVenue, userRole } = useVenue();
   const [userInfo, setUserInfo] = useState(null);
+  
+  // Trial info state
+  const [trialInfo, setTrialInfo] = useState(null);
 
   useEffect(() => {
     const loadUser = async () => {
       const { data: userData } = await supabase.auth.getUser();
       const email = userData?.user?.email;
+      const userId = userData?.user?.id;
+      
       if (!email) return navigate('/signin');
-
+      
       const { data: user } = await supabase
         .from('users')
-        .select('email, role, first_name, last_name')
-        .eq('email', email)
+        .select('email, role, account_id')
+        .eq('id', userId)  // Use the user ID instead of email
         .single();
-
+      
       if (!user) return navigate('/signin');
+      
       setUserInfo(user);
-    };
 
+      // Fetch trial info for all users (masters directly, managers via venue)
+      let accountIdToCheck = user.account_id;
+      
+      // For managers, get account_id through their venue
+      if (user.role === 'manager' && !accountIdToCheck) {
+        const { data: staffRow } = await supabase
+          .from('staff')
+          .select('venues!inner(account_id)')
+          .eq('user_id', userId)
+          .limit(1)
+          .single();
+          
+        accountIdToCheck = staffRow?.venues?.account_id;
+      }
+
+      if (accountIdToCheck) {
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('trial_ends_at, is_paid')
+          .eq('id', accountIdToCheck)
+          .single();
+
+        if (account?.trial_ends_at && !account.is_paid) {
+          const trialEndDate = new Date(account.trial_ends_at);
+          const daysLeft = Math.max(
+            0,
+            Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          );
+          
+          setTrialInfo({
+            endsAt: trialEndDate,
+            daysLeft: daysLeft,
+            isActive: daysLeft > 0,
+            isExpired: daysLeft <= 0,
+            isPaid: account.is_paid
+          });
+        }
+      }
+    };
     loadUser();
   }, [navigate]);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // For expired trials, redirect to billing page
+  const isOnBillingRoute = location.pathname === '/settings/billing' || location.pathname.startsWith('/settings/billing');
+  
+  useEffect(() => {
+    if (trialInfo?.isExpired && !isOnBillingRoute) {
+      navigate('/settings/billing');
+    }
+  }, [trialInfo?.isExpired, isOnBillingRoute, navigate]);
+
+  const handleOpenKiosk = () => {
+    // Open near-fullscreen popup window
+    const w = window.screen?.availWidth ?? window.innerWidth;
+    const h = window.screen?.availHeight ?? window.innerHeight;
+    const features = `popup=yes,toolbar=0,location=0,menubar=0,scrollbars=1,status=0,resizable=1,left=0,top=0,width=${w},height=${h}`;
+    const win = window.open('/kiosk', 'kioskWindow', features);
+    if (!win) return;
+
+    // Attempt fullscreen on the new window (best-effort)
+    try {
+      win.focus();
+      const tryFullscreen = () => {
+        const doc = win.document;
+        const el = doc?.documentElement || doc?.body;
+        if (!el) return;
+        const req =
+          el.requestFullscreen ||
+          el.webkitRequestFullscreen ||
+          el.mozRequestFullScreen ||
+          el.msRequestFullscreen;
+        req?.call(el).catch(() => {});
+      };
+      win.addEventListener('load', tryFullscreen);
+      // Fallback attempt after a short delay
+      setTimeout(() => {
+        try { tryFullscreen(); } catch {}
+      }, 800);
+    } catch {
+      // Ignore cross-window access issues; window still opened
+    }
+  };
 
   if (!userInfo) {
     return (
@@ -67,10 +151,42 @@ const UpdatedDashboardFrame = ({ children }) => {
     );
   }
 
-  const allNavLinks = [...navLinks, ...(userRole === 'master' ? [{ to: '/locations', label: 'Locations' }] : [])];
+  // Remove the locations link - venue management is now in Settings
+  const allNavLinks = navLinks;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Trial Banner */}
+      {trialInfo && trialInfo.isActive && (
+        <div className="bg-gray-100 border-b border-gray-200 px-4 py-3">
+          <div className="w-full flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 bg-gray-200 rounded-full">
+                <FiZap className="w-4 h-4 text-gray-600" />
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-gray-700 font-medium text-sm">
+                  Trial Account
+                </span>
+                <div className="flex items-center gap-1 text-gray-600 text-sm">
+                  <FiClock className="w-3 h-3" />
+                  <span>
+                    <span className="font-bold">{trialInfo.daysLeft}</span> day{trialInfo.daysLeft !== 1 ? 's' : ''} remaining
+                  </span>
+                </div>
+              </div>
+            </div>
+            <Button
+              onClick={() => navigate('/settings')}
+              size="sm"
+              className="bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
+            >
+              Upgrade Now
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Top nav */}
       <header className="border-b bg-white px-4 md:px-6 py-4 flex items-center justify-between shadow-sm relative z-50">
         {/* Left: Logo + Desktop Nav */}
@@ -80,21 +196,21 @@ const UpdatedDashboardFrame = ({ children }) => {
             src="https://www.getchatters.com/img/Logo.svg"
             alt="Chatters"
             className="h-6 w-auto cursor-pointer"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
           />
 
           {/* Desktop Nav links */}
           <nav className="hidden lg:flex gap-6">
             {allNavLinks.map((link) => {
-              const isActive = location.pathname.startsWith(link.to);
-
+              const isActive = location.pathname === link.to
+                || location.pathname.startsWith(link.to + '/');
               return (
                 <Link
                   key={link.to}
                   to={link.to}
                   className={`relative text-sm transition-colors after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-black after:transition-all after:duration-300 hover:after:w-full ${
                     isActive
-                      ? 'font-bold text-black after:w-full'
+                      ? 'font-medium text-black after:w-full'
                       : 'font-normal text-muted-foreground hover:text-black'
                   }`}
                 >
@@ -105,11 +221,23 @@ const UpdatedDashboardFrame = ({ children }) => {
           </nav>
         </div>
 
-        {/* Right: Venue Switcher + Avatar + Mobile Menu Button */}
+        {/* Right: Kiosk link + Venue Switcher + Avatar + Mobile Menu Button */}
         <div className="flex items-center gap-2 md:gap-4">
+          {/* Open Kiosk (desktop only) — to the LEFT of the venue switcher */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenKiosk}
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-xl text-gray-700 border-gray-300 bg-white hover:bg-gray-50"
+            title="Open Kiosk Mode (opens in a new window)"
+          >
+            <span className="text-sm">Open Kiosk Mode</span>
+            <FiExternalLink className="w-4 h-4" />
+          </Button>
+
           {/* Venue Switcher - Desktop */}
           <div className="hidden sm:block">
-            {userRole === 'master' ? (
+            {userRole === 'master' || allVenues.length > 1 ? (
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <div title={venueName}>
@@ -125,11 +253,10 @@ const UpdatedDashboardFrame = ({ children }) => {
                       ) : (
                         venueName || 'Select Venue'
                       )}
-                      <span className="ml-2 text-xs opacity-50">⌄</span>
+                      <FiChevronDown className="ml-2 h-4 w-4 text-gray-400" />
                     </Button>
                   </div>
                 </PopoverTrigger>
-
                 <PopoverContent className="w-[140px] md:w-[200px] p-2 rounded-xl shadow-md bg-white">
                   <div className="flex flex-col space-y-1">
                     {allVenues.map((v) => (
@@ -163,17 +290,16 @@ const UpdatedDashboardFrame = ({ children }) => {
             )}
           </div>
 
-          {/* Avatar menu */}
+          {/* Avatar menu (settings) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="h-9 w-9 p-0 flex items-center justify-center rounded-full border border-gray-300 shadow-sm"
+                className="h-12 w-12 p-0 flex items-center justify-center rounded-full hover:bg-gray-100"
               >
-                <Cog className="h-5 w-5 text-gray-600" />
+                <FiSettings className="h-8 w-8 text-gray-600" />
               </Button>
             </DropdownMenuTrigger>
-
             <DropdownMenuContent
               align="end"
               className="w-48 rounded-xl border border-gray-200 bg-white shadow-md p-1 font-medium"
@@ -184,9 +310,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               >
                 Account Settings
               </DropdownMenuItem>
-
               <DropdownMenuSeparator />
-
               <DropdownMenuItem
                 className="rounded-md px-3 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 cursor-pointer"
                 onClick={async () => {
@@ -202,13 +326,13 @@ const UpdatedDashboardFrame = ({ children }) => {
           {/* Mobile menu button */}
           <Button
             variant="ghost"
-            className="lg:hidden h-9 w-9 p-0 flex items-center justify-center"
+            className="lg:hidden h-12 w-12 p-0 flex items-center justify-center rounded-full hover:bg-gray-100"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
-              <X className="h-5 w-5" />
+              <FiX className="h-8 w-8 text-gray-600" />
             ) : (
-              <Menu className="h-5 w-5" />
+              <FiMenu className="h-8 w-8 text-gray-600" />
             )}
           </Button>
         </div>
@@ -219,6 +343,10 @@ const UpdatedDashboardFrame = ({ children }) => {
         <div className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)}>
           <div 
             className="absolute right-0 top-0 h-full w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out overflow-y-auto"
+            style={{ 
+              top: trialInfo && trialInfo.isActive ? '120px' : '72px', // Account for trial banner + nav height
+              height: trialInfo && trialInfo.isActive ? 'calc(100vh - 120px)' : 'calc(100vh - 72px)'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b">
@@ -229,13 +357,12 @@ const UpdatedDashboardFrame = ({ children }) => {
                   className="h-8 w-8 p-0"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <X className="h-4 w-4" />
+                  <FiX className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-
             {/* Mobile venue switcher */}
-            {userRole === 'master' && (
+            {(userRole === 'master' || allVenues.length > 1) && (
               <div className="p-4 border-b sm:hidden">
                 <span className="text-sm font-medium text-gray-700 block mb-3">Switch Venue</span>
                 <Popover>
@@ -252,10 +379,9 @@ const UpdatedDashboardFrame = ({ children }) => {
                       ) : (
                         venueName || 'Select Venue'
                       )}
-                      <span className="ml-2 text-xs opacity-50">⌄</span>
+                      <FiChevronDown className="ml-2 h-4 w-4 text-gray-400" />
                     </Button>
                   </PopoverTrigger>
-
                   <PopoverContent className="w-72 p-2 rounded-xl shadow-md bg-white" side="bottom" align="start">
                     <div className="flex flex-col space-y-1">
                       {allVenues.map((v) => (
@@ -285,13 +411,12 @@ const UpdatedDashboardFrame = ({ children }) => {
                 </Popover>
               </div>
             )}
-
             {/* Mobile navigation links */}
             <nav className="p-4">
               <div className="space-y-2">
                 {allNavLinks.map((link) => {
-                  const isActive = location.pathname.startsWith(link.to);
-
+                  const isActive = location.pathname === link.to
+                || location.pathname.startsWith(link.to + '/');
                   return (
                     <Link
                       key={link.to}
@@ -308,7 +433,6 @@ const UpdatedDashboardFrame = ({ children }) => {
                   );
                 })}
               </div>
-
               {/* Mobile settings */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <Link

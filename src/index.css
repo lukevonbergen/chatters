@@ -71,6 +71,82 @@ body {
   font-family: var(--font-marketing);
 }
 
+/* 🎨 COLOR SYSTEM - Reusable color classes */
+:root {
+  --color-primary: #16a34a; /* green-600 */
+  --color-primary-hover: #15803d; /* green-700 */
+  --color-primary-light: #dcfce7; /* green-100 */
+  --color-text-primary: #000000; /* black */
+  --color-text-secondary: #374151; /* gray-700 */
+  --color-text-muted: #6b7280; /* gray-500 */
+  --color-background-primary: #ffffff; /* white */
+  --color-background-secondary: #f9fafb; /* gray-50 */
+  --color-background-tertiary: #f3f4f6; /* gray-100 */
+  --color-border: #d1d5db; /* gray-300 */
+}
+
+/* Text Color Classes */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted { color: var(--color-text-muted); }
+.text-brand { color: var(--color-primary); }
+
+/* Button Classes */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(22, 163, 74, 0.2);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-primary);
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border: 2px solid var(--color-primary);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(22, 163, 74, 0.2);
+}
+
+/* Background Classes */
+.bg-primary { background-color: var(--color-background-primary); }
+.bg-secondary { background-color: var(--color-background-secondary); }
+.bg-tertiary { background-color: var(--color-background-tertiary); }
+
+/* Icon Classes */
+.icon-brand { color: var(--color-primary); }
+
+/* Section Classes for consistent spacing */
+.section-padding { padding: 5rem 0; }
+.section-padding-sm { padding: 3rem 0; }
+
 /* Modal Styles */
 .modal {
   position: absolute;
