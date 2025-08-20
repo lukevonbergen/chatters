@@ -130,21 +130,20 @@ const Hero = ({
     <section className={`relative w-full bg-gradient-to-b ${backgroundGradient} overflow-hidden`}>
       {/* Subtle grid texture */}
       <motion.div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          opacity: 0.07,
-          backgroundImage: `
-            linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)
-          `,
-          backgroundSize: "28px 28px, 28px 28px",
-          maskImage: "radial-gradient(ellipse at center, black 70%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse at center, black 70%, transparent 100%)",
-        }}
-        initial={prefersReduced ? false : { opacity: 0 }}
-        animate={prefersReduced ? false : { opacity: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      />
+  className="absolute inset-0 pointer-events-none"
+  style={{
+    opacity: 0.07,
+    backgroundImage: `
+      radial-gradient(circle, rgba(0,0,0,0.15) 1px, transparent 1px)
+    `,
+    backgroundSize: "24px 24px",
+    maskImage: "radial-gradient(ellipse at center, black 70%, transparent 100%)",
+    WebkitMaskImage: "radial-gradient(ellipse at center, black 70%, transparent 100%)",
+  }}
+  initial={prefersReduced ? false : { opacity: 0 }}
+  animate={prefersReduced ? false : { opacity: 1 }}
+  transition={{ duration: 0.6, ease: "easeOut" }}
+/>
 
       {/* Decorative blurred orbs */}
       <motion.div
