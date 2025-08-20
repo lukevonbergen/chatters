@@ -108,12 +108,129 @@ const SignInPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-green-100 via-orange-100 to-purple-100 flex items-center justify-center p-4 sm:p-6">
+      {/* Mobile Layout - Dark theme with spacing */}
+      <div className="lg:hidden w-full bg-gray-900 rounded-2xl shadow-2xl flex flex-col min-h-[80vh] my-8">
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between p-6">
+          <a
+            href="https://www.getchatters.com"
+            className="text-gray-300 hover:text-white flex items-center transition-colors text-sm"
+          >
+            <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+            Back to website
+          </a>
+        </div>
+        
+        {/* Mobile Logo */}
+        <div className="flex justify-center mb-8">
+          <img
+            src="https://www.getchatters.com/img/Logo.svg"
+            alt="Chatters Logo"
+            className="h-8 w-auto filter invert brightness-0 invert"
+          />
+        </div>
+
+        {/* Mobile Form */}
+        <div className="flex-1 flex items-center justify-center px-6 pb-8">
+          <div className="w-full max-w-sm">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-white mb-2 text-center">
+                Login to your account
+              </h2>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 text-red-400 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSignIn} className="space-y-6">
+              <div>
+                <label htmlFor="email-mobile" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email-mobile"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-white focus:border-transparent outline-none transition-all placeholder:text-gray-400"
+                  placeholder="Enter your email"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password-mobile" className="block text-sm font-medium text-gray-300 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password-mobile"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 pr-12 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-white focus:border-transparent outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-mobile"
+                    name="remember-mobile"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 text-white focus:ring-white border-gray-600 bg-gray-800 rounded"
+                  />
+                  <label htmlFor="remember-mobile" className="ml-2 block text-sm text-gray-300">
+                    Remember me
+                  </label>
+                </div>
+                <Link to="/forgot-password" className="text-sm font-medium text-white hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-white text-gray-900 py-3 px-4 rounded-lg font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign in'
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout - Original design */}
+      <div className="hidden lg:block w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex flex-col lg:flex-row min-h-[600px]">
           {/* Left Panel - Brand */}
           <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 lg:p-12 flex flex-col justify-center relative">
-            <div className="absolute top-4 sm:top-6 left-4 sm:left-6">
+            <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-10">
               <a
                 href="https://www.getchatters.com"
                 className="text-gray-600 hover:text-gray-900 flex items-center transition-colors text-sm"
@@ -123,7 +240,7 @@ const SignInPage = () => {
               </a>
             </div>
 
-            <div className="mb-6 lg:mb-8">
+            <div className="mb-6 lg:mb-8 mt-12 sm:mt-8 lg:mt-0">
               <div className="flex items-center mb-4 lg:mb-6">
                 <img
                   src="https://www.getchatters.com/img/Logo.svg"
@@ -132,12 +249,14 @@ const SignInPage = () => {
                 />
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 lg:mb-4 leading-tight">
-                Get access to real-time customer insights
-              </h1>
-              <p className="text-gray-600 text-base lg:text-lg leading-relaxed">
-                Transform your customer feedback into actionable insights. Monitor satisfaction in real-time and prevent negative reviews before they happen.
-              </p>
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 lg:mb-4 leading-tight">
+                  Get access to real-time customer insights
+                </h1>
+                <p className="text-gray-600 text-base lg:text-lg leading-relaxed">
+                  Transform your customer feedback into actionable insights. Monitor satisfaction in real-time and prevent negative reviews before they happen.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-3 lg:space-y-4">
