@@ -41,7 +41,7 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="/product/automation-workflows"
+                  href="/product/automation-workflow"
                   className="hover:text-white transition-colors"
                 >
                   Automation & Workflows
