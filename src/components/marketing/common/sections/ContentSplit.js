@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 
 const ContentSplit = ({
   eyebrow = "Why Chatters",
+  eyebrowColour = "text-purple-600/80",
   title = "Resolve issues before they become bad reviews.",
   description = "Give managers real-time visibility into guest sentiment, route alerts to the right staff, and fix problems while the guest is still at the table.",
   bullets = [
@@ -39,7 +40,7 @@ const ContentSplit = ({
           {/* Text */}
           <div className="lg:col-span-6">
             {eyebrow && (
-              <p className="text-xs tracking-widest uppercase font-semibold text-purple-600/80 mb-3">
+              <p className={`text-xs tracking-widest uppercase font-semibold ${eyebrowColour} mb-3`}>
                 {eyebrow}
               </p>
             )}

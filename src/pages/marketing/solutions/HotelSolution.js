@@ -41,6 +41,7 @@ const HotelSolution = () => {
 
       <ContentSplit
         eyebrow="Built for Hotels"
+        eyebrowColour = "text-blue-600/80"
         title="Address guest issues before they impact your reputation."
         description="From housekeeping concerns to front desk issues, Chatters helps your hotel team resolve problems while guests are still on property. Turn problems into praise."
         bullets={[
@@ -56,6 +57,7 @@ const HotelSolution = () => {
 
       <FeatureGrid
         eyebrow="Hotel Benefits"
+        eyebrowColour = "text-blue-600/80"
         title="Why hotel teams choose Chatters"
         description="From housekeeping to management, Chatters fits into your hotel workflow and helps you create exceptional guest experiences."
         gradientDirection="bg-gradient-to-b"
@@ -106,6 +108,7 @@ const HotelSolution = () => {
 
       <FAQSection
         eyebrow="Hotel FAQ"
+        eyebrowColour = "text-blue-600/80"
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
@@ -125,8 +128,8 @@ const HotelSolution = () => {
       <CTA 
         title="Enhance your guest experience today" 
         subtitle="Start your free 14-day trial and turn guest concerns into service excellence."
-        buttonText="Start free trial"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
         backgroundGradient="from-blue-50 via-white to-indigo-50"
       />

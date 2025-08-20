@@ -42,6 +42,7 @@ const RetailSolution = () => {
 
       <ContentSplit
         eyebrow="Built for Retail"
+        eyebrowColour = "text-purple-600/80"
         title="Fix customer issues while they're still in your store."
         description="From product availability to checkout problems, Chatters helps your retail team resolve issues immediately. Turn frustrated shoppers into loyal customers."
         bullets={[
@@ -57,6 +58,7 @@ const RetailSolution = () => {
 
       <FeatureGrid
         eyebrow="Retail Benefits"
+        eyebrowColour = "text-purple-600/80"
         title="Why retail teams choose Chatters"
         description="From sales associates to store managers, Chatters fits into your retail workflow and helps you create exceptional shopping experiences."
         gradientDirection="bg-gradient-to-b"
@@ -107,6 +109,7 @@ const RetailSolution = () => {
 
       <FAQSection
         eyebrow="Retail FAQ"
+        eyebrowColour = "text-purple-600/80"
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
@@ -126,8 +129,8 @@ const RetailSolution = () => {
       <CTA 
         title="Transform your retail customer experience" 
         subtitle="Start your free 14-day trial and turn shopping frustrations into customer loyalty."
-        buttonText="Start free trial"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
         backgroundGradient="from-purple-50 via-white to-pink-50"
       />

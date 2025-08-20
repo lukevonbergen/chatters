@@ -42,6 +42,7 @@ const QuestionManagementProduct = () => {
 
       <ContentSplit
         eyebrow="Smart Question Design"
+        eyebrowColour = "text-teal-600/80"
         title="Create feedback forms that customers actually complete."
         description="Our question builder helps you design surveys that are quick, relevant, and engaging. Get the insights you need without overwhelming your customers."
         bullets={[
@@ -57,6 +58,7 @@ const QuestionManagementProduct = () => {
 
       <ProductFeaturesShowcase
         eyebrow="Question Intelligence"
+        eyebrowColour = "text-teal-600/80" 
         title="Design surveys that drive action."
         description="Our question management system helps you create feedback forms that gather specific, actionable insights while maintaining high completion rates."
         primaryCta={{ label: "Start building questions", to: "/signup" }}
@@ -92,6 +94,7 @@ const QuestionManagementProduct = () => {
 
       <FeatureGrid
         eyebrow="Question Benefits"
+        eyebrowColour='text-teal-600/80'
         title="Why teams love our question system"
         description="Smart question design leads to better feedback, higher completion rates, and more actionable insights for your business."
         gradientDirection="bg-gradient-to-b"
@@ -142,6 +145,7 @@ const QuestionManagementProduct = () => {
 
       <FAQSection
         eyebrow="Questions FAQ"
+        eyebrowColour = "text-teal-600/80"
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
@@ -161,8 +165,8 @@ const QuestionManagementProduct = () => {
       <CTA 
         title="Design feedback forms that actually get completed" 
         subtitle="Start your free trial and create engaging surveys that drive better customer insights."
-        buttonText="Try question builder"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
         backgroundGradient="from-teal-50 via-white to-cyan-50"
       />

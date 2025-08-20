@@ -6,6 +6,7 @@ import PrimaryButton from "../../common/buttons/PrimaryButton";
 
 const ProductFeaturesStatic = ({
   eyebrow = "Product Features",
+  eyebrowColour = "text-purple-600/80",
   title = "Everything you need to prevent bad reviews",
   description = "Designed for hospitality teams. See issues early, act faster, and leave guests happier.",
   primaryCta = { label: "Book a demo", to: "/demo" },
@@ -52,7 +53,7 @@ const ProductFeaturesStatic = ({
   const HeaderBlock = () => (
     <div className="mb-12 max-w-3xl mx-auto text-center">
       {eyebrow && (
-        <p className="text-xs tracking-widest uppercase font-semibold text-purple-600/80 mb-3">
+        <p className={`text-xs tracking-widest uppercase font-semibold ${eyebrowColour} mb-3`}>
           {eyebrow}
         </p>
       )}
@@ -131,7 +132,7 @@ const ProductFeaturesStatic = ({
 
               <div className="relative z-[2] p-6 flex flex-col flex-1">
                 {f.eyebrow && (
-                  <p className="text-[11px] tracking-widest uppercase font-semibold text-purple-600/80 mb-2">
+                  <p className={`text-[11px] tracking-widest uppercase font-semibold ${eyebrowColour} mb-2`}>
                     {f.eyebrow}
                   </p>
                 )}

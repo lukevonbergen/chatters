@@ -36,13 +36,14 @@ const QuestionManagementProduct = () => {
       <PageHeader
         title="Restaurant Feedback Management That Prevents Bad Reviews"
         description="Give your restaurant the power to catch customer concerns before they leave your establishment. Turn potential negative reviews into positive experiences with real-time feedback management."
-        backgroundGradient="from-white to-orange-200"
+        backgroundGradient="from-white to-red-200"
         showSubtitle={true}
         subtitle="Restaurant Solutions"
       />
 
       <ContentSplit reversed
         eyebrow="Built for Restaurants"
+        eyebrowColour='text-red-600'
         title="Catch dining issues before they become bad reviews."
         description="From cold food to slow service, Chatters helps your restaurant team address problems while customers are still at the table. Turn complaints into compliments."
         bullets={[
@@ -58,6 +59,7 @@ const QuestionManagementProduct = () => {
 
       <ProductFeaturesShowcase
         eyebrow="Built for Restaurants"
+        eyebrowColour='text-red-600'
         title="Catch dining issues before they become bad reviews."
         description="From cold food to slow service, Chatters helps your restaurant team address problems while customers are still at the table. Turn complaints into compliments."
         primaryCta={{ label: "Start free trial", to: "/signup" }}
@@ -93,46 +95,47 @@ const QuestionManagementProduct = () => {
 
       <FeatureGrid
         eyebrow="Restaurant Benefits"
+        eyebrowColour='text-red-600'
         title="Why restaurant teams choose Chatters"
         description="From servers to managers, Chatters fits into your restaurant workflow and helps you fix issues before customers leave unhappy."
         gradientDirection="bg-gradient-to-b"
-        backgroundGradient="from-white to-orange-50"
+        backgroundGradient="from-white to-red-50"
         dottedBackground = {true}
         orbGlow
         cols={{ base: 1, sm: 2, md: 3, lg: 3 }}
         items={[
           {
-            icon: <Bell className="w-6 h-6 text-orange-600" />,
+            icon: <Bell className="w-6 h-6 text-red-600" />,
             title: "Real-time kitchen alerts",
             description:
               "Kitchen staff get instant notifications about food quality issues while dishes can still be remade.",
           },
           {
-            icon: <CheckCircle className="w-6 h-6 text-orange-600" />,
+            icon: <CheckCircle className="w-6 h-6 text-red-600" />,
             title: "Server-friendly interface",
             description:
               "Servers handle customer concerns through simple prompts during busy service.",
           },
           {
-            icon: <BarChart3 className="w-6 h-6 text-orange-600" />,
+            icon: <BarChart3 className="w-6 h-6 text-red-600" />,
             title: "Peak hour insights",
             description:
               "Track issues during rush periods and optimize staffing and processes.",
           },
           {
-            icon: <Shield className="w-6 h-6 text-orange-600" />,
+            icon: <Shield className="w-6 h-6 text-red-600" />,
             title: "Prevent review damage",
             description:
               "Address dining complaints before customers post on Yelp or Google.",
           },
           {
-            icon: <Zap className="w-6 h-6 text-orange-600" />,
+            icon: <Zap className="w-6 h-6 text-red-600" />,
             title: "Multi-restaurant ready",
             description:
               "Manage feedback across multiple locations with centralized reporting.",
           },
           {
-            icon: <Check className="w-6 h-6 text-orange-600" />,
+            icon: <Check className="w-6 h-6 text-red-600" />,
             title: "Increase repeat visits",
             description:
               "Turn negative experiences into positive ones, building customer loyalty.",
@@ -143,12 +146,13 @@ const QuestionManagementProduct = () => {
 
       <FAQSection
         eyebrow="Restaurant FAQ"
+        eyebrowColour='text-red-600'
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
         orbGlow
         wavyBottom = {false}
-        backgroundGradient="from-white via-white to-orange-50"
+        backgroundGradient="from-white via-white to-red-50"
         gradientDirection="bg-gradient-to-b"
         defaultOpenIndex={0}
         faqs={[
@@ -162,10 +166,10 @@ const QuestionManagementProduct = () => {
       <CTA 
         title="Transform your restaurant's customer experience" 
         subtitle="Start your free 14-day trial today and prevent bad reviews before they happen."
-        buttonText="Start free trial"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
-        backgroundGradient="from-orange-50 via-white to-red-50"
+        backgroundGradient="from-red-50 via-white to-red-50"
       />
 
 

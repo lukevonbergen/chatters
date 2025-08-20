@@ -42,6 +42,7 @@ const RestaurantSolution = () => {
 
       <ContentSplit
         eyebrow="Built for Restaurants"
+        eyebrowColour = "text-orange-600/80"
         title="Catch dining issues before they become bad reviews."
         description="From cold food to slow service, Chatters helps your restaurant team address problems while customers are still at the table. Turn complaints into compliments."
         bullets={[
@@ -57,12 +58,12 @@ const RestaurantSolution = () => {
 
       <FeatureGrid
         eyebrow="Restaurant Benefits"
+        eyebrowColour = "text-orange-600/80"
         title="Why restaurant teams choose Chatters"
         description="From servers to managers, Chatters fits into your restaurant workflow and helps you fix issues before customers leave unhappy."
         gradientDirection="bg-gradient-to-b"
         backgroundGradient="from-white to-orange-50"
         dottedBackground = {true}
-        orbGlow
         cols={{ base: 1, sm: 2, md: 3, lg: 3 }}
         items={[
           {
@@ -107,6 +108,7 @@ const RestaurantSolution = () => {
 
       <FAQSection
         eyebrow="Restaurant FAQ"
+        eyebrowColour = "text-orange-600/80"
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
@@ -126,8 +128,8 @@ const RestaurantSolution = () => {
       <CTA 
         title="Transform your restaurant's customer experience" 
         subtitle="Start your free 14-day trial today and prevent bad reviews before they happen."
-        buttonText="Start free trial"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
         backgroundGradient="from-orange-50 via-white to-red-50"
       />

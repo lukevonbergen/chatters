@@ -42,6 +42,7 @@ const KioskModeProduct = () => {
 
       <ContentSplit
         eyebrow="Dedicated Stations"
+        eyebrowColour='text-orange-600'
         title="Professional feedback kiosks that customers actually use."
         description="Transform any iPad or Android tablet into a polished feedback station. Perfect for retail stores, hotel lobbies, restaurants, and anywhere you want to make feedback convenient."
         bullets={[
@@ -57,6 +58,7 @@ const KioskModeProduct = () => {
 
       <ProductFeaturesShowcase
         eyebrow="Kiosk Intelligence"
+        eyebrowColour='text-orange-600'
         title="Professional feedback stations that work everywhere."
         description="Our kiosk mode transforms any tablet into a secure, branded feedback station that looks professional and encourages customer participation."
         primaryCta={{ label: "Set up kiosks", to: "/signup" }}
@@ -92,6 +94,7 @@ const KioskModeProduct = () => {
 
       <FeatureGrid
         eyebrow="Kiosk Benefits"
+        eyebrowColour='text-orange-600'
         title="Why businesses choose kiosk mode"
         description="Dedicated feedback stations increase response rates and provide a professional way to gather customer insights in high-traffic areas."
         gradientDirection="bg-gradient-to-b"
@@ -142,6 +145,7 @@ const KioskModeProduct = () => {
 
       <FAQSection
         eyebrow="Kiosk FAQ"
+        eyebrowColour='text-orange-600'
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
@@ -161,8 +165,8 @@ const KioskModeProduct = () => {
       <CTA 
         title="Turn any tablet into a professional feedback station" 
         subtitle="Start your free trial and create branded kiosks that increase customer feedback participation."
-        buttonText="Set up kiosks"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
         backgroundGradient="from-orange-50 via-white to-yellow-50"
       />

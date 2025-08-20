@@ -45,6 +45,7 @@ const FAQSection = ({
   defaultOpenIndex = null, // pass 0 to open the first one initially
   backgroundGradient = "from-white via-white to-purple-50",
   gradientDirection = "bg-gradient-to-b",
+  eyebrowColour = "text-purple-600/80",
   dottedBackground = true,
   orbGlow = false,
   wavyBottom = false,
@@ -56,47 +57,13 @@ const FAQSection = ({
     <section
       className={`relative w-full ${gradientDirection} ${backgroundGradient} overflow-hidden`}
     >
-      {/* Background effects */}
-      {dottedBackground && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            opacity: 0.07,
-            backgroundImage: `
-              linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)
-            `,
-            backgroundSize: "28px 28px, 28px 28px",
-          }}
-        />
-      )}
-      {orbGlow && (
-        <>
-          <div
-            aria-hidden="true"
-            className="absolute -top-24 -left-24 w-80 h-80 rounded-full blur-3xl"
-            style={{
-              background:
-                "radial-gradient(closest-side, rgba(168,85,247,0.16), transparent)",
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-28 -right-24 w-96 h-96 rounded-full blur-3xl"
-            style={{
-              background:
-                "radial-gradient(closest-side, rgba(59,130,246,0.12), transparent)",
-            }}
-          />
-        </>
-      )}
 
       {/* Content */}
       <div className="relative max-w-[900px] mx-auto px-6 py-16 lg:py-24">
         {eyebrow && (
-          <p className="text-xs tracking-widest uppercase font-semibold text-purple-600/80 mb-3 text-center">
-            {eyebrow}
-          </p>
+         <p className={`text-xs tracking-widest uppercase font-semibold ${eyebrowColour} mb-3 text-center`}>
+          {eyebrow}
+        </p>
         )}
         {title && (
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 font-satoshi text-center mb-4">

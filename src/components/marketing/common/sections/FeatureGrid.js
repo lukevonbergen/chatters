@@ -2,6 +2,7 @@ import React from "react";
 
 const FeatureGrid = ({
   eyebrow = "Key Benefits",
+  eyebrowColour = "text-purple-600/80",
   title = "Why teams choose Chatters",
   description = "",
   items = [],
@@ -39,41 +40,10 @@ const FeatureGrid = ({
       ].join(" ")}
       style={useInline ? { backgroundImage: customGradient } : undefined}
     >
-      {/* Dotted texture */}
-      {dottedBackground && (
-        <div
-          className="absolute inset-0 pointer-events-none mix-blend-normal"
-          style={{
-            opacity: 0.07,
-            backgroundImage: `
-              linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)
-            `,
-            backgroundSize: "28px 28px, 28px 28px",
-          }}
-        />
-      )}
-
-      {/* Orb glows */}
-      {orbGlow && (
-        <>
-          <div
-            aria-hidden="true"
-            className="absolute -top-20 -left-20 w-80 h-80 rounded-full blur-3xl"
-            style={{ background: "radial-gradient(closest-side, rgba(168,85,247,0.15), transparent)" }}
-          />
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full blur-3xl"
-            style={{ background: "radial-gradient(closest-side, rgba(59,130,246,0.12), transparent)" }}
-          />
-        </>
-      )}
-
       {/* Content */}
       <div className="relative max-w-[1200px] mx-auto px-6 py-20 lg:py-28 text-center">
         {eyebrow && (
-          <p className="text-xs tracking-widest uppercase font-semibold text-purple-600/80 mb-3">
+          <p className={`text-xs tracking-widest uppercase font-semibold ${eyebrowColour} mb-3`}>
             {eyebrow}
           </p>
         )}

@@ -42,6 +42,7 @@ const BusinessIntelligenceProduct = () => {
 
       <ContentSplit reversed
         eyebrow="Advanced Analytics"
+        eyebrowColour='text-blue-600'
         title="Transform feedback into business intelligence."
         description="Our powerful analytics engine turns customer feedback into actionable insights, helping you identify trends, measure performance, and make strategic decisions backed by real data."
         bullets={[
@@ -57,6 +58,7 @@ const BusinessIntelligenceProduct = () => {
 
       <ProductFeaturesShowcase
         eyebrow="Intelligence Platform"
+        eyebrowColour='text-blue-600'
         title="See the big picture with powerful analytics."
         description="Our BI platform transforms raw feedback data into strategic insights, helping you understand customer satisfaction patterns and make informed business decisions."
         primaryCta={{ label: "Try analytics free", to: "/signup" }}
@@ -92,6 +94,7 @@ const BusinessIntelligenceProduct = () => {
 
       <FeatureGrid
         eyebrow="Intelligence Benefits"
+        eyebrowColour='text-blue-600'
         title="Why leaders choose our BI platform"
         description="Transform raw feedback into strategic insights that drive better decisions, improved operations, and measurable business growth."
         gradientDirection="bg-gradient-to-b"
@@ -142,6 +145,7 @@ const BusinessIntelligenceProduct = () => {
 
       <FAQSection
         eyebrow="BI FAQ"
+        eyebrowColour='text-blue-600'
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
@@ -161,8 +165,8 @@ const BusinessIntelligenceProduct = () => {
       <CTA 
         title="Turn feedback into competitive advantage" 
         subtitle="Start your free trial and discover insights that drive better business decisions and customer satisfaction."
-        buttonText="Explore analytics"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
         backgroundGradient="from-blue-50 via-white to-indigo-50"
       />

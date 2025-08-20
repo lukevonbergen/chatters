@@ -42,6 +42,7 @@ const AutomationWorkflowsProduct = () => {
 
       <ContentSplit
         eyebrow="Smart Automation"
+        eyebrowColour='text-purple-600'
         title="Let workflows handle the routine so you can focus on customers."
         description="Our visual workflow builder lets you create automated processes that route feedback, trigger actions, and ensure proper follow-up - all without requiring technical expertise."
         bullets={[
@@ -57,6 +58,7 @@ const AutomationWorkflowsProduct = () => {
 
       <ProductFeaturesShowcase
         eyebrow="Workflow Intelligence"
+        eyebrowColour='text-purple-600'
         title="Automate your way to better customer service."
         description="Build sophisticated workflows that handle complex feedback scenarios automatically, ensuring consistent responses and reducing the burden on your team."
         primaryCta={{ label: "Try automation", to: "/signup" }}
@@ -92,6 +94,7 @@ const AutomationWorkflowsProduct = () => {
 
       <FeatureGrid
         eyebrow="Automation Benefits"
+        eyebrowColour='text-purple-600'
         title="Why teams love workflow automation"
         description="Reduce manual work, improve response consistency, and ensure nothing falls through the cracks with intelligent automation."
         gradientDirection="bg-gradient-to-b"
@@ -142,6 +145,7 @@ const AutomationWorkflowsProduct = () => {
 
       <FAQSection
         eyebrow="Automation FAQ"
+        eyebrowColour='text-purple-600'
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
@@ -161,8 +165,8 @@ const AutomationWorkflowsProduct = () => {
       <CTA 
         title="Automate your way to better customer service" 
         subtitle="Start your free trial and build workflows that handle feedback management automatically."
-        buttonText="Build workflows"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
         backgroundGradient="from-purple-50 via-white to-indigo-50"
       />

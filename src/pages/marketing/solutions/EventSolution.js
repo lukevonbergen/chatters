@@ -41,6 +41,7 @@ const EventSolution = () => {
 
       <ContentSplit
         eyebrow="Built for Events"
+        eyebrowColour = "text-green-600/80"
         title="Fix event issues while they're still happening."
         description="From AV problems to catering concerns, Chatters helps your event team resolve issues instantly. Turn event hiccups into seamless experiences."
         bullets={[
@@ -56,6 +57,7 @@ const EventSolution = () => {
 
       <FeatureGrid
         eyebrow="Event Benefits"
+        eyebrowColour = "text-green-600/80"
         title="Why event teams choose Chatters"
         description="From event coordinators to venue staff, Chatters fits into your event workflow and helps you create unforgettable experiences."
         gradientDirection="bg-gradient-to-b"
@@ -106,6 +108,7 @@ const EventSolution = () => {
 
       <FAQSection
         eyebrow="Event FAQ"
+        eyebrowColour = "text-green-600/80"
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
@@ -125,8 +128,8 @@ const EventSolution = () => {
       <CTA 
         title="Create unforgettable event experiences" 
         subtitle="Start your free 14-day trial and turn event challenges into seamless experiences."
-        buttonText="Start free trial"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
         backgroundGradient="from-green-50 via-white to-teal-50"
       />

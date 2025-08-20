@@ -42,6 +42,7 @@ const MultiLocationControlProduct = () => {
 
       <ContentSplit reversed
         eyebrow="Enterprise Scale"
+        eyebrowColour='text-green-600'
         title="One dashboard for all your locations."
         description="Whether you have 2 locations or 200, manage customer feedback across your entire network from a single, powerful dashboard that scales with your business."
         bullets={[
@@ -57,6 +58,7 @@ const MultiLocationControlProduct = () => {
 
       <ProductFeaturesShowcase
         eyebrow="Scale Intelligence"
+        eyebrowColour='text-green-600'
         title="Manage your entire network like a single location."
         description="Our multi-location platform gives you the tools to maintain consistent quality, compare performance, and identify opportunities across your entire business network."
         primaryCta={{ label: "Scale your feedback", to: "/signup" }}
@@ -92,6 +94,7 @@ const MultiLocationControlProduct = () => {
 
       <FeatureGrid
         eyebrow="Multi-Location Benefits"
+        eyebrowColour='text-green-600'
         title="Why multi-location businesses choose Chatters"
         description="Scale your customer experience management across locations while maintaining the personal touch that makes each site unique."
         gradientDirection="bg-gradient-to-b"
@@ -142,6 +145,7 @@ const MultiLocationControlProduct = () => {
 
       <FAQSection
         eyebrow="Multi-Location FAQ"
+        eyebrowColour='text-green-600'
         title="Everything you need to know"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
@@ -161,8 +165,8 @@ const MultiLocationControlProduct = () => {
       <CTA 
         title="Scale customer experience across all locations" 
         subtitle="Start your free trial and manage feedback across your entire network from one powerful dashboard."
-        buttonText="Try multi-location"
-        buttonLink="/signup"
+        buttonText="Book a Demo"
+        buttonLink="/demo"
         gradientDirection="bg-gradient-to-r"
         backgroundGradient="from-green-50 via-white to-teal-50"
       />
