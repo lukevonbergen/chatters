@@ -160,7 +160,7 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="https://chatters.canny.io/"
+                  href="https://chatters.canny.io/changelog"
                   className="hover:text-white transition-colors"
                   target="_blank"
                   rel="noreferrer"

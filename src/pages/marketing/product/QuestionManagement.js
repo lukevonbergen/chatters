@@ -1,197 +1,176 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { ArrowRight, HelpCircle, CheckCircle, Star, Users, Globe, Zap, BarChart3, Settings } from 'lucide-react';
+import { MessageSquare, Edit3, Filter, Tag, Archive, Search } from 'lucide-react';
 import Navbar from '../../../components/marketing/layout/Navbar';
-import Footer from '../../../components/marketing/layout/Footer';
-import CTASection from '../../../components/marketing/sections/CTASection';
 import PageHeader from '../../../components/marketing/common/sections/PageHeader';
+import ContentSplit from '../../../components/marketing/common/sections/ContentSplit';
+import ProductFeaturesShowcase from '../../../components/marketing/common/sections/ProductFeaturesShowcase';
+import FeatureGrid from '../../../components/marketing/common/sections/FeatureGrid';
+import FAQSection from '../../../components/marketing/common/sections/FAQSection';
+import CTA from '../../../components/marketing/common/sections/CTA';
+import Footer from '../../../components/marketing/layout/Footer';
 
-const QuestionManagementFeature = () => {
-  const features = [
-    {
-      icon: <Settings className="w-6 h-6" />,
-      title: "Dynamic Question Branching",
-      description: "Create intelligent question flows that adapt based on customer responses, ensuring relevant feedback collection."
-    },
-    {
-      icon: <Globe className="w-6 h-6" />,
-      title: "Industry-Specific Templates",
-      description: "Pre-built question sets tailored for restaurants, hotels, retail, and events - ready to deploy instantly."
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Multi-Language Support",
-      description: "Collect feedback in multiple languages to serve diverse customer bases effectively."
-    },
-    {
-      icon: <BarChart3 className="w-6 h-6" />,
-      title: "Question Performance Analytics",
-      description: "Track which questions generate the most actionable feedback and optimize your forms accordingly."
-    },
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: "Smart Skip Logic",
-      description: "Reduce survey fatigue with intelligent question skipping based on previous responses."
-    },
-    {
-      icon: <CheckCircle className="w-6 h-6" />,
-      title: "Custom Validation Rules",
-      description: "Ensure data quality with custom validation rules and required field configurations."
-    }
-  ];
-
-  const benefits = [
-    "Increase completion rates by up to 40% with optimized question flows",
-    "Reduce survey abandonment through intelligent question branching",
-    "Collect more targeted and actionable customer feedback",
-    "Save setup time with industry-specific templates",
-    "Support global customers with multi-language capabilities",
-    "Continuously improve feedback quality with performance analytics"
-  ];
-
-  const questionTypes = [
-    { type: "Rating Scales", description: "1-5 star ratings, NPS scores, satisfaction levels" },
-    { type: "Multiple Choice", description: "Single or multi-select options for specific feedback" },
-    { type: "Open Text", description: "Free-form responses for detailed customer insights" },
-    { type: "Yes/No Questions", description: "Binary choices for quick decision points" },
-    { type: "Image Selection", description: "Visual feedback options for better engagement" },
-    { type: "Conditional Logic", description: "Dynamic questions based on previous responses" }
-  ];
-
+const QuestionManagementProduct = () => {
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>Question Management | Chatters - Custom Feedback Forms</title>
-        <meta 
-          name="description" 
-          content="Create intelligent feedback forms with dynamic question flows, industry templates, and multi-language support. Optimize customer feedback collection with Chatters Question Management."
+        <title>Question Management | Chatters - Design Perfect Feedback Forms</title>
+        <meta
+          name="description"
+          content="Create and customize feedback questions that get the insights you need. Chatters' question management system helps you design forms that customers actually complete."
         />
-        <meta 
-          name="keywords" 
-          content="question management, feedback forms, survey builder, dynamic questions, customer feedback, form templates"
+        <meta
+          name="keywords"
+          content="feedback questions, survey design, question management, feedback forms, customer surveys, feedback customization"
         />
         <meta property="og:title" content="Question Management | Chatters" />
-        <meta property="og:description" content="Build intelligent feedback forms with dynamic question flows and industry-specific templates." />
+        <meta property="og:description" content="Design perfect feedback forms with Chatters' flexible question management system." />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://getchatters.com/features/question-management" />
+        <link rel="canonical" href="https://getchatters.com/product/question-management" />
       </Helmet>
 
+      {/* Overlay navbar sits above the hero */}
       <Navbar overlay />
 
       <PageHeader
-        title="Intelligent Question Management"
-        description="Create dynamic feedback forms that adapt to your customers. Build intelligent question flows, use industry templates, and collect more meaningful feedback with our advanced Question Management system."
-        backgroundGradient="from-white to-green-100"
+        title="Question Management That Gets the Feedback You Actually Need"
+        description="Design feedback forms that customers want to complete. Our flexible question system helps you gather specific, actionable insights while keeping surveys short and engaging."
+        backgroundGradient="from-white to-teal-200"
         showSubtitle={true}
         subtitle="Question Management"
       />
 
-      <div className="bg-white">
-        {/* Features Section */}
-        <section className="py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-[#1A535C] mb-4 font-satoshi">
-                Smart Question Management Features
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto font-satoshi">
-                Build better feedback forms with intelligent features designed to increase completion rates and gather more actionable insights.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => (
-                <div key={index} className="bg-gray-50 rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300">
-                  <div className="w-12 h-12 bg-[#4ECDC4]/20 rounded-xl flex items-center justify-center text-[#4ECDC4] mb-6">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold text-[#1A535C] mb-4 font-satoshi">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed font-satoshi">{feature.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Question Types Section */}
-        <section className="py-20 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-[#1A535C] mb-4 font-satoshi">
-                Powerful Question Types
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto font-satoshi">
-                Choose from a wide variety of question types to create engaging and effective feedback forms.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {questionTypes.map((type, index) => (
-                <div key={index} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <h3 className="text-lg font-semibold text-[#1A535C] mb-3 font-satoshi">{type.type}</h3>
-                  <p className="text-gray-600 text-sm font-satoshi">{type.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Benefits Section */}
-        <section className="py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-4xl font-bold text-[#1A535C] mb-4 font-satoshi">
-                  Why Choose Smart Question Management?
-                </h2>
-                <p className="text-xl text-gray-600 font-satoshi">
-                  Transform your feedback collection with intelligent question flows that get better results.
-                </p>
-              </div>
-              <div className="grid md:grid-cols-2 gap-6">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="w-6 h-6 text-[#4ECDC4]" />
-                    </div>
-                    <p className="text-gray-700 font-satoshi">{benefit}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Placeholder Image Section */}
-        <section className="py-20 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-[#1A535C] mb-4 font-satoshi">
-                See Question Management in Action
-              </h2>
-            </div>
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-gradient-to-br from-[#F7FFF7] to-[#4ECDC4]/10 rounded-3xl border-2 border-[#4ECDC4]/20 p-16 text-center">
-                <div className="w-24 h-24 bg-[#4ECDC4]/20 rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                  <HelpCircle className="w-12 h-12 text-[#4ECDC4]" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1A535C] mb-4 font-satoshi">Interactive Demo Coming Soon</h3>
-                <p className="text-gray-600 font-satoshi">Experience our Question Management system with a live demo showing dynamic question flows and intelligent branching.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <CTASection 
-        title="Ready to Build Smarter Questions?"
-        description="Start creating intelligent feedback forms that adapt to your customers and deliver better insights for your business."
-        primaryButtonText="Start Free Trial"
-        secondaryButtonText="View All Features"
-        secondaryButtonLink="/features"
+      <ContentSplit
+        eyebrow="Smart Question Design"
+        title="Create feedback forms that customers actually complete."
+        description="Our question builder helps you design surveys that are quick, relevant, and engaging. Get the insights you need without overwhelming your customers."
+        bullets={[
+          "Drag-and-drop question builder",
+          "Pre-built question templates", 
+          "Conditional question logic",
+          "Multi-language support"
+        ]}
+        primaryCta={{ label: "Try question builder", to: "/signup" }}
+        secondaryCta={{ label: "See examples", to: "/demo" }}
+        image={{ src: "/img/mock-questions.png", alt: "Question management interface" }}
       />
+
+      <ProductFeaturesShowcase
+        eyebrow="Question Intelligence"
+        title="Design surveys that drive action."
+        description="Our question management system helps you create feedback forms that gather specific, actionable insights while maintaining high completion rates."
+        primaryCta={{ label: "Start building questions", to: "/signup" }}
+        secondaryCta={{ label: "View templates", to: "/demo" }}
+        features={[
+          {
+            id: "builder",
+            eyebrow: "Visual Builder",
+            title: "Design questions visually",
+            description: "Drag-and-drop interface makes it easy to create professional feedback forms without technical skills.",
+            bullets: ["Visual editor", "Live preview", "Mobile optimization"],
+            image: { src: "/img/mock-builder.png", alt: "Question builder interface" },
+          },
+          {
+            id: "logic",
+            eyebrow: "Smart Logic",
+            title: "Conditional question flows",
+            description: "Show relevant follow-up questions based on previous answers to create personalized feedback experiences.",
+            bullets: ["Branching logic", "Skip patterns", "Dynamic content"],
+            image: { src: "/img/mock-logic.png", alt: "Conditional logic" },
+          },
+          {
+            id: "templates",
+            eyebrow: "Ready Templates",
+            title: "Start with proven questions",
+            description: "Choose from industry-tested question sets designed to maximize response rates and actionable insights.",
+            bullets: ["Industry templates", "Best practices", "Custom branding"],
+            image: { src: "/img/mock-templates.png", alt: "Question templates" },
+          },
+        ]}
+      />
+
+
+      <FeatureGrid
+        eyebrow="Question Benefits"
+        title="Why teams love our question system"
+        description="Smart question design leads to better feedback, higher completion rates, and more actionable insights for your business."
+        gradientDirection="bg-gradient-to-b"
+        backgroundGradient="from-white to-teal-50"
+        dottedBackground={true}
+        orbGlow
+        cols={{ base: 1, sm: 2, md: 3, lg: 3 }}
+        items={[
+          {
+            icon: <MessageSquare className="w-6 h-6 text-teal-600" />,
+            title: "Higher completion rates",
+            description:
+              "Well-designed questions keep customers engaged, leading to more completed feedback forms.",
+          },
+          {
+            icon: <Edit3 className="w-6 h-6 text-teal-600" />,
+            title: "Easy customization",
+            description:
+              "Modify questions, add your branding, and adjust forms without technical knowledge.",
+          },
+          {
+            icon: <Filter className="w-6 h-6 text-teal-600" />,
+            title: "Smart filtering",
+            description:
+              "Conditional logic shows relevant questions based on previous answers for personalized surveys.",
+          },
+          {
+            icon: <Tag className="w-6 h-6 text-teal-600" />,
+            title: "Category tagging",
+            description:
+              "Automatically categorize responses to route feedback to the right department or team member.",
+          },
+          {
+            icon: <Archive className="w-6 h-6 text-teal-600" />,
+            title: "Question library",
+            description:
+              "Save and reuse effective questions across different locations and feedback campaigns.",
+          },
+          {
+            icon: <Search className="w-6 h-6 text-teal-600" />,
+            title: "Response analytics",
+            description:
+              "See which questions generate the most useful feedback and optimize your forms over time.",
+          },
+        ]}
+        wavyBottom={true}
+      />
+
+      <FAQSection
+        eyebrow="Questions FAQ"
+        title="Everything you need to know"
+        description="If you have a different question, contact us and we'll help."
+        dottedBackground
+        orbGlow
+        wavyBottom={false}
+        backgroundGradient="from-white via-white to-teal-50"
+        gradientDirection="bg-gradient-to-b"
+        defaultOpenIndex={0}
+        faqs={[
+          { q: "How many questions can I add to a form?", a: "We recommend 3-5 questions for best completion rates, but you can add as many as needed. Our analytics show which length works best for your audience." },
+          { q: "Can I use my own branding on the forms?", a: "Yes - customize colors, logos, fonts, and styling to match your brand perfectly." },
+          { q: "Do you have pre-built question templates?", a: "We include proven question sets for restaurants, hotels, retail, and events. Each template is optimized for high completion rates." },
+          { q: "Can questions change based on previous answers?", a: "Yes - use conditional logic to show relevant follow-up questions, creating personalized feedback experiences." },
+        ]}
+      />
+
+      <CTA 
+        title="Design feedback forms that actually get completed" 
+        subtitle="Start your free trial and create engaging surveys that drive better customer insights."
+        buttonText="Try question builder"
+        buttonLink="/signup"
+        gradientDirection="bg-gradient-to-r"
+        backgroundGradient="from-teal-50 via-white to-cyan-50"
+      />
+
 
       <Footer />
     </div>
   );
 };
 
-export default QuestionManagementFeature;
+export default QuestionManagementProduct;

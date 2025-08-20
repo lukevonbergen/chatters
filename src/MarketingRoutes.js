@@ -21,8 +21,12 @@ import Dashboards_Feature from './pages/marketing/Features_Dashboards';
 import BlogPage from './pages/marketing/BlogPage';
 import BlogPost from './pages/marketing/BlogPost';
 
-import QuestionManagement_Feature from './pages/marketing/product/QuestionManagement';
-import BusinessIntelligence_Feature from './pages/marketing/product/BusinessIntelligence';
+import QuestionManagementProduct from './pages/marketing/product/QuestionManagement';
+import BusinessIntelligenceProduct from './pages/marketing/product/BusinessIntelligence';
+import AutomationWorkflowProduct from './pages/marketing/product/Automation-Workflows';
+import MultiLocationControlProduct from './pages/marketing/product/Multi-Location-Control';
+import KioskModeProduct from './pages/marketing/product/Kiosk-Mode';
+import RealTimeAlertsProduct from './pages/marketing/product/Real-Time-Alerts';
 
 import RestaurantSolution from './pages/marketing/solutions/RestaurantSolution';
 import HotelSolution from './pages/marketing/solutions/HotelSolution';
@@ -51,12 +55,18 @@ const MarketingRoutes = () => {
       <Route path="/features/custom-branding" element={<CustomBranding_Feature />} />
       <Route path="/features/custom-questions" element={<CustomQuestions_Feature />} />
       <Route path="/features/dashboards" element={<Dashboards_Feature />} />
-      <Route path="/product/question-management" element={<QuestionManagement_Feature />} />
-      <Route path="/product/business-intelligence" element={<BusinessIntelligence_Feature />} />
 
       {/* 📝 Blog Pages */}
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/:slug" element={<BlogPost />} />
+
+      {/* 🏢 Product Pages */}
+      <Route path="/product/question-management" element={<QuestionManagementProduct />} />
+      <Route path="/product/business-intelligence" element={<BusinessIntelligenceProduct />} />
+      <Route path="/product/automation-workflow" element={<AutomationWorkflowProduct />} />
+      <Route path="/product/multi-location-control" element={<MultiLocationControlProduct />} />
+      <Route path="/product/kiosk-mode" element={<KioskModeProduct />} />
+      <Route path="/product/real-time-alerts" element={<RealTimeAlertsProduct />} />
 
       {/* 🏢 Solutions Pages */}
       <Route path="/solutions/restaurants" element={<RestaurantSolution />} />

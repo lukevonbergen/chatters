@@ -124,21 +124,21 @@ const LandingPage = () => {
       <AlternatingSections
         sections={[
           {
-            title: "Tailored pricing for every venue",
-            description: "Whether you run a single pub or a multi-location group, our pricing adapts to your scale and needs.",
-            image: "/images/pricing-venue.jpg",
-            link: "/demo" // 👈 Learn More button will show only if you add this
+            title: "Resolve feedback quickly",
+            description: "Monitoring resolution time is key. Chatters helps you respond to customer feedback in real-time, preventing negative reviews before they happen.",
+            image: "/img/homepage/AlternatingSections/AverageResolutionTime-Chatters.svg",
+            link: "/demo"
           },
           {
-            title: "No per-user fees",
-            description: "Invite unlimited staff at no extra cost — focus on resolving guest feedback, not counting seats.",
-            image: "/images/pricing-staff.jpg",
+            title: "Reduce negative reviews",
+            description: "Knowing when customers are unhappy allows you to resolve issues before they escalate. Chatters helps you maintain a 5-star reputation.",
+            image: "/img/homepage/AlternatingSections/PreventBadFeedback.svg",
             link: "/features"
           },
           {
-            title: "Scale with your business",
-            description: "Start with one location and add more as you grow. Pricing scales seamlessly as you expand.",
-            image: "/images/pricing-scale.jpg",
+            title: "Optimise staffing",
+            description: "Use real-time feedback to adjust staffing levels based on customer flow and feedback trends. Chatters helps you ensure the right staff are in the right place at the right time.",
+            image: "/img/homepage/AlternatingSections/OptimiseStaffing.svg",
             link: "/pricing"
           },
         ]}
