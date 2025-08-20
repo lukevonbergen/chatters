@@ -102,7 +102,7 @@ const PrivacyPage = () => {
             <li>Process payments and manage your account</li>
             <li>Deliver customer support and respond to inquiries</li>
             <li>Send service-related notifications and updates</li>
-            <li>Customize your user experience</li>
+            <li>Customise your user experience</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-800 mb-4">3.2 Communication</h3>
@@ -115,10 +115,10 @@ const PrivacyPage = () => {
 
           <h3 className="text-xl font-semibold text-gray-800 mb-4">3.3 Analytics and Improvement</h3>
           <ul className="list-disc pl-6 text-gray-700 mb-6 space-y-2">
-            <li>Analyze usage patterns to improve our services</li>
+            <li>Analyse usage patterns to improve our services</li>
             <li>Monitor and maintain security</li>
             <li>Conduct research and development</li>
-            <li>Generate aggregated, anonymized insights</li>
+            <li>Generate aggregated, anonymised insights</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-800 mb-4">3.4 Legal Compliance</h3>
@@ -196,7 +196,7 @@ const PrivacyPage = () => {
             <li><strong>Customer Feedback:</strong> As directed by our business customers (as data controllers)</li>
           </ul>
           <p className="text-gray-700 mb-10 leading-relaxed">
-            When data is no longer needed, we securely delete or anonymize it in accordance with our
+            When data is no longer needed, we securely delete or anonymise it in accordance with our
             data retention schedule and applicable legal requirements.
           </p>
 
@@ -241,9 +241,9 @@ const PrivacyPage = () => {
           <h3 className="text-xl font-semibold text-gray-800 mb-4">9.1 Types of Cookies We Use</h3>
           <ul className="list-disc pl-6 text-gray-700 mb-6 space-y-2">
             <li><strong>Essential Cookies:</strong> Required for basic site functionality</li>
-            <li><strong>Performance Cookies:</strong> Help us analyze site usage and performance</li>
+            <li><strong>Performance Cookies:</strong> Help us analyse site usage and performance</li>
             <li><strong>Functional Cookies:</strong> Remember your preferences and settings</li>
-            <li><strong>Marketing Cookies:</strong> Track conversions and personalize ads (with consent)</li>
+            <li><strong>Marketing Cookies:</strong> Track conversions and personalise ads (with consent)</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-800 mb-4">9.2 Managing Cookies</h3>

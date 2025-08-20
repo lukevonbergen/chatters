@@ -68,11 +68,12 @@ const PricingPage = () => {
 
        <FAQSection
         eyebrow="Pricing FAQ"
+        eyebrowColour='text-green-600/80'
         title="Recent questions about pricing"
         description="If you have a different question, contact us and we'll help."
         dottedBackground
         wavyBottom = {false}
-        backgroundGradient="from-green via-white to-blue-50"
+        backgroundGradient="from-green to-blue-50"
         gradientDirection="bg-gradient-to-b"
         defaultOpenIndex={0}
         faqs={[

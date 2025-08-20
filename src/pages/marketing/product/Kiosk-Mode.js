@@ -34,7 +34,7 @@ const KioskModeProduct = () => {
 
       <PageHeader
         title="Kiosk Mode That Turns Any Tablet Into a Feedback Station"
-        description="Perfect for retail stores, hotel lobbies, and anywhere QR codes aren't practical. Create dedicated feedback stations that customers actually want to use."
+        description="Create dedicated spots where your staff can view and respond to customer feedback in real-time. Perfect for retail stores, hotels, and anywhere you want to make feedback convenient."
         backgroundGradient="from-white to-orange-200"
         showSubtitle={true}
         subtitle="Kiosk Mode"
@@ -43,50 +43,49 @@ const KioskModeProduct = () => {
       <ContentSplit
         eyebrow="Dedicated Stations"
         eyebrowColour='text-orange-600'
-        title="Professional feedback kiosks that customers actually use."
-        description="Transform any iPad or Android tablet into a polished feedback station. Perfect for retail stores, hotel lobbies, restaurants, and anywhere you want to make feedback convenient."
+        title="A simple view, respond, and manage feedback interface."
+        description="No fluff, no distractions. Just a clean, focused interface that lets your team see customer feedback and respond instantly."
         bullets={[
-          "Works with any tablet device",
+          "Works on any tablet or desktop",
           "Secure kiosk mode lockdown", 
-          "Custom branding & themes",
-          "Offline capability built-in"
+          "Easy to manage",
         ]}
-        primaryCta={{ label: "Try kiosk mode", to: "/signup" }}
-        secondaryCta={{ label: "See demo", to: "/demo" }}
+        primaryCta={{ label: "See Kiosk Mode", to: "/demo" }}
+        secondaryCta={{ label: "Pricing", to: "/pricing" }}
         image={{ src: "/img/mock-kiosk.png", alt: "Feedback kiosk interface" }}
       />
 
       <ProductFeaturesShowcase
         eyebrow="Kiosk Intelligence"
         eyebrowColour='text-orange-600'
-        title="Professional feedback stations that work everywhere."
-        description="Our kiosk mode transforms any tablet into a secure, branded feedback station that looks professional and encourages customer participation."
-        primaryCta={{ label: "Set up kiosks", to: "/signup" }}
-        secondaryCta={{ label: "View gallery", to: "/demo" }}
+        title="Place your station anywhere, receive feedback instantly."
+        description="Kiosk mode is designed for security, ease of use, and flexibility. Turn any tablet into a professional feedback station that captures customer insights in real-time."
+        primaryCta={{ label: "See Kiosk Mode", to: "/demo" }}
+        secondaryCta={{ label: "Pricing", to: "/pricing" }}
         features={[
           {
             id: "setup",
             eyebrow: "Easy Setup",
-            title: "Turn tablets into kiosks instantly",
-            description: "Install our app on any iPad or Android tablet and activate kiosk mode. No special hardware or technical setup required.",
-            bullets: ["Works with existing tablets", "5-minute setup", "Remote configuration"],
-            image: { src: "/img/mock-setup.png", alt: "Kiosk setup process" },
+            title: "Turn tablets or laptops into kiosks instantly",
+            description: "Just click 'Kiosk Mode' in the Chatters dashboard to transform any device into a dedicated feedback station.",
+            bullets: ["No additional devices", "Instant setup", "Easy to use"],
+            // image: { src: "/img/mock-setup.png", alt: "Kiosk setup process" },
           },
           {
             id: "design",
-            eyebrow: "Custom Design",
-            title: "Match your brand perfectly",
-            description: "Customize colors, logos, fonts, and layout to create kiosks that seamlessly blend with your business environment.",
-            bullets: ["Full brand customization", "Multiple themes", "Layout options"],
-            image: { src: "/img/mock-design.png", alt: "Kiosk customization" },
+            eyebrow: "Real-time",
+            title: "No wasting time waiting",
+            description: "No waiting around, or refreshing, feedback is displayed instantly as it comes in. Your team can respond immediately to customer concerns.",
+            bullets: ["Live updates ", "Offline mode", "Instant notifications"],
+            // image: { src: "/img/mock-design.png", alt: "Kiosk customisation" },
           },
           {
             id: "security",
             eyebrow: "Secure Mode",
-            title: "Locked down for public use",
-            description: "Kiosk mode prevents customers from accessing other apps or settings, keeping your device secure while allowing feedback submission.",
+            title: "Locked down for security",
+            description: "Kiosk mode prevents your staff from accessing other apps or settings, keeping your device secure while allowing feedback resolution.",
             bullets: ["App lockdown", "Auto-reset timer", "Tamper protection"],
-            image: { src: "/img/mock-security.png", alt: "Security features" },
+            // image: { src: "/img/mock-security.png", alt: "Security features" },
           },
         ]}
       />

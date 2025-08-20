@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Check, ArrowRight } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import PrimaryButton from "../../common/buttons/PrimaryButton";
 
 const Hero = ({
@@ -48,7 +48,7 @@ const Hero = ({
   const cardAnimate = prefersReduced ? {} : { opacity: 1, x: 0 };
   const cardTransition = { duration: 0.45, ease: "easeOut", delay: prefersReduced ? 0 : 0.15 };
 
-  // --- Your existing simulated activity ---
+  // --- Simulated activity ---
   const [stats, setStats] = useState({ alerts: 12, response: "3m", resolution: 84 });
   const [feedbackItems, setFeedbackItems] = useState([
     { id: 1, table: "Table 213", msg: "I'm still waiting for my food..", status: "Unresolved", isNew: false },
@@ -71,7 +71,7 @@ const Hero = ({
     { table: "Table 28", msg: "The bathroom needs attention", status: "Unresolved" },
     { table: "Table 56", msg: "We ordered medium but got well done", status: "Unresolved" },
     { table: "Table 3", msg: "Absolutely loved the dessert!", status: "Resolved" },
-    { table:  "Table 14", msg: "Water glasses need refilling", status: "Assistance Request" },
+    { table: "Table 14", msg: "Water glasses need refilling", status: "Assistance Request" },
     { table: "Table 45", msg: "Server was incredibly helpful", status: "Resolved" },
     { table: "Table 22", msg: "Spilled drink on the floor", status: "Assistance Request" },
     { table: "Table 11", msg: "Food took over 45 minutes", status: "Unresolved" },
@@ -80,6 +80,7 @@ const Hero = ({
   useEffect(() => {
     const interval = setInterval(() => {
       const action = Math.random() < 0.6 ? "add" : "resolve";
+
       if (action === "add") {
         setFeedbackItems(prev => {
           const currentTables = prev.map(item => item.table);
@@ -116,34 +117,34 @@ const Hero = ({
         });
       }
     }, 3000);
+
     return () => clearInterval(interval);
   }, []);
 
+  // Remove resolved items after a short delay (lets exit animation play)
   useEffect(() => {
     const timeout = setTimeout(() => {
       setFeedbackItems(prev => prev.filter(item => !item.isResolved));
-    }, 2000);
+    }, 300); // short to keep UI snappy; exit anim handles smoothness
     return () => clearTimeout(timeout);
   }, [feedbackItems]);
 
   return (
     <section className={`relative w-full bg-gradient-to-b ${backgroundGradient} overflow-hidden`}>
-      {/* Subtle grid texture */}
+      {/* Subtle dotted texture */}
       <motion.div
-  className="absolute inset-0 pointer-events-none"
-  style={{
-    opacity: 0.07,
-    backgroundImage: `
-      radial-gradient(circle, rgba(0,0,0,0.15) 1px, transparent 1px)
-    `,
-    backgroundSize: "24px 24px",
-    maskImage: "radial-gradient(ellipse at center, black 70%, transparent 100%)",
-    WebkitMaskImage: "radial-gradient(ellipse at center, black 70%, transparent 100%)",
-  }}
-  initial={prefersReduced ? false : { opacity: 0 }}
-  animate={prefersReduced ? false : { opacity: 1 }}
-  transition={{ duration: 0.6, ease: "easeOut" }}
-/>
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          opacity: 0.07,
+          backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.15) 1px, transparent 1px)`,
+          backgroundSize: "24px 24px",
+          maskImage: "radial-gradient(ellipse at center, black 70%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse at center, black 70%, transparent 100%)",
+        }}
+        initial={prefersReduced ? false : { opacity: 0 }}
+        animate={prefersReduced ? false : { opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      />
 
       {/* Decorative blurred orbs */}
       <motion.div
@@ -166,7 +167,7 @@ const Hero = ({
       {/* Content */}
       <div className="relative max-w-[1200px] mx-auto px-6 pt-36 lg:pt-40 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          {/* Left: Copy (animated) */}
+          {/* Left: Copy */}
           <motion.div
             className="lg:col-span-6 text-left"
             variants={container}
@@ -243,7 +244,7 @@ const Hero = ({
             </motion.div>
           </motion.div>
 
-          {/* Right: Mock product card (animated) */}
+          {/* Right: Mock product card */}
           <motion.div
             className="lg:col-span-6"
             initial={cardInitial}
@@ -275,36 +276,39 @@ const Hero = ({
                     ))}
                   </div>
 
-                  <div className="space-y-3">
-                    {feedbackItems.map((a) => (
-                      <div
-                        key={a.id}
-                        className={`flex items-center justify-between rounded-xl border border-gray-200 p-3 transition-all duration-500 ${
-                          a.isNew
-                            ? "animate-pulse bg-blue-50 border-blue-200 scale-105"
-                            : a.isResolved
-                            ? "opacity-0 scale-95 -translate-x-4"
-                            : ""
-                        }`}
-                      >
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900">{a.table}</div>
-                          <div className="text-sm text-gray-600">{a.msg}</div>
-                        </div>
-                        <span
-                          className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all duration-300 ${
-                            a.status === "Resolved"
-                              ? "bg-green-100 text-green-700"
-                              : a.status === "Assistance Request"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
+                  {/* Smoothly-resizing list */}
+                  <motion.div layout className="space-y-3">
+                    <AnimatePresence initial={false} mode="popLayout">
+                      {feedbackItems.map((a) => (
+                        <motion.div
+                          key={a.id}
+                          layout
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ duration: 0.28, ease: "easeOut" }}
+                          className={`flex items-center justify-between rounded-xl border border-gray-200 p-3`}
+                          style={{ transformOrigin: "top left" }}
                         >
-                          {a.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-900">{a.table}</div>
+                            <div className="text-sm text-gray-600">{a.msg}</div>
+                          </div>
+                          <span
+                            className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all duration-300 ${
+                              a.status === "Resolved"
+                                ? "bg-green-100 text-green-700"
+                                : a.status === "Assistance Request"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {a.status}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
                 </div>
               </div>
 
