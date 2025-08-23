@@ -190,7 +190,7 @@ const RatingDistributionTile = ({ venueId }) => {
                     }}
                   >
                     {/* Shimmer effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 -skew-x-12 animate-shimmer"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 -skew-x-12"></div>
                   </div>
                 </div>
               </div>
@@ -234,16 +234,6 @@ const RatingDistributionTile = ({ venueId }) => {
           </div>
         </>
       )}
-      
-      <style jsx>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%) skewX(-12deg); }
-          100% { transform: translateX(200%) skewX(-12deg); }
-        }
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-      `}</style>
     </div>
   );
 };

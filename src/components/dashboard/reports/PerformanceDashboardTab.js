@@ -14,32 +14,40 @@ const PerformanceDashboardTab = ({
 }) => {
   return (
     <div className="max-w-none">
+      {/* Header */}
       <div className="mb-6">
-        <h2 className="text-base lg:text-lg font-medium text-gray-900 mb-1">Performance Dashboard</h2>
+        <h2 className="text-base lg:text-lg font-medium text-gray-900 mb-1">
+          Performance Dashboard
+        </h2>
         <p className="text-sm text-gray-600">
-          Key metrics showing your team's response performance and customer satisfaction trends
+          Key metrics showing your team&apos;s response performance and customer satisfaction trends
         </p>
       </div>
 
       <div className="space-y-6 lg:space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          <ActionCompletionRateTile 
-            actionedCount={actionedCount} 
-            totalCount={totalCount} 
-          />
-          
-          <SatisfactionTrendTile 
-            satisfactionTrend={satisfactionTrend} 
-          />
-          
-          <AverageResolutionTimeTile 
-            venueId={venueId} 
-          />
+        {/* Row 1: Equal height KPIs */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+          <div className="lg:col-span-1 h-full">
+            <AverageResolutionTimeTile venueId={venueId} />
+          </div>
+          <div className="lg:col-span-1 h-full">
+            <ActionCompletionRateTile
+              venueId={venueId}
+              actionedCount={actionedCount}
+              totalCount={totalCount}
+            />
+          </div>
         </div>
 
-        <ResponseTimeAnalyticsTile 
-          venueId={venueId} 
-        />
+        {/* Row 2: Satisfaction trend */}
+        <div>
+          <SatisfactionTrendTile satisfactionTrend={satisfactionTrend} venueId={venueId}/>
+        </div>
+
+        {/* Row 3: Response time analytics */}
+        <div>
+          <ResponseTimeAnalyticsTile venueId={venueId} />
+        </div>
       </div>
     </div>
   );

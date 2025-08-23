@@ -1,218 +1,231 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
-import { CircularProgressbar } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
 
-const AverageResolutionTimeTile = ({ venueId }) => {
-  const [averageTime, setAverageTime] = useState(0);
-  const [totalResolved, setTotalResolved] = useState(0);
-  const [timeFilter, setTimeFilter] = useState('today');
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
-  const [isCustom, setIsCustom] = useState(false);
+const TARGET_MINUTES = 120;
 
-  const getDateRange = (filter) => {
+function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return x; }
+
+function toISO(d) { return d.toISOString(); }
+
+function rangeISO(preset, fromStr, toStr) {
+  const now = new Date();
+  switch (preset) {
+    case 'today': {
+      return { start: toISO(startOfDay(now)), end: toISO(endOfDay(now)) };
+    }
+    case 'yesterday': {
+      const y = new Date(now); y.setDate(now.getDate() - 1);
+      return { start: toISO(startOfDay(y)), end: toISO(endOfDay(y)) };
+    }
+    case 'last7': {
+      const s = new Date(now); s.setDate(now.getDate() - 6);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last30': {
+      const s = new Date(now); s.setDate(now.getDate() - 29);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'custom': {
+      const s = fromStr ? startOfDay(new Date(fromStr)) : startOfDay(new Date(0));
+      const e = toStr ? endOfDay(new Date(toStr)) : endOfDay(now);
+      return { start: toISO(s), end: toISO(e) };
+    }
+    default:
+      return { start: toISO(startOfDay(new Date(0))), end: toISO(endOfDay(now)) };
+  }
+}
+
+async function fetchAvgResolutionMinutes(venueId, startISO, endISO) {
+  const { data, error } = await supabase
+    .from('feedback')
+    .select('created_at, resolved_at')
+    .eq('venue_id', venueId)
+    .not('resolved_at', 'is', null)
+    .gte('resolved_at', startISO)
+    .lte('resolved_at', endISO);
+
+  if (error) {
+    console.error('Error fetching resolution times:', error);
+   return { avg: 0, count: 0 };
+  }
+  if (!data?.length) return { avg: 0, count: 0 };
+
+  const minutes = data.map(r => (new Date(r.resolved_at) - new Date(r.created_at)) / (1000 * 60));
+  const avg = minutes.reduce((a, b) => a + b, 0) / minutes.length;
+  return { avg, count: data.length };
+}
+
+function formatTime(minutes) {
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  if (minutes < 1440) {
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes % 60);
+    return m ? `${h}h ${m}m` : `${h}h`;
+  }
+  const d = Math.floor(minutes / 1440);
+  const h = Math.floor((minutes % 1440) / 60);
+  return h ? `${d}d ${h}h` : `${d}d`;
+}
+
+export default function AverageResolutionTimeTile({ venueId }) {
+  const [preset, setPreset] = useState('today'); // today | yesterday | last7 | last30 | custom
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+
+  const [avg, setAvg] = useState(0);
+  const [count, setCount] = useState(0);
+  const [baselineAvg, setBaselineAvg] = useState(0); // for delta when preset is 'today' or 'yesterday'
+  const [loading, setLoading] = useState(false);
+
+  // decide baseline window (yesterday vs previous period)
+  function baselineRange() {
     const now = new Date();
-    let startDate, endDate;
-
-    switch (filter) {
-      case 'today':
-        startDate = new Date(now.setHours(0, 0, 0, 0));
-        endDate = new Date(now.setHours(23, 59, 59, 999));
-        break;
-      case 'week':
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
-        startOfWeek.setHours(0, 0, 0, 0);
-        startDate = startOfWeek;
-        endDate = new Date();
-        break;
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate = new Date();
-        break;
-      case 'ytd':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        endDate = new Date();
-        break;
-      case 'custom':
-        startDate = customStartDate ? new Date(customStartDate) : new Date(0);
-        endDate = customEndDate ? new Date(customEndDate + 'T23:59:59') : new Date();
-        break;
-      default:
-        startDate = new Date(0);
-        endDate = new Date();
+    if (preset === 'today') {
+      const y = new Date(now); y.setDate(now.getDate() - 1);
+      return rangeISO('yesterday');
     }
-
-    return { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
-  };
-
-  const fetchResolutionTimes = async () => {
-    if (!venueId) return;
-    
-    const { startDate, endDate } = getDateRange(timeFilter);
-
-    const { data, error } = await supabase
-      .from('feedback')
-      .select('created_at, resolved_at')
-      .eq('venue_id', venueId)
-      .not('resolved_at', 'is', null)
-      .gte('resolved_at', startDate)
-      .lte('resolved_at', endDate);
-
-    if (error) {
-      console.error('Error fetching resolution times:', error);
-      return;
+    if (preset === 'yesterday') {
+      const d2 = new Date(now); d2.setDate(now.getDate() - 2);
+      return { start: toISO(startOfDay(d2)), end: toISO(endOfDay(d2)) };
     }
-
-    if (!data || data.length === 0) {
-      setAverageTime(0);
-      setTotalResolved(0);
-      return;
+    // for ranges, compare to immediately preceding same length
+    if (preset === 'last7') {
+      const s = new Date(now); s.setDate(now.getDate() - 13);
+      const e = new Date(now); e.setDate(now.getDate() - 7);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(e)) };
     }
-
-    const resolutionTimes = data.map(item => {
-      const created = new Date(item.created_at);
-      const resolved = new Date(item.resolved_at);
-      return (resolved - created) / (1000 * 60); // Convert to minutes
-    });
-
-    const avgTime = resolutionTimes.reduce((sum, time) => sum + time, 0) / resolutionTimes.length;
-    
-    setAverageTime(avgTime);
-    setTotalResolved(data.length);
-  };
+    if (preset === 'last30') {
+      const s = new Date(now); s.setDate(now.getDate() - 59);
+      const e = new Date(now); e.setDate(now.getDate() - 30);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(e)) };
+    }
+    if (preset === 'custom' && fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      const diff = Math.max(0, Math.ceil((to - from) / (1000 * 60 * 60 * 24))); // days
+      const prevEnd = new Date(from); prevEnd.setDate(from.getDate() - 1);
+      const prevStart = new Date(prevEnd); prevStart.setDate(prevEnd.getDate() - diff);
+      return { start: toISO(startOfDay(prevStart)), end: toISO(endOfDay(prevEnd)) };
+    }
+    return null;
+  }
 
   useEffect(() => {
-    fetchResolutionTimes();
-  }, [venueId, timeFilter, customStartDate, customEndDate]);
+    if (!venueId) return;
 
-  const formatTime = (minutes) => {
-    if (minutes < 60) {
-      return `${Math.round(minutes)}m`;
-    } else if (minutes < 1440) { // Less than 24 hours
-      const hours = Math.floor(minutes / 60);
-      const mins = Math.round(minutes % 60);
-      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-    } else { // 24 hours or more
-      const days = Math.floor(minutes / 1440);
-      const hours = Math.floor((minutes % 1440) / 60);
-      return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
-    }
-  };
+    const run = async () => {
+      setLoading(true);
+      const { start, end } = rangeISO(preset, fromDate, toDate);
+      const base = baselineRange();
 
-  const getProgressPercentage = () => {
-    // Assuming target resolution time of 2 hours (120 minutes)
-    // Invert the percentage so faster resolution = higher percentage
-    const targetMinutes = 120;
-    if (averageTime === 0) return 100;
-    const percentage = Math.max(0, ((targetMinutes - averageTime) / targetMinutes) * 100);
-    return Math.min(100, percentage);
-  };
+      const [main, baseData] = await Promise.all([
+        fetchAvgResolutionMinutes(venueId, start, end),
+        base ? fetchAvgResolutionMinutes(venueId, base.start, base.end) : Promise.resolve({ avg: 0, count: 0 }),
+      ]);
 
-  const getProgressColor = () => {
-    const percentage = getProgressPercentage();
-    if (percentage >= 80) return '#10B981'; // Green
-    if (percentage >= 60) return '#F59E0B'; // Yellow
-    return '#EF4444'; // Red
-  };
+      setAvg(main.avg || 0);
+      setCount(main.count || 0);
+      setBaselineAvg(baseData.avg || 0);
+      setLoading(false);
+    };
 
-  const handleFilterChange = (filter) => {
-    setTimeFilter(filter);
-    setIsCustom(filter === 'custom');
-  };
+    run();
+  }, [venueId, preset, fromDate, toDate]);
+
+  const progress = useMemo(() => {
+    if (avg === 0) return 100;
+    const pct = Math.max(0, ((TARGET_MINUTES - avg) / TARGET_MINUTES) * 100);
+    return Math.min(100, pct);
+  }, [avg]);
+
+  const delta = useMemo(() => {
+    if (!baselineAvg) return null;
+    const d = ((avg - baselineAvg) / baselineAvg) * 100; // + = slower
+    return Math.round(d);
+  }, [avg, baselineAvg]);
+
+  const deltaColor = delta != null
+    ? (delta <= 0 ? 'text-green-600' : 'text-gray-900')
+    : 'text-gray-900';
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8">
-      <div className="mb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-          <div>
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Average Resolution Time</h2>
-            <p className="text-gray-600 text-sm">
-              Time taken to resolve customer feedback.
-            </p>
-          </div>
-        </div>
-        
-        {/* Time Filter Buttons */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          {['today', 'week', 'month', 'ytd', 'custom'].map((filter) => (
-            <button
-              key={filter}
-              onClick={() => handleFilterChange(filter)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                timeFilter === filter
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {filter === 'ytd' ? 'YTD' : filter.charAt(0).toUpperCase() + filter.slice(1)}
-            </button>
-          ))}
+    <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100 h-full">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">Avg. Resolution Time</h3>
+          <p className="text-gray-600 text-xs mt-1">Time taken to resolve feedback</p>
         </div>
 
-        {/* Custom Date Inputs */}
-        {isCustom && (
-          <div className="flex gap-2 mt-3 items-center">
-            <input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-xs"
-            />
-            <span className="text-xs text-gray-500">to</span>
-            <input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-xs"
-            />
-          </div>
-        )}
+        {/* Styled dropdown */}
+        <div className="min-w-[150px]">
+          <select
+            value={preset}
+            onChange={(e) => setPreset(e.target.value)}
+            className="block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
+          >
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7">Last 7 Days</option>
+            <option value="last30">Last 30 Days</option>
+            <option value="custom">Custom…</option>
+          </select>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center space-y-6">
-        {/* Progress Circle */}
-        <div className="flex-shrink-0">
-          <div className="w-32 h-32 lg:w-40 lg:h-40">
-            <CircularProgressbar
-              value={getProgressPercentage()}
-              text={formatTime(averageTime)}
-              styles={{
-                path: { stroke: getProgressColor(), strokeWidth: 3 },
-                text: { fill: '#111827', fontSize: '14px', fontWeight: 'bold' },
-                trail: { stroke: '#f3f4f6', strokeWidth: 3 }
-              }}
-            />
+      {/* Custom date pickers */}
+      {preset === 'custom' && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="px-2 py-1 border border-gray-300 rounded-md text-xs"
+            placeholder="From"
+          />
+          <span className="text-xs text-gray-500">to</span>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="px-2 py-1 border border-gray-300 rounded-md text-xs"
+            placeholder="To"
+          />
+        </div>
+      )}
+
+      {/* Metric row */}
+      <div className="mt-4 flex items-end justify-between">
+        <div className="text-2xl font-bold text-gray-900">
+          {loading ? '—' : formatTime(avg)}
+        </div>
+        <div className="text-right">
+          <div className={`text-sm font-semibold ${delta != null ? deltaColor : 'text-gray-900'}`}>
+            {delta == null ? '—' : `${delta <= 0 ? '-' : '+'}${Math.abs(delta)}%`}
+          </div>
+          <div className="text-xs text-gray-600">
+            {preset === 'today' ? 'vs yesterday'
+              : preset === 'yesterday' ? 'vs day before'
+              : preset === 'last7' ? 'vs prior 7'
+              : preset === 'last30' ? 'vs prior 30'
+              : preset === 'custom' && fromDate && toDate ? 'vs previous window'
+              : '—'}
           </div>
         </div>
+      </div>
 
-        <div className="text-center">
-          <p className="text-gray-600 text-sm mb-2">
-            {totalResolved} feedback items resolved
-            {timeFilter === 'today' && ' today'}
-            {timeFilter === 'week' && ' this week'}
-            {timeFilter === 'month' && ' this month'}
-            {timeFilter === 'ytd' && ' year to date'}
-            {timeFilter === 'custom' && customStartDate && customEndDate && 
-              ` from ${customStartDate} to ${customEndDate}`}
-          </p>
-
-          {/* Performance Indicator */}
-          {totalResolved > 0 && (
-            <div className={`text-xs font-medium ${
-              getProgressPercentage() >= 80 ? 'text-green-600' : 
-              getProgressPercentage() >= 60 ? 'text-yellow-600' : 'text-red-600'
-            }`}>
-              {getProgressPercentage() >= 80 && '🎯 Excellent response time'}
-              {getProgressPercentage() >= 60 && getProgressPercentage() < 80 && '⚡ Good response time'}
-              {getProgressPercentage() < 60 && '⏰ Room for improvement'}
-            </div>
-          )}
+      {/* Progress bar */}
+      <div className="mt-4">
+        <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+          <div className="h-2 rounded-full bg-green-500" style={{ width: `${progress}%` }} />
         </div>
+      </div>
+
+      {/* Footnote */}
+      <div className="mt-2 text-xs text-gray-500">
+        {loading ? 'Loading…' : `${count} feedback ${count === 1 ? 'item' : 'items'} resolved`}
       </div>
     </div>
   );
-};
-
-export default AverageResolutionTimeTile;
+}
