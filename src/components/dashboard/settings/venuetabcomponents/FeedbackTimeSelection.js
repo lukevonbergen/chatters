@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../utils/supabase';
+import { ChevronDown, ChevronUp, Copy, Plus, X } from 'lucide-react';
 
 const FeedbackTimeSelection = ({ currentVenueId }) => {
   // Feedback hours state
@@ -15,9 +16,10 @@ const FeedbackTimeSelection = ({ currentVenueId }) => {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [expandedDays, setExpandedDays] = useState({});
 
   const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   // Fetch feedback hours on component mount
   useEffect(() => {
@@ -110,6 +112,18 @@ const FeedbackTimeSelection = ({ currentVenueId }) => {
     setFeedbackHours(newConfig);
   };
 
+  const toggleDayExpansion = (day) => {
+    setExpandedDays(prev => ({
+      ...prev,
+      [day]: !prev[day]
+    }));
+  };
+
+  const formatTimeRange = (periods) => {
+    if (!periods || periods.length === 0) return '';
+    return periods.map(p => `${p.start}-${p.end}`).join(', ');
+  };
+
   const saveFeedbackHours = async () => {
     setLoading(true);
     setMessage('');
@@ -142,92 +156,144 @@ const FeedbackTimeSelection = ({ currentVenueId }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8">
-      <div className="mb-6">
-        <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Feedback Collection Hours</h3>
-        <p className="text-gray-600 text-sm">Set when customers can leave feedback. Useful for avoiding feedback during busy periods or when operating as different venue types.</p>
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">Feedback Collection Hours</h3>
+        <p className="text-gray-600 text-sm">Set when customers can leave feedback during operating hours.</p>
       </div>
 
-      <div className="space-y-6">
+      {/* Compact table-like view */}
+      <div className="space-y-2">
         {dayNames.map((day, dayIndex) => (
-          <div key={day} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-3">
+          <div key={day} className="border border-gray-200 rounded-md">
+            {/* Day header row */}
+            <div className="flex items-center justify-between p-3 hover:bg-gray-50">
+              <div className="flex items-center space-x-3 flex-1">
                 <input
                   type="checkbox"
                   checked={feedbackHours[day].enabled}
                   onChange={(e) => updateFeedbackHours(day, 'enabled', e.target.checked)}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label className="text-sm font-medium text-gray-700">
-                  {dayLabels[dayIndex]}
-                </label>
+                <div className="min-w-[60px]">
+                  <span className="text-sm font-medium text-gray-900">
+                    {dayLabels[dayIndex]}
+                  </span>
+                </div>
+                
+                {feedbackHours[day].enabled && (
+                  <div className="flex-1 text-sm text-gray-600">
+                    {formatTimeRange(feedbackHours[day].periods)}
+                  </div>
+                )}
               </div>
-              
-              {feedbackHours[day].enabled && (
-                <button
-                  onClick={() => copyToAllDays(day)}
-                  className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded border border-blue-200 hover:bg-blue-50 transition-colors"
-                >
-                  Copy to all days
-                </button>
-              )}
+
+              <div className="flex items-center space-x-2">
+                {feedbackHours[day].enabled && (
+                  <>
+                    <button
+                      onClick={() => copyToAllDays(day)}
+                      className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                      title="Copy to all days"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => toggleDayExpansion(day)}
+                      className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+                      title={expandedDays[day] ? "Collapse" : "Expand"}
+                    >
+                      {expandedDays[day] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
-            {feedbackHours[day].enabled && (
-              <div className="space-y-3 ml-7">
-                {feedbackHours[day].periods.map((period, periodIndex) => (
-                  <div key={periodIndex} className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2">
+            {/* Expanded time controls */}
+            {feedbackHours[day].enabled && expandedDays[day] && (
+              <div className="border-t border-gray-200 p-3 bg-gray-50">
+                <div className="space-y-2">
+                  {feedbackHours[day].periods.map((period, periodIndex) => (
+                    <div key={periodIndex} className="flex items-center space-x-2">
                       <input
                         type="time"
                         value={period.start}
                         onChange={(e) => updateFeedbackHours(day, 'start', e.target.value, periodIndex)}
                         className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
-                      <span className="text-gray-500">to</span>
+                      <span className="text-gray-500 text-sm">to</span>
                       <input
                         type="time"
                         value={period.end}
                         onChange={(e) => updateFeedbackHours(day, 'end', e.target.value, periodIndex)}
                         className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
+                      
+                      {feedbackHours[day].periods.length > 1 && (
+                        <button
+                          onClick={() => removePeriod(day, periodIndex)}
+                          className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+                          title="Remove period"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-                    
-                    {feedbackHours[day].periods.length > 1 && (
-                      <button
-                        onClick={() => removePeriod(day, periodIndex)}
-                        className="text-red-500 hover:text-red-700 text-sm px-2 py-1 hover:bg-red-50 rounded transition-colors"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                ))}
-                
-                <button
-                  onClick={() => addPeriod(day)}
-                  className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 border border-blue-200 rounded hover:bg-blue-50 transition-colors"
-                >
-                  + Add break time
-                </button>
+                  ))}
+                  
+                  <button
+                    onClick={() => addPeriod(day)}
+                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add break time</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
         ))}
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">💡 Tips for Feedback Hours</h4>
-          <ul className="text-xs text-blue-700 space-y-1">
-            <li>• Set break times if you close between lunch and dinner service</li>
-            <li>• Disable late hours if your venue becomes a nightclub to avoid intoxicated feedback</li>
-            <li>• Times automatically round to 15-minute intervals</li>
-            <li>• Overnight hours (e.g., 22:00 to 02:00) are supported</li>
-          </ul>
-        </div>
       </div>
 
-      <div className="pt-4 border-t border-gray-200">
+      {/* Quick actions */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          onClick={() => {
+            const allEnabled = {};
+            dayNames.forEach(day => {
+              allEnabled[day] = { enabled: true, periods: [{ start: '09:00', end: '22:00' }] };
+            });
+            setFeedbackHours(allEnabled);
+          }}
+          className="text-sm text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-200 rounded hover:bg-blue-50 transition-colors"
+        >
+          Enable All Days
+        </button>
+        <button
+          onClick={() => {
+            const allDisabled = {};
+            dayNames.forEach(day => {
+              allDisabled[day] = { enabled: false, periods: [{ start: '09:00', end: '22:00' }] };
+            });
+            setFeedbackHours(allDisabled);
+          }}
+          className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+        >
+          Disable All Days
+        </button>
+      </div>
+
+      {/* Tips section - more compact */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+        <h4 className="text-sm font-medium text-blue-900 mb-1">💡 Quick Tips</h4>
+        <p className="text-xs text-blue-700">
+          Click the expand button (⌄) to edit times • Use "Copy to all days" to apply settings • Add break times for split shifts • Times round to 15-minute intervals
+        </p>
+      </div>
+
+      {/* Save button and messages */}
+      <div className="pt-4 border-t border-gray-200 mt-4">
         <button
           onClick={saveFeedbackHours}
           disabled={loading}

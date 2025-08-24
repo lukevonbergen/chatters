@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import { HandHeart, Clock } from 'lucide-react';
+import { HandHeart, Clock, Star } from 'lucide-react';
 
 const CustomerFeedbackPage = () => {
   const { venueId } = useParams();
@@ -162,14 +162,13 @@ const CustomerFeedbackPage = () => {
     }
   }, [venueId]);
 
-  const handleEmojiAnswer = (emoji) => {
-    const rating = { '😠': 1, '😞': 2, '😐': 3, '😊': 4, '😍': 5 }[emoji] || null;
+  const handleStarAnswer = (rating) => {
     const question = questions[current];
     setFeedbackAnswers(prev => [...prev, {
       venue_id: venueId,
       question_id: question.id,
       session_id: sessionId,
-      sentiment: emoji,
+      sentiment: null, // No emoji sentiment for stars
       rating,
       table_number: tableNumber || null,
     }]);
@@ -213,17 +212,17 @@ const CustomerFeedbackPage = () => {
     setAssistanceLoading(true);
     
     try {
-      const { error: insertError } = await supabase
-        .from('assistance_requests')
-        .insert([{
-          venue_id: venueId,
-          table_number: parseInt(tableNumber),
-          status: 'pending',
+      // Use Edge Function to bypass RLS restrictions
+      const { data, error } = await supabase.functions.invoke('create-assistance-request', {
+        body: {
+          venueId: venueId,
+          tableNumber: tableNumber,
           message: 'Just need assistance - Our team will be right with you'
-        }]);
+        }
+      });
 
-      if (insertError) {
-        console.error('Error requesting assistance:', insertError);
+      if (error) {
+        console.error('Error requesting assistance:', error);
         alert('Failed to request assistance. Please try again.');
         return;
       }
@@ -401,26 +400,37 @@ const CustomerFeedbackPage = () => {
             
             <h2 className="text-lg font-semibold mb-6">{questions[current].question}</h2>
             
-            {/* Mobile-optimized emoji layout */}
+            {/* Star rating system */}
             <div className="space-y-6">
-              <div className="grid grid-cols-5 gap-2 px-2">
-                {['😠', '😞', '😐', '😊', '😍'].map((emoji, index) => (
-                  <div key={emoji} className="flex flex-col items-center">
+              <div className="flex justify-center items-center space-x-2 px-2">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <div key={rating} className="flex flex-col items-center">
                     <button
-                      onClick={() => handleEmojiAnswer(emoji)}
-                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full text-2xl sm:text-3xl shadow-sm border hover:scale-110 transition transform active:scale-95 flex items-center justify-center"
+                      onClick={() => handleStarAnswer(rating)}
+                      className="p-2 rounded-full hover:scale-110 transition transform active:scale-95 flex items-center justify-center"
                       style={{
-                        borderColor: primary,
                         backgroundColor: secondary,
                       }}
                     >
-                      {emoji}
+                      <Star 
+                        className="w-8 h-8 sm:w-10 sm:h-10" 
+                        style={{ color: primary }}
+                        fill={primary}
+                      />
                     </button>
                     <span className="text-xs mt-1 text-gray-500">
-                      {['Poor', 'Fair', 'Good', 'Great', 'Excellent'][index]}
+                      {rating}
                     </span>
                   </div>
                 ))}
+              </div>
+              
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-2">Tap a star to rate</p>
+                <div className="flex justify-center space-x-4 text-xs text-gray-500">
+                  <span>1 = Poor</span>
+                  <span>5 = Excellent</span>
+                </div>
               </div>
 
               {/* Assistance Request Button */}
