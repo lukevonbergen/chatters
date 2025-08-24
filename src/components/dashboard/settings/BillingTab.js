@@ -154,7 +154,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
           </div>
           <div className="flex items-center justify-between sm:justify-end sm:ml-4">
             <div className="text-right">
-              <span className="text-lg lg:text-xl font-bold text-gray-800">£29/mo</span>
+              <span className="text-lg lg:text-xl font-bold text-gray-800">£149/mo</span>
             </div>
             <input
               type="radio"
@@ -180,8 +180,8 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
           </div>
           <div className="flex items-center justify-between sm:justify-end sm:ml-4">
             <div className="text-right">
-              <span className="text-lg lg:text-xl font-bold text-gray-800">£278/yr</span>
-              <p className="text-xs text-gray-500">£23.17/mo equivalent</p>
+              <span className="text-lg lg:text-xl font-bold text-gray-800">£1,430/yr</span>
+              <p className="text-xs text-gray-500">£119.16/mo equivalent</p>
             </div>
             <input
               type="radio"
