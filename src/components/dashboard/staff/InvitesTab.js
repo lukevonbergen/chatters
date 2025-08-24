@@ -64,7 +64,6 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchS
 
           setPendingInvitations([]); // Can't detect pending in fallback mode
           setActiveManagers(processedManagers);
-          setMessage('Note: Advanced invitation features require production environment. Showing active managers only.');
           return;
         }
         
@@ -103,7 +102,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchS
       // Check if API exists
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('This feature requires production environment');
+        throw new Error('Resend invitation feature is not available');
       }
 
       const result = await response.json();
@@ -123,14 +122,14 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchS
 
   // Revoke pending invitation
   const handleRevokePendingInvitation = async (manager) => {
-    setMessage('This feature requires production environment');
+    setMessage('Cancel invitation feature is not available');
     return;
   };
 
   // Revoke active manager access
   const handleRevokeAccess = async (manager, deleteAccount = false) => {
     if (deleteAccount) {
-      setMessage('Delete account feature requires production environment');
+      setMessage('Delete account feature is not available');
       return;
     }
 

@@ -1,7 +1,7 @@
 // EmployeesTab.js - Main component that orchestrates all the smaller components
 
 import React, { useState } from 'react';
-import { Plus, Download, Upload } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { supabase } from '../../../utils/supabase';
 import { downloadEmployeesCSV, parseEmployeesCSV } from '../../../utils/csvUtils';
 import EmployeesList from './employeetabcomponents/EmployeesList';

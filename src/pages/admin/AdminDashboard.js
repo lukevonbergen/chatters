@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../utils/supabase';
+import { downloadEmployeesCSV, parseEmployeesCSV } from '../../utils/csvUtils';
 import { 
   Plus, 
   Trash2, 
@@ -17,11 +18,11 @@ import {
   Search,
   Edit,
   Calendar,
-  Phone,
   Mail,
-  MapPin,
   Filter,
-  X
+  X,
+  UserPlus,
+  UserX
 } from 'lucide-react';
 
 const emptyVenue = () => ({
@@ -103,6 +104,13 @@ export default function AdminDashboard() {
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   const [editingAccountData, setEditingAccountData] = useState(null);
   const [isSavingAccount, setIsSavingAccount] = useState(false);
+  
+  // Staff management state
+  const [venueEmployees, setVenueEmployees] = useState({});
+  const [loadingVenueStaff, setLoadingVenueStaff] = useState({});
+  const [showAddEmployeeForm, setShowAddEmployeeForm] = useState({});
+  const [newEmployeeData, setNewEmployeeData] = useState({});
+  const [uploadingCSV, setUploadingCSV] = useState({});
 
   const totalTables = useMemo(
     () =>
@@ -485,6 +493,165 @@ export default function AdminDashboard() {
       return { status: 'trial', color: 'blue', label: 'Trial' };
     }
     return { status: 'expired', color: 'red', label: 'Expired' };
+  };
+
+  // Load employees for a specific venue
+  const loadVenueEmployees = async (venueId) => {
+    setLoadingVenueStaff(prev => ({ ...prev, [venueId]: true }));
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('venue_id', venueId)
+        .order('first_name');
+        
+      if (error) throw error;
+      
+      setVenueEmployees(prev => ({ ...prev, [venueId]: data || [] }));
+    } catch (error) {
+      console.error('Error loading venue employees:', error);
+      toast.error('Failed to load venue employees');
+    } finally {
+      setLoadingVenueStaff(prev => ({ ...prev, [venueId]: false }));
+    }
+  };
+
+  // Add individual employee
+  const addEmployee = async (venueId) => {
+    const employeeData = newEmployeeData[venueId];
+    if (!employeeData?.first_name || !employeeData?.last_name || !employeeData?.email) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .insert([{
+          venue_id: venueId,
+          first_name: employeeData.first_name.trim(),
+          last_name: employeeData.last_name.trim(),
+          email: employeeData.email.trim().toLowerCase(),
+          phone: employeeData.phone?.trim() || null,
+          role: employeeData.role?.trim() || 'employee'
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Add to local state
+      setVenueEmployees(prev => ({
+        ...prev,
+        [venueId]: [...(prev[venueId] || []), data]
+      }));
+
+      // Clear form
+      setNewEmployeeData(prev => ({ ...prev, [venueId]: {} }));
+      setShowAddEmployeeForm(prev => ({ ...prev, [venueId]: false }));
+      
+      toast.success('Employee added successfully');
+    } catch (error) {
+      console.error('Error adding employee:', error);
+      if (error.code === '23505') {
+        toast.error('An employee with this email already exists');
+      } else {
+        toast.error('Failed to add employee');
+      }
+    }
+  };
+
+  // Remove employee
+  const removeEmployee = async (venueId, employeeId, employeeName) => {
+    if (!window.confirm(`Are you sure you want to remove ${employeeName}?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .delete()
+        .eq('id', employeeId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setVenueEmployees(prev => ({
+        ...prev,
+        [venueId]: (prev[venueId] || []).filter(emp => emp.id !== employeeId)
+      }));
+
+      toast.success('Employee removed successfully');
+    } catch (error) {
+      console.error('Error removing employee:', error);
+      toast.error('Failed to remove employee');
+    }
+  };
+
+  // Download venue employees CSV
+  const downloadVenueCSV = (venueId, venueName) => {
+    const employees = venueEmployees[venueId] || [];
+    downloadEmployeesCSV(employees, venueName);
+  };
+
+  // Upload and replace venue employees from CSV
+  const handleVenueCSVUpload = async (venueId, file) => {
+    if (!file) return;
+
+    setUploadingCSV(prev => ({ ...prev, [venueId]: true }));
+    try {
+      const { employees: parsedEmployees, errors } = await parseEmployeesCSV(file);
+      
+      if (errors.length > 0) {
+        toast.error(`CSV parsing errors: ${errors.join('; ')}`);
+        return;
+      }
+      
+      if (parsedEmployees.length === 0) {
+        toast.error('No valid employee data found in CSV file');
+        return;
+      }
+
+      const venueName = selectedAccount?.venues?.find(v => v.id === venueId)?.name || 'this venue';
+      const existingCount = venueEmployees[venueId]?.length || 0;
+      
+      if (existingCount > 0) {
+        const confirmMessage = `This will replace all ${existingCount} existing employees at ${venueName} with ${parsedEmployees.length} new employees from your CSV. Continue?`;
+        if (!window.confirm(confirmMessage)) {
+          return;
+        }
+      }
+      
+      // Delete existing employees for this venue
+      const { error: deleteError } = await supabase
+        .from('employees')
+        .delete()
+        .eq('venue_id', venueId);
+      
+      if (deleteError) throw deleteError;
+      
+      // Insert new employees
+      const employeesToInsert = parsedEmployees.map(emp => ({
+        ...emp,
+        venue_id: venueId
+      }));
+      
+      const { data, error } = await supabase
+        .from('employees')
+        .insert(employeesToInsert)
+        .select();
+      
+      if (error) throw error;
+      
+      // Update local state
+      setVenueEmployees(prev => ({ ...prev, [venueId]: data }));
+      
+      toast.success(`Successfully replaced all employees with ${data.length} new employees from CSV`);
+      
+    } catch (error) {
+      console.error('Error processing CSV:', error);
+      toast.error(`Failed to process CSV: ${error.message}`);
+    } finally {
+      setUploadingCSV(prev => ({ ...prev, [venueId]: false }));
+    }
   };
 
   return (
@@ -1196,33 +1363,231 @@ export default function AdminDashboard() {
 
             </div>
 
-            {/* Venues */}
+            {/* Venues with Staff Management */}
             <div className="mt-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Venues ({selectedAccount.venues?.length || 0})
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {selectedAccount.venues?.length ? (
-                  selectedAccount.venues.map((venue) => (
-                    <div key={venue.id} className="p-4 bg-gray-50 rounded border">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium text-gray-900">{venue.name}</div>
-                          <div className="text-sm text-gray-600">
-                            {venue.table_count || 0} tables
+                  selectedAccount.venues.map((venue) => {
+                    const employees = venueEmployees[venue.id] || [];
+                    const isLoadingStaff = loadingVenueStaff[venue.id];
+                    const showAddForm = showAddEmployeeForm[venue.id];
+                    const isUploading = uploadingCSV[venue.id];
+                    
+                    return (
+                      <div key={venue.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                        {/* Venue Header */}
+                        <div className="p-4 bg-gray-50 border-b">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <Building2 className="w-4 h-4 text-gray-500" />
+                                <span className="font-medium text-gray-900">{venue.name}</span>
+                                <span className="text-sm text-gray-500">
+                                  {venue.table_count || 0} tables
+                                </span>
+                                {employees.length > 0 && (
+                                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                    {employees.length} staff
+                                  </span>
+                                )}
+                              </div>
+                              {venue.address && (
+                                <div className="text-xs text-gray-500 mt-1 ml-6">
+                                  {typeof venue.address === 'string' ? venue.address : 
+                                   venue.address.line1 ? `${venue.address.line1}, ${venue.address.city} ${venue.address.postcode}` :
+                                   'No address'
+                                  }
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Staff Management Actions */}
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => downloadVenueCSV(venue.id, venue.name)}
+                                disabled={employees.length === 0}
+                                className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Download Staff CSV"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                              
+                              <label className="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors cursor-pointer">
+                                <Upload className="w-4 h-4" />
+                                <input
+                                  type="file"
+                                  accept=".csv"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleVenueCSVUpload(venue.id, file);
+                                    e.target.value = '';
+                                  }}
+                                  disabled={isUploading}
+                                />
+                              </label>
+                              
+                              <button
+                                onClick={() => {
+                                  if (employees.length === 0) {
+                                    loadVenueEmployees(venue.id);
+                                  }
+                                  setShowAddEmployeeForm(prev => ({ 
+                                    ...prev, 
+                                    [venue.id]: !showAddForm 
+                                  }));
+                                }}
+                                className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Add Staff Member"
+                              >
+                                <UserPlus className="w-4 h-4" />
+                              </button>
+                              
+                              {employees.length === 0 && !isLoadingStaff && (
+                                <button
+                                  onClick={() => loadVenueEmployees(venue.id)}
+                                  className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors"
+                                  title="View Staff"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          {venue.address && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {typeof venue.address === 'string' ? venue.address : 
-                               venue.address.line1 ? `${venue.address.line1}, ${venue.address.city} ${venue.address.postcode}` :
-                               'No address'
-                              }
+                          
+                          {isUploading && (
+                            <div className="mt-2 text-sm text-orange-600 flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Uploading CSV...
                             </div>
                           )}
                         </div>
+                        
+                        {/* Add Employee Form */}
+                        {showAddForm && (
+                          <div className="p-4 bg-blue-50 border-b">
+                            <h4 className="font-medium text-gray-900 mb-3">Add New Employee</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <input
+                                type="text"
+                                placeholder="First Name *"
+                                value={newEmployeeData[venue.id]?.first_name || ''}
+                                onChange={(e) => setNewEmployeeData(prev => ({
+                                  ...prev,
+                                  [venue.id]: { ...prev[venue.id], first_name: e.target.value }
+                                }))}
+                                className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Last Name *"
+                                value={newEmployeeData[venue.id]?.last_name || ''}
+                                onChange={(e) => setNewEmployeeData(prev => ({
+                                  ...prev,
+                                  [venue.id]: { ...prev[venue.id], last_name: e.target.value }
+                                }))}
+                                className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              <input
+                                type="email"
+                                placeholder="Email *"
+                                value={newEmployeeData[venue.id]?.email || ''}
+                                onChange={(e) => setNewEmployeeData(prev => ({
+                                  ...prev,
+                                  [venue.id]: { ...prev[venue.id], email: e.target.value }
+                                }))}
+                                className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              <input
+                                type="tel"
+                                placeholder="Phone"
+                                value={newEmployeeData[venue.id]?.phone || ''}
+                                onChange={(e) => setNewEmployeeData(prev => ({
+                                  ...prev,
+                                  [venue.id]: { ...prev[venue.id], phone: e.target.value }
+                                }))}
+                                className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Role (e.g. Server, Manager)"
+                                value={newEmployeeData[venue.id]?.role || ''}
+                                onChange={(e) => setNewEmployeeData(prev => ({
+                                  ...prev,
+                                  [venue.id]: { ...prev[venue.id], role: e.target.value }
+                                }))}
+                                className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                            <div className="flex justify-end gap-2 mt-3">
+                              <button
+                                onClick={() => setShowAddEmployeeForm(prev => ({ 
+                                  ...prev, 
+                                  [venue.id]: false 
+                                }))}
+                                className="px-3 py-2 text-gray-600 hover:text-gray-800 text-sm"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => addEmployee(venue.id)}
+                                className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                              >
+                                Add Employee
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Staff List */}
+                        {isLoadingStaff ? (
+                          <div className="p-4 text-center">
+                            <Loader2 className="w-5 h-5 animate-spin text-blue-600 mx-auto mb-2" />
+                            <div className="text-sm text-gray-600">Loading staff...</div>
+                          </div>
+                        ) : employees.length > 0 ? (
+                          <div className="p-4">
+                            <div className="space-y-2">
+                              {employees.map((employee) => (
+                                <div key={employee.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                      <span className="text-sm font-medium text-blue-700">
+                                        {employee.first_name?.[0]}{employee.last_name?.[0]}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <div className="font-medium text-gray-900">
+                                        {employee.first_name} {employee.last_name}
+                                      </div>
+                                      <div className="text-sm text-gray-500">
+                                        {employee.email} • {employee.role || 'Employee'}
+                                        {employee.phone && ` • ${employee.phone}`}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => removeEmployee(venue.id, employee.id, `${employee.first_name} ${employee.last_name}`)}
+                                    className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                    title="Remove employee"
+                                  >
+                                    <UserX className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-4 text-center text-gray-500 text-sm">
+                            No staff members found
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-sm text-gray-500">No venues found</div>
                 )}
