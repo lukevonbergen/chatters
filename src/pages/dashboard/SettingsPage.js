@@ -9,7 +9,6 @@ import ProfileTab from '../../components/dashboard/settings/ProfileTab';
 import VenueTab from '../../components/dashboard/settings/VenueTab';
 import BrandingTab from '../../components/dashboard/settings/BrandingTab';
 import BillingTab from '../../components/dashboard/settings/BillingTab';
-import NotificationsTab from '../../components/dashboard/settings/NotificationsTab';
 
 const SettingsPage = () => {
   usePageTitle('Settings');
@@ -48,7 +47,6 @@ const SettingsPage = () => {
     { id: 'Venue', label: 'Venue' },
     { id: 'Branding', label: 'Branding' },
     ...(userRole === 'master' ? [{ id: 'Billing', label: 'Billing' }] : []),
-    { id: 'Notifications', label: 'Notifications' },
   ];
 
   // Close mobile menu when tab changes
@@ -227,8 +225,6 @@ const SettingsPage = () => {
         return <BrandingTab {...tabProps} />;
       case 'Billing':
         return <BillingTab />;
-      case 'Notifications':
-        return <NotificationsTab {...tabProps} />;
       default:
         return <ProfileTab {...tabProps} />;
     }

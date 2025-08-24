@@ -150,7 +150,7 @@ export default function AverageResolutionTimeTile({ venueId }) {
     : 'text-gray-900';
 
   return (
-    <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100 h-full">
+    <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>

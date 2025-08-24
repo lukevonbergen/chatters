@@ -1,7 +1,7 @@
 // EmployeesTab.js - Main component that orchestrates all the smaller components
 
-import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../../../utils/supabase';
 import { downloadEmployeesCSV, parseEmployeesCSV } from '../../../utils/csvUtils';
 import EmployeesList from './employeetabcomponents/EmployeesList';
@@ -22,24 +22,120 @@ const EmployeesTab = ({
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [uploading, setUploading] = useState(false);
+  
+  // Search and pagination state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1); // For managers (single venue)
+  const [venuePages, setVenuePages] = useState({}); // For masters (per-venue pagination)
+  const itemsPerPage = 10;
 
   // Filter employees based on user role
   const visibleEmployees = userRole === 'master' 
     ? employees 
     : employees.filter(emp => emp.venue_id === venueId);
 
-  // Group employees by venue (for masters)
-  const employeesByVenue = {};
-  if (userRole === 'master') {
-    allVenues.forEach(venue => {
-      employeesByVenue[venue.id] = {
-        venue: venue,
-        employees: employees.filter(employee => 
-          employee.venue_id === venue.id
+  // Initialize venue pages for all venues
+  const getVenuePage = (venueId) => venuePages[venueId] || 1;
+  const setVenuePage = (venueId, page) => {
+    setVenuePages(prev => ({ ...prev, [venueId]: page }));
+  };
+
+  // Filter and paginate for managers (single venue)
+  const managerData = useMemo(() => {
+    if (userRole !== 'manager') return null;
+    
+    // Filter employees
+    const filtered = searchTerm.trim() 
+      ? visibleEmployees.filter(employee => 
+          employee.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          employee.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          employee.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          employee.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          employee.phone?.toLowerCase().includes(searchTerm.toLowerCase())
         )
-      };
+      : visibleEmployees;
+    
+    // Paginate
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
+    
+    return {
+      filtered,
+      paginated,
+      totalPages,
+      currentPage,
+      startItem: filtered.length > 0 ? startIndex + 1 : 0,
+      endItem: Math.min(currentPage * itemsPerPage, filtered.length)
+    };
+  }, [userRole, visibleEmployees, searchTerm, currentPage, itemsPerPage]);
+
+  // Filter and paginate for masters (per-venue)
+  const masterData = useMemo(() => {
+    if (userRole !== 'master') return {};
+    
+    const result = {};
+    
+    allVenues.forEach(venue => {
+      // Get all employees for this venue
+      const venueEmployees = visibleEmployees.filter(emp => emp.venue_id === venue.id);
+      
+      // Filter employees based on search
+      const filtered = searchTerm.trim()
+        ? venueEmployees.filter(employee => 
+            employee.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            employee.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            employee.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            employee.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            employee.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            venue.name?.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : venueEmployees;
+      
+      // Paginate this venue's employees
+      const venuePage = getVenuePage(venue.id);
+      const totalPages = Math.ceil(filtered.length / itemsPerPage);
+      const startIndex = (venuePage - 1) * itemsPerPage;
+      const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
+      
+      // Always show venue if no search, or if it has filtered results
+      if (!searchTerm || filtered.length > 0) {
+        result[venue.id] = {
+          venue,
+          employees: venueEmployees, // All employees for this venue (for stats)
+          filtered, // Filtered employees
+          paginated, // Current page of filtered employees
+          totalPages,
+          currentPage: venuePage,
+          startItem: filtered.length > 0 ? startIndex + 1 : 0,
+          endItem: Math.min(venuePage * itemsPerPage, filtered.length)
+        };
+      }
     });
-  }
+    
+    return result;
+  }, [userRole, allVenues, visibleEmployees, searchTerm, venuePages, itemsPerPage, getVenuePage]);
+
+  // Calculate total stats for search results
+  const searchStats = useMemo(() => {
+    if (userRole === 'manager') {
+      return managerData ? {
+        totalFiltered: managerData.filtered.length,
+        totalVisible: managerData.paginated.length
+      } : { totalFiltered: 0, totalVisible: 0 };
+    } else {
+      const totalFiltered = Object.values(masterData).reduce((sum, venue) => sum + venue.filtered.length, 0);
+      const totalVisible = Object.values(masterData).reduce((sum, venue) => sum + venue.paginated.length, 0);
+      return { totalFiltered, totalVisible };
+    }
+  }, [userRole, managerData, masterData]);
+
+  // Reset pages when search changes
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset manager page
+    setVenuePages({}); // Reset all venue pages
+  };
 
   // Handle edit employee
   const handleEditEmployee = (employee) => {
@@ -221,27 +317,129 @@ const EmployeesTab = ({
               </a>
             </p>
           </div>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center justify-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Employee
-          </button>
         </div>
+      </div>
+
+      {/* Search and Pagination Controls */}
+      <div className="mb-6">
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search employees by name, email, role, phone..."
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => handleSearchChange('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          
+          {/* Results Summary */}
+          <div className="text-sm text-gray-600">
+            {searchStats.totalFiltered > 0 ? (
+              <>
+                {userRole === 'manager' 
+                  ? `Showing ${managerData?.startItem}-${managerData?.endItem} of ${searchStats.totalFiltered} employee${searchStats.totalFiltered !== 1 ? 's' : ''}` 
+                  : `Found ${searchStats.totalFiltered} employee${searchStats.totalFiltered !== 1 ? 's' : ''} across venues`
+                }
+                {searchTerm && (
+                  <span className="ml-1">
+                    for "{searchTerm}"
+                  </span>
+                )}
+              </>
+            ) : searchTerm ? (
+              <>No employees found for "{searchTerm}"</>
+            ) : (
+              <>No employees found</>
+            )}
+          </div>
+        </div>
+        
+        {/* Pagination Controls - Only for managers */}
+        {userRole === 'manager' && managerData && managerData.totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {/* Show page numbers */}
+                {Array.from({ length: managerData.totalPages }, (_, i) => i + 1).map(pageNum => {
+                  // Show first, last, current, and adjacent pages
+                  const showPage = pageNum === 1 || 
+                                  pageNum === managerData.totalPages || 
+                                  Math.abs(pageNum - currentPage) <= 1;
+                  
+                  if (!showPage) {
+                    // Show ellipsis for gaps
+                    if (pageNum === 2 && currentPage > 4) {
+                      return <span key={pageNum} className="px-2 text-gray-400">...</span>;
+                    }
+                    if (pageNum === managerData.totalPages - 1 && currentPage < managerData.totalPages - 3) {
+                      return <span key={pageNum} className="px-2 text-gray-400">...</span>;
+                    }
+                    return null;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(managerData.totalPages, prev + 1))}
+                disabled={currentPage === managerData.totalPages}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="text-sm text-gray-600">
+              Page {currentPage} of {managerData.totalPages}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Employees List */}
       <EmployeesList
         userRole={userRole}
-        visibleEmployees={visibleEmployees}
-        employeesByVenue={employeesByVenue}
+        visibleEmployees={userRole === 'manager' ? (managerData?.paginated || []) : []}
+        masterData={masterData}
         onAddEmployee={() => setShowAddForm(true)}
         onEditEmployee={handleEditEmployee}
         onDeleteEmployee={handleDeleteEmployee}
         onDownloadCSV={handleDownloadCSV}
         onUploadCSV={handleFileInputChange}
         uploading={uploading}
+        onVenuePageChange={setVenuePage}
       />
 
       {/* Summary */}
@@ -249,6 +447,8 @@ const EmployeesTab = ({
         visibleEmployees={visibleEmployees}
         userRole={userRole}
         allVenues={allVenues}
+        filteredCount={searchStats.totalFiltered}
+        searchTerm={searchTerm}
       />
 
       {/* Add Employee Modal */}

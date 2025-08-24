@@ -107,7 +107,7 @@ const ResponseTimeAnalyticsTile = ({ venueId }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm h-full">
+    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
       {/* Header */}
       <div className="mb-4">
         <h3 className="text-base font-semibold text-gray-900">

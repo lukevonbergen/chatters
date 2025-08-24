@@ -138,7 +138,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 auto-rows-max">
         <SessionsActionedTile venueId={venueId} />
         <UnresolvedAlertsTile venueId={venueId} />
         <AvgSatisfactionTile venueId={venueId} />
@@ -146,7 +146,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 auto-rows-max">
         {/* Left Column - Performance Charts */}
         <div className="lg:col-span-2 space-y-6">
           <SatisfactionTrendTile venueId={venueId} />
@@ -161,7 +161,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Bottom Section - Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-max">
         <RecentSessionsTile venueId={venueId} />
         
         {/* Recent Assistance Requests */}

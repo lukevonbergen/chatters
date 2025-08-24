@@ -16,7 +16,7 @@ const ManageQuestions = () => {
   const { venueId } = useVenue();
 
   // State for active tab
-  const [activeTab, setActiveTab] = useState('Questions');
+  const [activeTab, setActiveTab] = useState('QRCode');
   // Add mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

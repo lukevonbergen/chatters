@@ -93,7 +93,7 @@ export default function PeakHoursAnalysisTile({ venueId }) {
   const noData = !loading && hourlyData.every(h => h.count === 0);
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 h-full">
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <div>
