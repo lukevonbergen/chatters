@@ -222,23 +222,6 @@ const DashboardPage = () => {
           )}
         </div>
       </div>
-
-      {/* Bottom Call-to-Action */}
-      <div className="mt-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Ready to start service?</h3>
-            <p className="text-blue-100 text-sm">Launch Kiosk Mode to begin monitoring real-time feedback and assistance requests.</p>
-          </div>
-          <button
-            onClick={goToKioskMode}
-            className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2"
-          >
-            <Monitor className="w-5 h-5" />
-            Launch Kiosk Mode
-          </button>
-        </div>
-      </div>
     </PageContainer>
   );
 };

@@ -141,134 +141,185 @@ const VenueTab = ({
   return (
     <div className="max-w-none lg:max-w-4xl">
       {/* Page Header */}
-      <div className="mb-8 lg:mb-10">
-        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Venue Management</h2>
-        <p className="text-gray-600">Configure your venue settings, feedback collection hours, and manage multiple venues.</p>
+      <div className="mb-6">
+        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">Venue Settings</h2>
+        <p className="text-gray-600 text-sm">Configure your venue information and feedback collection preferences.</p>
       </div>
 
-      <div className="space-y-8 lg:space-y-12">
+      <div className="space-y-6">
         
-        {/* Section 1: Basic Venue Information */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8">
-          <div className="mb-6">
-            <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Basic Information</h3>
-            <p className="text-gray-600 text-sm">Update your venue's core details and contact information.</p>
+        {/* Section 1: Basic Information Card */}
+        <div className="bg-white border border-gray-200 rounded-lg">
+          {/* Section Header */}
+          <div className="border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                <p className="text-sm text-gray-500 mt-1">Venue name, address, and location details</p>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-6">
+          {/* Section Content */}
+          <div className="p-6 space-y-6">
             {/* Venue Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Venue Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-                placeholder="Enter your venue name"
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Venue Name <span className="text-red-500">*</span>
+                </label>
+                <p className="text-xs text-gray-500">The name customers will see</p>
+              </div>
+              <div className="lg:col-span-2">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Enter your venue name"
+                />
+              </div>
             </div>
 
             {/* Address Section */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-              <div className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <p className="text-xs text-gray-500">Physical location of your venue</p>
+              </div>
+              <div className="lg:col-span-2 space-y-3">
                 <input
                   type="text"
                   placeholder="Address Line 1"
                   value={address.line1}
                   onChange={(e) => setAddress({...address, line1: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
                 <input
                   type="text"
                   placeholder="Address Line 2 (Optional)"
                   value={address.line2}
                   onChange={(e) => setAddress({...address, line2: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <input
                     type="text"
                     placeholder="City"
                     value={address.city}
                     onChange={(e) => setAddress({...address, city: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                   <input
                     type="text"
                     placeholder="Postal Code"
                     value={address.postalCode}
                     onChange={(e) => setAddress({...address, postalCode: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Review Links Section */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Review Platform Links</label>
-              <div className="space-y-3">
-                <div>
-                  <div className="relative">
-                    <input
-                      type="url"
-                      placeholder="https://www.tripadvisor.com/your-venue"
-                      value={tripadvisorLink}
-                      onChange={(e) => setTripadvisorLink(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base pl-8"
-                    />
-                    <div className="absolute left-3 top-3 text-gray-400">🏨</div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Direct customers to leave reviews on Tripadvisor</p>
-                </div>
-                <div>
-                  <div className="relative">
-                    <input
-                      type="url"
-                      placeholder="https://g.page/your-business/review"
-                      value={googleReviewLink}
-                      onChange={(e) => setGoogleReviewLink(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base pl-8"
-                    />
-                    <div className="absolute left-3 top-3 text-gray-400">🌟</div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Direct customers to leave Google reviews</p>
-                </div>
+          {/* Card Save Action */}
+          <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 rounded-b-lg">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-gray-500">
+                Changes to basic information are saved immediately
+              </div>
+              <button
+                onClick={saveSettings}
+                disabled={loading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+            {message && (
+              <div className={`text-xs p-2 rounded-md mt-3 ${
+                message.includes('success') 
+                  ? 'text-green-700 bg-green-50 border border-green-200' 
+                  : 'text-red-700 bg-red-50 border border-red-200'
+              }`}>
+                {message}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Section 2: Review Links Card */}
+        <div className="bg-white border border-gray-200 rounded-lg">
+          {/* Section Header */}
+          <div className="border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Review Platform Links</h3>
+                <p className="text-sm text-gray-500 mt-1">Direct satisfied customers to leave positive reviews</p>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Section 2: Feedback Collection Hours */}
-        <FeedbackTimeSelection currentVenueId={currentVenueId} />
-
-        {/* Save Basic Settings Button */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div className="mb-4 sm:mb-0">
-              <h4 className="text-sm font-medium text-gray-900">Save Basic Settings</h4>
-              <p className="text-xs text-gray-600">Save changes to venue name, address, and review links</p>
+          {/* Section Content */}
+          <div className="p-6 space-y-6">
+            {/* TripAdvisor */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  TripAdvisor
+                </label>
+                <p className="text-xs text-gray-500">Your TripAdvisor review page</p>
+              </div>
+              <div className="lg:col-span-2">
+                <input
+                  type="url"
+                  placeholder="https://www.tripadvisor.com/your-venue"
+                  value={tripadvisorLink}
+                  onChange={(e) => setTripadvisorLink(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
             </div>
-            <button
-              onClick={saveSettings}
-              disabled={loading}
-              className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Saving...' : 'Save Basic Settings'}
-            </button>
+
+            {/* Google Reviews */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Google Reviews
+                </label>
+                <p className="text-xs text-gray-500">Your Google Business review link</p>
+              </div>
+              <div className="lg:col-span-2">
+                <input
+                  type="url"
+                  placeholder="https://g.page/your-business/review"
+                  value={googleReviewLink}
+                  onChange={(e) => setGoogleReviewLink(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+            </div>
           </div>
 
-          {message && (
-            <div className={`text-sm p-3 rounded-md mt-4 ${
-              message.includes('success') 
-                ? 'text-green-700 bg-green-50 border border-green-200' 
-                : 'text-red-700 bg-red-50 border border-red-200'
-            }`}>
-              {message}
+          {/* Card Save Action */}
+          <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 rounded-b-lg">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-gray-500">
+                Update review links to guide satisfied customers
+              </div>
+              <button
+                onClick={saveSettings}
+                disabled={loading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Saving...' : 'Save Review Links'}
+              </button>
             </div>
-          )}
+          </div>
         </div>
+
+        {/* Section 3: Feedback Collection Hours */}
+        <FeedbackTimeSelection currentVenueId={currentVenueId} />
 
         {/* Master-Only Section: Create New Venue */}
         {userRole === 'master' && (
@@ -353,31 +404,6 @@ const VenueTab = ({
                 </div>
               )}
             </form>
-
-            {/* Venues Summary for Masters */}
-            {venues.length > 0 && (
-              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="text-base font-medium text-blue-900 mb-3">📊 Your Venues Overview</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-900">{venues.length}</div>
-                    <div className="text-blue-700">Total Venues</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-blue-900 truncate">
-                      {venues[0]?.name || 'None'}
-                    </div>
-                    <div className="text-blue-700">Latest Venue</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm text-blue-800 bg-blue-100 px-2 py-1 rounded">
-                      Go to Staff page →
-                    </div>
-                    <div className="text-xs text-blue-600">Assign managers</div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
