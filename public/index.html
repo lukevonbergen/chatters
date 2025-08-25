@@ -1,117 +1,348 @@
 <!DOCTYPE html>
-<html lang="en-GB">
+<html lang="en-GB" prefix="og: https://ogp.me/ns#">
   <head>
-    <!-- Basic Meta Tags -->
+    <!-- Performance & Core Web Vitals -->
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-colour" content="#000000" />
-
-    <!-- Favicons -->
-    <link rel="icon" type="image/png" href="%PUBLIC_URL%/img/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/img/favicon.svg" />
-    <link rel="shortcut icon" href="%PUBLIC_URL%/img/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/img/favicon_96.png" />
-
-    <!-- Primary Meta Tags -->
-    <title>Chatters – Real time customer feedback - Prevent Negative Reviews and Boost your Rating</title>
-    <meta
-      name="description"
-      content="Chatters Feedback: Collect and analyse real-time customer feedback. Improve satisfaction and grow your business with actionable insights."
-    />
-    <meta
-      name="keywords"
-      content="customer feedback, real-time feedback, feedback platform, customer satisfaction, business insights, feedback analysis, customer experience, feedback tools"
-    />
-    <meta name="author" content="Chatters" />
-    <meta name="robots" content="index, follow" />
-
-    <!-- Open Graph / Facebook Meta Tags (for social sharing) -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.getchatters.com" />
-    <meta property="og:title" content="Chatters Feedback - Real-Time Customer Feedback Platform" />
-    <meta
-      property="og:description"
-      content="Chatters Feedback: Collect and analyse real-time customer feedback. Improve satisfaction and grow your business with actionable insights."
-    />
-    <meta property="og:image" content="%PUBLIC_URL%/img/og-image.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="Chatters" />
-
-    <!-- Twitter Meta Tags (for social sharing) -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://www.getchatters.com" />
-    <meta property="twitter:title" content="Chatters Feedback - Real-Time Customer Feedback Platform" />
-    <meta
-      property="twitter:description"
-      content="Chatters Feedback: Collect and analyse real-time customer feedback. Improve satisfaction and grow your business with actionable insights."
-    />
-    <meta property="twitter:image" content="%PUBLIC_URL%/img/twitter-image.jpg" />
-
-    <!-- Web App Manifest -->
-    <link rel="manifest" href="%PUBLIC_URL%/site.webmanifest" />
-
-    <!-- Preconnect to External Domains -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#059669" />
+    <meta name="color-scheme" content="light dark" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    
+    <!-- DNS Prefetch & Preconnect for Performance -->
+    <link rel="dns-prefetch" href="//www.google-analytics.com" />
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="//www.googletagmanager.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Critical Resource Hints -->
+    <link rel="preload" href="/getchatters_logo.png" as="image" type="image/png" />
+    <link rel="modulepreload" href="/src/main.jsx" />
 
-    <!-- Fonts are loaded via CSS imports in index.css -->
+    <!-- Modern Favicon Suite -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#059669" />
+
+    <!-- Primary SEO Meta Tags -->
+    <title>Chatters - Real-Time Customer Feedback Platform | Prevent Bad Reviews & Boost Ratings</title>
+    <meta name="description" content="Transform customer feedback into business growth with Chatters. Real-time feedback collection, advanced analytics, and automated responses for restaurants, hotels, and retail. Prevent negative reviews before they happen and boost your online ratings instantly." />
+    
+    <!-- Enhanced Keywords for Better Targeting -->
+    <meta name="keywords" content="customer feedback software, real-time feedback platform, restaurant feedback system, hotel guest feedback, retail customer experience, QR code feedback, prevent negative reviews, boost online ratings, customer satisfaction analytics, feedback management, hospitality software, NPS tracking, customer experience platform, business intelligence, automated feedback responses" />
+    
+    <!-- Business & Technical Meta -->
+    <meta name="author" content="Chatters Ltd" />
+    <meta name="publisher" content="Chatters" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="language" content="English" />
+    <meta name="geo.region" content="GB" />
+    <meta name="geo.placename" content="United Kingdom" />
+    <meta name="distribution" content="global" />
+    <meta name="rating" content="general" />
+    <meta name="revisit-after" content="3 days" />
+
+    <!-- Enhanced Open Graph for Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Chatters" />
+    <meta property="og:url" content="https://www.getchatters.com/" />
+    <meta property="og:title" content="Chatters - Real-Time Customer Feedback Platform | Prevent Bad Reviews" />
+    <meta property="og:description" content="Transform customer feedback into business growth with Chatters. Real-time feedback collection, advanced analytics, and automated responses for restaurants, hotels, and retail. Prevent negative reviews before they happen." />
+    <meta property="og:image" content="https://www.getchatters.com/img/homepage/homepage-hero.png" />
+    <meta property="og:image:secure_url" content="https://www.getchatters.com/img/homepage/homepage-hero.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Chatters - Real-time customer feedback platform dashboard showing analytics and feedback management tools" />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:locale:alternate" content="en_US" />
+
+    <!-- Enhanced Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@getchatters" />
+    <meta name="twitter:creator" content="@getchatters" />
+    <meta name="twitter:url" content="https://www.getchatters.com/" />
+    <meta name="twitter:title" content="Chatters - Real-Time Customer Feedback Platform" />
+    <meta name="twitter:description" content="Transform customer feedback into business growth. Real-time collection, analytics & automated responses for restaurants, hotels & retail. Prevent bad reviews." />
+    <meta name="twitter:image" content="https://www.getchatters.com/img/homepage/homepage-hero.png" />
+    <meta name="twitter:image:alt" content="Chatters feedback platform dashboard" />
+
+    <!-- LinkedIn Specific -->
+    <meta property="linkedin:owner" content="" />
+
+    <!-- Apple iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Chatters" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Microsoft/Windows Meta Tags -->
+    <meta name="msapplication-TileColor" content="#059669" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    
+    <!-- PWA Web App Manifest -->
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://www.getchatters.com" />
+    <link rel="canonical" href="https://www.getchatters.com/" />
+    
+    <!-- Alternate Language Versions -->
+    <link rel="alternate" hreflang="en-gb" href="https://www.getchatters.com/" />
+    <link rel="alternate" hreflang="en-us" href="https://www.getchatters.com/" />
+    <link rel="alternate" hreflang="x-default" href="https://www.getchatters.com/" />
 
-    <!-- Structured Data (JSON-LD) for SEO -->
+    <!-- Enhanced Structured Data (JSON-LD) -->
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Chatters Feedback",
-        "description": "Chatters Feedback: Collect and analyse real-time customer feedback. Improve satisfaction and grow your business with actionable insights.",
-        "url": "https://www.getchatters.com",
-        "image": "%PUBLIC_URL%/img/og-image.jpg",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.9",
-          "reviewCount": "150"
-        },
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "GBP",
-          "availability": "https://schema.org/InStock"
-        },
-        "location": {
-          "@type": "Place",
-          "address": {
-            "@type": "PostalAddress",
-            "streetAddress": "123 Business Street",
-            "addressLocality": "London",
-            "postalCode": "SW1A 1AA",
-            "addressCountry": "GB"
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.getchatters.com/#organization",
+          "name": "Chatters",
+          "legalName": "Chatters Ltd",
+          "url": "https://www.getchatters.com",
+          "logo": "https://www.getchatters.com/getchatters_logo.png",
+          "description": "Leading customer feedback platform helping businesses collect real-time feedback, prevent negative reviews, and boost customer satisfaction.",
+          "foundingDate": "2023",
+          "sameAs": [
+            "https://twitter.com/getchatters",
+            "https://linkedin.com/company/getchatters",
+            "https://github.com/getchatters"
+          ],
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "url": "https://www.getchatters.com/contact",
+            "availableLanguage": ["English"]
           }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.getchatters.com/#website",
+          "url": "https://www.getchatters.com",
+          "name": "Chatters",
+          "description": "Real-time customer feedback platform",
+          "publisher": {
+            "@id": "https://www.getchatters.com/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://www.getchatters.com/search?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://www.getchatters.com/#software",
+          "name": "Chatters",
+          "description": "Real-time customer feedback platform helping businesses collect feedback, prevent negative reviews, and boost customer satisfaction with advanced analytics and automated responses.",
+          "url": "https://www.getchatters.com",
+          "image": "https://www.getchatters.com/img/homepage/homepage-hero.png",
+          "screenshot": "https://www.getchatters.com/img/homepage/homepage-hero.png",
+          "applicationCategory": "BusinessApplication",
+          "applicationSubCategory": "Customer Feedback Software",
+          "operatingSystem": "Web Browser",
+          "browserRequirements": "Modern web browser with JavaScript enabled",
+          "softwareVersion": "2.0",
+          "datePublished": "2023-01-01",
+          "dateModified": "2025-01-20",
+          "author": {
+            "@id": "https://www.getchatters.com/#organization"
+          },
+          "provider": {
+            "@id": "https://www.getchatters.com/#organization"
+          },
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Free Trial",
+              "description": "14-day free trial with full access",
+              "price": "0",
+              "priceCurrency": "GBP",
+              "priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "price": "0",
+                "priceCurrency": "GBP",
+                "referenceQuantity": {
+                  "@type": "QuantitativeValue",
+                  "value": "14",
+                  "unitCode": "DAY"
+                }
+              },
+              "availability": "https://schema.org/InStock",
+              "url": "https://www.getchatters.com/pricing",
+              "category": "Free Trial"
+            },
+            {
+              "@type": "Offer",
+              "name": "Pro Plan",
+              "description": "Professional plan for growing businesses",
+              "price": "29",
+              "priceCurrency": "GBP",
+              "billingIncrement": "Month",
+              "priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "price": "29",
+                "priceCurrency": "GBP",
+                "referenceQuantity": {
+                  "@type": "QuantitativeValue",
+                  "value": "1",
+                  "unitCode": "MON"
+                }
+              },
+              "availability": "https://schema.org/InStock",
+              "url": "https://www.getchatters.com/pricing"
+            }
+          ],
+          "featureList": [
+            "Real-time feedback collection",
+            "QR code generation",
+            "Advanced analytics dashboard",
+            "Automated response system",
+            "Multi-location management",
+            "Custom branding",
+            "Integration APIs",
+            "Mobile-optimized interface"
+          ],
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "247",
+            "bestRating": "5",
+            "worstRating": "1"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://www.getchatters.com/#breadcrumbs",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.getchatters.com/"
+            }
+          ]
         }
-      }
+      ]
+    }
     </script>
 
-    <!-- Additional SEO Tags -->
-    <meta name="language" content="English (UK)" />
-    <meta name="revisit-after" content="7 days" />
-    <meta name="geo.region" content="GB-LND" />
-    <meta name="geo.placename" content="London" />
-    <meta name="geo.position" content="51.5074;-0.1278" />
-    <meta name="ICBM" content="51.5074, -0.1278" />
+    <!-- FAQ Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Chatters?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chatters is a real-time customer feedback platform that helps businesses collect feedback, prevent negative reviews, and boost customer satisfaction through QR codes, analytics, and automated responses."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Chatters prevent negative reviews?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chatters captures feedback in real-time before customers leave, allowing businesses to address concerns immediately and prevent negative reviews from being posted online."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What types of businesses use Chatters?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chatters is designed for restaurants, hotels, retail stores, and service businesses that want to improve customer experience and manage their online reputation."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Performance Monitoring -->
+    <script type="speculationrules">
+    {
+      "prerender": [
+        {
+          "where": {"href_matches": "/pricing"},
+          "eagerness": "moderate"
+        },
+        {
+          "where": {"href_matches": "/demo"},
+          "eagerness": "moderate"
+        }
+      ],
+      "prefetch": [
+        {
+          "where": {"href_matches": "/product/*"},
+          "eagerness": "conservative"
+        },
+        {
+          "where": {"href_matches": "/solutions/*"},
+          "eagerness": "conservative"
+        }
+      ]
+    }
+    </script>
 
   </head>
   <body>
-    <!-- Noscript Fallback -->
+    <!-- Skip Navigation for Accessibility -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded">Skip to main content</a>
+    
+    <!-- Noscript Enhanced Fallback -->
     <noscript>
-      <strong>You need to enable JavaScript to run this app.</strong>
-      <p>For the best experience, please enable JavaScript in your browser settings.</p>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 20px; margin: 20px; border-radius: 8px; font-family: system-ui, -apple-system, sans-serif;">
+        <h2 style="color: #dc2626; margin-top: 0;">JavaScript Required</h2>
+        <p><strong>To use Chatters, please enable JavaScript in your browser.</strong></p>
+        <p>Chatters is a modern web application that requires JavaScript for the best experience. Here's how to enable it:</p>
+        <ul style="margin: 15px 0;">
+          <li><strong>Chrome:</strong> Settings → Privacy and security → Site Settings → JavaScript → Allowed</li>
+          <li><strong>Firefox:</strong> about:config → javascript.enabled → true</li>
+          <li><strong>Safari:</strong> Preferences → Security → Enable JavaScript</li>
+        </ul>
+        <p>For more help, visit our <a href="https://www.getchatters.com/help" style="color: #2563eb;">support center</a>.</p>
+      </div>
     </noscript>
 
-    <!-- Main App Container -->
-    <div id="root" role="main" aria-label="Main application content"></div>
+    <!-- Main Application Container -->
+    <div id="root" role="main" aria-label="Chatters customer feedback platform"></div>
+    
+    <!-- Critical CSS Fallback -->
+    <style>
+      /* Critical loading styles */
+      #root:empty::before {
+        content: "Loading Chatters...";
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 18px;
+        color: #6b7280;
+      }
+      
+      /* Hide loading text once React loads */
+      #root:not(:empty)::before {
+        display: none;
+      }
+      
+      /* Ensure proper layout shift prevention */
+      html { scroll-behavior: smooth; }
+      body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+
   </body>
 </html>
