@@ -161,9 +161,6 @@ const ManagersTab = ({
           return {
             user_id: managerId,
             venue_id: assigningToVenue.id,
-            first_name: manager.first_name,
-            last_name: manager.last_name,
-            email: manager.email,
             role: 'manager'
           };
         });
@@ -228,9 +225,6 @@ const ManagersTab = ({
         const newStaffRecords = editManagerVenues.map(venueId => ({
           user_id: editingManager.user_id,
           venue_id: venueId,
-          first_name: editingManager.first_name,
-          last_name: editingManager.last_name,
-          email: editingManager.email,
           role: 'manager'
         }));
 
@@ -303,14 +297,14 @@ const ManagersTab = ({
                     <div className="flex items-center space-x-3 lg:space-x-4 min-w-0 flex-1">
                       <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-sm lg:text-base font-medium text-gray-700">
-                          {manager.first_name?.[0]}{manager.last_name?.[0]}
+                          {manager.users?.first_name?.[0]}{manager.users?.last_name?.[0]}
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm lg:text-base font-medium text-gray-900 truncate">
-                          {manager.first_name} {manager.last_name}
+                          {manager.users?.first_name} {manager.users?.last_name}
                         </p>
-                        <p className="text-xs lg:text-sm text-gray-500 truncate">{manager.email}</p>
+                        <p className="text-xs lg:text-sm text-gray-500 truncate">{manager.users?.email}</p>
                       </div>
                     </div>
                     
@@ -466,14 +460,14 @@ const ManagersTab = ({
                             <div className="flex items-center space-x-2 flex-1">
                               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                                 <span className="text-xs font-medium text-gray-700">
-                                  {manager.first_name?.[0]}{manager.last_name?.[0]}
+                                  {manager.users?.first_name?.[0]}{manager.users?.last_name?.[0]}
                                 </span>
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium text-gray-900 truncate">
-                                  {manager.first_name} {manager.last_name}
+                                  {manager.users?.first_name} {manager.users?.last_name}
                                 </p>
-                                <p className="text-xs text-gray-500 truncate">{manager.email}</p>
+                                <p className="text-xs text-gray-500 truncate">{manager.users?.email}</p>
                               </div>
                             </div>
                           </label>
@@ -516,7 +510,7 @@ const ManagersTab = ({
           <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="p-4 lg:p-6">
               <h3 className="text-lg lg:text-xl font-medium mb-4 lg:mb-6">
-                Edit Venues for {editingManager.first_name} {editingManager.last_name}
+                Edit Venues for {editingManager.users?.first_name} {editingManager.users?.last_name}
               </h3>
               
               <div className="space-y-4 lg:space-y-6">

@@ -83,17 +83,24 @@ const SettingsPage = () => {
         return;
       }
 
-      // Fetch staff data (profile info)
-      const { data: staffData, error: staffError } = await supabase
-        .from('staff')
+      // Fetch user profile data (global, not venue-specific)
+      const { data: userData, error: userError } = await supabase
+        .from('users')
         .select('first_name, last_name, email')
-        .eq('user_id', userId)
-        .eq('venue_id', venueId)
-        .maybeSingle();
+        .eq('id', userId)
+        .single();
 
-      if (staffError) {
-        console.error('Error fetching staff settings:', staffError);
-        return;
+      if (userError) {
+        console.error('Error fetching user profile:', userError);
+        // Fallback to auth data
+        setFirstName('');
+        setLastName('');
+        setEmail(auth.user.email || '');
+      } else {
+        // Set user profile data
+        setFirstName(userData.first_name || '');
+        setLastName(userData.last_name || '');
+        setEmail(userData.email || auth.user.email || '');
       }
 
       // Set venue data
@@ -113,16 +120,6 @@ const SettingsPage = () => {
         country: '',
       });
 
-      // Set staff data (handle missing staff records)
-      if (staffData) {
-        setFirstName(staffData.first_name || '');
-        setLastName(staffData.last_name || '');
-        setEmail(staffData.email || '');
-      } else {
-        setFirstName('');
-        setLastName('');
-        setEmail('');
-      }
     };
 
     fetchVenueData();
@@ -145,22 +142,23 @@ const SettingsPage = () => {
         throw new Error('User not authenticated');
       }
 
-      // Update staff table (profile data)
-      const staffUpdates = {
+      // Update users table (profile data)
+      const userUpdates = {
         first_name: firstName,
         last_name: lastName,
-        email: userEmail,
+        // Don't update email since it's disabled and should stay as-is
       };
 
-      const { error: staffError } = await supabase
-        .from('staff')
-        .update(staffUpdates)
-        .eq('user_id', userId)
-        .eq('venue_id', venueId);
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update(userUpdates)
+        .eq('id', userId);
 
-      if (staffError) {
-        throw staffError;
+      if (userUpdateError) {
+        throw userUpdateError;
       }
+
+      // No need to sync to staff table - names come from users table via join
 
       // Update venues table (venue data)
       const venueUpdates = {

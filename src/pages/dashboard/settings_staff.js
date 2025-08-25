@@ -77,21 +77,56 @@ const StaffPage = () => {
 
     const venueIds = allVenues.map(v => v.id);
 
-    const { data: staffData } = await supabase
+    // First get staff data
+    const { data: staffData, error: staffError } = await supabase
       .from('staff')
       .select(`
         id,
         user_id,
         venue_id,
-        first_name,
-        last_name,
-        email,
         role,
-        created_at,
-        venues (id, name),
-        users (id, email, role)
+        created_at
       `)
       .in('venue_id', venueIds);
+
+    if (staffError || !staffData) {
+      return;
+    }
+
+    // Get user IDs to fetch user data
+    const userIds = [...new Set(staffData.map(s => s.user_id))];
+    
+    // Get user data separately
+    const userPromises = userIds.map(async (userId) => {
+      const { data } = await supabase
+        .from('users')
+        .select('id, email, role, first_name, last_name')
+        .eq('id', userId)
+        .single();
+      
+      return data;
+    });
+    
+    const userResults = await Promise.all(userPromises);
+    const usersData = userResults.filter(user => user !== null);
+
+    // Get venue data separately  
+    const { data: venuesData } = await supabase
+      .from('venues')
+      .select('id, name')
+      .in('id', venueIds);
+
+    // Manually join the data
+    const staffWithJoins = staffData.map(staff => {
+      const foundUser = usersData?.find(u => u.id === staff.user_id);
+      const foundVenue = venuesData?.find(v => v.id === staff.venue_id);
+      
+      return {
+        ...staff,
+        users: foundUser || null,
+        venues: foundVenue || null
+      };
+    });
 
     const { data: employeesData } = await supabase
       .from('employees')
@@ -108,7 +143,7 @@ const StaffPage = () => {
       `)
       .in('venue_id', venueIds);
 
-    const managersData = staffData?.filter(staff => staff.role === 'manager') || [];
+    const managersData = staffWithJoins?.filter(staff => staff.role === 'manager') || [];
     const employeesFromTable = employeesData || [];
 
     setManagers(managersData);
@@ -122,13 +157,10 @@ const StaffPage = () => {
         id,
         user_id,
         venue_id,
-        first_name,
-        last_name,
-        email,
         role,
         created_at,
-        venues (id, name),
-        users (id, email, role)
+        venues!inner (id, name),
+        users!inner (id, email, role, first_name, last_name)
       `)
       .eq('venue_id', venueId)
       .neq('user_id', userId);

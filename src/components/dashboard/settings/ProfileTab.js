@@ -48,9 +48,10 @@ const ProfileTab = ({
             placeholder="your@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+            disabled
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed text-sm lg:text-base"
           />
-          <p className="text-xs text-gray-500 mt-1">You can manage verified email addresses in your email settings.</p>
+          <p className="text-xs text-gray-500 mt-1">Email changes require verification and must be done through your account security settings.</p>
         </div>
 
         {/* Button with responsive sizing */}
