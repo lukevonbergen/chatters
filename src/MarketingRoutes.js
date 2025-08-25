@@ -12,12 +12,6 @@ import PrivacyPolicyPage from './pages/marketing/Privacy';
 import AboutPage from './pages/marketing/AboutPage';
 import DemoPage from './pages/marketing/DemoPage';
 
-import QRCodePage_Feature from './pages/marketing/Features_QRCode';
-import NPS_Feature from './pages/marketing/Features_NPSScore';
-import RealTimeStats_Feature from './pages/marketing/Features_RealTimeStats';
-import CustomBranding_Feature from './pages/marketing/Features_CustomBranding';
-import CustomQuestions_Feature from './pages/marketing/Features_CustomQuestions';
-import Dashboards_Feature from './pages/marketing/Features_Dashboards';
 import BlogPage from './pages/marketing/BlogPage';
 import BlogPost from './pages/marketing/BlogPost';
 
@@ -48,13 +42,6 @@ const MarketingRoutes = () => {
       <Route path="/about" element={<AboutPage />} />
       <Route path="/demo" element={<DemoPage />} />
 
-      {/* 🎯 Feature Deep Links */}
-      <Route path="/features/qr-codes" element={<QRCodePage_Feature />} />
-      <Route path="/features/nps-score" element={<NPS_Feature />} />
-      <Route path="/features/real-time-stats" element={<RealTimeStats_Feature />} />
-      <Route path="/features/custom-branding" element={<CustomBranding_Feature />} />
-      <Route path="/features/custom-questions" element={<CustomQuestions_Feature />} />
-      <Route path="/features/dashboards" element={<Dashboards_Feature />} />
 
       {/* 📝 Blog Pages */}
       <Route path="/blog" element={<BlogPage />} />

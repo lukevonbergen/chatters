@@ -1,1 +1,161 @@
-<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"><url><loc>https://www.getchatters.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url><url><loc>https://www.getchatters.com/features</loc><changefreq>monthly</changefreq><priority>0.9</priority></url><url><loc>https://www.getchatters.com/features/real-time-stats</loc><changefreq>monthly</changefreq><priority>0.9</priority></url><url><loc>https://www.getchatters.com/features/custom-branding</loc><changefreq>monthly</changefreq><priority>0.9</priority></url><url><loc>https://www.getchatters.com/features/custom-questions</loc><changefreq>monthly</changefreq><priority>0.9</priority></url><url><loc>https://www.getchatters.com/features/dashboards</loc><changefreq>monthly</changefreq><priority>0.9</priority></url><url><loc>https://www.getchatters.com/features/qr-codes</loc><changefreq>monthly</changefreq><priority>0.9</priority></url><url><loc>https://www.getchatters.com/features/nps-score</loc><changefreq>monthly</changefreq><priority>0.9</priority></url><url><loc>https://www.getchatters.com/pricing</loc><changefreq>monthly</changefreq><priority>0.8</priority></url><url><loc>https://www.getchatters.com/demo</loc><changefreq>monthly</changefreq><priority>0.8</priority></url><url><loc>https://www.getchatters.com/contact</loc><changefreq>monthly</changefreq><priority>0.8</priority></url><url><loc>https://www.getchatters.com/about</loc><changefreq>monthly</changefreq><priority>0.8</priority></url><url><loc>https://www.getchatters.com/signup</loc><changefreq>monthly</changefreq><priority>0.7</priority></url><url><loc>https://www.getchatters.com/signin</loc><changefreq>monthly</changefreq><priority>0.7</priority></url><url><loc>https://www.getchatters.com/forgot-password</loc><changefreq>monthly</changefreq><priority>0.7</priority></url><url><loc>https://www.getchatters.com/reset-password</loc><changefreq>monthly</changefreq><priority>0.7</priority></url><url><loc>https://www.getchatters.com/security</loc><changefreq>monthly</changefreq><priority>0.7</priority></url><url><loc>https://www.getchatters.com/terms</loc><changefreq>monthly</changefreq><priority>0.7</priority></url><url><loc>https://www.getchatters.com/privacy</loc><changefreq>monthly</changefreq><priority>0.7</priority></url></urlset>
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" 
+        xmlns:xhtml="http://www.w3.org/1999/xhtml" 
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" 
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+
+  <!-- Main Marketing Pages (Highest Priority) -->
+  <url>
+    <loc>https://www.getchatters.com/</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/pricing</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/demo</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Product Pages (High Priority) -->
+  <url>
+    <loc>https://www.getchatters.com/product/question-management</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/product/business-intelligence</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/product/automation-workflow</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/product/multi-location-control</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/product/kiosk-mode</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/product/real-time-alerts</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Solutions Pages (High Priority) -->
+  <url>
+    <loc>https://www.getchatters.com/solutions/restaurants</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/solutions/hotels</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/solutions/retail</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/solutions/events</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Content & Resources Pages (Medium-High Priority) -->
+  <url>
+    <loc>https://www.getchatters.com/blog</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/help</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/about</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/contact</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/security</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Authentication Pages (Lower Priority) -->
+  <url>
+    <loc>https://www.getchatters.com/signin</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Legal Pages (Lower Priority) -->
+  <url>
+    <loc>https://www.getchatters.com/terms</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <url>
+    <loc>https://www.getchatters.com/privacy</loc>
+    <lastmod>2025-01-20</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+</urlset>

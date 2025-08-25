@@ -96,7 +96,7 @@ const AboutUsPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Navbar />
+      <Navbar overlay/>
 
       {/* Hero */}
       <section className="bg-white pt-32 pb-20 text-center px-6">

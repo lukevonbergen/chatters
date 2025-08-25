@@ -1,3 +1,17 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+
+# Disallow dashboard and internal pages
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /kiosk
+Disallow: /signin
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /set-password
+Disallow: /feedback
+
+# Sitemap location
+Sitemap: https://www.getchatters.com/sitemap.xml

@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
-import { BarChart, Star, TrendingUp, Users, Heart } from 'lucide-react';
+import { BarChart3, Star, Users } from 'lucide-react';
 
-const RatingDistributionTile = ({ venueId }) => {
-  const [ratingData, setRatingData] = useState([]);
-  const [totalRatings, setTotalRatings] = useState(0);
-  const [averageRating, setAverageRating] = useState(0);
+export default function RatingDistributionTile({ venueId }) {
+  const [rows, setRows] = useState([]); // [{rating, count, pct}]
+  const [total, setTotal] = useState(0);
+  const [avg, setAvg] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!venueId) return;
     fetchRatingDistribution();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [venueId]);
 
-  const fetchRatingDistribution = async () => {
+  async function fetchRatingDistribution() {
     setLoading(true);
-    
+
     const { data, error } = await supabase
       .from('feedback')
       .select('rating')
@@ -26,216 +27,159 @@ const RatingDistributionTile = ({ venueId }) => {
 
     if (error) {
       console.error('Error fetching rating distribution:', error);
+      setRows([]); setTotal(0); setAvg(0);
       setLoading(false);
       return;
     }
 
-    // Count ratings
-    const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    let totalCount = 0;
-    let ratingSum = 0;
+    const counts = [0,0,0,0,0,0]; // index 1..5
+    let n = 0, sum = 0;
 
-    data.forEach(item => {
-      ratingCounts[item.rating]++;
-      totalCount++;
-      ratingSum += item.rating;
+    (data || []).forEach(({ rating }) => {
+      const r = Number(rating);
+      if (Number.isFinite(r) && r >= 1 && r <= 5) {
+        counts[r] += 1; n += 1; sum += r;
+      }
     });
 
-    // Calculate percentages and prepare data
-    const distributionData = [1, 2, 3, 4, 5].map(rating => ({
-      rating,
-      count: ratingCounts[rating],
-      percentage: totalCount > 0 ? ((ratingCounts[rating] / totalCount) * 100).toFixed(1) : 0
-    })).reverse(); // Reverse to show 5 stars at top
+    const dist = [5,4,3,2,1].map(r => ({
+      rating: r,
+      count: counts[r],
+      pct: n ? +( (counts[r] / n) * 100 ).toFixed(1) : 0,
+    }));
 
-    setRatingData(distributionData);
-    setTotalRatings(totalCount);
-    setAverageRating(totalCount > 0 ? (ratingSum / totalCount).toFixed(2) : 0);
+    setRows(dist);
+    setTotal(n);
+    setAvg(n ? +(sum / n).toFixed(2) : 0);
     setLoading(false);
+  }
+
+  const satisfied = (rows.find(d => d.rating === 5)?.count || 0) + (rows.find(d => d.rating === 4)?.count || 0);
+  const neutral    = rows.find(d => d.rating === 3)?.count || 0;
+  const detractors = (rows.find(d => d.rating === 2)?.count || 0) + (rows.find(d => d.rating === 1)?.count || 0);
+  const satRate    = total ? Math.round((satisfied / total) * 100) : 0;
+
+  const maxCount = Math.max(0, ...rows.map(d => d.count));
+
+  // Monochrome fill + subtle alpha ramp to match PeakHours aesthetic
+  const fillWidth = (count) => (maxCount ? (count / maxCount) * 100 : 0);
+  const band = (intensity /*0..1*/) => {
+    const a = intensity === 0 ? 0.08 : 0.15 + 0.85 * Math.min(1, Math.max(0, intensity));
+    return { backgroundColor: `rgba(15,23,42,${a})` }; // slate-900 with variable alpha
   };
 
-  const getBarGradient = (rating) => {
-    if (rating === 5) return 'bg-gradient-to-r from-emerald-400 to-green-500';
-    if (rating === 4) return 'bg-gradient-to-r from-green-400 to-emerald-500';
-    if (rating === 3) return 'bg-gradient-to-r from-yellow-400 to-amber-500';
-    if (rating === 2) return 'bg-gradient-to-r from-orange-400 to-red-400';
-    return 'bg-gradient-to-r from-red-400 to-red-500';
-  };
-
-  const getStarColors = (rating) => {
-    if (rating === 5) return 'text-emerald-500';
-    if (rating === 4) return 'text-green-500';
-    if (rating === 3) return 'text-amber-500';
-    if (rating === 2) return 'text-orange-500';
-    return 'text-red-500';
-  };
-
-  const getRatingLabel = (rating) => {
-    const labels = {
-      5: 'Excellent',
-      4: 'Good',
-      3: 'Average',
-      2: 'Poor',
-      1: 'Very Poor'
-    };
-    return labels[rating];
-  };
-
-  const getOverallSentiment = () => {
-    if (averageRating >= 4.5) return { text: 'Outstanding!', color: 'text-emerald-600', bg: 'bg-emerald-50', icon: Heart };
-    if (averageRating >= 4.0) return { text: 'Excellent', color: 'text-green-600', bg: 'bg-green-50', icon: TrendingUp };
-    if (averageRating >= 3.5) return { text: 'Good', color: 'text-blue-600', bg: 'bg-blue-50', icon: TrendingUp };
-    if (averageRating >= 3.0) return { text: 'Fair', color: 'text-amber-600', bg: 'bg-amber-50', icon: BarChart };
-    return { text: 'Needs Improvement', color: 'text-red-600', bg: 'bg-red-50', icon: BarChart };
-  };
-
-  const maxCount = Math.max(...ratingData.map(d => d.count));
-  const satisfiedCount = ratingData.find(d => d.rating === 5)?.count + ratingData.find(d => d.rating === 4)?.count || 0;
-  const satisfactionRate = totalRatings > 0 ? ((satisfiedCount / totalRatings) * 100).toFixed(0) : 0;
-  
-  const sentiment = getOverallSentiment();
-  const SentimentIcon = sentiment.icon;
+  const noData = !loading && total === 0;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center mb-2">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-              <BarChart className="w-4 h-4 text-blue-600" />
-            </div>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-gray-600" />
             Customer Satisfaction
           </h3>
-          <p className="text-sm text-gray-600">
-            How customers rate their experience
-          </p>
+          <p className="text-xs text-gray-600 mt-1">How guests rate their experience (1–5)</p>
         </div>
-        
-        {/* Overall Rating Card */}
-        <div className={`${sentiment.bg} rounded-xl p-4 text-center min-w-[120px]`}>
-          <div className="flex items-center justify-center mb-2">
-            <Star className="w-5 h-5 text-yellow-400 fill-current mr-1" />
-            <span className="text-2xl font-bold text-gray-900">{averageRating}</span>
+
+        {/* Compact overall card */}
+        <div className="rounded-md border border-gray-100 p-3 text-right min-w-[132px]">
+          <div className="flex items-center justify-end gap-1">
+            <Star className="w-4 h-4 text-gray-700" />
+            <span className="text-2xl font-bold text-gray-900 tabular-nums">{avg}</span>
           </div>
-          <div className={`flex items-center justify-center text-sm font-medium ${sentiment.color} mb-1`}>
-            <SentimentIcon className="w-4 h-4 mr-1" />
-            {sentiment.text}
-          </div>
-          <div className="text-xs text-gray-500 flex items-center justify-center">
-            <Users className="w-3 h-3 mr-1" />
-            {totalRatings} reviews
+          <div className="text-[11px] text-gray-600 mt-1 flex items-center justify-end gap-1">
+            <Users className="w-3.5 h-3.5 text-gray-500" />
+            {total} reviews
           </div>
         </div>
       </div>
 
+      {/* Body */}
       {loading ? (
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="flex items-center space-x-3">
-                <div className="w-20 h-6 bg-gray-200 rounded"></div>
-                <div className="flex-1 h-8 bg-gray-200 rounded-full"></div>
-                <div className="w-12 h-6 bg-gray-200 rounded"></div>
-              </div>
-            </div>
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-12 bg-gray-100 rounded-md animate-pulse" />
           ))}
         </div>
-      ) : totalRatings === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <BarChart className="w-8 h-8 text-gray-400" />
+      ) : noData ? (
+        <div className="text-center py-10">
+          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <BarChart3 className="w-6 h-6 text-gray-400" />
           </div>
-          <h4 className="text-lg font-medium text-gray-900 mb-2">No Ratings Yet</h4>
-          <p className="text-sm text-gray-600 max-w-sm mx-auto">
-            Your rating distribution will appear here once customers start leaving feedback
-          </p>
+          <div className="text-sm text-gray-600">No ratings yet — distribution will appear once feedback comes in.</div>
         </div>
       ) : (
         <>
-          {/* Rating Bars */}
-          <div className="space-y-3 mb-6">
-            {ratingData.map((data) => (
-              <div key={data.rating} className="group">
+          {/* Distribution rows 5 → 1 */}
+          <div className="space-y-2 mb-4">
+            {rows.map(({ rating, count, pct }) => (
+              <div key={rating} className="rounded-md border border-gray-100 p-2">
                 <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <div className="flex">
-                      {[...Array(5)].map((_, i) => (
+                      {Array.from({ length: 5 }).map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-4 h-4 ${
-                            i < data.rating
-                              ? `fill-current ${getStarColors(data.rating)}`
-                              : 'text-gray-200'
-                          }`}
+                          className={`w-4 h-4 ${i < rating ? 'text-gray-800' : 'text-gray-300'}`}
                         />
                       ))}
                     </div>
-                    <span className="text-sm font-medium text-gray-700">
-                      {getRatingLabel(data.rating)}
-                    </span>
+                    <span className="text-xs text-gray-600">{rating} star{rating > 1 ? 's' : ''}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="font-medium text-gray-900">{data.count}</span>
-                    <span className="text-gray-500">({data.percentage}%)</span>
+                  <div className="text-xs text-gray-700">
+                    <span className="font-semibold text-gray-900 tabular-nums">{count}</span>
+                    <span className="text-gray-500"> ({pct}%)</span>
                   </div>
                 </div>
-                
-                {/* Enhanced Progress Bar */}
                 <div className="relative bg-gray-100 rounded-full h-3 overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-700 ease-out ${getBarGradient(data.rating)} relative overflow-hidden`}
-                    style={{ 
-                      width: maxCount > 0 ? `${(data.count / maxCount) * 100}%` : '0%'
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${fillWidth(count)}%`,
+                      ...band(maxCount ? count / maxCount : 0)
                     }}
-                  >
-                    {/* Shimmer effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 -skew-x-12"></div>
-                  </div>
+                  />
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-3 text-center border border-green-100">
-              <div className="text-xl font-bold text-green-700 mb-1">
-                {satisfactionRate}%
-              </div>
-              <div className="text-xs text-green-600 font-medium flex items-center justify-center">
-                <Heart className="w-3 h-3 mr-1" />
-                Satisfied
-              </div>
-              <div className="text-xs text-gray-500 mt-1">4-5 stars</div>
+          {/* Summary cards (neutral, compact) */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-md p-3 border border-gray-100">
+              <div className="text-xs text-gray-600 mb-1">Satisfied (4–5★)</div>
+              <div className="text-xl font-bold text-gray-900 tabular-nums">{satRate}%</div>
             </div>
-            
-            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg p-3 text-center border border-amber-100">
-              <div className="text-xl font-bold text-amber-700 mb-1">
-                {ratingData.find(d => d.rating === 3)?.count || 0}
-              </div>
-              <div className="text-xs text-amber-600 font-medium flex items-center justify-center">
-                <BarChart className="w-3 h-3 mr-1" />
-                Neutral
-              </div>
-              <div className="text-xs text-gray-500 mt-1">3 stars</div>
+            <div className="rounded-md p-3 border border-gray-100">
+              <div className="text-xs text-gray-600 mb-1">Neutral (3★)</div>
+              <div className="text-xl font-bold text-gray-900 tabular-nums">{neutral}</div>
             </div>
-            
-            <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg p-3 text-center border border-red-100">
-              <div className="text-xl font-bold text-red-700 mb-1">
-                {ratingData.find(d => d.rating === 2)?.count + ratingData.find(d => d.rating === 1)?.count || 0}
+            <div className="rounded-md p-3 border border-gray-100">
+              <div className="text-xs text-gray-600 mb-1">Detractors (1–2★)</div>
+              <div className="text-xl font-bold text-gray-900 tabular-nums">{detractors}</div>
+            </div>
+          </div>
+
+          {/* Legend / hint */}
+          <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-200">
+            <div className="flex items-center gap-2 text-[11px] text-gray-600">
+              <span>Bar fill:</span>
+              <div className="flex items-center gap-1">
+                <span className="inline-block w-4 h-3 rounded" style={{background:'rgba(15,23,42,0.12)'}} />
+                <span>Low</span>
+                <span className="inline-block w-4 h-3 rounded" style={{background:'rgba(15,23,42,0.5)'}} />
+                <span>Medium</span>
+                <span className="inline-block w-4 h-3 rounded" style={{background:'rgba(15,23,42,1)'}} />
+                <span>High</span>
               </div>
-              <div className="text-xs text-red-600 font-medium flex items-center justify-center">
-                <TrendingUp className="w-3 h-3 mr-1 rotate-180" />
-                Needs Work
-              </div>
-              <div className="text-xs text-gray-500 mt-1">1-2 stars</div>
+            </div>
+            <div className="text-[11px] text-gray-600">
+              Bars scale to the most common rating.
             </div>
           </div>
         </>
       )}
     </div>
   );
-};
-
-export default RatingDistributionTile;
+}
