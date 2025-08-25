@@ -117,26 +117,6 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Real-time Status Banner */}
-      <div className="mb-6">
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-900">System Status: Online</span>
-              </div>
-              <div className="h-4 w-px bg-gray-300"></div>
-              <span className="text-sm text-gray-600">Last updated: {new Date().toLocaleTimeString()}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Clock className="w-4 h-4" />
-              Ready for service
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 auto-rows-max">
         <SessionsActionedTile venueId={venueId} />

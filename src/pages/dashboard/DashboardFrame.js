@@ -56,22 +56,11 @@ const UpdatedDashboardFrame = ({ children }) => {
       
       setUserInfo(user);
 
-      // Fetch trial info for all users (masters directly, managers via venue)
-      let accountIdToCheck = user.account_id;
-      
-      // For managers, get account_id through their venue
-      if (user.role === 'manager' && !accountIdToCheck) {
-        const { data: staffRow } = await supabase
-          .from('staff')
-          .select('venues!inner(account_id)')
-          .eq('user_id', userId)
-          .limit(1)
-          .single();
-          
-        accountIdToCheck = staffRow?.venues?.account_id;
-      }
+      // Only fetch trial info for master users - managers don't need to see it
+      if (user.role === 'master') {
+        const accountIdToCheck = user.account_id;
 
-      if (accountIdToCheck) {
+        if (accountIdToCheck) {
         const { data: account } = await supabase
           .from('accounts')
           .select('trial_ends_at, is_paid')
@@ -92,6 +81,7 @@ const UpdatedDashboardFrame = ({ children }) => {
             isExpired: daysLeft <= 0,
             isPaid: account.is_paid
           });
+        }
         }
       }
     };
@@ -156,8 +146,8 @@ const UpdatedDashboardFrame = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Trial Banner */}
-      {trialInfo && trialInfo.isActive && (
+      {/* Trial Banner - Only show for master users */}
+      {trialInfo && trialInfo.isActive && userRole === 'master' && (
         <div className="bg-gray-100 border-b border-gray-200 px-4 py-3">
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -228,10 +218,10 @@ const UpdatedDashboardFrame = ({ children }) => {
             variant="outline"
             size="sm"
             onClick={handleOpenKiosk}
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-xl text-gray-700 border-gray-300 bg-white hover:bg-gray-50"
-            title="Open Kiosk Mode (opens in a new window)"
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-l text-gray-700 border-gray-300 bg-white hover:bg-gray-50"
+            title="Kiosk Mode (opens in a new window)"
           >
-            <span className="text-sm">Open Kiosk Mode</span>
+            <span className="text-sm">Kiosk Mode</span>
             <FiExternalLink className="w-4 h-4" />
           </Button>
 
@@ -344,8 +334,8 @@ const UpdatedDashboardFrame = ({ children }) => {
           <div 
             className="absolute right-0 top-0 h-full w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out overflow-y-auto"
             style={{ 
-              top: trialInfo && trialInfo.isActive ? '120px' : '72px', // Account for trial banner + nav height
-              height: trialInfo && trialInfo.isActive ? 'calc(100vh - 120px)' : 'calc(100vh - 72px)'
+              top: trialInfo && trialInfo.isActive && userRole === 'master' ? '120px' : '72px', // Account for trial banner + nav height
+              height: trialInfo && trialInfo.isActive && userRole === 'master' ? 'calc(100vh - 120px)' : 'calc(100vh - 72px)'
             }}
             onClick={(e) => e.stopPropagation()}
           >

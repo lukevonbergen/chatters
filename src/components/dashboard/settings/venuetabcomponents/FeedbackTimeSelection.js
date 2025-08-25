@@ -284,14 +284,6 @@ const FeedbackTimeSelection = ({ currentVenueId }) => {
         </button>
       </div>
 
-      {/* Tips section - more compact */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-        <h4 className="text-sm font-medium text-blue-900 mb-1">💡 Quick Tips</h4>
-        <p className="text-xs text-blue-700">
-          Click the expand button (⌄) to edit times • Use "Copy to all days" to apply settings • Add break times for split shifts • Times round to 15-minute intervals
-        </p>
-      </div>
-
       {/* Save button and messages */}
       <div className="pt-4 border-t border-gray-200 mt-4">
         <button
