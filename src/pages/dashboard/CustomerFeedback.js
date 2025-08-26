@@ -57,28 +57,39 @@ const CustomerFeedbackPage = () => {
     const loadData = async () => {
       try {
         console.log('Loading data for venueId:', venueId);
+        console.log('VenueId type:', typeof venueId);
         
         // Load venue data first (including feedback_hours)
         const { data: venueData, error: venueError } = await supabase
           .from('venues')
           .select('logo, primary_color, secondary_color, feedback_hours')
-          .eq('id', venueId)
-          .single();
+          .eq('id', venueId);
 
         if (venueError) {
           console.error('Venue error:', venueError);
           throw new Error(`Failed to load venue: ${venueError.message}`);
         }
 
-        if (!venueData) {
-          throw new Error('Venue not found');
+        console.log('Raw venue data:', venueData);
+        console.log('Venue data length:', venueData?.length);
+
+        // Handle multiple or no venues found
+        if (!venueData || venueData.length === 0) {
+          throw new Error(`Venue not found with ID: ${venueId}`);
+        }
+        
+        if (venueData.length > 1) {
+          console.warn(`Multiple venues found with ID ${venueId}, using the first one`);
         }
 
+        // Use the first venue (or only venue)
+        const venue = venueData[0];
+
         // Check if feedback is currently allowed
-        const feedbackAllowed = isFeedbackTimeAllowed(venueData.feedback_hours);
+        const feedbackAllowed = isFeedbackTimeAllowed(venue.feedback_hours);
         if (!feedbackAllowed) {
           setFeedbackUnavailable(true);
-          setVenue(venueData);
+          setVenue(venue);
           setLoading(false);
           return;
         }
@@ -110,7 +121,7 @@ const CustomerFeedbackPage = () => {
         }
 
         console.log('Questions loaded:', questionsData?.length || 0);
-        console.log('Venue loaded:', venueData ? 'success' : 'failed');
+        console.log('Venue loaded:', venue ? 'success' : 'failed');
         console.log('Tables loaded:', tablesData?.length || 0);
 
         if (!questionsData || questionsData.length === 0) {
@@ -118,7 +129,7 @@ const CustomerFeedbackPage = () => {
         }
 
         setQuestions(questionsData);
-        setVenue(venueData);
+        setVenue(venue);
         
         // Process and sort tables numerically
         if (tablesData && tablesData.length > 0) {
