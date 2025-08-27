@@ -2,13 +2,13 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 import { Trophy, Medal, Users, TrendingUp, Star, Target } from 'lucide-react';
 import Navbar from '../../../components/marketing/layout/Navbar';
-import PageHeader from '../../components/marketing/common/sections/PageHeader';
-import ContentSplit from '../../components/marketing/common/sections/ContentSplit';
-import ProductFeaturesShowcase from '../../components/marketing/common/sections/ProductFeaturesShowcase';
-import FeatureGrid from '../../components/marketing/common/sections/FeatureGrid';
-import FAQSection from '../../components/marketing/common/sections/FAQSection';
-import CTA from '../../components/marketing/common/sections/CTA';
-import Footer from '../../components/marketing/layout/Footer';
+import PageHeader from '../../../components/marketing/common/sections/PageHeader';
+import ContentSplit from '../../../components/marketing/common/sections/ContentSplit';
+import ProductFeaturesShowcase from '../../../components/marketing/common/sections/ProductFeaturesShowcase';
+import FeatureGrid from '../../../components/marketing/common/sections/FeatureGrid';
+import FAQSection from '../../../components/marketing/common/sections/FAQSection';
+import CTA from '../../../components/marketing/common/sections/CTA';
+import Footer from '../../../components/marketing/layout/Footer';
 
 const StaffLeaderboardPage = () => {
   return (
