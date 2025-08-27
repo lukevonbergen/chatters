@@ -17,7 +17,7 @@ import BlogPost from './pages/marketing/BlogPost';
 
 import QuestionManagementProduct from './pages/marketing/product/QuestionManagement';
 import BusinessIntelligenceProduct from './pages/marketing/product/BusinessIntelligence';
-import AutomationWorkflowProduct from './pages/marketing/product/Automation-Workflows';
+import StaffLeaderboardPage from './pages/marketing/product/StaffLeaderboardPage';
 import MultiLocationControlProduct from './pages/marketing/product/Multi-Location-Control';
 import KioskModeProduct from './pages/marketing/product/Kiosk-Mode';
 import RealTimeAlertsProduct from './pages/marketing/product/Real-Time-Alerts';
@@ -42,7 +42,6 @@ const MarketingRoutes = () => {
       <Route path="/about" element={<AboutPage />} />
       <Route path="/demo" element={<DemoPage />} />
 
-
       {/* 📝 Blog Pages */}
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/:slug" element={<BlogPost />} />
@@ -50,10 +49,10 @@ const MarketingRoutes = () => {
       {/* 🏢 Product Pages */}
       <Route path="/product/question-management" element={<QuestionManagementProduct />} />
       <Route path="/product/business-intelligence" element={<BusinessIntelligenceProduct />} />
-      <Route path="/product/automation-workflow" element={<AutomationWorkflowProduct />} />
       <Route path="/product/multi-location-control" element={<MultiLocationControlProduct />} />
       <Route path="/product/kiosk-mode" element={<KioskModeProduct />} />
       <Route path="/product/real-time-alerts" element={<RealTimeAlertsProduct />} />
+      <Route path="/product/staff-leaderboard" element={<StaffLeaderboardPage />} />
 
       {/* 🏢 Solutions Pages */}
       <Route path="/solutions/restaurants" element={<RestaurantSolution />} />

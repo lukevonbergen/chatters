@@ -1,7 +1,7 @@
 // components/marketing/layout/Navbar.jsx
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, BarChart3, Utensils, Building, ShoppingBag, Calendar, BookOpen, HelpCircle, FileText, GraduationCap, Zap, Globe, Monitor, Bell } from 'lucide-react';
+import { Menu, X, ChevronDown, BarChart3, Utensils, Building, ShoppingBag, Calendar, BookOpen, HelpCircle, FileText, GraduationCap, Trophy, Globe, Monitor, Bell } from 'lucide-react';
 import PrimaryButton from '../common/buttons/PrimaryButton';
 
 const Navbar = ({ overlay = false }) => {
@@ -15,7 +15,7 @@ const Navbar = ({ overlay = false }) => {
   const productLinks = [
     { name: 'Question Management', path: '/product/question-management', description: 'Custom feedback forms and intelligent question flows', icon: <HelpCircle className="w-5 h-5" /> },
     { name: 'Business Intelligence', path: '/product/business-intelligence', description: 'Advanced analytics and performance insights', icon: <BarChart3 className="w-5 h-5" /> },
-    { name: 'Automation & Workflows', path: '/product/automation-workflow', description: 'Smart automated responses and escalation paths', icon: <Zap className="w-5 h-5" /> },
+    { name: 'Staff Leaderboard', path: '/product/staff-leaderboard', description: 'Track and celebrate team performance achievements', icon: <Trophy className="w-5 h-5" /> },
     { name: 'Multi-Location Control', path: '/product/multi-location-control', description: 'Centralised management for restaurant/hotel chains', icon: <Globe className="w-5 h-5" /> },
     { name: 'Kiosk Mode', path: '/product/kiosk-mode', description: 'Tablet-based feedback stations and self-service', icon: <Monitor className="w-5 h-5" /> },
     { name: 'Real-Time Alerts', path: '/product/real-time-alerts', description: 'Instant notifications and emergency escalation', icon: <Bell className="w-5 h-5" /> },
