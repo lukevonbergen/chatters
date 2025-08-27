@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { Trophy, Medal, Users, TrendingUp, Star, Target } from 'lucide-react';
-import Navbar from '../../components/marketing/layout/Navbar';
+import Navbar from '../../../components/marketing/layout/Navbar';
 import PageHeader from '../../components/marketing/common/sections/PageHeader';
 import ContentSplit from '../../components/marketing/common/sections/ContentSplit';
 import ProductFeaturesShowcase from '../../components/marketing/common/sections/ProductFeaturesShowcase';
