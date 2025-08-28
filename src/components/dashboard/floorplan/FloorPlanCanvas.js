@@ -2,11 +2,7 @@ import React, { forwardRef, useMemo, useRef, useState, useEffect, useCallback } 
 import Draggable from 'react-draggable';
 import TableComponent from './TableComponent';
 
-const GRID_SIZE = 20;
-
-// Logical design space for % coords
-const WORLD_WIDTH = 1600;
-const WORLD_HEIGHT = 1000;
+// Note: GRID_SIZE removed since we now use magnetic alignment instead of rigid grid
 
 // Zoom constraints
 const MIN_ZOOM = 0.2;
@@ -202,10 +198,73 @@ const FloorPlanCanvas = forwardRef(
     // Handle table drag - convert screen coordinates back to container pixel coordinates
     const handleTableDragEnd = (tableId, screenX, screenY) => {
       // Convert screen coordinates back to container pixel coordinates
-      const containerX = (screenX - panOffset.x) / zoom;
-      const containerY = (screenY - panOffset.y) / zoom;
+      let containerX = (screenX - panOffset.x) / zoom;
+      let containerY = (screenY - panOffset.y) / zoom;
+      
+      const table = tables.find(t => t.id === tableId);
+      if (table) {
+        // Magnetic alignment with other tables
+        const otherTables = filteredTables.filter(t => t.id !== tableId);
+        const { snapX, snapY } = findSnapPoints(table, containerX, containerY, otherTables);
+        containerX = snapX;
+        containerY = snapY;
+      }
       
       onTableDrag(tableId, containerX, containerY);
+    };
+
+    // Magnetic alignment helper - finds nearby snap points
+    const findSnapPoints = useCallback((movingTable, newX, newY, otherTables) => {
+      const SNAP_DISTANCE = 10;
+      let snapX = newX;
+      let snapY = newY;
+      
+      for (const otherTable of otherTables) {
+        if (otherTable.id === movingTable.id || otherTable.zone_id !== movingTable.zone_id) continue;
+        
+        const otherX = otherTable.x_px;
+        const otherY = otherTable.y_px;
+        const otherW = otherTable.w || otherTable.width || 56;
+        const otherH = otherTable.h || otherTable.height || 56;
+        const movingW = movingTable.w || movingTable.width || 56;
+        const movingH = movingTable.h || movingTable.height || 56;
+        
+        // Horizontal alignment (same Y or aligned edges)
+        if (Math.abs(newY - otherY) < SNAP_DISTANCE) {
+          snapY = otherY; // Top edges align
+        } else if (Math.abs(newY + movingH - (otherY + otherH)) < SNAP_DISTANCE) {
+          snapY = otherY + otherH - movingH; // Bottom edges align
+        } else if (Math.abs(newY + movingH/2 - (otherY + otherH/2)) < SNAP_DISTANCE) {
+          snapY = otherY + otherH/2 - movingH/2; // Centers align
+        }
+        
+        // Vertical alignment (same X or aligned edges)
+        if (Math.abs(newX - otherX) < SNAP_DISTANCE) {
+          snapX = otherX; // Left edges align
+        } else if (Math.abs(newX + movingW - (otherX + otherW)) < SNAP_DISTANCE) {
+          snapX = otherX + otherW - movingW; // Right edges align
+        } else if (Math.abs(newX + movingW/2 - (otherX + otherW/2)) < SNAP_DISTANCE) {
+          snapX = otherX + otherW/2 - movingW/2; // Centers align
+        }
+      }
+      
+      return { snapX, snapY };
+    }, []);
+
+    // Handle table move from resize operations - apply relative deltas
+    const handleTableMove = (tableId, deltaX, deltaY) => {
+      const table = tables.find(t => t.id === tableId);
+      if (!table) return;
+      
+      // Apply deltas directly to existing position
+      let newX = table.x_px + deltaX;
+      let newY = table.y_px + deltaY;
+      
+      // Magnetic alignment with other tables
+      const otherTables = filteredTables.filter(t => t.id !== tableId);
+      const { snapX, snapY } = findSnapPoints(table, newX, newY, otherTables);
+      
+      onTableDrag(tableId, snapX, snapY);
     };
 
     return (
@@ -255,13 +314,13 @@ const FloorPlanCanvas = forwardRef(
             cursor: isDragging ? 'grabbing' : (editMode ? 'default' : 'grab')
           }}
         >
-          {/* Grid pattern for better visual alignment */}
+          {/* Subtle grid pattern for visual reference */}
           <div
-            className="absolute inset-0 opacity-20 pointer-events-none"
+            className="absolute inset-0 opacity-5 pointer-events-none"
             style={{
-              backgroundImage: 'radial-gradient(circle, #94a3b8 1px, transparent 1px)',
-              backgroundSize: `${30 * zoom}px ${30 * zoom}px`,
-              backgroundPosition: `${panOffset.x % (30 * zoom)}px ${panOffset.y % (30 * zoom)}px`
+              backgroundImage: 'radial-gradient(circle, #94a3b8 0.5px, transparent 0.5px)',
+              backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+              backgroundPosition: `${panOffset.x % (20 * zoom)}px ${panOffset.y % (20 * zoom)}px`
             }}
           />
 
@@ -301,7 +360,8 @@ const FloorPlanCanvas = forwardRef(
                 editMode={editMode}
                 onRemoveTable={onRemoveTable}
                 onTableResize={onTableResize}
-                onTableMove={handleTableDragEnd}
+                onTableMove={handleTableMove}
+                zoom={zoom}
               />
             );
 
@@ -310,7 +370,6 @@ const FloorPlanCanvas = forwardRef(
                 key={table.id}
                 position={{ x: screenX, y: screenY }}
                 bounds="parent"
-                grid={[GRID_SIZE * zoom, GRID_SIZE * zoom]}
                 onStop={(e, data) => {
                   handleTableDragEnd(table.id, data.x, data.y);
                 }}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 const MIN_SIZE = 40;
-const GRID = 10;
+const GRID = 5; // Match FloorPlanCanvas GRID_SIZE
 
 const TableComponent = ({
   table,
@@ -9,13 +9,22 @@ const TableComponent = ({
   onRemoveTable,
   onTableResize, // (id, width, height) -> parent persists immutably
   onTableMove,   // (id, dx, dy) to adjust x/y when resizing from left/top
+  zoom = 1,      // Current zoom level for position calculations
 }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Live visual size during drag (no snap while moving)
+  // Get the world dimensions (unscaled) for calculations
+  const worldWidth = table.w || 56;
+  const worldHeight = table.h || 56;
+
+  // Live visual size during drag (no snap while moving) - these are screen coordinates
   const [liveWidth, setLiveWidth] = useState(table.width || 56);
   const [liveHeight, setLiveHeight] = useState(table.height || 56);
+  
+  // Live position adjustments during resize
+  const [liveOffsetX, setLiveOffsetX] = useState(0);
+  const [liveOffsetY, setLiveOffsetY] = useState(0);
 
   // Stay in sync with parent props unless currently resizing
   useEffect(() => {
@@ -24,6 +33,14 @@ const TableComponent = ({
       setLiveHeight(table.height || 56);
     }
   }, [table.width, table.height, isResizing]);
+
+  // Reset live offsets when position actually changes from parent
+  useEffect(() => {
+    if (!isResizing) {
+      setLiveOffsetX(0);
+      setLiveOffsetY(0);
+    }
+  }, [table.x_px, table.y_px, isResizing]);
 
   // UX: prevent text selection while dragging
   useEffect(() => {
@@ -70,12 +87,14 @@ const TableComponent = ({
     dragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
-      startW: table.width || 56,
-      startH: table.height || 56,
+      startW: worldWidth,
+      startH: worldHeight,
       direction,
     };
 
     setIsResizing(true);
+    setLiveOffsetX(0);
+    setLiveOffsetY(0);
 
     const onMove = (ev) => {
       const { startX, startY, startW, startH, direction: dir } = dragRef.current;
@@ -83,23 +102,41 @@ const TableComponent = ({
       const dy = ev.clientY - startY;
 
       if (circle) {
-        const delta = Math.max(dx, dy);
-        const newSize = Math.max(MIN_SIZE, startW + delta);
-        setLiveWidth(newSize);
-        setLiveHeight(newSize);
+        // Convert screen delta to world delta
+        const worldDelta = Math.max(dx, dy) / zoom;
+        const newWorldSize = Math.max(MIN_SIZE, startW + worldDelta);
+        // Convert back to screen for live display
+        const screenSize = newWorldSize * zoom;
+        setLiveWidth(screenSize);
+        setLiveHeight(screenSize);
         return;
       }
 
-      let newW = startW;
-      let newH = startH;
+      // Calculate new world dimensions
+      let newWorldW = startW;
+      let newWorldH = startH;
 
-      if (dir.includes('right')) newW = Math.max(MIN_SIZE, startW + dx);
-      if (dir.includes('left'))  newW = Math.max(MIN_SIZE, startW - dx);
-      if (dir.includes('bottom')) newH = Math.max(MIN_SIZE, startH + dy);
-      if (dir.includes('top'))    newH = Math.max(MIN_SIZE, startH - dy);
+      if (dir.includes('right')) newWorldW = Math.max(MIN_SIZE, startW + dx / zoom);
+      if (dir.includes('left'))  newWorldW = Math.max(MIN_SIZE, startW - dx / zoom);
+      if (dir.includes('bottom')) newWorldH = Math.max(MIN_SIZE, startH + dy / zoom);
+      if (dir.includes('top'))    newWorldH = Math.max(MIN_SIZE, startH - dy / zoom);
 
-      setLiveWidth(newW);
-      setLiveHeight(newH);
+      // Calculate live position offsets for left/top resize
+      let liveOffX = 0;
+      let liveOffY = 0;
+      
+      if (dir.includes('left')) {
+        liveOffX = -(newWorldW - startW) * zoom;
+      }
+      if (dir.includes('top')) {
+        liveOffY = -(newWorldH - startH) * zoom;
+      }
+
+      // Convert to screen for live display
+      setLiveWidth(newWorldW * zoom);
+      setLiveHeight(newWorldH * zoom);
+      setLiveOffsetX(liveOffX);
+      setLiveOffsetY(liveOffY);
     };
 
     // Track last pointer position for reliable final commit
@@ -115,21 +152,21 @@ const TableComponent = ({
       const dx = lastX - startX;
       const dy = lastY - startY;
 
-      // Calculate final dimensions
+      // Calculate final dimensions in world coordinates
       let finalW, finalH;
       
       if (circle) {
-        const delta = Math.max(dx, dy);
-        const newSize = Math.max(MIN_SIZE, startW + delta);
-        finalW = finalH = roundToGrid(newSize);
+        const worldDelta = Math.max(dx, dy) / zoom;
+        const newWorldSize = Math.max(MIN_SIZE, startW + worldDelta);
+        finalW = finalH = roundToGrid(newWorldSize);
       } else {
         finalW = startW;
         finalH = startH;
         
-        if (dir.includes('right')) finalW = Math.max(MIN_SIZE, startW + dx);
-        if (dir.includes('left'))  finalW = Math.max(MIN_SIZE, startW - dx);
-        if (dir.includes('bottom')) finalH = Math.max(MIN_SIZE, startH + dy);
-        if (dir.includes('top'))    finalH = Math.max(MIN_SIZE, startH - dy);
+        if (dir.includes('right')) finalW = Math.max(MIN_SIZE, startW + dx / zoom);
+        if (dir.includes('left'))  finalW = Math.max(MIN_SIZE, startW - dx / zoom);
+        if (dir.includes('bottom')) finalH = Math.max(MIN_SIZE, startH + dy / zoom);
+        if (dir.includes('top'))    finalH = Math.max(MIN_SIZE, startH - dy / zoom);
         
         finalW = roundToGrid(finalW);
         finalH = roundToGrid(finalH);
@@ -141,18 +178,21 @@ const TableComponent = ({
         let moveDy = 0;
         
         if (dir.includes('left')) {
-          const oldW = roundToGrid(startW);
-          moveDx = -(finalW - oldW);
+          // When resizing from left, move left by the amount the width increased
+          // If width increased, we need to move left (negative direction)
+          moveDx = -(finalW - startW);
         }
         if (dir.includes('top')) {
-          const oldH = roundToGrid(startH);
-          moveDy = -(finalH - oldH);
+          // When resizing from top, move up by the amount the height increased
+          // If height increased, we need to move up (negative direction)
+          moveDy = -(finalH - startH);
         }
         
         if (moveDx !== 0 || moveDy !== 0) {
           onTableMove(table.id, moveDx, moveDy);
         }
       }
+
 
       // Persist the new size
       onTableResize?.(table.id, finalW, finalH);
@@ -163,6 +203,7 @@ const TableComponent = ({
       pointerIdRef.current = null;
 
       setIsResizing(false);
+      // Live offsets will be reset by useEffect when position updates
 
       // Remove event listeners
       window.removeEventListener('pointermove', trackLast);
@@ -187,7 +228,7 @@ const TableComponent = ({
   const getShapeClasses = () => {
     const base = 'text-gray-800 bg-white flex items-center justify-center font-semibold border border-gray-300 shadow-sm transition-all duration-200';
     const isCircle = table.shape === 'circle';
-    return `${base} ${isCircle ? 'rounded-full' : 'rounded-lg'} ${editMode && !isResizing ? 'hover:scale-105' : ''}`;
+    return `${base} ${isCircle ? 'rounded-full' : 'rounded-lg'}`;
   };
 
   const showHandles = isHovered || isResizing;
@@ -195,7 +236,11 @@ const TableComponent = ({
   return (
     <div
       className="relative select-none"
-      style={{ width: liveWidth, height: liveHeight }}
+      style={{ 
+        width: liveWidth, 
+        height: liveHeight,
+        transform: `translate(${liveOffsetX}px, ${liveOffsetY}px)`
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => !isResizing && setIsHovered(false)}
       title={`Table ${table.table_number}`}
