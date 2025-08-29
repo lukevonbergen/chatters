@@ -65,7 +65,7 @@ const MetricCard = React.forwardRef(({
   if (loading) {
     return (
       <Card ref={ref} className={className} {...props}>
-        <CardContent className="p-6">
+        <CardContent className="">
           <div className="animate-pulse space-y-3">
             <div className="flex items-center justify-between">
               <div className="h-4 bg-gray-200 rounded w-24"></div>
@@ -81,7 +81,7 @@ const MetricCard = React.forwardRef(({
 
   return (
     <Card ref={ref} className={className} {...props}>
-      <CardContent className="p-6">
+      <CardContent className="">
         <div className="flex items-center justify-between mb-3">
           <CardTitle className="text-sm font-medium text-gray-600">
             {title}

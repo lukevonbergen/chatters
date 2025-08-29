@@ -45,7 +45,7 @@ const fetch = async () => {
   const percentage = total > 0 ? ((actioned / total) * 100).toFixed(1) : '0.0';
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 border text-center flex flex-col items-center justify-center">
+    <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
       <div className="w-28 h-28 mb-4">
         <CircularProgressbar
           value={parseFloat(percentage)}

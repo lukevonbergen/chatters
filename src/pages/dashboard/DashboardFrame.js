@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../context/VenueContext';
+import { useLoading } from '../../context/LoadingContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
 import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown, FiExternalLink } from 'react-icons/fi';
@@ -33,7 +34,15 @@ const UpdatedDashboardFrame = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { venueId, venueName, allVenues, setCurrentVenue, userRole } = useVenue();
+  const { showLoading } = useLoading();
   const [userInfo, setUserInfo] = useState(null);
+
+  const handleNavigation = (to) => {
+    if (location.pathname !== to) {
+      showLoading();
+      navigate(to);
+    }
+  };
   
   // Trial info state
   const [trialInfo, setTrialInfo] = useState(null);
@@ -186,7 +195,7 @@ const UpdatedDashboardFrame = ({ children }) => {
             src="https://www.getchatters.com/img/Logo.svg"
             alt="Chatters"
             className="h-6 w-auto cursor-pointer"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => handleNavigation('/dashboard')}
           />
 
           {/* Desktop Nav links */}
@@ -195,9 +204,9 @@ const UpdatedDashboardFrame = ({ children }) => {
               const isActive = location.pathname === link.to
                 || location.pathname.startsWith(link.to + '/');
               return (
-                <Link
+                <button
                   key={link.to}
-                  to={link.to}
+                  onClick={() => handleNavigation(link.to)}
                   className={`relative text-sm transition-colors after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-black after:transition-all after:duration-300 hover:after:w-full ${
                     isActive
                       ? 'font-medium text-black after:w-full'
@@ -205,7 +214,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                   }`}
                 >
                   {link.label}
-                </Link>
+                </button>
               );
             })}
           </nav>
@@ -295,7 +304,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               className="w-48 rounded-xl border border-gray-200 bg-white shadow-md p-1 font-medium"
             >
               <DropdownMenuItem
-                onClick={() => navigate('/settings')}
+                onClick={() => handleNavigation('/settings')}
                 className="rounded-md px-3 py-2 hover:bg-muted/50 cursor-pointer"
               >
                 Account Settings
@@ -408,30 +417,34 @@ const UpdatedDashboardFrame = ({ children }) => {
                   const isActive = location.pathname === link.to
                 || location.pathname.startsWith(link.to + '/');
                   return (
-                    <Link
+                    <button
                       key={link.to}
-                      to={link.to}
-                      className={`block px-3 py-3 rounded-md text-base font-medium transition-colors ${
+                      onClick={() => {
+                        handleNavigation(link.to);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left block px-3 py-3 rounded-md text-base font-medium transition-colors ${
                         isActive
                           ? 'bg-black text-white'
                           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                       }`}
-                      onClick={() => setMobileMenuOpen(false)}
                     >
                       {link.label}
-                    </Link>
+                    </button>
                   );
                 })}
               </div>
               {/* Mobile settings */}
               <div className="mt-6 pt-4 border-t border-gray-200">
-                <Link
-                  to="/settings"
-                  className="block px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  onClick={() => setMobileMenuOpen(false)}
+                <button
+                  onClick={() => {
+                    handleNavigation('/settings');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left block px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 >
                   Account Settings
-                </Link>
+                </button>
                 <button
                   className="w-full text-left px-3 py-3 rounded-md text-base font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
                   onClick={async () => {

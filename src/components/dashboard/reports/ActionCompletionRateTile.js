@@ -30,10 +30,8 @@ export default function ActionCompletionRateTile({
   actionedCount: propActionedCount,
   totalCount: propTotalCount,
 }) {
-  // filter UI
-  const [preset, setPreset] = useState('today'); // today | yesterday | last7 | last30 | custom
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  // Fixed to today
+  const preset = 'today';
 
   // data
   const [actionedCount, setActionedCount] = useState(propActionedCount ?? 0);
@@ -53,7 +51,7 @@ export default function ActionCompletionRateTile({
     const run = async () => {
       setLoading(true);
       try {
-        const { start, end } = rangeISO(preset, fromDate, toDate);
+        const { start, end } = rangeISO(preset);
 
         // Pull needed fields to compute session status + timestamp
         const { data, error } = await supabase
@@ -92,7 +90,7 @@ export default function ActionCompletionRateTile({
           }
 
           // Make sure the session actually falls in range (safety if the coarse filter lets something through)
-          const { start: sISO, end: eISO } = rangeISO(preset, fromDate, toDate);
+          const { start: sISO, end: eISO } = rangeISO(preset);
           const sMs = new Date(sISO).getTime();
           const eMs = new Date(eISO).getTime();
           if (latestTs < sMs || latestTs > eMs) continue;
@@ -116,7 +114,7 @@ export default function ActionCompletionRateTile({
     };
 
     run();
-  }, [venueId, propActionedCount, propTotalCount, preset, fromDate, toDate]);
+  }, [venueId, propActionedCount, propTotalCount]);
 
   const rate = useMemo(() => {
     if (!totalCount) return 0;
@@ -131,48 +129,10 @@ export default function ActionCompletionRateTile({
   return (
     <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-gray-900">Completion Rate</h3>
-          <p className="text-gray-600 text-xs mt-1">Share of sessions fully resolved</p>
-        </div>
-
-        {/* Styled dropdown to mirror Avg Resolution tile */}
-        <div className="min-w-[150px]">
-          <select
-            value={preset}
-            onChange={(e) => setPreset(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="last7">Last 7 Days</option>
-            <option value="last30">Last 30 Days</option>
-            <option value="custom">Custom…</option>
-          </select>
-        </div>
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-gray-900">Completion Rate</h3>
+        <p className="text-gray-600 text-xs mt-1">Today's share of sessions fully resolved</p>
       </div>
-
-      {/* Custom date pickers */}
-      {preset === 'custom' && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded-md text-xs"
-            placeholder="From"
-          />
-          <span className="text-xs text-gray-500">to</span>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded-md text-xs"
-            placeholder="To"
-          />
-        </div>
-      )}
 
       {/* Metric */}
       <div className="mt-4 flex items-end justify-between">

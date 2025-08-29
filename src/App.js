@@ -2,6 +2,7 @@
 import './index.css';
 import React, { useEffect, useState } from 'react';
 import { ModalProvider } from './context/ModalContext';
+import { LoadingProvider } from './context/LoadingContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -42,14 +43,16 @@ function App() {
 
   return (
     <div className={isDashboardDomain ? 'font-sans' : 'font-marketing'}>
-      <ModalProvider>
-        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-        <Sentry.ErrorBoundary fallback={<p>Something went wrong!</p>} showDialog>
-          {isDashboardDomain ? <AppRoutes /> : <MarketingRoutes />}
-        </Sentry.ErrorBoundary>
-        <Analytics />
-        <SpeedInsights />
-      </ModalProvider>
+      <LoadingProvider>
+        <ModalProvider>
+          <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+          <Sentry.ErrorBoundary fallback={<p>Something went wrong!</p>} showDialog>
+            {isDashboardDomain ? <AppRoutes /> : <MarketingRoutes />}
+          </Sentry.ErrorBoundary>
+          <Analytics />
+          <SpeedInsights />
+        </ModalProvider>
+      </LoadingProvider>
     </div>
   );
 }

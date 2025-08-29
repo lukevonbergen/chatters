@@ -152,7 +152,7 @@ const SentimentTrendsTile = ({ venueId }) => {
   const maxWeeklyScore = Math.max(...weeklyTrend.map(d => d.weeklyAvg));
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+    <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex-1">

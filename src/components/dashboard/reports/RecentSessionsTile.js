@@ -28,11 +28,13 @@ const RecentSessionsTile = ({ venueId }) => {
   }, [venueId]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-all duration-200 border border-gray-100 flex items-center space-x-4">
-      <CalendarClock className="w-6 h-6 text-purple-600" />
-      <div>
-        <p className="text-sm text-gray-600">Feedback This Week</p>
-        <p className="text-xl font-bold">{value}</p>
+    <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center space-x-4">
+        <CalendarClock className="w-6 h-6 text-purple-600" />
+        <div>
+          <p className="text-sm text-gray-600">Feedback This Week</p>
+          <p className="text-xl font-bold">{value}</p>
+        </div>
       </div>
     </div>
   );

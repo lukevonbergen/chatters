@@ -69,9 +69,7 @@ function formatTime(minutes) {
 }
 
 export default function AverageResolutionTimeTile({ venueId }) {
-  const [preset, setPreset] = useState('today'); // today | yesterday | last7 | last30 | custom
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const preset = 'today'; // Fixed to today
 
   const [avg, setAvg] = useState(0);
   const [count, setCount] = useState(0);
@@ -100,14 +98,7 @@ export default function AverageResolutionTimeTile({ venueId }) {
       const e = new Date(now); e.setDate(now.getDate() - 30);
       return { start: toISO(startOfDay(s)), end: toISO(endOfDay(e)) };
     }
-    if (preset === 'custom' && fromDate && toDate) {
-      const from = new Date(fromDate);
-      const to = new Date(toDate);
-      const diff = Math.max(0, Math.ceil((to - from) / (1000 * 60 * 60 * 24))); // days
-      const prevEnd = new Date(from); prevEnd.setDate(from.getDate() - 1);
-      const prevStart = new Date(prevEnd); prevStart.setDate(prevEnd.getDate() - diff);
-      return { start: toISO(startOfDay(prevStart)), end: toISO(endOfDay(prevEnd)) };
-    }
+    // Custom preset not supported in simplified version
     return null;
   }
 
@@ -116,7 +107,7 @@ export default function AverageResolutionTimeTile({ venueId }) {
 
     const run = async () => {
       setLoading(true);
-      const { start, end } = rangeISO(preset, fromDate, toDate);
+      const { start, end } = rangeISO(preset);
       const base = baselineRange();
 
       const [main, baseData] = await Promise.all([
@@ -131,7 +122,7 @@ export default function AverageResolutionTimeTile({ venueId }) {
     };
 
     run();
-  }, [venueId, preset, fromDate, toDate]);
+  }, [venueId]);
 
   const progress = useMemo(() => {
     if (avg === 0) return 100;
@@ -152,48 +143,10 @@ export default function AverageResolutionTimeTile({ venueId }) {
   return (
     <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-gray-900">Avg. Resolution Time</h3>
-          <p className="text-gray-600 text-xs mt-1">Time taken to resolve feedback</p>
-        </div>
-
-        {/* Styled dropdown */}
-        <div className="min-w-[150px]">
-          <select
-            value={preset}
-            onChange={(e) => setPreset(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="last7">Last 7 Days</option>
-            <option value="last30">Last 30 Days</option>
-            <option value="custom">Custom…</option>
-          </select>
-        </div>
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-gray-900">Avg. Resolution Time</h3>
+        <p className="text-gray-600 text-xs mt-1">Today's average time to resolve feedback</p>
       </div>
-
-      {/* Custom date pickers */}
-      {preset === 'custom' && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded-md text-xs"
-            placeholder="From"
-          />
-          <span className="text-xs text-gray-500">to</span>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded-md text-xs"
-            placeholder="To"
-          />
-        </div>
-      )}
 
       {/* Metric row */}
       <div className="mt-4 flex items-end justify-between">
@@ -205,12 +158,7 @@ export default function AverageResolutionTimeTile({ venueId }) {
             {delta == null ? '—' : `${delta <= 0 ? '-' : '+'}${Math.abs(delta)}%`}
           </div>
           <div className="text-xs text-gray-600">
-            {preset === 'today' ? 'vs yesterday'
-              : preset === 'yesterday' ? 'vs day before'
-              : preset === 'last7' ? 'vs prior 7'
-              : preset === 'last30' ? 'vs prior 30'
-              : preset === 'custom' && fromDate && toDate ? 'vs previous window'
-              : '—'}
+            vs yesterday
           </div>
         </div>
       </div>

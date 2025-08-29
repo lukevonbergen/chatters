@@ -71,9 +71,7 @@ function buildDayBuckets(startISO, endISO) {
 }
 
 export default function SatisfactionTrendTile({ venueId }) {
-  const [preset, setPreset] = useState('last30');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const preset = 'last7'; // Fixed to last 7 days
   const [loading, setLoading] = useState(true);
   const [series, setSeries] = useState([]); // [{labelTs:number, average:number|null, hour?:number}]
   const pollRef = useRef(null);
@@ -81,7 +79,7 @@ export default function SatisfactionTrendTile({ venueId }) {
   async function fetchData() {
     if (!venueId) return;
 
-    const { startISO, endISO, hourly, baseDate } = getRange(preset, fromDate, toDate);
+    const { startISO, endISO, hourly, baseDate } = getRange(preset);
     setLoading(true);
 
     const { data, error } = await supabase
@@ -150,70 +148,17 @@ export default function SatisfactionTrendTile({ venueId }) {
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [venueId, preset, fromDate, toDate]);
+  }, [venueId]);
 
-  // Poll every 30s for Today
-  useEffect(() => {
-    if (preset !== 'today') {
-      if (pollRef.current) clearInterval(pollRef.current);
-      return;
-    }
-    pollRef.current = setInterval(fetchData, 30000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preset, venueId, fromDate, toDate]);
-
-  const isHourly = useMemo(() => {
-    if (preset === 'today' || preset === 'yesterday') return true;
-    if (preset === 'custom' && fromDate && toDate && fromDate === toDate) return true;
-    return false;
-  }, [preset, fromDate, toDate]);
+  const isHourly = false; // Always show daily view for last 7 days
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-gray-900">Satisfaction Trend</h3>
-          <p className="text-xs text-gray-600 mt-1">
-            {isHourly ? 'Hourly average satisfaction' : 'Daily average satisfaction over time'}
-          </p>
-        </div>
-
-        {/* Range control */}
-        <div className="min-w-[170px]">
-          <select
-            value={preset}
-            onChange={(e) => setPreset(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="last7">Last 7 Days</option>
-            <option value="last30">Last 30 Days</option>
-            <option value="custom">Custom…</option>
-          </select>
-        </div>
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-gray-900">Satisfaction Trend</h3>
+        <p className="text-xs text-gray-600 mt-1">Daily average satisfaction over the last 7 days</p>
       </div>
-
-      {/* Custom pickers */}
-      {preset === 'custom' && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded-md text-xs"
-          />
-          <span className="text-xs text-gray-500">to</span>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded-md text-xs"
-          />
-        </div>
-      )}
 
       {/* Chart */}
       <div className="mt-4 h-64">
