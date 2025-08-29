@@ -50,7 +50,7 @@ const groupBySession = (rows) => {
 };
 
 /* ---------- main ---------- */
-const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSelect }) => {
+const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, assistanceMap, onZoneSelect }) => {
   const sessions = React.useMemo(() => groupBySession(feedbackList), [feedbackList]);
 
   // Attach meta + priority and sort
@@ -90,20 +90,31 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
   const getZoneAccent = (urgentCount, totalAlerts) =>
     urgentCount > 0 ? 'bg-red-500' : totalAlerts > 0 ? 'bg-amber-500' : 'bg-emerald-500';
 
-  const getFeedbackStatus = (avg) => {
-    if (avg == null) return { border: 'border-gray-300', bg: 'bg-gray-700', status: 'no-feedback' };
-    if (avg > 4) return { border: 'border-green-500', bg: 'bg-gray-700', status: 'happy' };
-    if (avg >= 2.5) return { border: 'border-yellow-500', bg: 'bg-gray-700', status: 'attention' };
+  const getTableStatus = (tableNumber, feedbackAvg) => {
+    // Assistance requests take priority over feedback
+    const assistanceStatus = assistanceMap?.[tableNumber];
+    if (assistanceStatus === 'pending') {
+      return { border: 'border-orange-500', bg: 'bg-gray-700', status: 'assistance-pending' };
+    }
+    if (assistanceStatus === 'acknowledged') {
+      return { border: 'border-yellow-500', bg: 'bg-gray-700', status: 'assistance-acknowledged' };
+    }
+    
+    // Fall back to feedback status
+    if (feedbackAvg == null) return { border: 'border-gray-300', bg: 'bg-gray-700', status: 'no-feedback' };
+    if (feedbackAvg > 4) return { border: 'border-green-500', bg: 'bg-gray-700', status: 'happy' };
+    if (feedbackAvg >= 2.5) return { border: 'border-yellow-500', bg: 'bg-gray-700', status: 'attention' };
     return { border: 'border-red-500', bg: 'bg-gray-700', status: 'unhappy' };
   };
 
   // Denser chips; "long" is auto-width (padding), so spacing stays clean
-  const getTableShapeClasses = (shape, feedbackStatus) => {
+  const getTableShapeClasses = (shape, tableStatus) => {
     const base =
       `inline-flex items-center justify-center shrink-0
        text-white font-medium border-2 transition-colors duration-150 cursor-pointer
-       ${feedbackStatus.bg} ${feedbackStatus.border}`;
-    const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
+       ${tableStatus.bg} ${tableStatus.border}`;
+    // Pulse for unhappy feedback or pending assistance
+    const pulseStyle = (tableStatus.status === 'unhappy' || tableStatus.status === 'assistance-pending') ? slowPulseStyle : {};
 
     switch (shape) {
       case 'circle':
@@ -117,11 +128,15 @@ const KioskZoneOverview = ({ zones, tables, feedbackMap, feedbackList, onZoneSel
 
   const renderTable = (table) => {
     const avg = feedbackMap[table.table_number];
-    const status = getFeedbackStatus(avg);
+    const status = getTableStatus(table.table_number, avg);
     const cfg = getTableShapeClasses(table.shape, status);
 
     const statusText =
-      status.status === 'happy'
+      status.status === 'assistance-pending'
+        ? 'Table Needs Assistance (Pending)'
+        : status.status === 'assistance-acknowledged'
+        ? 'Table Needs Assistance (Acknowledged)'
+        : status.status === 'happy'
         ? 'Table Happy'
         : status.status === 'attention'
         ? 'Table Needs Attention'

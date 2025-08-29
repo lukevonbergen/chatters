@@ -261,6 +261,7 @@ export default function SatisfactionTrendTile({ venueId }) {
                   border: '1px solid #e5e7eb',
                   borderRadius: 8,
                   fontSize: 12,
+                  fontWeight: 'bold',
                   boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
                 }}
                 formatter={(v) => [v, isHourly ? 'Hourly Avg' : 'Daily Avg']}

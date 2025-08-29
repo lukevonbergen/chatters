@@ -21,6 +21,7 @@ const KioskPage = () => {
   const [feedbackMap, setFeedbackMap] = useState({});
   const [feedbackList, setFeedbackList] = useState([]);
   const [assistanceRequests, setAssistanceRequests] = useState([]);
+  const [assistanceMap, setAssistanceMap] = useState({});
   const [currentView, setCurrentView] = useState('overview'); // 'overview' or zone id
   const [inactivityTimer, setInactivityTimer] = useState(null); // kept for easy re-enable
   const [selectedFeedback, setSelectedFeedback] = useState(null);
@@ -244,7 +245,18 @@ const KioskPage = () => {
       console.log('Fetched assistance requests:', data);
     }
 
+    // Build assistance map for table coloring (table_number -> status)
+    const assistanceTableMap = {};
+    for (const request of data || []) {
+      const tableNum = request.table_number;
+      if (!assistanceTableMap[tableNum] || request.status === 'pending') {
+        // Prioritize pending over acknowledged
+        assistanceTableMap[tableNum] = request.status;
+      }
+    }
+
     setAssistanceRequests(data || []);
+    setAssistanceMap(assistanceTableMap);
   };
 
   // Mark feedback as resolved
@@ -438,6 +450,7 @@ const KioskPage = () => {
               tables={tables}
               feedbackMap={feedbackMap}
               feedbackList={feedbackList}
+              assistanceMap={assistanceMap}
               onZoneSelect={handleZoneSelect}
             />
           ) : (
@@ -446,6 +459,7 @@ const KioskPage = () => {
               selectedZoneId={currentView}
               feedbackMap={feedbackMap}
               selectedFeedback={selectedFeedback}
+              assistanceMap={assistanceMap}
               onTableClick={handleTableClick}
             />
           )}

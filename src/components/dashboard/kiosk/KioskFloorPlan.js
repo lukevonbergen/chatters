@@ -12,7 +12,7 @@ const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.2;
 
-const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, selectedFeedback, onTableClick }, outerRef) => {
+const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, selectedFeedback, assistanceMap, onTableClick }, outerRef) => {
   const containerRef = useRef(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   
@@ -214,16 +214,27 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
   }, [isDragging, onPan, endPan]);
 
   // Table rendering helpers
-  const getFeedbackStatus = (avg) => {
-    if (avg == null) return { borderColor: 'border-gray-800', bgColor: 'bg-gray-700', status: 'no-feedback' };
-    if (avg > 4) return { borderColor: 'border-green-500', bgColor: 'bg-gray-700', status: 'happy' };
-    if (avg >= 2.5) return { borderColor: 'border-yellow-500', bgColor: 'bg-gray-700', status: 'attention' };
+  const getTableStatus = (tableNumber, feedbackAvg) => {
+    // Assistance requests take priority over feedback
+    const assistanceStatus = assistanceMap?.[tableNumber];
+    if (assistanceStatus === 'pending') {
+      return { borderColor: 'border-orange-500', bgColor: 'bg-gray-700', status: 'assistance-pending' };
+    }
+    if (assistanceStatus === 'acknowledged') {
+      return { borderColor: 'border-yellow-500', bgColor: 'bg-gray-700', status: 'assistance-acknowledged' };
+    }
+    
+    // Fall back to feedback status
+    if (feedbackAvg == null) return { borderColor: 'border-gray-800', bgColor: 'bg-gray-700', status: 'no-feedback' };
+    if (feedbackAvg > 4) return { borderColor: 'border-green-500', bgColor: 'bg-gray-700', status: 'happy' };
+    if (feedbackAvg >= 2.5) return { borderColor: 'border-yellow-500', bgColor: 'bg-gray-700', status: 'attention' };
     return { borderColor: 'border-red-500', bgColor: 'bg-gray-700', status: 'unhappy' };
   };
 
-  const getTableShapeClasses = (table, feedbackStatus) => {
-    const baseClass = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-200 cursor-pointer ${feedbackStatus.bgColor} ${feedbackStatus.borderColor}`;
-    const pulseStyle = feedbackStatus.status === 'unhappy' ? slowPulseStyle : {};
+  const getTableShapeClasses = (table, tableStatus) => {
+    const baseClass = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-200 cursor-pointer ${tableStatus.bgColor} ${tableStatus.borderColor}`;
+    // Pulse for unhappy feedback or pending assistance
+    const pulseStyle = (tableStatus.status === 'unhappy' || tableStatus.status === 'assistance-pending') ? slowPulseStyle : {};
     
     switch (table.shape) {
       case 'circle': 
@@ -330,8 +341,8 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
           {/* Tables */}
           {processedTables.map((table) => {
             const avg = feedbackMap[table.table_number];
-            const feedbackStatus = getFeedbackStatus(avg);
-            const cfg = getTableShapeClasses(table, feedbackStatus);
+            const tableStatus = getTableStatus(table.table_number, avg);
+            const cfg = getTableShapeClasses(table, tableStatus);
             
             const isSelectedTable = selectedFeedback?.table_number === table.table_number;
             
