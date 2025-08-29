@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../context/VenueContext';
 import { useLoading } from '../../context/LoadingContext';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../utils/supabase';
+import { supabase, setAuthStorage } from '../../utils/supabase';
 import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown, FiExternalLink } from 'react-icons/fi';
 
 import { Button } from '../../components/ui/button';
@@ -314,6 +314,13 @@ const UpdatedDashboardFrame = ({ children }) => {
                 className="rounded-md px-3 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 cursor-pointer"
                 onClick={async () => {
                   await supabase.auth.signOut();
+                    // Clear custom remember-me flags
+                  localStorage.removeItem('chatters_remember_email');
+                  localStorage.removeItem('chatters_remember_me');
+                  localStorage.removeItem('chatters_auth_storage');
+
+                  // Reset client to persistent mode as default
+                  setAuthStorage('local');
                   navigate('/signin');
                 }}
               >
@@ -449,6 +456,13 @@ const UpdatedDashboardFrame = ({ children }) => {
                   className="w-full text-left px-3 py-3 rounded-md text-base font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
                   onClick={async () => {
                     await supabase.auth.signOut();
+                      // Clear custom remember-me flags
+                    localStorage.removeItem('chatters_remember_email');
+                    localStorage.removeItem('chatters_remember_me');
+                    localStorage.removeItem('chatters_auth_storage');
+
+                    // Reset client to persistent mode as default
+                    setAuthStorage('local');
                     navigate('/signin');
                     setMobileMenuOpen(false);
                   }}

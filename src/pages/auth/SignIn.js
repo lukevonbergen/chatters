@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { supabase } from '../../utils/supabase';
+import { supabase, setAuthStorage } from '../../utils/supabase';
 
 // Ensures there's a row in public.users so role checks don't fail on first login.
 // Adjust the inserted default role if you prefer something else.
@@ -60,23 +60,19 @@ const SignInPage = () => {
     setError('');
 
     try {
-      // 1) Auth with remember me preference
-      const { error: signInErr } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password,
-        options: {
-          // If remember me is checked, use a longer session
-          // Otherwise use default session length
-          ...(rememberMe && { 
-            redirectTo: undefined, // Prevent redirect
-            // Note: Supabase handles session persistence automatically
-            // The remember me mainly affects UI behavior
-          })
-        }
+      // 🔑 1) Choose auth storage before sign-in
+      // - localStorage → stays signed in after browser restart
+      // - sessionStorage → dies when browser closes
+      setAuthStorage(rememberMe ? 'local' : 'session');
+
+      // 2) Attempt sign in
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
       if (signInErr) throw new Error(signInErr.message);
 
-      // Store remember me preference in localStorage
+      // 3) Store remember me preference + email (UI nicety only)
       if (rememberMe) {
         localStorage.setItem('chatters_remember_email', email);
         localStorage.setItem('chatters_remember_me', 'true');
@@ -85,20 +81,20 @@ const SignInPage = () => {
         localStorage.removeItem('chatters_remember_me');
       }
 
-      // 2) Get user
+      // 4) Get user
       const { data: auth } = await supabase.auth.getUser();
       const user = auth?.user;
       if (!user) throw new Error('No authenticated user returned');
 
-      // 3) Ensure users row exists, then read role
+      // 5) Ensure users row exists, then read role
       const ensured = await ensureUsersRow(user);
       const role = ensured?.role ?? null;
 
-      // 4) Admin fallback by email domain to avoid RLS/race issues
+      // 6) Admin fallback by email domain
       const isAdminByEmail = (user.email || '').toLowerCase().endsWith('@getchatters.com');
       const isAdmin = role === 'admin' || isAdminByEmail;
 
-      // 5) Route
+      // 7) Route to dashboard/admin
       navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
     } catch (err) {
       setError(err.message || 'Sign-in failed');
