@@ -78,7 +78,8 @@ const KioskPage = () => {
           filter: `venue_id=eq.${venueId}` 
         },
         (payload) => {
-          console.log('New feedback detected:', payload);
+          console.log('🔥 REAL-TIME: New feedback detected:', payload);
+          console.log('Payload details:', JSON.stringify(payload, null, 2));
           fetchFeedback(venueId);
         }
       )
@@ -91,7 +92,8 @@ const KioskPage = () => {
           filter: `venue_id=eq.${venueId}` 
         },
         (payload) => {
-          console.log('Feedback updated:', payload);
+          console.log('🔥 REAL-TIME: Feedback updated:', payload);
+          console.log('Update payload details:', JSON.stringify(payload, null, 2));
           fetchFeedback(venueId);
         }
       )
@@ -104,7 +106,8 @@ const KioskPage = () => {
           filter: `venue_id=eq.${venueId}` 
         },
         (payload) => {
-          console.log('New assistance request:', payload);
+          console.log('🔥 REAL-TIME: New assistance request:', payload);
+          console.log('Assistance payload details:', JSON.stringify(payload, null, 2));
           fetchAssistanceRequests(venueId);
         }
       )
@@ -117,7 +120,8 @@ const KioskPage = () => {
           filter: `venue_id=eq.${venueId}` 
         },
         (payload) => {
-          console.log('Assistance request updated:', payload);
+          console.log('🔥 REAL-TIME: Assistance request updated:', payload);
+          console.log('Update assistance payload:', JSON.stringify(payload, null, 2));
           fetchAssistanceRequests(venueId);
         }
       )
@@ -224,13 +228,21 @@ const KioskPage = () => {
     const now = dayjs();
     const cutoff = now.subtract(2, 'hour').toISOString();
 
-    const { data } = await supabase
+    console.log('Fetching assistance requests for venue:', venueId);
+
+    const { data, error } = await supabase
       .from('assistance_requests')
       .select('*')
       .eq('venue_id', venueId)
       .in('status', ['pending', 'acknowledged']) // Only show unresolved requests
       .gt('created_at', cutoff)
       .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching assistance requests:', error);
+    } else {
+      console.log('Fetched assistance requests:', data);
+    }
 
     setAssistanceRequests(data || []);
   };
@@ -271,6 +283,8 @@ const KioskPage = () => {
   // Handle assistance request actions
   const handleAssistanceAction = async (requestId, action) => {
     try {
+      console.log(`Attempting to ${action} assistance request ${requestId}`);
+      
       const now = new Date().toISOString();
       const updates = {
         status: action === 'acknowledge' ? 'acknowledged' : 'resolved'
@@ -285,22 +299,29 @@ const KioskPage = () => {
         // You might want to add resolved_by with staff ID here
       }
 
-      const { error } = await supabase
+      console.log('Update payload:', updates);
+
+      const { data, error } = await supabase
         .from('assistance_requests')
         .update(updates)
-        .eq('id', requestId);
+        .eq('id', requestId)
+        .select(); // Add select to see what was updated
 
       if (error) {
-        console.error('Error updating assistance request:', error);
-        throw error;
+        console.error('Supabase error updating assistance request:', error);
+        alert(`Failed to ${action} request: ${error.message}`);
+        return false;
       }
+
+      console.log('Successfully updated assistance request:', data);
 
       // Refresh assistance requests
       await fetchAssistanceRequests(venueId);
       return true;
     } catch (error) {
       console.error('Failed to update assistance request:', error);
-      throw error;
+      alert(`Error: ${error.message}`);
+      return false;
     }
   };
 

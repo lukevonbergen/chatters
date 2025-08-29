@@ -223,14 +223,15 @@ const CustomerFeedbackPage = () => {
     setAssistanceLoading(true);
     
     try {
-      // Use Edge Function to bypass RLS restrictions
-      const { data, error } = await supabase.functions.invoke('create-assistance-request', {
-        body: {
-          venueId: venueId,
-          tableNumber: tableNumber,
+      // Use the exact same approach as feedback submission
+      const { error } = await supabase
+        .from('assistance_requests')
+        .insert([{
+          venue_id: venueId,
+          table_number: parseInt(tableNumber),
+          status: 'pending',
           message: 'Just need assistance - Our team will be right with you'
-        }
-      });
+        }]);
 
       if (error) {
         console.error('Error requesting assistance:', error);
