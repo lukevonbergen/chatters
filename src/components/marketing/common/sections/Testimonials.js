@@ -69,74 +69,25 @@ const TestimonialsSection = ({
         )}
       </div>
 
-      {/* Rows wrapper */}
-      <div className="space-y-8">
-        {/* Row 1 → */}
-        <div className="relative w-full overflow-hidden">
-          <div className="flex animate-marquee space-x-4">
-            {[...items, ...items].map((t, i) => (
-              <figure
-                key={`row1-${i}`}
-                className="w-[320px] flex-shrink-0 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm"
-              >
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-3">
-                  {t.avatar ? (
-                    <img
-                      src={t.avatar}
-                      alt={t.author || "Customer"}
-                      className="w-8 h-8 rounded-full border border-gray-200 object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-purple-100 border border-gray-200" />
-                  )}
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900">{t.author}</div>
-                    {t.role && <div className="text-xs text-gray-600">{t.role}</div>}
-                  </div>
-                </div>
-                {typeof t.rating === "number" && <Stars rating={t.rating} />}
-                <blockquote className="text-gray-800 text-sm leading-relaxed mt-2">
-                  “{t.quote}”
-                </blockquote>
-              </figure>
-            ))}
-          </div>
-        </div>
-
-        {/* Row 2 ← */}
-        <div className="relative w-full overflow-hidden">
-          <div className="flex animate-marquee-reverse space-x-4">
-            {[...items, ...items].map((t, i) => (
-              <figure
-                key={`row2-${i}`}
-                className="w-[320px] flex-shrink-0 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm"
-              >
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-3">
-                  {t.avatar ? (
-                    <img
-                      src={t.avatar}
-                      alt={t.author || "Customer"}
-                      className="w-8 h-8 rounded-full border border-gray-200 object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-purple-100 border border-gray-200" />
-                  )}
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900">{t.author}</div>
-                    {t.role && <div className="text-xs text-gray-600">{t.role}</div>}
-                  </div>
-                </div>
-                {typeof t.rating === "number" && <Stars rating={t.rating} />}
-                <blockquote className="text-gray-800 text-sm leading-relaxed mt-2">
-                  “{t.quote}”
-                </blockquote>
-              </figure>
-            ))}
-          </div>
+      {/* Single Row */}
+      <div className="relative w-full overflow-hidden">
+        <div className="flex animate-marquee space-x-4">
+          {[...items, ...items].map((t, i) => (
+            <figure
+              key={`testimonial-${i}`}
+              className="w-[320px] flex-shrink-0 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm"
+            >
+              {/* Header - Author and Role only */}
+              <div className="mb-3">
+                <div className="text-sm font-semibold text-gray-900">{t.author}</div>
+                {t.role && <div className="text-xs text-gray-600">{t.role}</div>}
+              </div>
+              {typeof t.rating === "number" && <Stars rating={t.rating} />}
+              <blockquote className="text-gray-800 text-sm leading-relaxed mt-2">
+                "{t.quote}"
+              </blockquote>
+            </figure>
+          ))}
         </div>
       </div>
     </section>
