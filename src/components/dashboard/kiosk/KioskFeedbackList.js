@@ -146,8 +146,27 @@ const KioskFeedbackList = ({
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto">
-        {sorted.length === 0 ? (
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="px-4 py-3 bg-blue-50 border-b border-blue-200 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0v10a2 2 0 002 2h6a2 2 0 002-2V8z" />
+              </svg>
+              <h3 className="font-medium text-blue-800">Active Feedback</h3>
+            </div>
+            {sorted.length > 0 && (
+              <span className="text-xs bg-blue-200 text-blue-700 px-2 py-1 rounded-full font-medium">
+                {sorted.length}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {sorted.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,6 +276,7 @@ const KioskFeedbackList = ({
             })}
           </div>
         )}
+        </div>
       </div>
 
       {/* Feedback Detail Modal */}

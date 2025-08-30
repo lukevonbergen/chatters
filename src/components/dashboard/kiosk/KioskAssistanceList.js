@@ -1,11 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HandHeart, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import AssistanceResolveModal from './AssistanceResolveModal';
 
 dayjs.extend(relativeTime);
 
 const KioskAssistanceList = ({ assistanceRequests, onAssistanceAction }) => {
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+  const handleRequestClick = (request) => {
+    setSelectedRequest(request);
+    setShowModal(true);
+  };
+
+  const handleModalClose = () => {
+    setSelectedRequest(null);
+    setShowModal(false);
+  };
+
+  const handleResolveWithNotes = async (requestId, notes) => {
+    await onAssistanceAction(requestId, 'resolve', notes);
+    handleModalClose();
+  };
+
+  const handleAcknowledge = async (requestId) => {
+    await onAssistanceAction(requestId, 'acknowledge');
+    handleModalClose();
+  };
+
   if (!assistanceRequests || assistanceRequests.length === 0) {
     return (
       <div className="p-4 text-center text-gray-500">
@@ -42,18 +66,25 @@ const KioskAssistanceList = ({ assistanceRequests, onAssistanceAction }) => {
   };
 
   return (
-    <div className="space-y-2">
-      <div className="px-4 py-2 bg-orange-50 border-b border-orange-200">
-        <div className="flex items-center gap-2">
-          <HandHeart className="w-4 h-4 text-orange-600" />
-          <h3 className="font-medium text-orange-800">Assistance Requests</h3>
-          <span className="text-xs bg-orange-200 text-orange-700 px-2 py-1 rounded-full">
-            {assistanceRequests.length}
-          </span>
+    <div className="flex flex-col h-full">
+      {/* Header - now simplified since tabs handle the title */}
+      <div className="px-4 py-3 bg-orange-50 border-b border-orange-200 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <HandHeart className="w-4 h-4 text-orange-600" />
+            <h3 className="font-medium text-orange-800">Active Requests</h3>
+          </div>
+          {assistanceRequests.length > 0 && (
+            <span className="text-xs bg-orange-200 text-orange-700 px-2 py-1 rounded-full font-medium">
+              {assistanceRequests.length}
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="max-h-64 overflow-y-auto space-y-2 px-2">
+      {/* List - scrollable content area */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-2 space-y-2">
         {assistanceRequests.map((request) => (
           <div
             key={request.id}
@@ -69,30 +100,38 @@ const KioskAssistanceList = ({ assistanceRequests, onAssistanceAction }) => {
               </span>
             </div>
 
-            <p className="text-sm mb-3">{request.message}</p>
+            <p className="text-sm mb-2">{request.message}</p>
+            
+            {/* Show staff acknowledgment info */}
+            {request.acknowledged_by && (
+              <p className="text-xs text-gray-500 mb-2">
+                Acknowledged by staff member
+              </p>
+            )}
 
             <div className="flex gap-2">
-              {request.status === 'pending' && (
-                <button
-                  onClick={() => onAssistanceAction(request.id, 'acknowledge')}
-                  className="flex-1 bg-white text-yellow-700 border border-yellow-300 px-3 py-1 rounded text-sm font-medium hover:bg-yellow-50 transition-colors"
-                >
-                  Acknowledge
-                </button>
-              )}
-              
               {(request.status === 'pending' || request.status === 'acknowledged') && (
                 <button
-                  onClick={() => onAssistanceAction(request.id, 'resolve')}
-                  className="flex-1 bg-white text-green-700 border border-green-300 px-3 py-1 rounded text-sm font-medium hover:bg-green-50 transition-colors"
+                  onClick={() => handleRequestClick(request)}
+                  className="flex-1 bg-white text-blue-700 border border-blue-300 px-3 py-1 rounded text-sm font-medium hover:bg-blue-50 transition-colors"
                 >
-                  Mark Resolved
+                  Manage Request
                 </button>
               )}
             </div>
           </div>
         ))}
+        </div>
       </div>
+
+      {/* Resolution Modal */}
+      <AssistanceResolveModal
+        request={selectedRequest}
+        isVisible={showModal}
+        onResolve={handleResolveWithNotes}
+        onAcknowledge={handleAcknowledge}
+        onCancel={handleModalClose}
+      />
     </div>
   );
 };

@@ -25,6 +25,7 @@ const KioskPage = () => {
   const [currentView, setCurrentView] = useState('overview'); // 'overview' or zone id
   const [inactivityTimer, setInactivityTimer] = useState(null); // kept for easy re-enable
   const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [activeTab, setActiveTab] = useState('assistance'); // 'assistance' or 'feedback'
 
   // ==== AUTO-RETURN (10s) — DISABLED ====
   // useEffect(() => {
@@ -229,8 +230,21 @@ const KioskPage = () => {
     const now = dayjs();
     const cutoff = now.subtract(2, 'hour').toISOString();
 
-    console.log('Fetching assistance requests for venue:', venueId);
+    console.log('🔍 Fetching assistance requests for venue:', venueId);
+    console.log('🕐 Current time:', now.toISOString());
+    console.log('⏰ Cutoff time (2h ago):', cutoff);
+    console.log('📊 Status filter:', ['pending', 'acknowledged']);
 
+    // First, let's see ALL assistance requests for this venue (no filters)
+    const { data: allData, error: allError } = await supabase
+      .from('assistance_requests')
+      .select('*')
+      .eq('venue_id', venueId)
+      .order('created_at', { ascending: false });
+
+    console.log('🗂️ ALL assistance requests for venue:', allData);
+
+    // Temporary fix: Remove staff joins to get basic functionality working
     const { data, error } = await supabase
       .from('assistance_requests')
       .select('*')
@@ -240,9 +254,10 @@ const KioskPage = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching assistance requests:', error);
+      console.error('❌ Error fetching assistance requests:', error);
     } else {
-      console.log('Fetched assistance requests:', data);
+      console.log('✅ Filtered assistance requests:', data);
+      console.log(`📈 Found ${data?.length || 0} requests matching filters`);
     }
 
     // Build assistance map for table coloring (table_number -> status)
@@ -293,9 +308,30 @@ const KioskPage = () => {
   };
 
   // Handle assistance request actions
-  const handleAssistanceAction = async (requestId, action) => {
+  const handleAssistanceAction = async (requestId, action, notes = null) => {
     try {
       console.log(`Attempting to ${action} assistance request ${requestId}`);
+      
+      // Get current staff ID
+      let currentStaffId = null;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const userId = session.user.id;
+          const { data: staffRow, error } = await supabase
+            .from('staff')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('venue_id', venueId)
+            .single();
+
+          if (!error && staffRow) {
+            currentStaffId = staffRow.id;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load staff ID for action:', error);
+      }
       
       const now = new Date().toISOString();
       const updates = {
@@ -305,10 +341,17 @@ const KioskPage = () => {
       // Set the correct timestamp field based on action
       if (action === 'acknowledge') {
         updates.acknowledged_at = now;
-        // You might want to add acknowledged_by with staff ID here
+        if (currentStaffId) {
+          updates.acknowledged_by = currentStaffId;
+        }
       } else if (action === 'resolve') {
         updates.resolved_at = now;
-        // You might want to add resolved_by with staff ID here
+        if (currentStaffId) {
+          updates.resolved_by = currentStaffId;
+        }
+        if (notes) {
+          updates.notes = notes;
+        }
       }
 
       console.log('Update payload:', updates);
@@ -390,10 +433,10 @@ const KioskPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex overflow-hidden" onClick={resetInactivityTimer}>
-      {/* Left Sidebar - Feedback List */}
+      {/* Left Sidebar - Tabbed Lists */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-gray-50">
+        <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-bold text-gray-900">Staff View</h1>
@@ -409,20 +452,64 @@ const KioskPage = () => {
           </div>
         </div>
 
-        {/* Assistance Requests */}
-        <KioskAssistanceList
-          assistanceRequests={assistanceRequests}
-          onAssistanceAction={handleAssistanceAction}
-        />
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200 bg-white flex-shrink-0">
+          <div className="flex">
+            <button
+              onClick={() => setActiveTab('assistance')}
+              className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'assistance'
+                  ? 'border-orange-500 text-orange-600 bg-orange-50'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span>Assistance</span>
+                {assistanceRequests.length > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                    {assistanceRequests.length}
+                  </span>
+                )}
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('feedback')}
+              className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'feedback'
+                  ? 'border-blue-500 text-blue-600 bg-blue-50'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span>Feedback</span>
+                {feedbackList.length > 0 && (
+                  <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                    {feedbackList.length}
+                  </span>
+                )}
+              </div>
+            </button>
+          </div>
+        </div>
 
-        {/* Feedback List */}
-        <KioskFeedbackList
-          feedbackList={feedbackList}
-          selectedFeedback={selectedFeedback}
-          onFeedbackClick={handleFeedbackClick}
-          onMarkResolved={handleMarkResolved}
-          venueId={venueId}
-        />
+        {/* Tab Content */}
+        <div className="flex-1 overflow-hidden min-h-0">
+          {activeTab === 'assistance' && (
+            <KioskAssistanceList
+              assistanceRequests={assistanceRequests}
+              onAssistanceAction={handleAssistanceAction}
+            />
+          )}
+          {activeTab === 'feedback' && (
+            <KioskFeedbackList
+              feedbackList={feedbackList}
+              selectedFeedback={selectedFeedback}
+              onFeedbackClick={handleFeedbackClick}
+              onMarkResolved={handleMarkResolved}
+              venueId={venueId}
+            />
+          )}
+        </div>
       </div>
 
       {/* Right Side - Floor Plan */}

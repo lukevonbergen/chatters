@@ -17,7 +17,8 @@ import ResponseTimeAnalyticsTile from '../../components/dashboard/reports/Respon
 import SentimentTrendsTile from '../../components/dashboard/reports/SentimentTrendsTile';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
-import { Monitor, AlertTriangle, Clock, TrendingUp, Users, Star, BarChart3, Zap } from 'lucide-react';
+import { Monitor, AlertTriangle, Clock, TrendingUp, Users, Star, BarChart3, Zap, HandHeart } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const DashboardPage = () => {
   usePageTitle('Overview');
@@ -43,7 +44,31 @@ const DashboardPage = () => {
           table: 'assistance_requests',
           filter: `venue_id=eq.${venueId}`
         },
-        () => {
+        (payload) => {
+          // Show toast notification for new assistance requests
+          if (payload.eventType === 'INSERT') {
+            const request = payload.new;
+            toast((t) => (
+              <div className="flex items-center gap-3">
+                <HandHeart className="w-5 h-5 text-orange-500" />
+                <div>
+                  <div className="font-semibold text-sm text-gray-900">
+                    New Assistance Request
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    Table {request.table_number} needs help
+                  </div>
+                </div>
+              </div>
+            ), {
+              duration: 5000,
+              style: {
+                background: '#FFF7ED',
+                border: '1px solid #FB923C',
+                color: '#EA580C'
+              }
+            });
+          }
           loadAssistanceRequests();
         }
       )
@@ -97,6 +122,7 @@ const DashboardPage = () => {
   const loadAssistanceRequests = async () => {
     if (!venueId) return;
 
+    // Temporary fix: Remove staff joins to get basic functionality working  
     const { data } = await supabase
       .from('assistance_requests')
       .select('*')
@@ -266,6 +292,16 @@ const DashboardPage = () => {
                         <p className="text-xs text-gray-500">
                           {new Date(request.created_at).toLocaleTimeString()}
                         </p>
+                        {request.resolved_by && (
+                          <p className="text-xs text-gray-400">
+                            Resolved by staff member
+                          </p>
+                        )}
+                        {!request.resolved_by && request.acknowledged_by && (
+                          <p className="text-xs text-gray-400">
+                            Acknowledged by staff member
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">

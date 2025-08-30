@@ -218,31 +218,85 @@ const CustomerFeedbackPage = () => {
   };
 
   const handleAssistanceRequest = async () => {
-    if (assistanceLoading || !tableNumber) return;
+    if (assistanceLoading || !tableNumber) {
+      console.log('Assistance request blocked:', { assistanceLoading, tableNumber });
+      return;
+    }
 
     setAssistanceLoading(true);
     
     try {
-      // Use the exact same approach as feedback submission
-      const { error } = await supabase
+      const requestData = {
+        venue_id: venueId,
+        table_number: parseInt(tableNumber),
+        status: 'pending',
+        message: 'Just need assistance - Our team will be right with you'
+      };
+      
+      console.log('Submitting assistance request for:', requestData);
+      console.log('Current timestamp:', new Date().toISOString());
+      console.log('Venue ID type:', typeof venueId, venueId);
+      console.log('Table number type:', typeof parseInt(tableNumber), parseInt(tableNumber));
+
+      // Test Supabase connection and permissions
+      const { data: testData, error: testError } = await supabase
         .from('assistance_requests')
-        .insert([{
-          venue_id: venueId,
-          table_number: parseInt(tableNumber),
-          status: 'pending',
-          message: 'Just need assistance - Our team will be right with you'
-        }]);
+        .select('count', { count: 'exact', head: true })
+        .eq('venue_id', venueId);
+      
+      console.log('Supabase connection test:', { testData, testError });
+      
+      // Test if we can read existing records
+      const { data: readTest, error: readError } = await supabase
+        .from('assistance_requests')
+        .select('*')
+        .eq('venue_id', venueId)
+        .limit(1);
+        
+      console.log('Read permission test:', { readTest, readError });
+
+      // Use the exact same approach as feedback submission
+      const { data, error } = await supabase
+        .from('assistance_requests')
+        .insert([requestData])
+        .select();
+
+      console.log('Assistance request response:', { data, error });
 
       if (error) {
         console.error('Error requesting assistance:', error);
-        alert('Failed to request assistance. Please try again.');
+        alert(`Failed to request assistance: ${error.message}. Please try again.`);
         return;
       }
 
+      if (!data || data.length === 0) {
+        console.warn('Warning: No data returned from assistance request insertion');
+        console.log('Full response details:', { data, error });
+        
+        // Let's try a verification query to see if it was actually inserted
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('assistance_requests')
+          .select('*')
+          .eq('venue_id', venueId)
+          .eq('table_number', parseInt(tableNumber))
+          .gte('created_at', new Date(Date.now() - 60000).toISOString()) // Last minute
+          .order('created_at', { ascending: false })
+          .limit(1);
+          
+        console.log('Verification query result:', { verifyData, verifyError });
+        
+        if (verifyData && verifyData.length > 0) {
+          console.log('✅ Record found in verification query - insertion was successful!');
+        } else {
+          console.error('❌ Record not found in verification query - insertion may have failed silently');
+        }
+      }
+
+      console.log('Assistance request submitted successfully:', data);
       setAssistanceRequested(true);
     } catch (err) {
       console.error('Error requesting assistance:', err);
-      alert('Failed to request assistance. Please try again.');
+      alert(`Failed to request assistance: ${err.message}. Please try again.`);
     } finally {
       setAssistanceLoading(false);
     }

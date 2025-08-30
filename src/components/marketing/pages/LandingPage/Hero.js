@@ -6,14 +6,15 @@ import PrimaryButton from "../../common/buttons/PrimaryButton";
 
 const Hero = ({
   eyebrow = "Chatters for Hospitality",
-  title = "Turn on real-time feedback. Turn off bad reviews.",
+  title = "Convert customer feedback into conversations, in real-time.",
   subtitle = "Capture issues at the table, resolve them in minutes, and watch your ratings climb. One dashboard. Instant alerts. Happier guests.",
   primaryCta = { label: "Book a demo", to: "/demo" },
   secondaryCta = { label: "Pricing", to: "/pricing" },
   bullets = [
-    "Live alerts to the right staff",
-    "No staff training required",
-    "Works across all your locations",
+    "Alerts direct to staff",
+    "Boost revenue & ratings",
+    "Multi-location control",
+    "Improve customer retention",
   ],
   backgroundGradient = "from-white via-white to-purple-50",
 }) => {
@@ -223,7 +224,7 @@ const Hero = ({
               ))}
             </motion.ul>
 
-            <motion.div className="mt-8" variants={item}>
+            {/* <motion.div className="mt-8" variants={item}>
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
                 Trusted by teams across hospitality & retail
               </p>
@@ -241,7 +242,7 @@ const Hero = ({
                   <rect width="64" height="20" rx="4" fill="currentColor" opacity="0.2" />
                 </svg>
               </div>
-            </motion.div>
+            </motion.div> */}
           </motion.div>
 
           {/* Right: Mock product card */}
