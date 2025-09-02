@@ -1,19 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, X, AlertTriangle, Clock } from 'lucide-react';
+import { supabase } from '../../../utils/supabase';
 
 const AssistanceResolveModal = ({ 
   request, 
   onResolve, 
   onAcknowledge, 
   onCancel,
-  isVisible 
+  isVisible,
+  venueId
 }) => {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState('');
+
+  // Load employees when modal opens
+  useEffect(() => {
+    const loadEmployees = async () => {
+      if (!isVisible || !venueId) return;
+      
+      const { data: employeesData, error } = await supabase
+        .from('employees')
+        .select('id, first_name, last_name, email, role')
+        .eq('venue_id', venueId);
+        
+      if (error) {
+        console.error('Error loading employees:', error);
+      } else {
+        setEmployees(employeesData || []);
+        
+        // Auto-select current user if their email matches an employee
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email) {
+          const currentEmployee = employeesData?.find(e => e.email === session.user.email);
+          if (currentEmployee) {
+            setSelectedEmployee(currentEmployee.id);
+          }
+        }
+      }
+    };
+    
+    loadEmployees();
+  }, [isVisible, venueId]);
+  
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isVisible) {
+      setNotes('');
+      setSelectedEmployee('');
+    }
+  }, [isVisible]);
 
   if (!isVisible || !request) return null;
 
   const handleResolve = async () => {
+    if (!selectedEmployee) {
+      alert('Please select which staff member resolved this request.');
+      return;
+    }
     if (!notes.trim()) {
       alert('Please provide notes on how the issue was resolved.');
       return;
@@ -21,17 +66,24 @@ const AssistanceResolveModal = ({
 
     setIsSubmitting(true);
     try {
-      await onResolve(request.id, notes.trim());
+      await onResolve(request.id, notes.trim(), selectedEmployee);
       setNotes('');
+      setSelectedEmployee('');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleAcknowledge = async () => {
+    if (!selectedEmployee) {
+      alert('Please select which staff member acknowledged this request.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await onAcknowledge(request.id);
+      await onAcknowledge(request.id, selectedEmployee);
+      setSelectedEmployee('');
     } finally {
       setIsSubmitting(false);
     }
@@ -112,6 +164,34 @@ const AssistanceResolveModal = ({
             </div>
           </div>
 
+          {/* Staff Member Selection */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Staff Member <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={selectedEmployee}
+              onChange={(e) => setSelectedEmployee(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              disabled={isSubmitting}
+            >
+              <option value="">Choose staff member...</option>
+              {employees.map(employee => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.first_name} {employee.last_name} ({employee.role})
+                </option>
+              ))}
+            </select>
+            {selectedEmployee && (
+              <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span>
+                  {employees.find(e => e.id === selectedEmployee)?.first_name} {employees.find(e => e.id === selectedEmployee)?.last_name}
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* Resolution Notes */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -136,9 +216,9 @@ const AssistanceResolveModal = ({
           {/* Resolve Button - Primary Action */}
           <button
             onClick={handleResolve}
-            disabled={isSubmitting || !notes.trim()}
+            disabled={isSubmitting || !notes.trim() || !selectedEmployee}
             className={`w-full py-3 px-4 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              !notes.trim() || isSubmitting
+              !notes.trim() || !selectedEmployee || isSubmitting
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-green-600 hover:bg-green-700 text-white'
             }`}
@@ -161,8 +241,12 @@ const AssistanceResolveModal = ({
             {request.status === 'pending' && (
               <button
                 onClick={handleAcknowledge}
-                disabled={isSubmitting}
-                className="flex-1 py-2 px-4 border border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50"
+                disabled={isSubmitting || !selectedEmployee}
+                className={`flex-1 py-2 px-4 border border-yellow-300 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
+                  !selectedEmployee || isSubmitting
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300'
+                    : 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
+                }`}
               >
                 {isSubmitting ? 'Processing...' : 'Acknowledge Only'}
               </button>

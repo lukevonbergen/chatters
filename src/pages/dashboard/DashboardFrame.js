@@ -25,6 +25,7 @@ const navLinks = [
   { to: '/reports', label: 'Reports' },
   { to: '/floorplan', label: 'Floor Plan' },
   { to: '/staff', label: 'Staff' },
+  { to: '/staff/leaderboard', label: 'Leaderboard' },
 ];
 
 const UpdatedDashboardFrame = ({ children }) => {
@@ -202,7 +203,7 @@ const UpdatedDashboardFrame = ({ children }) => {
           <nav className="hidden lg:flex gap-6">
             {allNavLinks.map((link) => {
               const isActive = location.pathname === link.to
-                || location.pathname.startsWith(link.to + '/');
+                || (location.pathname.startsWith(link.to + '/') && link.to !== '/staff');
               return (
                 <button
                   key={link.to}
@@ -422,7 +423,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               <div className="space-y-2">
                 {allNavLinks.map((link) => {
                   const isActive = location.pathname === link.to
-                || location.pathname.startsWith(link.to + '/');
+                || (location.pathname.startsWith(link.to + '/') && link.to !== '/staff');
                   return (
                     <button
                       key={link.to}

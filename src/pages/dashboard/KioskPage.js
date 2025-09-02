@@ -308,30 +308,16 @@ const KioskPage = () => {
   };
 
   // Handle assistance request actions
-  const handleAssistanceAction = async (requestId, action, notes = null) => {
+  const handleAssistanceAction = async (requestId, action, notes = null, employeeId = null) => {
     try {
       console.log(`Attempting to ${action} assistance request ${requestId}`);
       
-      // Get current staff ID
-      let currentStaffId = null;
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const userId = session.user.id;
-          const { data: staffRow, error } = await supabase
-            .from('staff')
-            .select('id')
-            .eq('user_id', userId)
-            .eq('venue_id', venueId)
-            .single();
-
-          if (!error && staffRow) {
-            currentStaffId = staffRow.id;
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load staff ID for action:', error);
-      }
+      // Use the provided employee ID from the modal
+      console.log('Using selected employee ID for assistance action:', { 
+        employeeId, 
+        action, 
+        requestId 
+      });
       
       const now = new Date().toISOString();
       const updates = {
@@ -341,13 +327,13 @@ const KioskPage = () => {
       // Set the correct timestamp field based on action
       if (action === 'acknowledge') {
         updates.acknowledged_at = now;
-        if (currentStaffId) {
-          updates.acknowledged_by = currentStaffId;
+        if (employeeId) {
+          updates.acknowledged_by = employeeId;
         }
       } else if (action === 'resolve') {
         updates.resolved_at = now;
-        if (currentStaffId) {
-          updates.resolved_by = currentStaffId;
+        if (employeeId) {
+          updates.resolved_by = employeeId;
         }
         if (notes) {
           updates.notes = notes;
@@ -498,6 +484,7 @@ const KioskPage = () => {
             <KioskAssistanceList
               assistanceRequests={assistanceRequests}
               onAssistanceAction={handleAssistanceAction}
+              venueId={venueId}
             />
           )}
           {activeTab === 'feedback' && (

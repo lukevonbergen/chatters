@@ -7,7 +7,6 @@ import { useVenue } from '../../context/VenueContext';
 // Import tab components
 import ManagersTab from '../../components/dashboard/staff/ManagersTab';
 import EmployeesTab from '../../components/dashboard/staff/EmployeesTab';
-import InvitesTab from '../../components/dashboard/staff/InvitesTab';
 
 const StaffPage = () => {
   usePageTitle('Staff');
@@ -23,8 +22,7 @@ const StaffPage = () => {
 
   const navItems = [
     ...(userRole === 'master' ? [
-      { id: 'Managers', label: 'Managers' },
-      { id: 'Invites', label: 'Invites' }
+      { id: 'Managers', label: 'Managers' }
     ] : []),
     { id: 'Employees', label: 'Employees' },
   ];
@@ -229,8 +227,6 @@ const StaffPage = () => {
     switch (activeTab) {
       case 'Managers':
         return <ManagersTab {...tabProps} />;
-      case 'Invites':
-        return <InvitesTab {...tabProps} />;
       case 'Employees':
         return <EmployeesTab {...tabProps} />;
       default:

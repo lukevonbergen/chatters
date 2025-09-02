@@ -6,7 +6,7 @@ import AssistanceResolveModal from './AssistanceResolveModal';
 
 dayjs.extend(relativeTime);
 
-const KioskAssistanceList = ({ assistanceRequests, onAssistanceAction }) => {
+const KioskAssistanceList = ({ assistanceRequests, onAssistanceAction, venueId }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -20,13 +20,13 @@ const KioskAssistanceList = ({ assistanceRequests, onAssistanceAction }) => {
     setShowModal(false);
   };
 
-  const handleResolveWithNotes = async (requestId, notes) => {
-    await onAssistanceAction(requestId, 'resolve', notes);
+  const handleResolveWithNotes = async (requestId, notes, employeeId) => {
+    await onAssistanceAction(requestId, 'resolve', notes, employeeId);
     handleModalClose();
   };
 
-  const handleAcknowledge = async (requestId) => {
-    await onAssistanceAction(requestId, 'acknowledge');
+  const handleAcknowledge = async (requestId, employeeId) => {
+    await onAssistanceAction(requestId, 'acknowledge', null, employeeId);
     handleModalClose();
   };
 
@@ -131,6 +131,7 @@ const KioskAssistanceList = ({ assistanceRequests, onAssistanceAction }) => {
         onResolve={handleResolveWithNotes}
         onAcknowledge={handleAcknowledge}
         onCancel={handleModalClose}
+        venueId={venueId}
       />
     </div>
   );

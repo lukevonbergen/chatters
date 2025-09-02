@@ -162,25 +162,20 @@ const FeedbackDetailModal = ({
           setCurrentUser(userProfile);
         }
         
-        // Get staff members and employees for this venue
+        // Get employees for this venue (all staff are stored in employees table)
         if (venueId) {
-          const { data: staffData } = await supabase
-            .from('staff')
-            .select('id, first_name, last_name, role, user_id')
+          const { data: employeesData, error: employeesError } = await supabase
+            .from('employees')
+            .select('id, first_name, last_name, email, role')
             .eq('venue_id', venueId);
 
-          const { data: employeesData } = await supabase
-            .from('employees')
-            .select('id, first_name, last_name, role')
-            .eq('venue_id', venueId);
+          if (employeesError) {
+            console.error('Error loading employees data:', employeesError);
+          }
+          
+          console.log('Employees data loaded:', { employeesData, venueId });
 
           const combinedStaffList = [
-            ...(staffData || []).map(person => ({
-              ...person,
-              source: 'staff',
-              display_name: `${person.first_name} ${person.last_name}`,
-              role_display: person.role || 'Staff Member'
-            })),
             ...(employeesData || []).map(person => ({
               ...person,
               source: 'employee',
@@ -189,13 +184,15 @@ const FeedbackDetailModal = ({
             }))
           ].sort((a, b) => a.display_name.localeCompare(b.display_name));
 
+          console.log('Combined staff list:', combinedStaffList);
           setStaffMembers(combinedStaffList);
           
-          // Auto-select current user if they're staff at this venue
-          if (user && staffData) {
-            const currentStaff = staffData.find(s => s.user_id === user.id);
-            if (currentStaff) {
-              setSelectedStaffMember(`staff-${currentStaff.id}`);
+          // Auto-select current user if their email matches an employee
+          if (user && employeesData) {
+            const currentEmployee = employeesData.find(e => e.email === user.email);
+            console.log('Current user auto-selection:', { userEmail: user.email, currentEmployee, employeesData });
+            if (currentEmployee) {
+              setSelectedStaffMember(`employee-${currentEmployee.id}`);
             }
           }
         }
@@ -261,38 +258,68 @@ const FeedbackDetailModal = ({
       let resolvedById = null;
       let resolverInfo = '';
       
-      if (selectedStaffMember.startsWith('staff-')) {
-        // Staff member selected - can use their ID directly
-        resolvedById = selectedStaffMember.replace('staff-', '');
-        resolverInfo = selectedStaff ? selectedStaff.display_name : '';
-      } else if (selectedStaffMember.startsWith('employee-')) {
-        // Employee selected - need to handle differently since they're not in staff table
-        // For now, we'll need to either:
-        // 1. Create a staff entry for the employee, or 
-        // 2. Use a different approach
+      if (selectedStaffMember.startsWith('employee-')) {
+        // Employee selected - use their ID directly for resolved_by
+        const selectedEmployee = staffMembers.find(s => s.source === 'employee' && String(s.id) === String(selectedStaffMember.replace('employee-', '')));
         
-        // Let's use the current user (who must be staff to access kiosk) as resolved_by
-        // and store employee info in dismissal_reason or create a new field
-        const currentStaffMember = staffMembers.find(s => s.source === 'staff' && s.user_id === currentUser?.id);
-        if (currentStaffMember) {
-          resolvedById = currentStaffMember.id;
-          resolverInfo = `Resolved by ${selectedStaff?.display_name} (Employee) via ${currentStaffMember.display_name}`;
+        if (selectedEmployee) {
+          // Validate that this employee actually exists in the database
+          const { data: dbEmployee, error: employeeCheckError } = await supabase
+            .from('employees')
+            .select('id, first_name, last_name')
+            .eq('id', selectedEmployee.id)
+            .eq('venue_id', venueId)
+            .single();
+            
+          if (employeeCheckError || !dbEmployee) {
+            console.error('Employee not found in database:', { 
+              employeeId: selectedEmployee.id, 
+              error: employeeCheckError,
+              venueId 
+            });
+            throw new Error(`Employee "${selectedEmployee.display_name}" not found in database. Please refresh the page and try again.`);
+          }
+          
+          resolvedById = selectedEmployee.id;
+          resolverInfo = `Resolved by ${selectedEmployee.display_name}`;
+          console.log('Using validated employee ID for resolved_by:', { 
+            employeeId: selectedEmployee.id, 
+            employeeName: selectedEmployee.display_name,
+            dbEmployee
+          });
         } else {
-          throw new Error('No staff member found to attribute resolution to. Employees cannot directly resolve feedback.');
+          console.error('Selected employee not found in employee list');
         }
       }
       
+      // Fallback: if no resolvedById was set, use the first available employee
       if (!resolvedById) {
-        throw new Error('Invalid staff member selection');
+        console.warn('No employee selected for resolution, using fallback approach');
+        
+        // If there are any employees, use the first one
+        const anyEmployee = staffMembers.find(s => s.source === 'employee');
+        if (anyEmployee) {
+          resolvedById = anyEmployee.id;
+          resolverInfo = `Resolved via kiosk by ${anyEmployee.display_name}`;
+        } else {
+          // Last resort: allow resolution without staff attribution
+          // This maintains functionality when no employees exist
+          resolvedById = null;
+          resolverInfo = 'Resolved via kiosk (no staff attribution)';
+        }
       }
       
       // Use correct Supabase database fields
       const updateData = {
         is_actioned: true,
         resolved_at: new Date().toISOString(),
-        resolved_by: resolvedById,
         resolution_type: resolutionType
       };
+      
+      // Only set resolved_by if we have a valid staff ID
+      if (resolvedById) {
+        updateData.resolved_by = resolvedById;
+      }
       
       // Add dismissal fields if dismissing
       if (resolutionType === 'dismissed') {
@@ -380,10 +407,8 @@ const FeedbackDetailModal = ({
   const urgency = urgencyConfig[urgencyLevel];
   
   const selectedStaff = staffMembers.find(s => {
-    if (selectedStaffMember.startsWith('staff-')) {
-      return s.source === 'staff' && s.id === selectedStaffMember.replace('staff-', '');
-    } else if (selectedStaffMember.startsWith('employee-')) {
-      return s.source === 'employee' && s.id === selectedStaffMember.replace('employee-', '');
+    if (selectedStaffMember.startsWith('employee-')) {
+      return s.source === 'employee' && String(s.id) === String(selectedStaffMember.replace('employee-', ''));
     }
     return false;
   });
@@ -671,21 +696,8 @@ const FeedbackDetailModal = ({
                   <option value="" disabled>No staff members found for this venue</option>
                 )}
                 
-                {staffMembers.some(person => person.source === 'staff') && (
-                  <optgroup label="Managers & Staff">
-                    {staffMembers
-                      .filter(person => person.source === 'staff')
-                      .map(staff => (
-                        <option key={`staff-${staff.id}`} value={`staff-${staff.id}`}>
-                          {staff.display_name} ({staff.role_display})
-                        </option>
-                      ))
-                    }
-                  </optgroup>
-                )}
-                
                 {staffMembers.some(person => person.source === 'employee') && (
-                  <optgroup label="Employees">
+                  <optgroup label="Staff Members">
                     {staffMembers
                       .filter(person => person.source === 'employee')
                       .map(employee => (
@@ -699,15 +711,9 @@ const FeedbackDetailModal = ({
               </select>
               {selectedStaff && (
                 <div className="mt-2 flex items-center gap-2 text-sm">
-                  <div className={`w-2 h-2 rounded-full ${selectedStaff.source === 'staff' ? 'bg-emerald-500' : 'bg-blue-500'}`}></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                   <span className="text-slate-600">
                     <strong>{selectedStaff.display_name}</strong> ({selectedStaff.role_display})
-                    {selectedStaff.source === 'employee' && (
-                      <span className="ml-1 text-blue-600">• Employee</span>
-                    )}
-                    {selectedStaff.source === 'staff' && (
-                      <span className="ml-1 text-emerald-600">• Staff Member</span>
-                    )}
                   </span>
                 </div>
               )}

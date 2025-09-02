@@ -24,6 +24,7 @@ const navLinks = [
   { to: '/reports', label: 'Reports' },
   { to: '/floorplan', label: 'Floor Plan' },
   { to: '/staff', label: 'Staff' },
+  { to: '/staff/leaderboard', label: 'Leaderboard' },
 ];
 
 const UpdatedDashboardFrame = ({ children }) => {
