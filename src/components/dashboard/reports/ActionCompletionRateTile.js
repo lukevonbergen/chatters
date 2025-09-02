@@ -53,53 +53,72 @@ export default function ActionCompletionRateTile({
       try {
         const { start, end } = rangeISO(preset);
 
-        // Pull needed fields to compute session status + timestamp
-        const { data, error } = await supabase
+        // Fetch feedback sessions
+        const { data: feedbackData, error: feedbackError } = await supabase
           .from('feedback')
           .select('session_id, is_actioned, dismissed, created_at, resolved_at')
           .eq('venue_id', venueId)
-          // quick coarse filter to reduce rows early using resolved_at where present
           .or(`and(resolved_at.gte.${start},resolved_at.lte.${end}),and(resolved_at.is.null,created_at.gte.${start},created_at.lte.${end})`);
 
-        if (error) throw error;
+        // Fetch assistance requests
+        const { data: assistanceData, error: assistanceError } = await supabase
+          .from('assistance_requests')
+          .select('id, status, created_at, resolved_at')
+          .eq('venue_id', venueId)
+          .or(`and(resolved_at.gte.${start},resolved_at.lte.${end}),and(resolved_at.is.null,created_at.gte.${start},created_at.lte.${end})`);
 
-        if (!data?.length) {
-          setActionedCount(0);
-          setTotalCount(0);
-          return;
-        }
+        if (feedbackError || assistanceError) throw feedbackError || assistanceError;
 
-        // Group rows by session_id
-        const sessions = new Map();
-        for (const row of data) {
-          if (!sessions.has(row.session_id)) sessions.set(row.session_id, []);
-          sessions.get(row.session_id).push(row);
-        }
-
-        // Compute session effective timestamp = max(resolved_at || created_at)
-        // and whether the session is fully resolved (all actioned OR all dismissed)
         let total = 0;
         let resolved = 0;
 
-        for (const rows of sessions.values()) {
-          // effective timestamp
-          let latestTs = 0;
-          for (const r of rows) {
-            const ts = new Date(r.resolved_at ?? r.created_at).getTime();
-            if (ts > latestTs) latestTs = ts;
+        // Process feedback sessions
+        if (feedbackData?.length) {
+          const sessions = new Map();
+          for (const row of feedbackData) {
+            if (!sessions.has(row.session_id)) sessions.set(row.session_id, []);
+            sessions.get(row.session_id).push(row);
           }
 
-          // Make sure the session actually falls in range (safety if the coarse filter lets something through)
-          const { start: sISO, end: eISO } = rangeISO(preset);
-          const sMs = new Date(sISO).getTime();
-          const eMs = new Date(eISO).getTime();
-          if (latestTs < sMs || latestTs > eMs) continue;
+          for (const rows of sessions.values()) {
+            // effective timestamp
+            let latestTs = 0;
+            for (const r of rows) {
+              const ts = new Date(r.resolved_at ?? r.created_at).getTime();
+              if (ts > latestTs) latestTs = ts;
+            }
 
-          total += 1;
+            // Make sure the session actually falls in range
+            const { start: sISO, end: eISO } = rangeISO(preset);
+            const sMs = new Date(sISO).getTime();
+            const eMs = new Date(eISO).getTime();
+            if (latestTs < sMs || latestTs > eMs) continue;
 
-          const allActioned = rows.every(x => x.is_actioned === true);
-          const allDismissed = rows.every(x => x.dismissed === true);
-          if (allActioned || allDismissed) resolved += 1;
+            total += 1;
+
+            const allActioned = rows.every(x => x.is_actioned === true);
+            const allDismissed = rows.every(x => x.dismissed === true);
+            if (allActioned || allDismissed) resolved += 1;
+          }
+        }
+
+        // Process assistance requests
+        if (assistanceData?.length) {
+          for (const request of assistanceData) {
+            const ts = new Date(request.resolved_at ?? request.created_at).getTime();
+            
+            // Make sure the request falls in range
+            const { start: sISO, end: eISO } = rangeISO(preset);
+            const sMs = new Date(sISO).getTime();
+            const eMs = new Date(eISO).getTime();
+            if (ts < sMs || ts > eMs) continue;
+
+            total += 1;
+
+            if (request.status === 'resolved' || request.resolved_at !== null) {
+              resolved += 1;
+            }
+          }
         }
 
         setActionedCount(resolved);
@@ -124,14 +143,14 @@ export default function ActionCompletionRateTile({
   const rateTextClass = rate >= 80 ? 'text-green-600' : 'text-gray-900';
   const subline = loading
     ? 'Loading…'
-    : `${actionedCount}/${totalCount} sessions resolved`;
+    : `${actionedCount}/${totalCount} items resolved (feedback + assistance)`;
 
   return (
     <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       {/* Header */}
       <div className="mb-4">
         <h3 className="text-base font-semibold text-gray-900">Completion Rate</h3>
-        <p className="text-gray-600 text-xs mt-1">Today's share of sessions fully resolved</p>
+        <p className="text-gray-600 text-xs mt-1">Today's share of feedback & assistance fully resolved</p>
       </div>
 
       {/* Metric */}

@@ -12,6 +12,7 @@ import BusinessImpactTab from '../../components/dashboard/reports/BusinessImpact
 import PerformanceDashboardTab from '../../components/dashboard/reports/PerformanceDashboardTab';
 import CustomerInsightsTab from '../../components/dashboard/reports/CustomerInsightsTab';
 import QuickMetricsTab from '../../components/dashboard/reports/QuickMetricsTab';
+import FeedbackTab from '../../components/dashboard/reports/FeedbackTab';
 
 const ReportsPage = () => {
   usePageTitle('Reports');
@@ -19,32 +20,35 @@ const ReportsPage = () => {
   const { venueId } = useVenue();
   
   // State for active tab
-  const [activeTab, setActiveTab] = useState('Performance');
+  const [activeTab, setActiveTab] = useState('Feedback');
   // Add mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Data state
   const [feedbackSessions, setFeedbackSessions] = useState([]);
+  const [assistanceRequests, setAssistanceRequests] = useState([]);
 
   useEffect(() => {
     if (!venueId) return;
-    fetchFeedback(venueId);
+    fetchData(venueId);
     setupRealtime(venueId);
   }, [venueId]);
 
-  const fetchFeedback = async (venueId) => {
-    const { data } = await supabase
+  const fetchData = async (venueId) => {
+    // Fetch feedback sessions
+    const { data: feedbackData } = await supabase
       .from('feedback')
       .select('*')
       .eq('venue_id', venueId);
 
     const grouped = {};
-    for (const row of data || []) {
+    for (const row of feedbackData || []) {
       if (!grouped[row.session_id]) grouped[row.session_id] = [];
       grouped[row.session_id].push(row);
     }
 
     const sessions = Object.values(grouped).map(items => ({
+      type: 'feedback',
       isActioned: items.every(i => i.is_actioned),
       createdAt: items[0].created_at,
       table: items[0].table_number,
@@ -52,7 +56,23 @@ const ReportsPage = () => {
       lowScore: items.some(i => i.rating !== null && i.rating <= 2)
     }));
 
+    // Fetch assistance requests
+    const { data: assistanceData } = await supabase
+      .from('assistance_requests')
+      .select('*')
+      .eq('venue_id', venueId);
+
+    const assistanceRequests = (assistanceData || []).map(request => ({
+      type: 'assistance',
+      isActioned: request.status === 'resolved' || request.acknowledged_at !== null,
+      createdAt: request.created_at,
+      table: request.table_number,
+      items: [], // No rating items for assistance requests
+      lowScore: false
+    }));
+
     setFeedbackSessions(sessions);
+    setAssistanceRequests(assistanceRequests);
   };
 
   const setupRealtime = (venueId) => {
@@ -62,16 +82,23 @@ const ReportsPage = () => {
         schema: 'public',
         table: 'feedback',
         filter: `venue_id=eq.${venueId}`
-      }, () => fetchFeedback(venueId))
+      }, () => fetchData(venueId))
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'assistance_requests',
+        filter: `venue_id=eq.${venueId}`
+      }, () => fetchData(venueId))
       .subscribe();
   };
 
   // Calculate derived data
+  const allSessions = [...feedbackSessions, ...assistanceRequests];
   const actionedCount = feedbackSessions.filter(s => s.isActioned).length;
   const totalCount = feedbackSessions.length;
   const alertsCount = feedbackSessions.filter(s => s.lowScore && !s.isActioned).length;
-  const recentCount = feedbackSessions.filter(s => new Date(s.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length;
-  const uniqueTables = [...new Set(feedbackSessions.map(s => s.table))];
+  const recentCount = allSessions.filter(s => new Date(s.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length;
+  const uniqueTables = [...new Set(allSessions.map(s => s.table))];
   const completionRate = totalCount > 0 ? ((actionedCount / totalCount) * 100).toFixed(1) : 0;
 
   const allRatings = feedbackSessions.flatMap(session => session.items?.map(i => i.rating).filter(r => r !== null && r >= 1 && r <= 5) || []);
@@ -97,10 +124,11 @@ const ReportsPage = () => {
 
   // Navigation items
   const navItems = [
-    { id: 'Performance', label: 'Performance Dashboard' },
-    { id: 'Business', label: 'Business Impact' },
-    { id: 'Insights', label: 'Customer Insights' },
-    { id: 'Metrics', label: 'Quick Metrics' },
+    { id: 'Feedback', label: 'Feedback' },
+    { id: 'Performance', label: 'Performance' },
+    { id: 'Business', label: 'Impact' },
+    { id: 'Insights', label: 'Insights' },
+    { id: 'Metrics', label: 'Metrics' },
   ];
 
   // Close mobile menu when tab changes
@@ -113,6 +141,8 @@ const ReportsPage = () => {
   const tabProps = {
     venueId,
     feedbackSessions,
+    assistanceRequests,
+    allSessions,
     actionedCount,
     totalCount,
     alertsCount,
@@ -134,6 +164,8 @@ const ReportsPage = () => {
         return <CustomerInsightsTab {...tabProps} />;
       case 'Metrics':
         return <QuickMetricsTab {...tabProps} />;
+      case 'Feedback':
+        return <FeedbackTab {...tabProps} />;
       default:
         return <PerformanceDashboardTab {...tabProps} />;
     }

@@ -33,8 +33,6 @@ const PerformanceDashboardTab = ({
           <div className="lg:col-span-1 h-full">
             <ActionCompletionRateTile
               venueId={venueId}
-              actionedCount={actionedCount}
-              totalCount={totalCount}
             />
           </div>
         </div>

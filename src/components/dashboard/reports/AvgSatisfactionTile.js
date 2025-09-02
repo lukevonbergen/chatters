@@ -13,10 +13,15 @@ const AvgSatisfactionTile = ({ venueId }) => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        const now = new Date();
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+
         const { data, error } = await supabase
           .from('feedback')
           .select('rating')
-          .eq('venue_id', venueId);
+          .eq('venue_id', venueId)
+          .gte('created_at', startOfDay.toISOString());
 
         if (error) {
           console.error('Error fetching satisfaction data:', error);
@@ -52,7 +57,7 @@ const AvgSatisfactionTile = ({ venueId }) => {
       title="Customer Satisfaction"
       value={value > 0 ? value : "N/A"}
       metric={value > 0 ? "/5" : ""}
-      description="Average rating from all feedback"
+      description="Today's average rating from feedback"
       icon={Star}
       variant={getVariant(value)}
       loading={loading}

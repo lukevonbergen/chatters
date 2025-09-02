@@ -37,23 +37,55 @@ function rangeISO(preset, fromStr, toStr) {
 }
 
 async function fetchAvgResolutionMinutes(venueId, startISO, endISO) {
-  const { data, error } = await supabase
+  // Fetch resolved feedback sessions
+  const { data: feedbackData, error: feedbackError } = await supabase
     .from('feedback')
+    .select('session_id, created_at, resolved_at')
+    .eq('venue_id', venueId)
+    .not('resolved_at', 'is', null)
+    .gte('resolved_at', startISO)
+    .lte('resolved_at', endISO);
+
+  // Fetch resolved assistance requests
+  const { data: assistanceData, error: assistanceError } = await supabase
+    .from('assistance_requests')
     .select('created_at, resolved_at')
     .eq('venue_id', venueId)
     .not('resolved_at', 'is', null)
     .gte('resolved_at', startISO)
     .lte('resolved_at', endISO);
 
-  if (error) {
-    console.error('Error fetching resolution times:', error);
-   return { avg: 0, count: 0 };
+  if (feedbackError || assistanceError) {
+    console.error('Error fetching resolution times:', feedbackError || assistanceError);
+    return { avg: 0, count: 0 };
   }
-  if (!data?.length) return { avg: 0, count: 0 };
 
-  const minutes = data.map(r => (new Date(r.resolved_at) - new Date(r.created_at)) / (1000 * 60));
+  // Group feedback by session_id to get one resolution time per session
+  const sessionResolutions = [];
+  if (feedbackData?.length) {
+    const sessionMap = new Map();
+    feedbackData.forEach(item => {
+      if (!sessionMap.has(item.session_id)) {
+        sessionMap.set(item.session_id, {
+          created_at: item.created_at,
+          resolved_at: item.resolved_at
+        });
+      }
+    });
+    sessionResolutions.push(...sessionMap.values());
+  }
+
+  // Combine session resolutions with assistance request resolutions
+  const allResolutions = [
+    ...sessionResolutions,
+    ...(assistanceData || [])
+  ];
+
+  if (!allResolutions.length) return { avg: 0, count: 0 };
+
+  const minutes = allResolutions.map(r => (new Date(r.resolved_at) - new Date(r.created_at)) / (1000 * 60));
   const avg = minutes.reduce((a, b) => a + b, 0) / minutes.length;
-  return { avg, count: data.length };
+  return { avg, count: allResolutions.length };
 }
 
 function formatTime(minutes) {
@@ -145,34 +177,19 @@ export default function AverageResolutionTimeTile({ venueId }) {
       {/* Header */}
       <div className="mb-4">
         <h3 className="text-base font-semibold text-gray-900">Avg. Resolution Time</h3>
-        <p className="text-gray-600 text-xs mt-1">Today's average time to resolve feedback</p>
+        <p className="text-gray-600 text-xs mt-1">Today's average time to resolve feedback & assistance</p>
       </div>
 
-      {/* Metric row */}
+      {/* Metric */}
       <div className="mt-4 flex items-end justify-between">
         <div className="text-2xl font-bold text-gray-900">
           {loading ? '—' : formatTime(avg)}
         </div>
         <div className="text-right">
-          <div className={`text-sm font-semibold ${delta != null ? deltaColor : 'text-gray-900'}`}>
-            {delta == null ? '—' : `${delta <= 0 ? '-' : '+'}${Math.abs(delta)}%`}
-          </div>
           <div className="text-xs text-gray-600">
-            vs yesterday
+            {loading ? 'Loading…' : `${count} ${count === 1 ? 'item' : 'items'} resolved (feedback + assistance)`}
           </div>
         </div>
-      </div>
-
-      {/* Progress bar */}
-      <div className="mt-4">
-        <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
-          <div className="h-2 rounded-full bg-green-500" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-
-      {/* Footnote */}
-      <div className="mt-2 text-xs text-gray-500">
-        {loading ? 'Loading…' : `${count} feedback ${count === 1 ? 'item' : 'items'} resolved`}
       </div>
     </div>
   );

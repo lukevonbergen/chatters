@@ -20,31 +20,46 @@ const SessionsActionedTile = ({ venueId }) => {
         const startOfDay = new Date(now);
         startOfDay.setHours(0, 0, 0, 0);
 
-        const { data, error } = await supabase
+        // Fetch feedback sessions
+        const { data: feedbackData, error: feedbackError } = await supabase
           .from('feedback')
           .select('session_id, is_actioned, dismissed')
           .eq('venue_id', venueId)
           .gte('created_at', startOfDay.toISOString());
 
-        if (error) {
-          console.error('Error fetching feedback:', error);
+        // Fetch assistance requests
+        const { data: assistanceData, error: assistanceError } = await supabase
+          .from('assistance_requests')
+          .select('id, status, resolved_at')
+          .eq('venue_id', venueId)
+          .gte('created_at', startOfDay.toISOString());
+
+        if (feedbackError || assistanceError) {
+          console.error('Error fetching data:', feedbackError || assistanceError);
           return;
         }
 
+        // Process feedback sessions
         const grouped = {};
-        for (const row of data || []) {
+        for (const row of feedbackData || []) {
           if (!grouped[row.session_id]) grouped[row.session_id] = [];
           grouped[row.session_id].push(row);
         }
 
         const sessions = Object.values(grouped);
-        const totalSessions = sessions.length;
-        const actionedSessions = sessions.filter(session =>
+        const totalFeedbackSessions = sessions.length;
+        const actionedFeedbackSessions = sessions.filter(session =>
           session.every(item => item.is_actioned === true || item.dismissed === true)
         ).length;
 
-        setTotal(totalSessions);
-        setActioned(actionedSessions);
+        // Process assistance requests
+        const totalAssistanceRequests = assistanceData?.length || 0;
+        const actionedAssistanceRequests = (assistanceData || []).filter(request =>
+          request.status === 'resolved' || request.resolved_at !== null
+        ).length;
+
+        setTotal(totalFeedbackSessions + totalAssistanceRequests);
+        setActioned(actionedFeedbackSessions + actionedAssistanceRequests);
       } catch (error) {
         console.error('Error in fetchData:', error);
       } finally {

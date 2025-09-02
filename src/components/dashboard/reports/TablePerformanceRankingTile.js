@@ -82,7 +82,7 @@ export default function TablePerformanceRankingTile({ venueId }) {
             Table Performance Ranking
           </h3>
           <p className="text-xs text-gray-600 mt-1">
-            Tables ranked by average satisfaction (1–5)
+            Ranked by average rating
           </p>
         </div>
       </div>
@@ -117,22 +117,6 @@ export default function TablePerformanceRankingTile({ venueId }) {
                   </div>
                 </div>
 
-                {/* Middle: mini distribution 5→1 (monochrome) */}
-                <div className="flex items-center gap-1 flex-1 max-w-md">
-                  {r.dist.map((count, i) => {
-                    const total = r.totalFeedback || 1;
-                    const pct = count / total; // 0..1
-                    return (
-                      <div key={i} className="flex-1">
-                        <div
-                          className="h-2 rounded"
-                          style={band(pct)}
-                          aria-hidden
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
 
                 {/* Right: average */}
                 <div className="text-right">
@@ -141,45 +125,11 @@ export default function TablePerformanceRankingTile({ venueId }) {
                 </div>
               </div>
 
-              {/* Legend line for the mini distribution */}
-              <div className="flex justify-between text-[10px] text-gray-500 mt-1">
-                <span>5★</span><span>4★</span><span>3★</span><span>2★</span><span>1★</span>
-              </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Footer facts */}
-      {rows.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-gray-200">
-          <div className="grid grid-cols-3 gap-2 text-xs text-gray-700">
-            <div className="rounded-md p-2 border border-gray-100">
-              <div className="font-medium text-gray-800">Best</div>
-              <div className="text-gray-900 font-semibold">{best?.average ?? 0}★</div>
-              <div className="text-[11px] text-gray-600">Table {best?.table ?? '-'}</div>
-            </div>
-            <div className="rounded-md p-2 border border-gray-100">
-              <div className="font-medium text-gray-800">Active Tables</div>
-              <div className="text-gray-900 font-semibold">{rows.length}</div>
-              <div className="text-[11px] text-gray-600">with feedback</div>
-            </div>
-            <div className="rounded-md p-2 border border-gray-100">
-              <div className="font-medium text-gray-800">Lowest</div>
-              <div className="text-gray-900 font-semibold">{worst?.average ?? 0}★</div>
-              <div className="text-[11px] text-gray-600">Table {worst?.table ?? '-'}</div>
-            </div>
-          </div>
-
-          {/* Hint row */}
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-2 text-[11px] text-gray-600">
-              <BarChart3 className="w-3.5 h-3.5 text-gray-600" />
-              <span>Shading shows response mix per table (darker = more of that star).</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
