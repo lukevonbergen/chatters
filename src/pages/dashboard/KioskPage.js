@@ -435,16 +435,9 @@ const KioskPage = () => {
         {/* Priority Queue Header */}
         <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-red-50 flex-shrink-0">
           <div className="px-5 py-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-white rounded-full shadow-sm">
-                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0h2m0 0h2a2 2 0 002-2V7a2 2 0 00-2-2h-2m0 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v0z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Priority Queue</h3>
-                <p className="text-xs text-gray-600">Urgent feedback first, then assistance requests</p>
-              </div>
+            <div className="mb-3">
+              <h3 className="font-bold text-gray-900">Priority Queue</h3>
+              <p className="text-xs text-gray-600">Urgent feedback first, then assistance requests</p>
             </div>
             <div className="flex gap-3">
               {feedbackList.sessionCount > 0 && (

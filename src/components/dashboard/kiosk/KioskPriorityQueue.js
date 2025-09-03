@@ -219,16 +219,11 @@ const KioskPriorityQueue = ({
               >
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
-                    <div className="p-1 bg-white rounded">
-                      {getIcon(item)}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm">Table {item.table_number}</span>
-                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${badge.className}`}>
-                          {badge.text}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">Table {item.table_number}</span>
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${badge.className}`}>
+                        {badge.text}
+                      </span>
                     </div>
                   </div>
                   <span className="text-xs text-gray-500">
