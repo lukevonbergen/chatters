@@ -6,9 +6,8 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 // Kiosk components
 import KioskFloorPlan from '../../components/dashboard/kiosk/KioskFloorPlan';
-import KioskFeedbackList from '../../components/dashboard/kiosk/KioskFeedbackList';
 import KioskZoneOverview from '../../components/dashboard/kiosk/KioskZoneOverview';
-import KioskAssistanceList from '../../components/dashboard/kiosk/KioskAssistanceList';
+import KioskPriorityQueue from '../../components/dashboard/kiosk/KioskPriorityQueue';
 
 dayjs.extend(relativeTime);
 
@@ -19,13 +18,12 @@ const KioskPage = () => {
   const [zones, setZones] = useState([]);
   const [tables, setTables] = useState([]);
   const [feedbackMap, setFeedbackMap] = useState({});
-  const [feedbackList, setFeedbackList] = useState([]);
+  const [feedbackList, setFeedbackList] = useState({ items: [], sessionCount: 0 });
   const [assistanceRequests, setAssistanceRequests] = useState([]);
   const [assistanceMap, setAssistanceMap] = useState({});
   const [currentView, setCurrentView] = useState('overview'); // 'overview' or zone id
   const [inactivityTimer, setInactivityTimer] = useState(null); // kept for easy re-enable
   const [selectedFeedback, setSelectedFeedback] = useState(null);
-  const [activeTab, setActiveTab] = useState('assistance'); // 'assistance' or 'feedback'
 
   // ==== AUTO-RETURN (10s) — DISABLED ====
   // useEffect(() => {
@@ -67,7 +65,6 @@ const KioskPage = () => {
   useEffect(() => {
     if (!venueId) return;
 
-    console.log('Setting up real-time subscription for venue:', venueId);
 
     const channel = supabase
       .channel(`kiosk_updates_${venueId}`) // More specific channel name
@@ -80,8 +77,6 @@ const KioskPage = () => {
           filter: `venue_id=eq.${venueId}` 
         },
         (payload) => {
-          console.log('🔥 REAL-TIME: New feedback detected:', payload);
-          console.log('Payload details:', JSON.stringify(payload, null, 2));
           fetchFeedback(venueId);
         }
       )
@@ -94,8 +89,6 @@ const KioskPage = () => {
           filter: `venue_id=eq.${venueId}` 
         },
         (payload) => {
-          console.log('🔥 REAL-TIME: Feedback updated:', payload);
-          console.log('Update payload details:', JSON.stringify(payload, null, 2));
           fetchFeedback(venueId);
         }
       )
@@ -108,8 +101,6 @@ const KioskPage = () => {
           filter: `venue_id=eq.${venueId}` 
         },
         (payload) => {
-          console.log('🔥 REAL-TIME: New assistance request:', payload);
-          console.log('Assistance payload details:', JSON.stringify(payload, null, 2));
           fetchAssistanceRequests(venueId);
         }
       )
@@ -122,22 +113,16 @@ const KioskPage = () => {
           filter: `venue_id=eq.${venueId}` 
         },
         (payload) => {
-          console.log('🔥 REAL-TIME: Assistance request updated:', payload);
-          console.log('Update assistance payload:', JSON.stringify(payload, null, 2));
           fetchAssistanceRequests(venueId);
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to real-time updates');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Real-time subscription error - falling back to polling');
+        if (status === 'CHANNEL_ERROR') {
+          // Real-time subscription error - falling back to polling
         }
       });
 
     return () => {
-      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [venueId]);
@@ -189,7 +174,6 @@ const KioskPage = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching feedback:', error);
       return;
     }
 
@@ -197,13 +181,19 @@ const KioskPage = () => {
     const latestSession = {};
     const ratings = {};
     const feedbackItems = [];
+    const uniqueSessions = new Set();
 
     for (const entry of data || []) {
       const table = entry.table_number;
       if (!table) continue;
 
-      // Sidebar list shows raw rows; KioskFeedbackList groups per session
+      // Store all feedback items for detailed modal view
       feedbackItems.push(entry);
+      
+      // Track unique sessions for count
+      if (entry.session_id) {
+        uniqueSessions.add(entry.session_id);
+      }
 
       // Build latest session per table for the map (only track most recent session per table)
       if (!latestSession[table] || new Date(entry.created_at) > new Date(latestSession[table])) {
@@ -223,17 +213,14 @@ const KioskPage = () => {
     }
 
     setFeedbackMap(ratings);
-    setFeedbackList(feedbackItems);
+    // Store both raw items and session count
+    setFeedbackList({ items: feedbackItems, sessionCount: uniqueSessions.size });
   };
 
   const fetchAssistanceRequests = async (venueId) => {
     const now = dayjs();
     const cutoff = now.subtract(2, 'hour').toISOString();
 
-    console.log('🔍 Fetching assistance requests for venue:', venueId);
-    console.log('🕐 Current time:', now.toISOString());
-    console.log('⏰ Cutoff time (2h ago):', cutoff);
-    console.log('📊 Status filter:', ['pending', 'acknowledged']);
 
     // First, let's see ALL assistance requests for this venue (no filters)
     const { data: allData, error: allError } = await supabase
@@ -242,7 +229,6 @@ const KioskPage = () => {
       .eq('venue_id', venueId)
       .order('created_at', { ascending: false });
 
-    console.log('🗂️ ALL assistance requests for venue:', allData);
 
     // Temporary fix: Remove staff joins to get basic functionality working
     const { data, error } = await supabase
@@ -254,10 +240,7 @@ const KioskPage = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ Error fetching assistance requests:', error);
-    } else {
-      console.log('✅ Filtered assistance requests:', data);
-      console.log(`📈 Found ${data?.length || 0} requests matching filters`);
+      // Error fetching assistance requests
     }
 
     // Build assistance map for table coloring (table_number -> status)
@@ -288,7 +271,6 @@ const KioskPage = () => {
         .in('session_id', sessionIds);
 
       if (error) {
-        console.error('Error marking feedback as resolved:', error);
         throw error;
       }
 
@@ -302,7 +284,6 @@ const KioskPage = () => {
 
       return true;
     } catch (error) {
-      console.error('Failed to resolve feedback:', error);
       throw error;
     }
   };
@@ -310,14 +291,7 @@ const KioskPage = () => {
   // Handle assistance request actions
   const handleAssistanceAction = async (requestId, action, notes = null, employeeId = null) => {
     try {
-      console.log(`Attempting to ${action} assistance request ${requestId}`);
-      
       // Use the provided employee ID from the modal
-      console.log('Using selected employee ID for assistance action:', { 
-        employeeId, 
-        action, 
-        requestId 
-      });
       
       const now = new Date().toISOString();
       const updates = {
@@ -340,7 +314,6 @@ const KioskPage = () => {
         }
       }
 
-      console.log('Update payload:', updates);
 
       const { data, error } = await supabase
         .from('assistance_requests')
@@ -349,18 +322,15 @@ const KioskPage = () => {
         .select(); // Add select to see what was updated
 
       if (error) {
-        console.error('Supabase error updating assistance request:', error);
         alert(`Failed to ${action} request: ${error.message}`);
         return false;
       }
 
-      console.log('Successfully updated assistance request:', data);
 
       // Refresh assistance requests
       await fetchAssistanceRequests(venueId);
       return true;
     } catch (error) {
-      console.error('Failed to update assistance request:', error);
       alert(`Error: ${error.message}`);
       return false;
     }
@@ -382,8 +352,32 @@ const KioskPage = () => {
     resetInactivityTimer(); // no-op while disabled
   };
 
+  const handleLocationClick = (item) => {
+    // For both assistance and feedback, set as selected to highlight the table
+    if (item.type === 'assistance') {
+      // Create a feedback-like object for table highlighting
+      setSelectedFeedback({
+        table_number: item.table_number,
+        session_id: `assistance-${item.id}`,
+        type: 'assistance'
+      });
+    } else {
+      setSelectedFeedback(item);
+    }
+
+    // Navigate to the table's zone (handle both string and number types)
+    const table = tables.find((t) => String(t.table_number) === String(item.table_number));
+    
+    if (table && table.zone_id) {
+      setCurrentView(table.zone_id);
+    }
+    
+    resetInactivityTimer(); // no-op while disabled
+  };
+
   const handleTableClick = (tableNumber) => {
-    const tableFeedback = feedbackList.filter((f) => f.table_number === tableNumber);
+    const feedbackItems = feedbackList.items || [];
+    const tableFeedback = feedbackItems.filter((f) => f.table_number === tableNumber);
     if (tableFeedback.length > 0) {
       setSelectedFeedback(tableFeedback[0]); // most recent
     }
@@ -438,64 +432,49 @@ const KioskPage = () => {
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200 bg-white flex-shrink-0">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('assistance')}
-              className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'assistance'
-                  ? 'border-orange-500 text-orange-600 bg-orange-50'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <span>Assistance</span>
-                {assistanceRequests.length > 0 && (
-                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
-                    {assistanceRequests.length}
-                  </span>
-                )}
+        {/* Priority Queue Header */}
+        <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-red-50 flex-shrink-0">
+          <div className="px-5 py-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-white rounded-full shadow-sm">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0h2m0 0h2a2 2 0 002-2V7a2 2 0 00-2-2h-2m0 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v0z" />
+                </svg>
               </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('feedback')}
-              className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'feedback'
-                  ? 'border-blue-500 text-blue-600 bg-blue-50'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <span>Feedback</span>
-                {feedbackList.length > 0 && (
-                  <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
-                    {feedbackList.length}
-                  </span>
-                )}
+              <div>
+                <h3 className="font-bold text-gray-900">Priority Queue</h3>
+                <p className="text-xs text-gray-600">Urgent feedback first, then assistance requests</p>
               </div>
-            </button>
+            </div>
+            <div className="flex gap-3">
+              {feedbackList.sessionCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full shadow-sm"></div>
+                  <span className="text-xs text-gray-600">{feedbackList.sessionCount} feedback sessions</span>
+                </div>
+              )}
+              {assistanceRequests.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gradient-to-r from-red-400 to-red-600 rounded-full shadow-sm animate-pulse"></div>
+                  <span className="text-xs text-gray-600">{assistanceRequests.length} assistance requests</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Tab Content */}
+        {/* Unified Priority Queue */}
         <div className="flex-1 overflow-hidden min-h-0">
-          {activeTab === 'assistance' && (
-            <KioskAssistanceList
-              assistanceRequests={assistanceRequests}
-              onAssistanceAction={handleAssistanceAction}
-              venueId={venueId}
-            />
-          )}
-          {activeTab === 'feedback' && (
-            <KioskFeedbackList
-              feedbackList={feedbackList}
-              selectedFeedback={selectedFeedback}
-              onFeedbackClick={handleFeedbackClick}
-              onMarkResolved={handleMarkResolved}
-              venueId={venueId}
-            />
-          )}
+          <KioskPriorityQueue
+            feedbackList={feedbackList.items || []}
+            assistanceRequests={assistanceRequests}
+            selectedFeedback={selectedFeedback}
+            onFeedbackClick={handleFeedbackClick}
+            onLocationClick={handleLocationClick}
+            onMarkResolved={handleMarkResolved}
+            onAssistanceAction={handleAssistanceAction}
+            venueId={venueId}
+          />
         </div>
       </div>
 
@@ -523,7 +502,7 @@ const KioskPage = () => {
               zones={zones}
               tables={tables}
               feedbackMap={feedbackMap}
-              feedbackList={feedbackList}
+              feedbackList={feedbackList.items || []}
               assistanceMap={assistanceMap}
               onZoneSelect={handleZoneSelect}
             />

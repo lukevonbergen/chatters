@@ -25,12 +25,6 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
 
   const filtered = useMemo(() => {
     const result = tables.filter(t => t.zone_id === selectedZoneId);
-    console.log('Filtering tables:', {
-      totalTables: tables.length,
-      selectedZoneId,
-      filteredCount: result.length,
-      allZoneIds: tables.map(t => ({ id: t.id, zone_id: t.zone_id, table_number: t.table_number }))
-    });
     return result;
   }, [tables, selectedZoneId]);
 
@@ -42,7 +36,6 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     const update = () => {
       const rect = el.getBoundingClientRect();
       const newSize = { width: rect.width, height: rect.height };
-      console.log('Container size updated:', newSize);
       setContainerSize(newSize);
     };
     
@@ -58,21 +51,6 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
 
   // Process tables with simpler coordinate system
   const processedTables = useMemo(() => {
-    console.log('Processing tables:', {
-      filteredCount: filtered.length,
-      sampleTable: filtered[0] ? {
-        id: filtered[0].id,
-        table_number: filtered[0].table_number,
-        zone_id: filtered[0].zone_id,
-        x_percent: filtered[0].x_percent,
-        y_percent: filtered[0].y_percent,
-        x_px: filtered[0].x_px,
-        y_px: filtered[0].y_px,
-        width: filtered[0].width,
-        height: filtered[0].height
-      } : 'No tables'
-    });
-    
     return filtered.map(t => {
       // Convert percentages to world coordinates
       const worldX = t.x_percent != null ? (t.x_percent / 100) * WORLD_WIDTH : (t.x_px ?? 0);
@@ -86,15 +64,7 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
 
   // Simple fit to screen
   const fitToScreen = useCallback(() => {
-    console.log('fitToScreen called with:', {
-      tablesLength: processedTables.length,
-      containerWidth: containerSize.width,
-      containerHeight: containerSize.height,
-      containerSize
-    });
-    
     if (!processedTables.length || !containerSize.width || !containerSize.height) {
-      console.log('Cannot fit - no tables or container size');
       return;
     }
     
@@ -130,14 +100,6 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
     const centerX = (containerSize.width - scaledContentWidth) / 2 - minX * newZoom;
     const centerY = (containerSize.height - scaledContentHeight) / 2 - minY * newZoom;
     
-    console.log('fitToScreen calculation:', {
-      bounds: { minX, minY, maxX, maxY },
-      contentSize: { contentWidth, contentHeight },
-      containerSize,
-      newZoom,
-      centerOffset: { centerX, centerY }
-    });
-    
     setZoom(newZoom);
     setPanOffset({ x: centerX, y: centerY });
   }, [processedTables, containerSize]);
@@ -145,7 +107,6 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
   // Auto-fit when data changes
   useEffect(() => {
     if (processedTables.length > 0 && containerSize.width > 0) {
-      console.log('Auto-fitting with', processedTables.length, 'tables');
       setTimeout(fitToScreen, 100);
     }
   }, [selectedZoneId, processedTables.length, containerSize.width, fitToScreen]);

@@ -170,10 +170,9 @@ const FeedbackDetailModal = ({
             .eq('venue_id', venueId);
 
           if (employeesError) {
-            console.error('Error loading employees data:', employeesError);
+            // Error loading employees data
           }
           
-          console.log('Employees data loaded:', { employeesData, venueId });
 
           const combinedStaffList = [
             ...(employeesData || []).map(person => ({
@@ -184,20 +183,17 @@ const FeedbackDetailModal = ({
             }))
           ].sort((a, b) => a.display_name.localeCompare(b.display_name));
 
-          console.log('Combined staff list:', combinedStaffList);
           setStaffMembers(combinedStaffList);
           
           // Auto-select current user if their email matches an employee
           if (user && employeesData) {
             const currentEmployee = employeesData.find(e => e.email === user.email);
-            console.log('Current user auto-selection:', { userEmail: user.email, currentEmployee, employeesData });
             if (currentEmployee) {
               setSelectedStaffMember(`employee-${currentEmployee.id}`);
             }
           }
         }
       } catch (error) {
-        console.error('Error loading user data:', error);
       }
     };
     
@@ -236,7 +232,6 @@ const FeedbackDetailModal = ({
       await onMarkResolved(sessionIds, null);
       onClose();
     } catch (error) {
-      console.error('Error clearing positive feedback:', error);
       alert('Failed to clear feedback. Please try again.');
     } finally {
       setIsResolving(false);
@@ -272,29 +267,16 @@ const FeedbackDetailModal = ({
             .single();
             
           if (employeeCheckError || !dbEmployee) {
-            console.error('Employee not found in database:', { 
-              employeeId: selectedEmployee.id, 
-              error: employeeCheckError,
-              venueId 
-            });
             throw new Error(`Employee "${selectedEmployee.display_name}" not found in database. Please refresh the page and try again.`);
           }
           
           resolvedById = selectedEmployee.id;
           resolverInfo = `Resolved by ${selectedEmployee.display_name}`;
-          console.log('Using validated employee ID for resolved_by:', { 
-            employeeId: selectedEmployee.id, 
-            employeeName: selectedEmployee.display_name,
-            dbEmployee
-          });
-        } else {
-          console.error('Selected employee not found in employee list');
         }
       }
       
       // Fallback: if no resolvedById was set, use the first available employee
       if (!resolvedById) {
-        console.warn('No employee selected for resolution, using fallback approach');
         
         // If there are any employees, use the first one
         const anyEmployee = staffMembers.find(s => s.source === 'employee');
@@ -358,7 +340,6 @@ const FeedbackDetailModal = ({
       await onMarkResolved(sessionIds, resolvedById);
       onClose();
     } catch (error) {
-      console.error('Error marking feedback as resolved:', error);
       alert('Failed to mark feedback as resolved. Please try again.');
     } finally {
       setIsResolving(false);
@@ -423,11 +404,11 @@ const FeedbackDetailModal = ({
     >
       <div className="space-y-0">
         {/* Professional Header */}
-        <div className={`${urgency.bgColor} ${urgency.borderColor} border-b px-6 py-5 -mx-4 -mt-4 mb-6`}>
+        <div className={`${urgency.bgColor} ${urgency.borderColor} border-b px-6 py-6 -mx-4 -mt-4 mb-6`}>
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-md border border-gray-200">
                   <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0v8a2 2 0 002 2h6a2 2 0 002-2V8M9 12h6" />
                   </svg>
@@ -459,7 +440,7 @@ const FeedbackDetailModal = ({
                   <StarRating rating={session.avg_rating} />
                 </div>
               )}
-              <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${urgency.color} shadow-sm`}>
+              <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold ${urgency.color} shadow-md`}>
                 {urgency.icon}
                 {urgency.label}
               </span>
@@ -480,7 +461,7 @@ const FeedbackDetailModal = ({
               const question = item.questions?.question || `Question ${index + 1}`;
               
               return (
-                <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-lg transition-all duration-200">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 pr-4">
                       <h6 className="font-semibold text-slate-900 mb-1">
@@ -498,7 +479,7 @@ const FeedbackDetailModal = ({
                   </div>
                   
                   {item.additional_feedback && item.additional_feedback.trim() && (
-                    <div className="mt-4 bg-slate-50 border-l-4 border-blue-400 rounded-r-lg p-4">
+                    <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
                       <div className="flex items-start gap-3">
                         <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -541,7 +522,7 @@ const FeedbackDetailModal = ({
         )}
         
         {/* Professional Resolution Section */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 mt-8">
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mt-8 shadow-sm">
           <div className="flex items-center gap-2 mb-6">
             <h4 className="text-lg font-semibold text-slate-900">
               {isPositiveFeedback(session) ? 'Acknowledgment' : 'Resolution Actions'}
@@ -552,7 +533,7 @@ const FeedbackDetailModal = ({
           {isPositiveFeedback(session) ? (
             // For positive feedback - just show clear button
             <div className="space-y-4">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 shadow-sm">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -571,7 +552,7 @@ const FeedbackDetailModal = ({
               <button
                 onClick={clearPositiveFeedback}
                 disabled={isResolving}
-                className="w-full px-6 py-3 rounded-lg font-semibold transition-all shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white disabled:bg-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
+                className="w-full px-6 py-3 rounded-xl font-bold transition-all shadow-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg text-white disabled:bg-slate-400 disabled:cursor-not-allowed disabled:shadow-none focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 {isResolving ? (
                   <span className="flex items-center justify-center gap-2">
@@ -593,7 +574,7 @@ const FeedbackDetailModal = ({
               
               <button
                 onClick={onClose}
-                className="w-full px-6 py-3 border-2 border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
+                className="w-full px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400"
               >
                 Cancel
               </button>
@@ -688,7 +669,7 @@ const FeedbackDetailModal = ({
                 id="staffMember"
                 value={selectedStaffMember}
                 onChange={(e) => setSelectedStaffMember(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium shadow-sm"
               >
                 <option value="">Choose staff member...</option>
                 
@@ -733,7 +714,7 @@ const FeedbackDetailModal = ({
                   : "Add any additional context for the dismissal..."
                 }
                 rows={3}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder-slate-400 text-sm resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder-gray-400 text-sm resize-none shadow-sm"
                 maxLength={500}
               />
               <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
@@ -752,7 +733,7 @@ const FeedbackDetailModal = ({
               <button
                 onClick={handleMarkResolved}
                 disabled={isResolving || !selectedStaffMember || (resolutionType === 'dismissed' && !dismissalReason.trim())}
-                className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all shadow-sm ${
+                className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg focus:outline-none ${
                   resolutionType === 'resolved' 
                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
                     : 'bg-amber-600 hover:bg-amber-700 text-white'
@@ -789,7 +770,7 @@ const FeedbackDetailModal = ({
               
               <button
                 onClick={onClose}
-                className="px-6 py-3 border-2 border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
+                className="px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400"
               >
                 Cancel
               </button>
