@@ -58,12 +58,9 @@ export default async function handler(req, res) {
       
       // Create staff records for all venues
       const staffRecords = venueIds.map(vId => ({
-        first_name: firstName,
-        last_name: lastName,
         user_id: authUserId,
         venue_id: vId,
-        role: 'manager',
-        email: email
+        role: 'manager'
       }));
       
       const { error: staffInsertError } = await supabase.from('staff').insert(staffRecords);
@@ -100,12 +97,9 @@ export default async function handler(req, res) {
 
     const { error: staffInsertError } = await supabase.from('staff').insert([
       {
-        first_name: firstName,
-        last_name: lastName,
         user_id: authUserId,
         venue_id: venueId,
-        role: 'manager',
-        email: email
+        role: 'manager'
       },
     ]);
     if (staffInsertError) throw staffInsertError;
