@@ -436,7 +436,7 @@ const KioskPage = () => {
         <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-red-50 flex-shrink-0">
           <div className="px-5 py-4">
             <div className="mb-3">
-              <h3 className="font-bold text-gray-900">Priority Queue</h3>
+              <h3 className="font-bold text-gray-900">Queue</h3>
               <p className="text-xs text-gray-600">Urgent feedback first, then assistance requests</p>
             </div>
             <div className="flex gap-3">

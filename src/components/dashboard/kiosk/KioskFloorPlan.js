@@ -182,20 +182,20 @@ const KioskFloorPlan = forwardRef(({ tables, selectedZoneId, feedbackMap, select
       return { borderColor: 'border-orange-500', bgColor: 'bg-gray-700', status: 'assistance-pending' };
     }
     if (assistanceStatus === 'acknowledged') {
-      return { borderColor: 'border-yellow-500', bgColor: 'bg-gray-700', status: 'assistance-acknowledged' };
+      return { borderColor: 'border-orange-400', bgColor: 'bg-gray-700', status: 'assistance-acknowledged' };
     }
     
     // Fall back to feedback status
     if (feedbackAvg == null) return { borderColor: 'border-gray-800', bgColor: 'bg-gray-700', status: 'no-feedback' };
     if (feedbackAvg > 4) return { borderColor: 'border-green-500', bgColor: 'bg-gray-700', status: 'happy' };
-    if (feedbackAvg >= 2.5) return { borderColor: 'border-yellow-500', bgColor: 'bg-gray-700', status: 'attention' };
-    return { borderColor: 'border-red-500', bgColor: 'bg-gray-700', status: 'unhappy' };
+    if (feedbackAvg > 2) return { borderColor: 'border-blue-500', bgColor: 'bg-gray-700', status: 'mid-rating' };
+    return { borderColor: 'border-red-500', bgColor: 'bg-gray-700', status: 'urgent-feedback' };
   };
 
   const getTableShapeClasses = (table, tableStatus) => {
     const baseClass = `text-white flex items-center justify-center font-bold border-4 shadow-lg transition-all duration-200 cursor-pointer ${tableStatus.bgColor} ${tableStatus.borderColor}`;
-    // Pulse for unhappy feedback or pending assistance
-    const pulseStyle = (tableStatus.status === 'unhappy' || tableStatus.status === 'assistance-pending') ? slowPulseStyle : {};
+    // Pulse for urgent feedback or pending assistance
+    const pulseStyle = (tableStatus.status === 'urgent-feedback' || tableStatus.status === 'assistance-pending') ? slowPulseStyle : {};
     
     switch (table.shape) {
       case 'circle': 
