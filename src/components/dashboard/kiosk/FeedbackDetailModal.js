@@ -700,33 +700,27 @@ const FeedbackDetailModal = ({
               )}
             </div>
 
-            {/* Resolution Message (Optional) */}
-            <div>
-              <label htmlFor="resolutionMessage" className="block text-sm font-semibold text-slate-700 mb-3">
-                Resolution Details <span className="text-slate-500">(Optional)</span>
-              </label>
-              <textarea
-                id="resolutionMessage"
-                value={resolutionMessage}
-                onChange={(e) => setResolutionMessage(e.target.value)}
-                placeholder={resolutionType === 'resolved' 
-                  ? "Describe how the issue was resolved (e.g., 'Spoke with kitchen manager, implemented new temperature checks', 'Provided fresh meal and discount coupon', etc.)"
-                  : "Add any additional context for the dismissal..."
-                }
-                rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder-gray-400 text-sm resize-none shadow-sm"
-                maxLength={500}
-              />
-              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-                <span>
-                  {resolutionType === 'resolved' 
-                    ? "Help track what actions were taken to resolve similar issues in the future" 
-                    : "Provide context for why this feedback was dismissed"
-                  }
-                </span>
-                <span>{resolutionMessage.length}/500</span>
+            {/* Resolution Message (Optional) - Only show for resolved type */}
+            {resolutionType === 'resolved' && (
+              <div>
+                <label htmlFor="resolutionMessage" className="block text-sm font-semibold text-slate-700 mb-3">
+                  Resolution Details <span className="text-slate-500">(Optional)</span>
+                </label>
+                <textarea
+                  id="resolutionMessage"
+                  value={resolutionMessage}
+                  onChange={(e) => setResolutionMessage(e.target.value)}
+                  placeholder="Describe how the issue was resolved (e.g., 'Spoke with kitchen manager, implemented new temperature checks', 'Provided fresh meal and discount coupon', etc.)"
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder-gray-400 text-sm resize-none shadow-sm"
+                  maxLength={500}
+                />
+                <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                  <span>Help track what actions were taken to resolve similar issues in the future</span>
+                  <span>{resolutionMessage.length}/500</span>
+                </div>
               </div>
-            </div>
+            )}
             
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4 border-t border-slate-200">
