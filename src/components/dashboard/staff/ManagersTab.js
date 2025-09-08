@@ -17,6 +17,8 @@ const ManagersTab = ({
   const [assignFormLoading, setAssignFormLoading] = useState(false);
   const [deleteFormLoading, setDeleteFormLoading] = useState(false);
   const [managerToDelete, setManagerToDelete] = useState(null);
+  const [editingManagerDetails, setEditingManagerDetails] = useState(null);
+  const [editDetailsLoading, setEditDetailsLoading] = useState(false);
 
   // Add manager form state
   const [newManager, setNewManager] = useState({
@@ -296,6 +298,82 @@ const ManagersTab = ({
     }
   };
 
+  // Edit manager details (name, email, venues)
+  const handleEditManagerDetails = (manager) => {
+    const managerVenues = managers
+      .filter(m => m.user_id === manager.user_id)
+      .map(m => m.venue_id);
+    
+    setEditingManagerDetails({
+      ...manager,
+      first_name: manager.users?.first_name || '',
+      last_name: manager.users?.last_name || '',
+      email: manager.users?.email || '',
+      venue_ids: managerVenues
+    });
+  };
+
+  // Save manager venue assignments
+  const handleSaveManagerDetails = async () => {
+    if (!editingManagerDetails) return;
+    
+    setEditDetailsLoading(true);
+    
+    try {
+      // Update venue assignments only
+      // First, delete existing staff records for this manager
+      const { error: deleteError } = await supabase
+        .from('staff')
+        .delete()
+        .eq('user_id', editingManagerDetails.user_id);
+
+      if (deleteError) {
+        throw new Error('Failed to update venue assignments: ' + deleteError.message);
+      }
+
+      // Create new staff records for selected venues
+      if (editingManagerDetails.venue_ids.length > 0) {
+        const newStaffRecords = editingManagerDetails.venue_ids.map(venueId => ({
+          user_id: editingManagerDetails.user_id,
+          venue_id: venueId,
+          role: 'manager'
+        }));
+
+        const { error: insertError } = await supabase
+          .from('staff')
+          .insert(newStaffRecords);
+
+        if (insertError) {
+          throw new Error('Failed to assign venues: ' + insertError.message);
+        }
+      }
+
+      setMessage('Manager venue assignments updated successfully!');
+      setEditingManagerDetails(null);
+      await fetchStaffData();
+
+    } catch (error) {
+      setMessage('Failed to update venue assignments: ' + error.message);
+    } finally {
+      setEditDetailsLoading(false);
+    }
+  };
+
+  // Cancel editing manager details
+  const handleCancelEditManagerDetails = () => {
+    setEditingManagerDetails(null);
+  };
+
+  // Handle venue toggle for editing manager details
+  const handleEditManagerVenueToggle = (venueId) => {
+    setEditingManagerDetails(prev => ({
+      ...prev,
+      venue_ids: prev.venue_ids.includes(venueId)
+        ? prev.venue_ids.filter(id => id !== venueId)
+        : [...prev.venue_ids, venueId]
+    }));
+  };
+
   return (
     <div className="max-w-none lg:max-w-6xl">
       {/* Header Section */}
@@ -314,73 +392,137 @@ const ManagersTab = ({
         </div>
       </div>
 
-      {/* Managers grouped by venue */}
-      <div className="space-y-4 lg:space-y-6">
-        {Object.values(managersByVenue).map(({ venue, managers: venueManagers }) => (
-          <div key={venue.id} className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6">
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-4">
-              <h3 className="text-base lg:text-lg font-medium text-gray-900">{venue.name}</h3>
-              <span className="text-sm text-gray-500 self-start sm:self-auto">
-                {venueManagers.length} manager{venueManagers.length !== 1 ? 's' : ''}
-              </span>
-            </div>
+      {/* Managers List */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
+          <h3 className="text-base lg:text-lg font-medium text-gray-900">All Managers</h3>
+          <span className="text-sm text-gray-500">
+            {uniqueManagers.length} manager{uniqueManagers.length !== 1 ? 's' : ''} across all venues
+          </span>
+        </div>
 
-            {venueManagers.length === 0 ? (
-              <div className="text-center py-6 lg:py-8 text-gray-500">
-                <p className="text-sm lg:text-base mb-2">No managers assigned to this venue</p>
-                <button
-                  onClick={() => handleAssignToVenue(venue)}
-                  className="text-black hover:underline text-sm lg:text-base font-medium"
-                >
-                  Assign a manager
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {venueManagers.map(manager => (
-                  <div 
-                    key={manager.id} 
-                    className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 p-3 lg:p-4 bg-gray-50 rounded-md"
-                  >
-                    <div className="flex items-center space-x-3 lg:space-x-4 min-w-0 flex-1">
-                      <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm lg:text-base font-medium text-gray-700">
-                          {manager.users?.first_name?.[0]}{manager.users?.last_name?.[0]}
-                        </span>
+        {uniqueManagers.length === 0 ? (
+          <div className="text-center py-8 lg:py-12">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No managers yet</h3>
+            <p className="text-gray-600 mb-4">Add your first manager to get started</p>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors duration-200 font-medium"
+            >
+              Add First Manager
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {uniqueManagers.map(manager => {
+              // Get all venues for this manager
+              const managerVenues = managers
+                .filter(m => m.user_id === manager.user_id)
+                .map(m => allVenues.find(v => v.id === m.venue_id))
+                .filter(Boolean);
+              
+              return editingManagerDetails?.user_id === manager.user_id ? (
+                // Edit mode - Venue assignments only
+                <div key={manager.user_id} className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="space-y-3">
+                    {/* Manager Info (Read-only) */}
+                    <div className="flex items-center space-x-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {manager.users?.first_name} {manager.users?.last_name}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm lg:text-base font-medium text-gray-900 truncate">
-                          {manager.users?.first_name} {manager.users?.last_name}
-                        </p>
-                        <p className="text-xs lg:text-sm text-gray-500 truncate">{manager.users?.email}</p>
+                      <span className="text-xs text-gray-500">•</span>
+                      <div className="text-xs text-gray-500">{manager.users?.email}</div>
+                    </div>
+
+                    {/* Venue Assignment */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-2">Venue Access</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                        {allVenues.map(venue => (
+                          <label key={venue.id} className="flex items-center space-x-2 text-xs">
+                            <input
+                              type="checkbox"
+                              checked={editingManagerDetails.venue_ids.includes(venue.id)}
+                              onChange={() => handleEditManagerVenueToggle(venue.id)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-3 w-3"
+                              disabled={editDetailsLoading}
+                            />
+                            <span className="text-gray-700">{venue.name}</span>
+                          </label>
+                        ))}
                       </div>
                     </div>
-                    
-                    <div className="flex items-center justify-between sm:justify-end space-x-2 flex-shrink-0">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Manager
-                      </span>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleVenueAssignment(manager)}
-                          className="text-sm text-gray-600 hover:text-gray-900 font-medium whitespace-nowrap"
-                        >
-                          Edit Venues
-                        </button>
-                        <button
-                          onClick={() => setManagerToDelete(manager)}
-                          className="text-sm text-red-600 hover:text-red-800 font-medium whitespace-nowrap"
-                        >
-                          Delete
-                        </button>
-                      </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-end space-x-2 pt-2 border-t border-blue-200">
+                      <button
+                        onClick={handleCancelEditManagerDetails}
+                        disabled={editDetailsLoading}
+                        className="px-3 py-1 text-xs border border-gray-300 text-gray-600 rounded hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveManagerDetails}
+                        disabled={editDetailsLoading || editingManagerDetails.venue_ids.length === 0}
+                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {editDetailsLoading ? 'Saving...' : 'Update Venues'}
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ) : (
+                // View mode
+                <div key={manager.user_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                  {/* Manager info in one line */}
+                  <div className="flex items-center space-x-4 min-w-0 flex-1">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {manager.users?.first_name} {manager.users?.last_name}
+                    </div>
+                    <div className="flex items-center space-x-3 text-xs text-gray-500">
+                      <span className="truncate">{manager.users?.email}</span>
+                      <span>•</span>
+                      <span>
+                        {managerVenues.length === 1 
+                          ? managerVenues[0]?.name 
+                          : `${managerVenues.length} venues`
+                        }
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="flex items-center space-x-2 ml-4 flex-shrink-0">
+                    <button 
+                      onClick={() => handleEditManagerDetails(manager)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all duration-200"
+                      title="Edit venue assignments"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button 
+                      onClick={() => setManagerToDelete(manager)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all duration-200"
+                      title="Delete manager"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ))}
+        )}
       </div>
 
       {/* Summary card */}

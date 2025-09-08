@@ -13,6 +13,7 @@ import PerformanceDashboardTab from '../../components/dashboard/reports/Performa
 import CustomerInsightsTab from '../../components/dashboard/reports/CustomerInsightsTab';
 import QuickMetricsTab from '../../components/dashboard/reports/QuickMetricsTab';
 import FeedbackTab from '../../components/dashboard/reports/FeedbackTab';
+import ReportBuilderTab from '../../components/dashboard/reports/ReportBuilderTab';
 
 const ReportsPage = () => {
   usePageTitle('Reports');
@@ -129,6 +130,7 @@ const ReportsPage = () => {
     { id: 'Business', label: 'Impact' },
     { id: 'Insights', label: 'Insights' },
     { id: 'Metrics', label: 'Metrics' },
+    { id: 'Builder', label: 'Builder' },
   ];
 
   // Close mobile menu when tab changes
@@ -166,6 +168,8 @@ const ReportsPage = () => {
         return <QuickMetricsTab {...tabProps} />;
       case 'Feedback':
         return <FeedbackTab {...tabProps} />;
+      case 'Builder':
+        return <ReportBuilderTab />;
       default:
         return <PerformanceDashboardTab {...tabProps} />;
     }
