@@ -24,7 +24,10 @@ function App() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsDashboardDomain(window.location.hostname.startsWith('my.'));
+      setIsDashboardDomain(
+        window.location.hostname.startsWith('my.') || 
+        window.location.hostname.includes('.my.')
+      );
 
       const hash = window.location.hash;
 
