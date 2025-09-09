@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, BarChart3, Utensils, Building, ShoppingBag, Calendar, BookOpen, HelpCircle, FileText, GraduationCap, Trophy, Globe, Monitor, Bell } from 'lucide-react';
 import PrimaryButton from '../common/buttons/PrimaryButton';
+import { getDashboardUrl } from '../../../utils/domainUtils';
 
 const Navbar = ({ overlay = false }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -166,7 +167,7 @@ const Navbar = ({ overlay = false }) => {
             {/* Right: Auth */}
             <div className="hidden lg:flex lg:items-center lg:space-x-4">
               <Link
-                to="https://my.getchatters.com/signin"
+                to={getDashboardUrl('/signin')}
                 className="text-sm font-semibold text-black hover:text-green-600 transition-colors duration-200 font-satoshi"
               >
                 Log in
@@ -274,7 +275,7 @@ const Navbar = ({ overlay = false }) => {
 
               <div className="grid grid-cols-2 gap-3">
                 <Link
-                  to="https://my.getchatters.com/signin"
+                  to={getDashboardUrl('/signin')}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="text-center border border-gray-300 text-black px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
                 >
