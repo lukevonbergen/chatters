@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
+import { getMarketingUrl } from '../../utils/domainUtils';
 
 const SetPasswordPage = () => {
   const [password, setPassword] = useState('');
@@ -71,7 +72,7 @@ const SetPasswordPage = () => {
         {/* Mobile Header */}
         <div className="flex items-center justify-between p-6">
           <a
-            href="https://www.getchatters.com"
+            href={getMarketingUrl()}
             className="text-gray-300 hover:text-white flex items-center transition-colors text-sm"
           >
             <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
@@ -82,7 +83,7 @@ const SetPasswordPage = () => {
         {/* Mobile Logo */}
         <div className="flex justify-center mb-8">
           <img
-            src="https://www.getchatters.com/img/Logo.svg"
+            src={getMarketingUrl('/img/Logo.svg')}
             alt="Chatters Logo"
             className="h-8 w-auto filter invert brightness-0 invert"
           />
@@ -198,7 +199,7 @@ const SetPasswordPage = () => {
           <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 lg:p-12 flex flex-col justify-center relative">
             <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-10">
               <a
-                href="https://www.getchatters.com"
+                href={getMarketingUrl()}
                 className="text-gray-600 hover:text-gray-900 flex items-center transition-colors text-sm"
               >
                 <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
@@ -209,7 +210,7 @@ const SetPasswordPage = () => {
             <div className="mb-6 lg:mb-8 mt-12 sm:mt-8 lg:mt-0">
               <div className="flex items-center mb-4 lg:mb-6">
                 <img
-                  src="https://www.getchatters.com/img/Logo.svg"
+                  src={getMarketingUrl('/img/Logo.svg')}
                   alt="Chatters Logo"
                   className="h-6 sm:h-8 w-auto"
                 />

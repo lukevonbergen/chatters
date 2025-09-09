@@ -5,6 +5,7 @@ import Template2 from '../../components/dashboard/feedback/QRTemplates/Template2
 import PageContainer from '../../components/dashboard/layout/PageContainer';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
+import { getDashboardUrl } from '../../utils/domainUtils';
 
 const QRTemplates = () => {
   usePageTitle('QR Templates');
@@ -32,7 +33,7 @@ const QRTemplates = () => {
         setLogo(venueData.logo || null);
         setPrimaryColor(venueData.primary_color || '#1890ff');
         setSecondaryColor(venueData.secondary_color || '#52c41a');
-        setFeedbackUrl(`https://my.getchatters.com/feedback/${venueId}`);
+        setFeedbackUrl(getDashboardUrl(`/feedback/${venueId}`));
       } catch (error) {
         console.error('Error fetching branding data:', error);
       } finally {
