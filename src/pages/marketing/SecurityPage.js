@@ -857,9 +857,9 @@ CREATE POLICY "feedback_venue_access" ON feedback FOR ALL
                   <div className="bg-gray-50 rounded-xl p-6">
                     <div className="text-center text-gray-600 font-satoshi">
                       <p className="mb-2"><strong>Document Version:</strong> 1.1 (Security Assessment Update)</p>
-                      <p className="mb-2"><strong>Last Updated:</strong> December 2024</p>
+                      <p className="mb-2"><strong>Last Updated:</strong> September 10 2025</p>
                       <p className="mb-2"><strong>Security Review:</strong> In Progress</p>
-                      <p className="mb-2"><strong>Next Review:</strong> January 2025</p>
+                      <p className="mb-2"><strong>Next Review:</strong> September 13 2025</p>
                       <p className="text-sm text-red-600"><strong>Note:</strong> This document reflects current security posture including identified improvements</p>
                     </div>
                   </div>
