@@ -174,7 +174,7 @@ const DashboardPage = () => {
           <div className="flex flex-wrap gap-3">
             <button
               onClick={goToFloorplan}
-              className="flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+              className="hidden lg:flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
             >
               <Users className="w-4 h-4" />
               Floor Plan
@@ -188,7 +188,7 @@ const DashboardPage = () => {
             </button>
             <button
               onClick={goToKioskMode}
-              className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+              className="hidden lg:flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
             >
               <Monitor className="w-4 h-4" />
               Launch Kiosk Mode
