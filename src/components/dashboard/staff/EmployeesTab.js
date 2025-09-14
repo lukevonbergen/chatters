@@ -8,6 +8,8 @@ import EmployeesList from './employeetabcomponents/EmployeesList';
 import AddEmployeeModal from './employeetabcomponents/AddEmployeeModal';
 import EmployeeSummary from './employeetabcomponents/EmployeeSummary';
 import EditEmployeeModal from './employeetabcomponents/EditEmployeeModal';
+import DeleteEmployeeModal from './employeetabcomponents/DeleteEmployeeModal';
+import ConfirmationModal from '../../ui/ConfirmationModal';
 
 const EmployeesTab = ({ 
   employees, 
@@ -22,6 +24,9 @@ const EmployeesTab = ({
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [csvConfirmation, setCsvConfirmation] = useState(null);
   
   // Search and pagination state
   const [searchTerm, setSearchTerm] = useState('');
@@ -143,12 +148,15 @@ const EmployeesTab = ({
     setShowEditForm(true);
   };
 
-  // Handle delete employee
-  const handleDeleteEmployee = async (employeeId, employeeName) => {
-    if (!window.confirm(`Are you sure you want to delete ${employeeName}? This action cannot be undone.`)) {
-      return;
-    }
+  // Handle delete employee - show modal
+  const handleDeleteEmployee = (employee) => {
+    setEmployeeToDelete(employee);
+  };
 
+  // Confirm delete employee - actual deletion
+  const confirmDeleteEmployee = async (employeeId, employeeName) => {
+    setDeleteLoading(true);
+    
     try {
       const { error } = await supabase
         .from('employees')
@@ -158,6 +166,7 @@ const EmployeesTab = ({
       if (error) throw error;
 
       setMessage('Employee deleted successfully!');
+      setEmployeeToDelete(null);
       
       // Refresh the staff data
       if (fetchStaffData) {
@@ -166,6 +175,8 @@ const EmployeesTab = ({
     } catch (error) {
       console.error('Error deleting employee:', error);
       setMessage('Failed to delete employee. Please try again.');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -228,10 +239,34 @@ const EmployeesTab = ({
       const existingEmployeesCount = employees.filter(emp => emp.venue_id === targetVenueIdForReplace).length;
       
       if (existingEmployeesCount > 0) {
-        const confirmMessage = `This will replace all ${existingEmployeesCount} existing employees at ${venueName} with ${parsedEmployees.length} new employees from your CSV. Continue?`;
-        if (!window.confirm(confirmMessage)) {
-          return;
-        }
+        // Show confirmation modal instead of window.confirm
+        await new Promise((resolve) => {
+          setCsvConfirmation({
+            message: (
+              <div>
+                <p className="mb-4">
+                  This will replace all <strong>{existingEmployeesCount}</strong> existing employees at <strong>{venueName}</strong> with <strong>{parsedEmployees.length}</strong> new employees from your CSV.
+                </p>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <p className="text-sm text-orange-800">
+                    <strong>Warning:</strong> This action cannot be undone. All existing employee data will be permanently deleted.
+                  </p>
+                </div>
+              </div>
+            ),
+            onConfirm: () => {
+              setCsvConfirmation(null);
+              resolve(true);
+            },
+            onCancel: () => {
+              setCsvConfirmation(null);
+              setUploading(false);
+              resolve(false);
+            }
+          });
+        }).then(confirmed => {
+          if (!confirmed) return;
+        });
       }
       
       // Delete all existing employees for this venue
@@ -474,6 +509,28 @@ const EmployeesTab = ({
         employees={employees}
         fetchStaffData={fetchStaffData}
         setMessage={setMessage}
+      />
+
+      {/* Delete Employee Modal */}
+      <DeleteEmployeeModal
+        employee={employeeToDelete}
+        onConfirm={confirmDeleteEmployee}
+        onCancel={() => setEmployeeToDelete(null)}
+        loading={deleteLoading}
+      />
+
+      {/* CSV Upload Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!csvConfirmation}
+        onConfirm={csvConfirmation?.onConfirm}
+        onCancel={csvConfirmation?.onCancel}
+        title="Replace All Employees"
+        message={csvConfirmation?.message}
+        confirmText="Replace Employees"
+        cancelText="Cancel Upload"
+        confirmButtonStyle="warning"
+        icon="warning"
+        loading={uploading}
       />
     </div>
   );

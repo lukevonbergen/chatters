@@ -56,7 +56,7 @@ function App() {
       {/* Dev Site Banner */}
       {isDevSite && (
         <div className="bg-orange-500 text-white text-xs text-center py-1 px-4 font-medium">
-          🚧 Development Site - Expect bugs and incomplete features
+          Dev Site - Expect bugs and incomplete features
         </div>
       )}
       

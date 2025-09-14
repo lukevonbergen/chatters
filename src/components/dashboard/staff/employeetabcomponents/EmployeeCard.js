@@ -9,7 +9,7 @@ const EmployeeCard = ({ employee, onEdit, onDelete }) => {
   };
 
   const handleDelete = () => {
-    onDelete(employee.id, `${employee.first_name} ${employee.last_name}`);
+    onDelete(employee);
   };
 
   return (

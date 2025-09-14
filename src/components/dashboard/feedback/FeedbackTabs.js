@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import { AlertTriangle, CheckCircle, Clock, MapPin, Calendar, Timer, User, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import AlertModal from '../ui/AlertModal';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
@@ -13,6 +14,7 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
   const [activeTab, setActiveTab] = useState('alerts');
   const [selectedSession, setSelectedSession] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [alertModal, setAlertModal] = useState(null);
   const [staffList, setStaffList] = useState([]);
   const [selectedStaffId, setSelectedStaffId] = useState('');
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,14 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
   };
 
   const markSessionAsActioned = async (session) => {
-    if (!selectedStaffId) return alert('Please select a staff member');
+    if (!selectedStaffId) {
+      setAlertModal({
+        type: 'warning',
+        title: 'Missing Staff Selection',
+        message: 'Please select a staff member'
+      });
+      return;
+    }
     const ids = session.items.map(i => i.id);
     await supabase.from('feedback').update({
       is_actioned: true,
@@ -529,6 +538,15 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
           </div>
         </div>
       )}
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={!!alertModal}
+        onClose={() => setAlertModal(null)}
+        title={alertModal?.title}
+        message={alertModal?.message}
+        type={alertModal?.type}
+      />
     </>
   );
 };

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, RotateCcw, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { supabase } from '../../../utils/supabase';
+import ConfirmationModal from '../../ui/ConfirmationModal';
 
 const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchStaffData }) => {
   const [actionLoading, setActionLoading] = useState({});
   const [pendingInvitations, setPendingInvitations] = useState([]);
   const [activeManagers, setActiveManagers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [revokeConfirmation, setRevokeConfirmation] = useState(null);
 
   // Fetch pending invitations and active managers
   useEffect(() => {
@@ -137,12 +139,20 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchS
     const action = 'revoke access';
     const warning = 'This will remove their venue access but keep their account.';
     
-    if (!window.confirm(`Are you sure you want to ${action} for ${manager.email}? ${warning}`)) {
-      return;
-    }
+    setRevokeConfirmation({
+      manager,
+      action,
+      warning,
+      deleteAccount
+    });
+  };
 
+  const confirmRevokeAccess = async () => {
+    const { manager, action } = revokeConfirmation;
     const loadingKey = 'revoking';
+    
     setActionLoading(prev => ({ ...prev, [manager.id]: loadingKey }));
+    setRevokeConfirmation(null);
     
     try {
       // Use Supabase directly for staff table deletion (this works in local dev)
@@ -391,6 +401,33 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchS
           <div>• <strong>Delete Account:</strong> Permanently deletes the manager's account and all data</div>
         </div>
       </div>
+
+      {/* Revoke Access Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!revokeConfirmation}
+        onConfirm={confirmRevokeAccess}
+        onCancel={() => setRevokeConfirmation(null)}
+        title="Revoke Manager Access"
+        message={
+          revokeConfirmation && (
+            <div>
+              <p className="mb-3">
+                Are you sure you want to revoke access for <strong>{revokeConfirmation.manager?.email}</strong>?
+              </p>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm text-orange-800">
+                  {revokeConfirmation.warning}
+                </p>
+              </div>
+            </div>
+          )
+        }
+        confirmText="Revoke Access"
+        cancelText="Cancel"
+        confirmButtonStyle="warning"
+        icon="warning"
+        loading={revokeConfirmation && actionLoading[revokeConfirmation.manager?.id] === 'revoking'}
+      />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../utils/supabase';
 import { downloadEmployeesCSV, parseEmployeesCSV } from '../../utils/csvUtils';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import { 
   Plus, 
   Trash2, 
@@ -109,6 +110,10 @@ export default function AdminDashboard() {
   const [venueEmployees, setVenueEmployees] = useState({});
   const [loadingVenueStaff, setLoadingVenueStaff] = useState({});
   const [showAddEmployeeForm, setShowAddEmployeeForm] = useState({});
+  
+  // Modal state
+  const [deleteEmployeeConfirmation, setDeleteEmployeeConfirmation] = useState(null);
+  const [csvReplaceConfirmation, setCsvReplaceConfirmation] = useState(null);
   const [newEmployeeData, setNewEmployeeData] = useState({});
   const [uploadingCSV, setUploadingCSV] = useState({});
 
@@ -563,7 +568,12 @@ export default function AdminDashboard() {
 
   // Remove employee
   const removeEmployee = async (venueId, employeeId, employeeName) => {
-    if (!window.confirm(`Are you sure you want to remove ${employeeName}?`)) return;
+    setDeleteEmployeeConfirmation({ venueId, employeeId, employeeName });
+  };
+
+  const confirmDeleteEmployee = async () => {
+    const { venueId, employeeId, employeeName } = deleteEmployeeConfirmation;
+    setDeleteEmployeeConfirmation(null);
 
     try {
       const { error } = await supabase
@@ -614,10 +624,25 @@ export default function AdminDashboard() {
       const existingCount = venueEmployees[venueId]?.length || 0;
       
       if (existingCount > 0) {
-        const confirmMessage = `This will replace all ${existingCount} existing employees at ${venueName} with ${parsedEmployees.length} new employees from your CSV. Continue?`;
-        if (!window.confirm(confirmMessage)) {
-          return;
-        }
+        // Show confirmation modal instead of window.confirm
+        await new Promise((resolve) => {
+          setCsvReplaceConfirmation({
+            venueId,
+            venueName,
+            existingCount,
+            parsedEmployees,
+            onConfirm: () => {
+              setCsvReplaceConfirmation(null);
+              resolve(true);
+            },
+            onCancel: () => {
+              setCsvReplaceConfirmation(null);
+              resolve(false);
+            }
+          });
+        }).then(confirmed => {
+          if (!confirmed) return;
+        });
       }
       
       // Delete existing employees for this venue
@@ -1642,6 +1667,49 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Delete Employee Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!deleteEmployeeConfirmation}
+        onConfirm={confirmDeleteEmployee}
+        onCancel={() => setDeleteEmployeeConfirmation(null)}
+        title="Remove Employee"
+        message={
+          deleteEmployeeConfirmation && (
+            <p>Are you sure you want to remove <strong>{deleteEmployeeConfirmation.employeeName}</strong> from the system? This action cannot be undone.</p>
+          )
+        }
+        confirmText="Remove Employee"
+        cancelText="Cancel"
+        confirmButtonStyle="danger"
+        icon="danger"
+      />
+
+      {/* CSV Replace Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!csvReplaceConfirmation}
+        onConfirm={csvReplaceConfirmation?.onConfirm}
+        onCancel={csvReplaceConfirmation?.onCancel}
+        title="Replace All Employees"
+        message={
+          csvReplaceConfirmation && (
+            <div>
+              <p className="mb-4">
+                This will replace all <strong>{csvReplaceConfirmation.existingCount}</strong> existing employees at <strong>{csvReplaceConfirmation.venueName}</strong> with <strong>{csvReplaceConfirmation.parsedEmployees.length}</strong> new employees from your CSV.
+              </p>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm text-orange-800">
+                  <strong>Warning:</strong> This action cannot be undone. All existing employee data will be permanently deleted.
+                </p>
+              </div>
+            </div>
+          )
+        }
+        confirmText="Replace Employees"
+        cancelText="Cancel Upload"
+        confirmButtonStyle="warning"
+        icon="warning"
+      />
     </div>
   );
 }

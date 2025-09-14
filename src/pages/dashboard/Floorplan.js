@@ -5,6 +5,8 @@ import PageContainer from '../../components/dashboard/layout/PageContainer';
 import { v4 as uuidv4 } from 'uuid';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import AlertModal from '../../components/ui/AlertModal';
 
 // Components
 import FloorPlanCanvas from '../../components/dashboard/floorplan/FloorPlanCanvas';
@@ -27,6 +29,12 @@ const Floorplan = () => {
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false); // default to view mode
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  // Modal states
+  const [exitConfirmation, setExitConfirmation] = useState(false);
+  const [clearAllConfirmation, setClearAllConfirmation] = useState(false);
+  const [zoneDeleteConfirmation, setZoneDeleteConfirmation] = useState(null);
+  const [alertModal, setAlertModal] = useState(null);
 
   // Check for mobile on mount
   useEffect(() => {
@@ -84,9 +92,18 @@ const Floorplan = () => {
 
   // Event handlers
   const handleToggleEdit = () => {
-    if (editMode && hasUnsavedChanges && !window.confirm('You have unsaved changes. Exit anyway?')) return;
+    if (editMode && hasUnsavedChanges) {
+      setExitConfirmation(true);
+      return;
+    }
     setEditMode(!editMode);
     setHasUnsavedChanges(false);
+  };
+
+  const confirmExitEdit = () => {
+    setEditMode(false);
+    setHasUnsavedChanges(false);
+    setExitConfirmation(false);
   };
 
   const handleAddTable = (tableNumber, shape) => {
@@ -188,7 +205,11 @@ const Floorplan = () => {
     const { error } = await supabase.from('table_positions').upsert(payload, { onConflict: 'id' });
 
     if (error) {
-      alert('Error saving layout. Check console for details.');
+      setAlertModal({
+        type: 'error',
+        title: 'Save Error',
+        message: 'Error saving layout. Please check the console for details.'
+      });
       console.error(error);
     } else {
       setEditMode(false); // return to view mode after saving
@@ -201,11 +222,14 @@ const Floorplan = () => {
 
   const handleClearAllTables = async () => {
     if (!venueId) return;
-    if (!window.confirm('Delete all tables in this venue?')) return;
+    setClearAllConfirmation(true);
+  };
 
+  const confirmClearAllTables = async () => {
     await supabase.from('table_positions').delete().eq('venue_id', venueId);
     setTables([]);
     setHasUnsavedChanges(false);
+    setClearAllConfirmation(false);
   };
 
   // Zone handlers
@@ -218,13 +242,15 @@ const Floorplan = () => {
 
   const handleZoneDelete = async (zoneId) => {
     const count = tables.filter((t) => t.zone_id === zoneId).length;
-    if (count > 0 && !window.confirm(`This zone contains ${count} table(s). Deleting the zone will remove them. Proceed?`))
-      return;
+    setZoneDeleteConfirmation({ zoneId, count });
+  };
 
+  const confirmZoneDelete = async (zoneId) => {
     await supabase.from('table_positions').delete().eq('zone_id', zoneId);
     await supabase.from('zones').delete().eq('id', zoneId);
     await loadZones(venueId);
     await loadTables(venueId);
+    setZoneDeleteConfirmation(null);
   };
 
   const handleCreateZone = async () => {
@@ -260,6 +286,7 @@ const Floorplan = () => {
         onAddTable={handleAddTable}
         onSaveLayout={handleSaveLayout}
         onClearAllTables={handleClearAllTables}
+        onShowAlert={setAlertModal}
       />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
@@ -283,6 +310,58 @@ const Floorplan = () => {
           onTableResize={handleTableResize}
         />
       </div>
+
+      {/* Exit Edit Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={exitConfirmation}
+        onConfirm={confirmExitEdit}
+        onCancel={() => setExitConfirmation(false)}
+        title="Exit Edit Mode"
+        message="You have unsaved changes. Are you sure you want to exit without saving?"
+        confirmText="Exit Without Saving"
+        cancelText="Stay in Edit Mode"
+        confirmButtonStyle="warning"
+        icon="warning"
+      />
+
+      {/* Clear All Tables Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={clearAllConfirmation}
+        onConfirm={confirmClearAllTables}
+        onCancel={() => setClearAllConfirmation(false)}
+        title="Clear All Tables"
+        message="Are you sure you want to delete all tables in this venue? This action cannot be undone."
+        confirmText="Delete All Tables"
+        cancelText="Cancel"
+        confirmButtonStyle="danger"
+        icon="danger"
+      />
+
+      {/* Zone Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!zoneDeleteConfirmation}
+        onConfirm={() => confirmZoneDelete(zoneDeleteConfirmation?.zoneId)}
+        onCancel={() => setZoneDeleteConfirmation(null)}
+        title="Delete Zone"
+        message={
+          zoneDeleteConfirmation?.count > 0
+            ? `This zone contains ${zoneDeleteConfirmation.count} table${zoneDeleteConfirmation.count !== 1 ? 's' : ''}. Deleting the zone will permanently remove ${zoneDeleteConfirmation.count === 1 ? 'it' : 'them'}. This action cannot be undone.`
+            : "Are you sure you want to delete this zone? This action cannot be undone."
+        }
+        confirmText="Delete Zone"
+        cancelText="Cancel"
+        confirmButtonStyle="danger"
+        icon="danger"
+      />
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={!!alertModal}
+        onClose={() => setAlertModal(null)}
+        title={alertModal?.title}
+        message={alertModal?.message}
+        type={alertModal?.type}
+      />
     </PageContainer>
   );
 };

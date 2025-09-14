@@ -8,8 +8,11 @@ const VenueTab = ({
   tripadvisorLink, setTripadvisorLink,
   googleReviewLink, setGoogleReviewLink,
   saveSettings,
+  saveReviewLinks,
   loading,
+  reviewLinksLoading,
   message,
+  reviewLinksMessage,
   userRole,
   currentVenueId  // Add this prop
 }) => {
@@ -306,8 +309,8 @@ const VenueTab = ({
           </div>
         </div>
 
-        {/* Section 2: Review Links Card - Hidden for now */}
-        <div className="bg-white border border-gray-200 rounded-lg hidden">
+        {/* Section 2: Review Links Card */}
+        <div className="bg-white border border-gray-200 rounded-lg">
           {/* Section Header */}
           <div className="border-b border-gray-200 px-6 py-4">
             <div className="flex items-center justify-between">
@@ -366,13 +369,22 @@ const VenueTab = ({
                 Update review links to guide satisfied customers
               </div>
               <button
-                onClick={saveSettings}
-                disabled={loading}
+                onClick={saveReviewLinks}
+                disabled={reviewLinksLoading}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Saving...' : 'Save Review Links'}
+                {reviewLinksLoading ? 'Saving...' : 'Save Review Links'}
               </button>
             </div>
+            {reviewLinksMessage && (
+              <div className={`text-xs p-2 rounded-md mt-3 ${
+                reviewLinksMessage.includes('success') 
+                  ? 'text-green-700 bg-green-50 border border-green-200' 
+                  : 'text-red-700 bg-red-50 border border-red-200'
+              }`}>
+                {reviewLinksMessage}
+              </div>
+            )}
           </div>
         </div>
 
