@@ -227,7 +227,7 @@ const CustomerFeedbackPage = () => {
     }
   };
 
-  // Check if all feedback ratings are positive (>4)
+  // Check if all feedback ratings are positive (≥4)
   const isAllFeedbackPositive = () => {
     // Get only feedback with actual ratings (not free text)
     const ratedFeedback = feedbackAnswers.filter(feedback => feedback.rating !== null);
@@ -235,8 +235,8 @@ const CustomerFeedbackPage = () => {
     // If no rated feedback, don't show review prompt (only free text submitted)
     if (ratedFeedback.length === 0) return false;
     
-    // Check ALL ratings are above 4
-    return ratedFeedback.every(feedback => feedback.rating > 4);
+    // Check ALL ratings are 4 or above (4-star and 5-star)
+    return ratedFeedback.every(feedback => feedback.rating >= 4);
   };
 
   const handleAssistanceRequest = async () => {

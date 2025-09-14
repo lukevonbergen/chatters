@@ -40,6 +40,8 @@ const SettingsPage = () => {
     country: '',
   });
   const [message, setMessage] = useState('');
+  const [reviewLinksLoading, setReviewLinksLoading] = useState(false);
+  const [reviewLinksMessage, setReviewLinksMessage] = useState('');
 
   // Sidebar navigation items - conditionally include Billing for master users
   const navItems = [
@@ -191,6 +193,36 @@ const SettingsPage = () => {
     }
   };
 
+  // Save review links only
+  const saveReviewLinks = async () => {
+    if (!venueId) return;
+
+    setReviewLinksLoading(true);
+    setReviewLinksMessage('');
+
+    try {
+      // Update only review links in venues table
+      const { error: venueError } = await supabase
+        .from('venues')
+        .update({
+          tripadvisor_link: tripadvisorLink,
+          google_review_link: googleReviewLink,
+        })
+        .eq('id', venueId);
+
+      if (venueError) {
+        throw venueError;
+      }
+
+      setReviewLinksMessage('Review links updated successfully!');
+    } catch (error) {
+      console.error('Error updating review links:', error);
+      setReviewLinksMessage(`Error updating review links: ${error.message}`);
+    } finally {
+      setReviewLinksLoading(false);
+    }
+  };
+
   // Props to pass to tab components
   const tabProps = {
     // Data
@@ -208,8 +240,11 @@ const SettingsPage = () => {
     
     // Actions
     saveSettings,
+    saveReviewLinks,
     loading,
+    reviewLinksLoading,
     message,
+    reviewLinksMessage,
     venueId,
     userRole,
     currentVenueId: venueId, // Add this line - pass venueId as currentVenueId
