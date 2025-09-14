@@ -24,6 +24,7 @@ const KioskPage = () => {
   const [currentView, setCurrentView] = useState('overview'); // 'overview' or zone id
   const [inactivityTimer, setInactivityTimer] = useState(null); // kept for easy re-enable
   const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [sessionTimeoutHours, setSessionTimeoutHours] = useState(2); // Default 2 hours
 
   // ==== AUTO-RETURN (10s) — DISABLED ====
   // useEffect(() => {
@@ -53,6 +54,7 @@ const KioskPage = () => {
   useEffect(() => {
     if (!venueId || venueLoading) return;
     const load = async () => {
+      await loadVenueSettings(venueId);
       await loadZones(venueId);
       await loadTables(venueId);
       await fetchFeedback(venueId);
@@ -140,6 +142,18 @@ const KioskPage = () => {
   }, [venueId]);
 
   // Data loading
+  const loadVenueSettings = async (venueId) => {
+    const { data, error } = await supabase
+      .from('venues')
+      .select('session_timeout_hours')
+      .eq('id', venueId)
+      .single();
+    
+    if (!error && data) {
+      setSessionTimeoutHours(data.session_timeout_hours || 2); // Default to 2 hours if not set
+    }
+  };
+
   const loadZones = async (venueId) => {
     const { data } = await supabase
       .from('zones')
@@ -163,7 +177,7 @@ const KioskPage = () => {
 
   const fetchFeedback = async (venueId) => {
     const now = dayjs();
-    const cutoff = now.subtract(2, 'hour').toISOString();
+    const cutoff = now.subtract(sessionTimeoutHours, 'hour').toISOString();
 
     const { data, error } = await supabase
       .from('feedback')
@@ -219,7 +233,7 @@ const KioskPage = () => {
 
   const fetchAssistanceRequests = async (venueId) => {
     const now = dayjs();
-    const cutoff = now.subtract(2, 'hour').toISOString();
+    const cutoff = now.subtract(sessionTimeoutHours, 'hour').toISOString();
 
 
     // First, let's see ALL assistance requests for this venue (no filters)

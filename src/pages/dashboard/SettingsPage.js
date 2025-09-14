@@ -183,7 +183,9 @@ const SettingsPage = () => {
       setMessage('Settings updated successfully!');
     } catch (error) {
       console.error('Error updating settings:', error);
-      setMessage('Failed to update settings. Please try again.');
+      // Show detailed error info to user for support purposes
+      const errorDetails = error.code ? `Error ${error.code}: ${error.message}` : error.message;
+      setMessage(`Failed to update settings: ${errorDetails}. Please contact support with this error code.`);
     } finally {
       setLoading(false);
     }

@@ -325,11 +325,7 @@ console.log('Environment variables:', {
    ```
 
 2. **Console Logs**: Check browser console for errors
-3. **Sentry Integration**: Use error tracking
-   ```javascript
-   import * as Sentry from '@sentry/react';
-   Sentry.captureException(error);
-   ```
+3. **Browser DevTools**: Use debugging tools for error analysis
 
 ## Debugging Tools
 

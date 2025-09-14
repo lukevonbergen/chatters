@@ -6,17 +6,15 @@ import { LoadingProvider } from './context/LoadingContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import * as Sentry from '@sentry/react';
-import { browserTracingIntegration } from '@sentry/react';
-
+import * as Sentry from "@sentry/react";
 import MarketingRoutes from './MarketingRoutes';
 import AppRoutes from './AppRoutes'; // ✅ now controls dashboard vs admin
 
 Sentry.init({
-  dsn: 'your-sentry-dsn',
-  integrations: [browserTracingIntegration()],
-  tracesSampleRate: 1.0,
-  sendDefaultPii: true,
+  dsn: "https://e4e4170e47a3d8d9bbdacb71d59fb96e@o4509429646622720.ingest.de.sentry.io/4510018410381392",
+  // Setting this option to true will send default PII data to Sentry.
+  // For example, automatic IP address collection on events
+  sendDefaultPii: true
 });
 
 function App() {
