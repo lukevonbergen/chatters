@@ -6,21 +6,20 @@ import { LoadingProvider } from './context/LoadingContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import * as Sentry from '@sentry/react';
-import { browserTracingIntegration } from '@sentry/react';
-
+import * as Sentry from "@sentry/react";
 import MarketingRoutes from './MarketingRoutes';
 import AppRoutes from './AppRoutes'; // ✅ now controls dashboard vs admin
 
 Sentry.init({
-  dsn: 'your-sentry-dsn',
-  integrations: [browserTracingIntegration()],
-  tracesSampleRate: 1.0,
-  sendDefaultPii: true,
+  dsn: "https://e4e4170e47a3d8d9bbdacb71d59fb96e@o4509429646622720.ingest.de.sentry.io/4510018410381392",
+  // Setting this option to true will send default PII data to Sentry.
+  // For example, automatic IP address collection on events
+  sendDefaultPii: true
 });
 
 function App() {
   const [isDashboardDomain, setIsDashboardDomain] = useState(false);
+  const [isDevSite, setIsDevSite] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -28,6 +27,14 @@ function App() {
         window.location.hostname.startsWith('my.') || 
         window.location.hostname.includes('.my.')
       );
+
+      // Check if this is a dev site
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isDevDomain = hostname.includes('dev') || hostname.includes('staging') || hostname.includes('test');
+      const isVercelPreview = hostname.includes('vercel.app') && !hostname.includes('getchatters.com');
+      
+      setIsDevSite(isLocalhost || isDevDomain || isVercelPreview);
 
       const hash = window.location.hash;
 
@@ -46,6 +53,13 @@ function App() {
 
   return (
     <div className={isDashboardDomain ? 'font-sans' : 'font-marketing'}>
+      {/* Dev Site Banner */}
+      {isDevSite && (
+        <div className="bg-orange-500 text-white text-xs text-center py-1 px-4 font-medium">
+          🚧 Development Site - Expect bugs and incomplete features
+        </div>
+      )}
+      
       <LoadingProvider>
         <ModalProvider>
           <Toaster position="top-right" toastOptions={{ duration: 3000 }} />

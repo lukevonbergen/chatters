@@ -149,7 +149,9 @@ const FeedbackTimeSelection = ({ currentVenueId }) => {
 
     } catch (error) {
       console.error('Error saving feedback hours:', error);
-      setMessage('Failed to save feedback hours: ' + error.message);
+      // Show detailed error info to user for support purposes
+      const errorDetails = error.code ? `Error ${error.code}: ${error.message}` : error.message;
+      setMessage(`Failed to save feedback hours: ${errorDetails}. Please contact support with this error code.`);
     } finally {
       setLoading(false);
     }

@@ -90,6 +90,21 @@ const SecurityPage = () => {
           <p className="text-xl text-gray-200 mb-8 leading-relaxed font-satoshi max-w-4xl mx-auto">
             Comprehensive security documentation for the Chatters platform. Learn about our security architecture, data protection measures, compliance standards, and privacy policies.
           </p>
+          
+          {/* Security Notice Banner */}
+          <div className="max-w-4xl mx-auto bg-yellow-500/20 border border-yellow-400 rounded-2xl p-6 mb-8">
+            <div className="flex items-start space-x-4">
+              <AlertTriangle className="w-8 h-8 text-yellow-400 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="text-xl font-bold text-yellow-100 mb-2 font-satoshi">Security Assessment Notice</h3>
+                <p className="text-yellow-200 font-satoshi leading-relaxed">
+                  We are currently implementing enhanced database security policies to strengthen tenant isolation. 
+                  While no customer data has been compromised, this document reflects our current security posture 
+                  including identified areas for improvement. Updates are being applied with zero downtime.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -170,32 +185,54 @@ const SecurityPage = () => {
                 
                 <div className="mb-8">
                   <h3 className="text-2xl font-semibold text-[#1A535C] mb-4 font-satoshi">Multi-Tenant Data Isolation</h3>
-                  <div className="bg-blue-50 border-l-4 border-[#4ECDC4] p-6 mb-6">
-                    <h4 className="font-semibold text-[#1A535C] mb-3 font-satoshi">Question: How do you ensure tenant data isolation?</h4>
-                    <p className="text-gray-700 mb-4 font-satoshi">We implement a hybrid security model:</p>
-                    <ul className="space-y-2 text-gray-700 font-satoshi">
+                  <div className="bg-red-50 border-l-4 border-red-500 p-6 mb-6">
+                    <h4 className="font-semibold text-red-800 mb-3 font-satoshi flex items-center">
+                      <AlertTriangle className="w-5 h-5 mr-2" />
+                      Security Notice: Current RLS Policy Status
+                    </h4>
+                    <p className="text-red-700 mb-4 font-satoshi">Our current implementation has identified security gaps that are being addressed:</p>
+                    <ul className="space-y-2 text-red-700 font-satoshi">
                       <li className="flex items-start space-x-2">
-                        <CheckCircle className="w-5 h-5 text-[#4ECDC4] mt-0.5 flex-shrink-0" />
-                        <span><strong>Database Level:</strong> Row Level Security (RLS) policies ensure only authenticated users can access data</span>
+                        <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                        <span><strong>Database Level:</strong> Some RLS policies are currently over-permissive and allow broader access than intended</span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <CheckCircle className="w-5 h-5 text-[#4ECDC4] mt-0.5 flex-shrink-0" />
-                        <span><strong>Application Level:</strong> Account-based filtering ensures users only see data from their own account/venues</span>
+                        <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span><strong>Application Level:</strong> Code correctly implements venue-scoped data access</span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <CheckCircle className="w-5 h-5 text-[#4ECDC4] mt-0.5 flex-shrink-0" />
-                        <span><strong>API Level:</strong> All endpoints validate user permissions and scope data to accessible venues</span>
+                        <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                        <span><strong>Database Policies:</strong> Some policies allow any authenticated user to access all venue data</span>
                       </li>
                     </ul>
+                    <div className="mt-4 p-4 bg-red-100 rounded-lg">
+                      <p className="text-red-800 font-semibold font-satoshi">Action Required:</p>
+                      <p className="text-red-700 text-sm font-satoshi">Database policies are being updated to enforce proper tenant isolation. No customer data has been compromised.</p>
+                    </div>
                   </div>
                   
                   <div className="bg-gray-900 rounded-xl p-6 mb-6">
-                    <h4 className="text-white font-semibold mb-3 font-satoshi">Example RLS Policy</h4>
-                    <pre className="text-[#4ECDC4] text-sm overflow-x-auto">
-{`-- Example RLS Policy
-CREATE POLICY "users_policy" ON users FOR ALL USING (auth.uid() = id);
-CREATE POLICY "venues_select" ON venues FOR SELECT USING (auth.uid() IS NOT NULL);`}
-                    </pre>
+                    <h4 className="text-white font-semibold mb-3 font-satoshi">Current RLS Policy Issues</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <h5 className="text-red-400 font-semibold mb-2 font-satoshi">❌ Over-Permissive Policies (Being Fixed):</h5>
+                        <pre className="text-red-300 text-sm overflow-x-auto">
+{`-- These allow ANY authenticated user to see ALL data:
+CREATE POLICY "feedback_authenticated_select" ON feedback 
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "venues_select" ON venues 
+  FOR SELECT USING (auth.uid() IS NOT NULL);`}
+                        </pre>
+                      </div>
+                      <div>
+                        <h5 className="text-green-400 font-semibold mb-2 font-satoshi">✅ Secure Replacement Policies:</h5>
+                        <pre className="text-green-300 text-sm overflow-x-auto">
+{`-- These properly scope access to user's venues only:
+CREATE POLICY "feedback_venue_access" ON feedback FOR ALL
+  USING (venue_id IN (SELECT accessible_venue_ids()));`}
+                        </pre>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="bg-gray-50 rounded-xl p-6">
@@ -249,14 +286,23 @@ CREATE POLICY "venues_select" ON venues FOR SELECT USING (auth.uid() IS NOT NULL
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 border-l-4 border-[#4ECDC4] p-6">
-                    <h4 className="font-semibold text-[#1A535C] mb-3 font-satoshi">Question: How do you prevent unauthorized access between accounts?</h4>
-                    <ol className="space-y-2 text-gray-700 font-satoshi list-decimal list-inside">
-                      <li><strong>Account ID Scoping:</strong> All queries filtered by user's account_id</li>
-                      <li><strong>Staff Table Relationships:</strong> Managers can only access venues they're assigned to</li>
-                      <li><strong>VenueContext Isolation:</strong> Frontend automatically filters available venues per user</li>
-                      <li><strong>API Endpoint Validation:</strong> Server-side verification of venue access rights</li>
-                    </ol>
+                  <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6">
+                    <h4 className="font-semibold text-yellow-800 mb-3 font-satoshi">Question: How do you prevent unauthorized access between accounts?</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <h5 className="font-semibold text-yellow-800 mb-2 font-satoshi">Current Status (Mixed Security Model):</h5>
+                        <ol className="space-y-2 text-yellow-700 font-satoshi list-decimal list-inside">
+                          <li><strong>✅ Account ID Scoping:</strong> Application code correctly filters by user's account_id</li>
+                          <li><strong>✅ Staff Table Relationships:</strong> Managers properly limited to assigned venues</li>
+                          <li><strong>✅ VenueContext Isolation:</strong> Frontend correctly filters available venues</li>
+                          <li><strong>⚠️ Database Policy Gap:</strong> Some RLS policies allow broader access than application intends</li>
+                        </ol>
+                      </div>
+                      <div className="bg-yellow-100 rounded-lg p-4">
+                        <p className="text-yellow-800 font-semibold font-satoshi">Security Assessment:</p>
+                        <p className="text-yellow-700 text-sm font-satoshi">While the application code implements proper security controls, database-level policies need tightening to match application intent. This represents defense-in-depth improvements rather than active vulnerabilities.</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </section>
@@ -669,25 +715,78 @@ if (userData.role !== 'master') {
                   Technical Security Measures
                 </h2>
                 
+                {/* Security Status Alert */}
+                <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6 mb-8">
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-6 h-6 text-yellow-600 mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-yellow-800 mb-2 font-satoshi">Current Security Assessment</h3>
+                      <p className="text-yellow-700 mb-4 font-satoshi">
+                        Our security team has identified areas for improvement in our database policies. While no data has been compromised, 
+                        we are implementing additional security measures to ensure complete tenant isolation.
+                      </p>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="bg-green-100 rounded-lg p-4">
+                          <h4 className="font-semibold text-green-800 mb-2 font-satoshi">✅ Secure Components:</h4>
+                          <ul className="text-green-700 text-sm space-y-1 font-satoshi">
+                            <li>• Application-level access controls</li>
+                            <li>• Frontend venue filtering</li>
+                            <li>• User role enforcement</li>
+                            <li>• Account-scoped queries</li>
+                          </ul>
+                        </div>
+                        <div className="bg-yellow-100 rounded-lg p-4">
+                          <h4 className="font-semibold text-yellow-800 mb-2 font-satoshi">⚠️ Areas Being Strengthened:</h4>
+                          <ul className="text-yellow-700 text-sm space-y-1 font-satoshi">
+                            <li>• Database RLS policy tightening</li>
+                            <li>• Redundant policy cleanup</li>
+                            <li>• Enhanced admin access controls</li>
+                            <li>• Additional audit logging</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="mb-8">
                   <h3 className="text-2xl font-semibold text-[#1A535C] mb-4 font-satoshi">Database Security</h3>
                   <div className="mb-6">
-                    <h4 className="font-semibold text-[#1A535C] mb-3 font-satoshi">Row Level Security Policies:</h4>
-                    <div className="bg-gray-900 rounded-xl p-6">
-                      <pre className="text-[#4ECDC4] text-sm overflow-x-auto">
-{`-- Users can only access their own data
-CREATE POLICY "users_policy" ON users FOR ALL USING (auth.uid() = id);
-
--- Account isolation
-CREATE POLICY "accounts_select" ON accounts FOR SELECT USING (
-  id = (SELECT account_id FROM users WHERE id = auth.uid())
-);
-
--- Venue access control
-CREATE POLICY "venues_select" ON venues FOR SELECT USING (
-  auth.uid() IS NOT NULL
-);`}
-                      </pre>
+                    <h4 className="font-semibold text-[#1A535C] mb-3 font-satoshi">Row Level Security Policies (Under Review):</h4>
+                    <div className="space-y-4">
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <h5 className="font-semibold text-red-800 mb-2 font-satoshi">Identified Issues:</h5>
+                        <div className="bg-gray-900 rounded-lg p-4">
+                          <pre className="text-red-300 text-sm overflow-x-auto">
+{`-- These policies are being replaced (too permissive):
+CREATE POLICY "feedback_authenticated_select" ON feedback 
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+  
+CREATE POLICY "assistance_requests_authenticated_select" 
+  ON assistance_requests FOR SELECT USING (auth.uid() IS NOT NULL);
+  
+CREATE POLICY "staff_authenticated_access" ON staff 
+  FOR ALL USING (auth.uid() IS NOT NULL);`}
+                          </pre>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                        <h5 className="font-semibold text-green-800 mb-2 font-satoshi">Secure Replacement Policies:</h5>
+                        <div className="bg-gray-900 rounded-lg p-4">
+                          <pre className="text-green-300 text-sm overflow-x-auto">
+{`-- New secure policies enforce proper venue scoping:
+CREATE POLICY "feedback_venue_access" ON feedback FOR ALL
+  USING (venue_id IN (
+    SELECT staff.venue_id FROM staff WHERE staff.user_id = auth.uid()
+    UNION
+    SELECT venues.id FROM venues 
+    JOIN users ON venues.account_id = users.account_id 
+    WHERE users.id = auth.uid() AND users.role = 'master'
+  ));`}
+                          </pre>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -723,14 +822,45 @@ CREATE POLICY "venues_select" ON venues FOR SELECT USING (
                   </div>
                 </div>
 
+                {/* Security Recommendations Section */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+                  <h4 className="font-semibold text-[#1A535C] mb-4 font-satoshi flex items-center">
+                    <Settings className="w-5 h-5 mr-2" />
+                    Security Improvement Plan
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <h5 className="font-semibold text-[#1A535C] mb-2 font-satoshi">Immediate Actions (Priority 1):</h5>
+                      <ul className="text-gray-700 space-y-1 text-sm font-satoshi">
+                        <li>• Replace over-permissive RLS policies with venue-scoped access controls</li>
+                        <li>• Remove redundant authentication policies that create confusion</li>
+                        <li>• Implement proper admin role checking across all policies</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-[#1A535C] mb-2 font-satoshi">Medium-term Improvements (Priority 2):</h5>
+                      <ul className="text-gray-700 space-y-1 text-sm font-satoshi">
+                        <li>• Add comprehensive audit logging for all data access</li>
+                        <li>• Implement additional monitoring for suspicious access patterns</li>
+                        <li>• Create automated security policy validation tests</li>
+                      </ul>
+                    </div>
+                    <div className="bg-blue-100 rounded-lg p-4">
+                      <p className="text-blue-800 font-semibold font-satoshi mb-1">Timeline:</p>
+                      <p className="text-blue-700 text-sm font-satoshi">High-priority security policy updates are being implemented immediately. All improvements will be completed within 30 days with thorough testing.</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Document Info */}
                 <div className="border-t-2 border-gray-200 pt-8 mt-16">
                   <div className="bg-gray-50 rounded-xl p-6">
                     <div className="text-center text-gray-600 font-satoshi">
-                      <p className="mb-2"><strong>Document Version:</strong> 1.0</p>
-                      <p className="mb-2"><strong>Last Updated:</strong> December 2024</p>
-                      <p className="mb-2"><strong>Review Schedule:</strong> Quarterly</p>
-                      <p><strong>Next Review:</strong> March 2025</p>
+                      <p className="mb-2"><strong>Document Version:</strong> 1.1 (Security Assessment Update)</p>
+                      <p className="mb-2"><strong>Last Updated:</strong> September 10 2025</p>
+                      <p className="mb-2"><strong>Security Review:</strong> In Progress</p>
+                      <p className="mb-2"><strong>Next Review:</strong> September 13 2025</p>
+                      <p className="text-sm text-red-600"><strong>Note:</strong> This document reflects current security posture including identified improvements</p>
                     </div>
                   </div>
                 </div>

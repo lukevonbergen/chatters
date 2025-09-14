@@ -73,11 +73,11 @@ const UpdatedDashboardFrame = ({ children }) => {
         if (accountIdToCheck) {
         const { data: account } = await supabase
           .from('accounts')
-          .select('trial_ends_at, is_paid')
+          .select('trial_ends_at, is_paid, demo_account')
           .eq('id', accountIdToCheck)
           .single();
 
-        if (account?.trial_ends_at && !account.is_paid) {
+        if (account?.trial_ends_at && !account.is_paid && !account.demo_account) {
           const trialEndDate = new Date(account.trial_ends_at);
           const daysLeft = Math.max(
             0,
@@ -89,7 +89,8 @@ const UpdatedDashboardFrame = ({ children }) => {
             daysLeft: daysLeft,
             isActive: daysLeft > 0,
             isExpired: daysLeft <= 0,
-            isPaid: account.is_paid
+            isPaid: account.is_paid,
+            isDemoAccount: account.demo_account || false
           });
         }
         }

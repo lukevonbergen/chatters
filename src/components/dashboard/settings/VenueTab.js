@@ -32,6 +32,9 @@ const VenueTab = ({
   const [venueMessage, setVenueMessage] = useState('');
   const [accountId, setAccountId] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [sessionTimeoutHours, setSessionTimeoutHours] = useState(2);
+  const [sessionTimeoutLoading, setSessionTimeoutLoading] = useState(false);
+  const [sessionTimeoutMessage, setSessionTimeoutMessage] = useState('');
 
   // Fetch venues for masters
   useEffect(() => {
@@ -39,6 +42,59 @@ const VenueTab = ({
       fetchVenues();
     }
   }, [userRole]);
+
+  // Fetch session timeout for current venue
+  useEffect(() => {
+    if (currentVenueId) {
+      fetchSessionTimeout();
+    }
+  }, [currentVenueId]);
+
+  const fetchSessionTimeout = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('venues')
+        .select('session_timeout_hours')
+        .eq('id', currentVenueId)
+        .single();
+      
+      if (!error && data) {
+        setSessionTimeoutHours(data.session_timeout_hours || 2);
+      }
+    } catch (error) {
+      console.error('Error fetching session timeout:', error);
+    }
+  };
+
+  const saveSessionTimeout = async () => {
+    if (!currentVenueId) return;
+    
+    setSessionTimeoutLoading(true);
+    setSessionTimeoutMessage('');
+    
+    try {
+      const { data, error, count } = await supabase
+        .from('venues')
+        .update({ session_timeout_hours: sessionTimeoutHours })
+        .eq('id', currentVenueId)
+        .select();
+      
+      if (error) throw error;
+      
+      if (count === 0 || !data || data.length === 0) {
+        throw new Error('No rows updated. You may not have permission to update this venue.');
+      }
+      
+      setSessionTimeoutMessage('Session timeout updated successfully!');
+    } catch (error) {
+      console.error('Error saving session timeout:', error);
+      // Show detailed error info to user for support purposes
+      const errorDetails = error.code ? `Error ${error.code}: ${error.message}` : error.message;
+      setSessionTimeoutMessage(`Failed to save session timeout: ${errorDetails}. Please contact support with this error code.`);
+    } finally {
+      setSessionTimeoutLoading(false);
+    }
+  };
 
   const fetchVenues = async () => {
     const { data: auth } = await supabase.auth.getUser();
@@ -132,7 +188,9 @@ const VenueTab = ({
 
     } catch (error) {
       console.error('Error creating venue:', error);
-      setVenueMessage('Failed to create venue: ' + error.message);
+      // Show detailed error info to user for support purposes
+      const errorDetails = error.code ? `Error ${error.code}: ${error.message}` : error.message;
+      setVenueMessage(`Failed to create venue: ${errorDetails}. Please contact support with this error code.`);
     } finally {
       setVenueLoading(false);
     }
@@ -318,7 +376,77 @@ const VenueTab = ({
           </div>
         </div>
 
-        {/* Section 3: Feedback Collection Hours */}
+        {/* Section 3: Session Timeout Settings */}
+        <div className="bg-white border border-gray-200 rounded-lg">
+          {/* Section Header */}
+          <div className="border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Session Timeout</h3>
+                <p className="text-sm text-gray-500 mt-1">Configure how long feedback sessions remain visible in the kiosk view</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section Content */}
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Timeout Duration (Hours)
+                </label>
+                <p className="text-xs text-gray-500">
+                  Feedback older than this will be filtered from kiosk view
+                </p>
+              </div>
+              <div className="lg:col-span-2">
+                <select
+                  value={sessionTimeoutHours}
+                  onChange={(e) => setSessionTimeoutHours(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <option value={1}>1 hour</option>
+                  <option value={2}>2 hours (default)</option>
+                  <option value={4}>4 hours</option>
+                  <option value={6}>6 hours</option>
+                  <option value={8}>8 hours</option>
+                  <option value={12}>12 hours</option>
+                  <option value={24}>24 hours</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Current setting: Feedback older than {sessionTimeoutHours} hour{sessionTimeoutHours !== 1 ? 's' : ''} will be hidden from staff kiosk
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Save Action */}
+          <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 rounded-b-lg">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-gray-500">
+                Changes apply immediately to all staff devices
+              </div>
+              <button
+                onClick={saveSessionTimeout}
+                disabled={sessionTimeoutLoading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {sessionTimeoutLoading ? 'Saving...' : 'Save Timeout Setting'}
+              </button>
+            </div>
+            {sessionTimeoutMessage && (
+              <div className={`text-xs p-2 rounded-md mt-3 ${
+                sessionTimeoutMessage.includes('success') 
+                  ? 'text-green-700 bg-green-50 border border-green-200' 
+                  : 'text-red-700 bg-red-50 border border-red-200'
+              }`}>
+                {sessionTimeoutMessage}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Section 4: Feedback Collection Hours */}
         <FeedbackTimeSelection currentVenueId={currentVenueId} />
 
         {/* Master-Only Section: Create New Venue */}

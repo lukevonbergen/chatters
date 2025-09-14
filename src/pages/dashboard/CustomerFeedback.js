@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import { HandHeart, Clock, Star } from 'lucide-react';
+import { HandHeart, Star } from 'lucide-react';
 
 const CustomerFeedbackPage = () => {
   const { venueId } = useParams();
@@ -385,17 +385,11 @@ const CustomerFeedbackPage = () => {
             </div>
           )}
           
-          <HandHeart className="w-16 h-16 text-orange-500 mx-auto mb-6" />
           <h2 className="text-xl font-semibold mb-4">Help is on the way!</h2>
           <p className="text-gray-600 text-sm mb-6">
             We've notified our team that Table {tableNumber} needs assistance. 
             Someone will be with you shortly.
           </p>
-          
-          <div className="flex items-center justify-center text-orange-600 mb-4">
-            <Clock className="w-5 h-5 mr-2" />
-            <span className="font-medium text-sm">Expected response time: 2-5 minutes</span>
-          </div>
           
           <div className="text-xs text-gray-400">
             You can close this page now.
@@ -527,12 +521,12 @@ const CustomerFeedbackPage = () => {
           </div>
         ) : (
           <div>
-            <h2 className="text-lg font-semibold mb-4">Anything else you'd like to tell us?</h2>
+            <h2 className="text-lg font-semibold mb-4">Anything else you'd like to tell us? <span className="text-sm font-normal text-gray-500">(Optional)</span></h2>
             <textarea
               value={freeText}
               onChange={(e) => setFreeText(e.target.value)}
               rows={4}
-              placeholder="Leave any additional comments..."
+              placeholder="Leave any additional comments (optional)..."
               className="w-full p-3 border rounded-lg text-base mb-4"
               style={{
                 borderColor: primary,

@@ -150,7 +150,8 @@ const PrivacyPage = () => {
             <li>Cloud hosting and infrastructure (Vercel, Supabase)</li>
             <li>Payment processing (Stripe)</li>
             <li>Email delivery and marketing automation</li>
-            <li>Analytics and performance monitoring</li>
+            <li>Analytics and performance monitoring (Vercel Analytics)</li>
+            <li>Error tracking and monitoring (Sentry)</li>
             <li>Customer support tools</li>
             <li>Security and fraud prevention</li>
           </ul>

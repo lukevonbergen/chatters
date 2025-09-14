@@ -75,8 +75,8 @@ The app requires Supabase configuration:
 
 ### Analytics & Monitoring
 
+- **Sentry** error tracking configured in `App.js:13-18`
 - **Vercel Analytics** and **Speed Insights** integrated
-- **Sentry** error tracking configured in `App.js:14-19`
 
 ## Important Development Notes
 

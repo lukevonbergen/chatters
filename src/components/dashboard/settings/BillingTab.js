@@ -50,7 +50,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
       if (accountIdToCheck) {
         const { data: account } = await supabase
           .from('accounts')
-          .select('trial_ends_at, is_paid')
+          .select('trial_ends_at, is_paid, demo_account')
           .eq('id', accountIdToCheck)
           .single();
 
@@ -61,8 +61,9 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
           const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
           
           setTrialInfo({
-            isExpired: daysLeft <= 0 && !account.is_paid,
-            daysLeft
+            isExpired: daysLeft <= 0 && !account.is_paid && !account.demo_account,
+            daysLeft,
+            isDemoAccount: account.demo_account || false
           });
         }
       }
