@@ -408,8 +408,7 @@ const CustomerFeedbackPage = () => {
               </div>
             )}
             
-            <div className="text-4xl mb-4">🌟</div>
-            <h2 className="text-xl font-semibold mb-4">Thanks for your amazing feedback!</h2>
+            <h2 className="text-xl font-semibold mb-4">Thanks for your positive feedback!</h2>
             <p className="text-gray-600 text-sm mb-6">
               We're so glad you had a great experience! Would you mind sharing your positive experience with others?
             </p>
