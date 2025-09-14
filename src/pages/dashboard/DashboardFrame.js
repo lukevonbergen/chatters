@@ -422,7 +422,7 @@ const UpdatedDashboardFrame = ({ children }) => {
             {/* Mobile navigation links */}
             <nav className="p-4">
               <div className="space-y-2">
-                {allNavLinks.map((link) => {
+                {allNavLinks.filter(link => link.to !== '/floorplan').map((link) => {
                   const isActive = location.pathname === link.to
                 || (location.pathname.startsWith(link.to + '/') && link.to !== '/staff');
                   return (
