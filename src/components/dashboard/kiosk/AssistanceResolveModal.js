@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, X, AlertTriangle, Clock } from 'lucide-react';
 import { supabase } from '../../../utils/supabase';
+import AlertModal from '../../ui/AlertModal';
 
 const AssistanceResolveModal = ({ 
   request, 
@@ -14,6 +15,7 @@ const AssistanceResolveModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [alertModal, setAlertModal] = useState(null);
 
   // Load employees when modal opens
   useEffect(() => {
@@ -56,11 +58,19 @@ const AssistanceResolveModal = ({
 
   const handleResolve = async () => {
     if (!selectedEmployee) {
-      alert('Please select which staff member resolved this request.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Missing Staff Selection',
+        message: 'Please select which staff member resolved this request.'
+      });
       return;
     }
     if (!notes.trim()) {
-      alert('Please provide notes on how the issue was resolved.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Missing Notes',
+        message: 'Please provide notes on how the issue was resolved.'
+      });
       return;
     }
 
@@ -76,7 +86,11 @@ const AssistanceResolveModal = ({
 
   const handleAcknowledge = async () => {
     if (!selectedEmployee) {
-      alert('Please select which staff member acknowledged this request.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Missing Staff Selection',
+        message: 'Please select which staff member acknowledged this request.'
+      });
       return;
     }
 
@@ -290,6 +304,15 @@ const AssistanceResolveModal = ({
           </div>
         </div>
       </div>
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={!!alertModal}
+        onClose={() => setAlertModal(null)}
+        title={alertModal?.title}
+        message={alertModal?.message}
+        type={alertModal?.type}
+      />
     </div>
   );
 };

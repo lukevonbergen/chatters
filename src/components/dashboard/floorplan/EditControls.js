@@ -8,7 +8,8 @@ const EditControls = ({
   onAddTable, 
   onSaveLayout, 
   onClearAllTables,
-  tables 
+  tables,
+  onShowAlert
 }) => {
   const [newTableNumber, setNewTableNumber] = useState('');
   const [newTableShape, setNewTableShape] = useState('square');
@@ -22,12 +23,20 @@ const EditControls = ({
   const handleAddTable = () => {
     const number = newTableNumber.trim();
     if (!number) {
-      alert('Please enter a table number');
+      onShowAlert?.({
+        type: 'warning',
+        title: 'Missing Table Number',
+        message: 'Please enter a table number'
+      });
       return;
     }
     
     if (tables.find(t => String(t.table_number) === number)) {
-      alert('Table number already exists. Please choose a different number.');
+      onShowAlert?.({
+        type: 'warning',
+        title: 'Duplicate Table Number',
+        message: 'Table number already exists. Please choose a different number.'
+      });
       return;
     }
 
@@ -43,9 +52,7 @@ const EditControls = ({
   };
 
   const handleClearAll = () => {
-    if (window.confirm(`Are you sure you want to delete all ${tables.length} tables? This action cannot be undone.`)) {
-      onClearAllTables();
-    }
+    onClearAllTables();
   };
 
   return (

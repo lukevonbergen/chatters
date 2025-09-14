@@ -6,6 +6,7 @@ import { DragDropContext } from 'react-beautiful-dnd';
 import PageContainer from '../../components/dashboard/layout/PageContainer';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
+import AlertModal from '../../components/ui/AlertModal';
 
 // Import tab components
 import QRCodeTab from '../../components/dashboard/feedback/QRCodeTab';
@@ -33,6 +34,7 @@ const ManageQuestions = () => {
   const [replacementSource, setReplacementSource] = useState(null);
   const [duplicateError, setDuplicateError] = useState('');
   const [addedSuggestedQuestions, setAddedSuggestedQuestions] = useState([]);
+  const [alertModal, setAlertModal] = useState(null);
 
   const qrCodeRef = useRef(null);
 
@@ -105,18 +107,30 @@ const ManageQuestions = () => {
     }
 
     if (!newQuestion.trim()) {
-      alert('Question cannot be empty.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Invalid Question',
+        message: 'Question cannot be empty.'
+      });
       return;
     }
 
     if (newQuestion.length > 100) {
-      alert('Question cannot exceed 100 characters.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Question Too Long',
+        message: 'Question cannot exceed 100 characters.'
+      });
       return;
     }
 
     const isDuplicate = await checkForDuplicateQuestion(newQuestion, true);
     if (isDuplicate) {
-      alert('This question already exists.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Duplicate Question',
+        message: 'This question already exists.'
+      });
       return;
     }
 
@@ -169,12 +183,20 @@ const ManageQuestions = () => {
 
   const handleReplaceQuestion = async (questionIdToReplace) => {
     if (replacementSource === 'new' && !pendingNewQuestion.trim()) {
-      alert('Please enter a question to add.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Missing Question',
+        message: 'Please enter a question to add.'
+      });
       return;
     }
 
     if (replacementSource === 'inactive' && !selectedInactiveQuestion) {
-      alert('Please select a question to re-add.');
+      setAlertModal({
+        type: 'warning',
+        title: 'No Selection',
+        message: 'Please select a question to re-add.'
+      });
       return;
     }
 
@@ -183,7 +205,11 @@ const ManageQuestions = () => {
     if (replacementSource === 'new') {
       const isDuplicate = await checkForDuplicateQuestion(questionToAdd, true);
       if (isDuplicate) {
-        alert('This question already exists. Please select a unique question.');
+        setAlertModal({
+          type: 'warning',
+          title: 'Duplicate Question',
+          message: 'This question already exists. Please select a unique question.'
+        });
         return;
       }
     }
@@ -271,12 +297,20 @@ const ManageQuestions = () => {
 
   const saveEditedQuestion = async () => {
     if (!editingQuestionText.trim()) {
-      alert('Question cannot be empty.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Invalid Question',
+        message: 'Question cannot be empty.'
+      });
       return;
     }
 
     if (editingQuestionText.length > 100) {
-      alert('Question cannot exceed 100 characters.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Question Too Long',
+        message: 'Question cannot exceed 100 characters.'
+      });
       return;
     }
 
@@ -453,6 +487,15 @@ const ManageQuestions = () => {
           </div>
         </div>
       </div>
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={!!alertModal}
+        onClose={() => setAlertModal(null)}
+        title={alertModal?.title}
+        message={alertModal?.message}
+        type={alertModal?.type}
+      />
     </PageContainer>
   );
 };

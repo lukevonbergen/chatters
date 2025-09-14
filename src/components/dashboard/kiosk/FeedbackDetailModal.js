@@ -3,6 +3,7 @@ import Modal from '../../common/Modal';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { supabase } from '../../../utils/supabase';
+import AlertModal from '../../ui/AlertModal';
 
 dayjs.extend(relativeTime);
 
@@ -125,6 +126,7 @@ const FeedbackDetailModal = ({
   const [dismissalReason, setDismissalReason] = useState('');
   const [resolutionMessage, setResolutionMessage] = useState('');
   const [isResolving, setIsResolving] = useState(false);
+  const [alertModal, setAlertModal] = useState(null);
   
   // Clear form when modal closes
   useEffect(() => {
@@ -232,7 +234,11 @@ const FeedbackDetailModal = ({
       await onMarkResolved(sessionIds, null);
       onClose();
     } catch (error) {
-      alert('Failed to clear feedback. Please try again.');
+      setAlertModal({
+        type: 'error',
+        title: 'Clear Failed',
+        message: 'Failed to clear feedback. Please try again.'
+      });
     } finally {
       setIsResolving(false);
     }
@@ -240,7 +246,11 @@ const FeedbackDetailModal = ({
 
   const handleMarkResolved = async () => {
     if (!selectedStaffMember) {
-      alert('Please select the staff member who resolved this feedback.');
+      setAlertModal({
+        type: 'warning',
+        title: 'Missing Staff Selection',
+        message: 'Please select the staff member who resolved this feedback.'
+      });
       return;
     }
     
@@ -340,7 +350,11 @@ const FeedbackDetailModal = ({
       await onMarkResolved(sessionIds, resolvedById);
       onClose();
     } catch (error) {
-      alert('Failed to mark feedback as resolved. Please try again.');
+      setAlertModal({
+        type: 'error',
+        title: 'Resolution Failed',
+        message: 'Failed to mark feedback as resolved. Please try again.'
+      });
     } finally {
       setIsResolving(false);
     }
@@ -395,6 +409,7 @@ const FeedbackDetailModal = ({
   });
   
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -774,6 +789,18 @@ const FeedbackDetailModal = ({
         </div>
       </div>
     </Modal>
+
+    {/* Alert Modal */}
+    {alertModal && (
+      <AlertModal
+        isOpen={!!alertModal}
+        onClose={() => setAlertModal(null)}
+        title={alertModal?.title}
+        message={alertModal?.message}
+        type={alertModal?.type}
+      />
+    )}
+    </>
   );
 };
 

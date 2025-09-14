@@ -3,6 +3,8 @@ import { supabase } from '../../utils/supabase';
 import { useVenue } from '../../context/VenueContext';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import AlertModal from '../../components/ui/AlertModal';
 
 // Kiosk components
 import KioskFloorPlan from '../../components/dashboard/kiosk/KioskFloorPlan';
@@ -25,6 +27,8 @@ const KioskPage = () => {
   const [inactivityTimer, setInactivityTimer] = useState(null); // kept for easy re-enable
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [sessionTimeoutHours, setSessionTimeoutHours] = useState(2); // Default 2 hours
+  const [exitConfirmation, setExitConfirmation] = useState(false);
+  const [alertModal, setAlertModal] = useState(null);
 
   // ==== AUTO-RETURN (10s) — DISABLED ====
   // useEffect(() => {
@@ -336,7 +340,11 @@ const KioskPage = () => {
         .select(); // Add select to see what was updated
 
       if (error) {
-        alert(`Failed to ${action} request: ${error.message}`);
+        setAlertModal({
+          type: 'error',
+          title: 'Request Failed',
+          message: `Failed to ${action} request: ${error.message}`
+        });
         return false;
       }
 
@@ -345,7 +353,11 @@ const KioskPage = () => {
       await fetchAssistanceRequests(venueId);
       return true;
     } catch (error) {
-      alert(`Error: ${error.message}`);
+      setAlertModal({
+        type: 'error',
+        title: 'Error',
+        message: error.message
+      });
       return false;
     }
   };
@@ -408,9 +420,12 @@ const KioskPage = () => {
   };
 
   const handleExitKiosk = () => {
-    if (window.confirm('Exit kiosk mode?')) {
-      window.close();
-    }
+    setExitConfirmation(true);
+  };
+
+  const confirmExitKiosk = () => {
+    setExitConfirmation(false);
+    window.close();
   };
 
   // Loading state
@@ -525,6 +540,28 @@ const KioskPage = () => {
           )}
         </div>
       </div>
+
+      {/* Exit Kiosk Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={exitConfirmation}
+        onConfirm={confirmExitKiosk}
+        onCancel={() => setExitConfirmation(false)}
+        title="Exit Kiosk Mode"
+        message="Are you sure you want to exit kiosk mode and close this window?"
+        confirmText="Exit Kiosk"
+        cancelText="Stay in Kiosk"
+        confirmButtonStyle="primary"
+        icon="info"
+      />
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={!!alertModal}
+        onClose={() => setAlertModal(null)}
+        title={alertModal?.title}
+        message={alertModal?.message}
+        type={alertModal?.type}
+      />
     </div>
   );
 };

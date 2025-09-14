@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { HandHeart, Star } from 'lucide-react';
+import AlertModal from '../../components/ui/AlertModal';
 
 const CustomerFeedbackPage = () => {
   const { venueId } = useParams();
@@ -20,6 +21,7 @@ const CustomerFeedbackPage = () => {
   const [feedbackUnavailable, setFeedbackUnavailable] = useState(false);
   const [assistanceLoading, setAssistanceLoading] = useState(false);
   const [assistanceRequested, setAssistanceRequested] = useState(false);
+  const [alertModal, setAlertModal] = useState(null);
 
   // Utility function to check if current time is within feedback hours
   const isFeedbackTimeAllowed = (feedbackHours) => {
@@ -206,14 +208,22 @@ const CustomerFeedbackPage = () => {
       const { error } = await supabase.from('feedback').insert(entries);
       if (error) {
         console.error('Error submitting feedback:', error);
-        alert('Failed to submit feedback. Please try again.');
+        setAlertModal({
+          type: 'error',
+          title: 'Submission Failed',
+          message: 'Failed to submit feedback. Please try again.'
+        });
         return;
       }
       
       setIsFinished(true);
     } catch (err) {
       console.error('Error submitting feedback:', err);
-      alert('Failed to submit feedback. Please try again.');
+      setAlertModal({
+        type: 'error',
+        title: 'Submission Failed',
+        message: 'Failed to submit feedback. Please try again.'
+      });
     }
   };
 
@@ -265,7 +275,11 @@ const CustomerFeedbackPage = () => {
 
       if (error) {
         console.error('Error requesting assistance:', error);
-        alert(`Failed to request assistance: ${error.message}. Please try again.`);
+        setAlertModal({
+          type: 'error',
+          title: 'Assistance Request Failed',
+          message: `Failed to request assistance: ${error.message}. Please try again.`
+        });
         return;
       }
 
@@ -296,7 +310,11 @@ const CustomerFeedbackPage = () => {
       setAssistanceRequested(true);
     } catch (err) {
       console.error('Error requesting assistance:', err);
-      alert(`Failed to request assistance: ${err.message}. Please try again.`);
+      setAlertModal({
+        type: 'error',
+        title: 'Assistance Request Failed',
+        message: `Failed to request assistance: ${err.message}. Please try again.`
+      });
     } finally {
       setAssistanceLoading(false);
     }
@@ -543,6 +561,15 @@ const CustomerFeedbackPage = () => {
           </div>
         )}
       </div>
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={!!alertModal}
+        onClose={() => setAlertModal(null)}
+        title={alertModal?.title}
+        message={alertModal?.message}
+        type={alertModal?.type}
+      />
     </div>
   );
 };
