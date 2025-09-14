@@ -61,10 +61,10 @@ const CustomerFeedbackPage = () => {
         console.log('Loading data for venueId:', venueId);
         console.log('VenueId type:', typeof venueId);
         
-        // Load venue data first (including feedback_hours)
+        // Load venue data first (including feedback_hours and review links)
         const { data: venueData, error: venueError } = await supabase
           .from('venues')
-          .select('logo, primary_color, secondary_color, feedback_hours')
+          .select('logo, primary_color, secondary_color, feedback_hours, google_review_link, tripadvisor_link')
           .eq('id', venueId);
 
         if (venueError) {
@@ -227,6 +227,18 @@ const CustomerFeedbackPage = () => {
     }
   };
 
+  // Check if all feedback ratings are positive (>4)
+  const isAllFeedbackPositive = () => {
+    // Get only feedback with actual ratings (not free text)
+    const ratedFeedback = feedbackAnswers.filter(feedback => feedback.rating !== null);
+    
+    // If no rated feedback, don't show review prompt (only free text submitted)
+    if (ratedFeedback.length === 0) return false;
+    
+    // Check ALL ratings are above 4
+    return ratedFeedback.every(feedback => feedback.rating > 4);
+  };
+
   const handleAssistanceRequest = async () => {
     if (assistanceLoading || !tableNumber) {
       console.log('Assistance request blocked:', { assistanceLoading, tableNumber });
@@ -380,6 +392,64 @@ const CustomerFeedbackPage = () => {
 
   // Success state
   if (isFinished) {
+    const showReviewPrompt = isAllFeedbackPositive() && 
+                            (venue?.google_review_link || venue?.tripadvisor_link);
+    
+    if (showReviewPrompt) {
+      const primary = venue?.primary_color || '#111827';
+      const secondary = venue?.secondary_color || '#f3f4f6';
+      
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: secondary }}>
+          <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 text-center" style={{ color: primary }}>
+            {venue?.logo && (
+              <div className="mb-6">
+                <img src={venue.logo} alt="Venue Logo" className="h-14 mx-auto" />
+              </div>
+            )}
+            
+            <div className="text-4xl mb-4">🌟</div>
+            <h2 className="text-xl font-semibold mb-4">Thanks for your amazing feedback!</h2>
+            <p className="text-gray-600 text-sm mb-6">
+              We're so glad you had a great experience! Would you mind sharing your positive experience with others?
+            </p>
+            
+            <div className="space-y-3">
+              {venue?.google_review_link && (
+                <a
+                  href={venue.google_review_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Leave a Google Review
+                </a>
+              )}
+              
+              {venue?.tripadvisor_link && (
+                <a
+                  href={venue.tripadvisor_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-3 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                >
+                  Review on TripAdvisor
+                </a>
+              )}
+              
+              <button
+                onClick={() => window.close()}
+                className="block w-full py-3 px-4 border border-gray-300 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition-colors mt-4"
+              >
+                No thanks, close
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    // Default success state for non-positive feedback or no review links
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-green-600 space-y-4">
         <div className="text-4xl">✅</div>
