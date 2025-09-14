@@ -98,25 +98,25 @@ const EmployeesList = ({
               </div>
               
               {/* Venue-specific actions */}
-              <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                 <button
                   onClick={() => onAddEmployee && onAddEmployee()}
-                  className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition-colors duration-200 flex items-center justify-center"
+                  className="text-sm sm:text-xs bg-blue-100 text-blue-700 px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-blue-200 transition-colors duration-200 flex items-center justify-center font-medium"
                 >
-                  <Plus className="w-3 h-3 mr-1" />
+                  <Plus className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
                   Add Employee
                 </button>
                 
                 <button
                   onClick={() => onDownloadCSV && onDownloadCSV(venueData.venue.id)}
-                  className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-md hover:bg-green-200 transition-colors duration-200 flex items-center justify-center"
+                  className="text-sm sm:text-xs bg-green-100 text-green-700 px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-green-200 transition-colors duration-200 flex items-center justify-center font-medium"
                 >
-                  <Download className="w-3 h-3 mr-1" />
+                  <Download className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
                   Download
                 </button>
                 
-                <label className="text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-md hover:bg-orange-200 transition-colors duration-200 flex items-center justify-center cursor-pointer">
-                  <Upload className="w-3 h-3 mr-1" />
+                <label className="text-sm sm:text-xs bg-orange-100 text-orange-700 px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-orange-200 transition-colors duration-200 flex items-center justify-center cursor-pointer font-medium">
+                  <Upload className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
                   {uploading ? 'Uploading...' : 'Replace'}
                   <input
                     type="file"
@@ -167,25 +167,25 @@ const EmployeesList = ({
         <h3 className="text-base lg:text-lg font-medium text-gray-900">Your Venue Employees</h3>
         
         {/* Manager-specific actions */}
-        <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
           <button
             onClick={() => onAddEmployee && onAddEmployee()}
-            className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition-colors duration-200 flex items-center justify-center"
+            className="text-sm sm:text-xs bg-blue-100 text-blue-700 px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-blue-200 transition-colors duration-200 flex items-center justify-center font-medium"
           >
-            <Plus className="w-3 h-3 mr-1" />
+            <Plus className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
             Add Employee
           </button>
           
           <button
             onClick={() => onDownloadCSV && onDownloadCSV()}
-            className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-md hover:bg-green-200 transition-colors duration-200 flex items-center justify-center"
+            className="text-sm sm:text-xs bg-green-100 text-green-700 px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-green-200 transition-colors duration-200 flex items-center justify-center font-medium"
           >
-            <Download className="w-3 h-3 mr-1" />
+            <Download className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
             Download
           </button>
           
-          <label className="text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-md hover:bg-orange-200 transition-colors duration-200 flex items-center justify-center cursor-pointer">
-            <Upload className="w-3 h-3 mr-1" />
+          <label className="text-sm sm:text-xs bg-orange-100 text-orange-700 px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-orange-200 transition-colors duration-200 flex items-center justify-center cursor-pointer font-medium">
+            <Upload className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
             {uploading ? 'Uploading...' : 'Replace'}
             <input
               type="file"
