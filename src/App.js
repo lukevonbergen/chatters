@@ -19,6 +19,7 @@ Sentry.init({
 
 function App() {
   const [isDashboardDomain, setIsDashboardDomain] = useState(false);
+  const [isDevSite, setIsDevSite] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -26,6 +27,14 @@ function App() {
         window.location.hostname.startsWith('my.') || 
         window.location.hostname.includes('.my.')
       );
+
+      // Check if this is a dev site
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isDevDomain = hostname.includes('dev') || hostname.includes('staging') || hostname.includes('test');
+      const isVercelPreview = hostname.includes('vercel.app') && !hostname.includes('getchatters.com');
+      
+      setIsDevSite(isLocalhost || isDevDomain || isVercelPreview);
 
       const hash = window.location.hash;
 
@@ -44,6 +53,13 @@ function App() {
 
   return (
     <div className={isDashboardDomain ? 'font-sans' : 'font-marketing'}>
+      {/* Dev Site Banner */}
+      {isDevSite && (
+        <div className="bg-orange-500 text-white text-xs text-center py-1 px-4 font-medium">
+          🚧 Development Site - Expect bugs and incomplete features
+        </div>
+      )}
+      
       <LoadingProvider>
         <ModalProvider>
           <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
