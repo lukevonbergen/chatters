@@ -1,13 +1,54 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { supabase } from '../../../utils/supabase';
 
 const ProfileTab = ({ 
   firstName, setFirstName,
   lastName, setLastName,
   email, setEmail,
-  saveSettings,
-  loading,
-  message 
+  venueId
 }) => {
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const saveSettings = async () => {
+    if (!venueId) return;
+    
+    setLoading(true);
+    setMessage('');
+    
+    try {
+      // Get current user ID
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+      
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      // Update users table (profile data)
+      const userUpdates = {
+        first_name: firstName,
+        last_name: lastName,
+      };
+
+      const { error: userError } = await supabase
+        .from('users')
+        .update(userUpdates)
+        .eq('id', userId);
+
+      if (userError) {
+        throw userError;
+      }
+
+      setMessage('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setMessage(`Error updating profile: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-none lg:max-w-2xl">
       <div className="mb-6 lg:mb-8">
@@ -59,7 +100,7 @@ const ProfileTab = ({
           <button
             onClick={saveSettings}
             disabled={loading}
-            className="w-full sm:w-auto bg-black text-white px-4 lg:px-6 py-2 lg:py-3 rounded-md hover:bg-gray-800 transition-colors duration-200 text-sm lg:text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Updating...' : 'Update profile'}
           </button>

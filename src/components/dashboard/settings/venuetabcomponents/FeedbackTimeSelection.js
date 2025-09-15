@@ -167,7 +167,7 @@ const FeedbackTimeSelection = ({ currentVenueId }) => {
       {/* Compact table-like view */}
       <div className="space-y-2">
         {dayNames.map((day, dayIndex) => (
-          <div key={day} className="border border-gray-200 rounded-md">
+          <div key={day} className="border border-gray-200 rounded-lg">
             {/* Day header row */}
             <div className="flex items-center justify-between p-3 hover:bg-gray-50">
               <div className="flex items-center space-x-3 flex-1">
@@ -291,13 +291,13 @@ const FeedbackTimeSelection = ({ currentVenueId }) => {
         <button
           onClick={saveFeedbackHours}
           disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Saving...' : 'Save Feedback Hours'}
         </button>
         
         {message && (
-          <div className={`text-sm p-3 rounded-md mt-3 ${
+          <div className={`text-sm p-3 rounded-lg mt-3 ${
             message.includes('success') 
               ? 'text-green-700 bg-green-50 border border-green-200' 
               : 'text-red-700 bg-red-50 border border-red-200'

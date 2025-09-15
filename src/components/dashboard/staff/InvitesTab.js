@@ -302,7 +302,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchS
       {/* Active Managers Section */}
       <div>
         <h3 className="text-md font-medium text-gray-900 mb-4 flex items-center">
-          <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+          <CheckCircle className="w-5 h-5 text-custom-green mr-2" />
           Active Managers ({activeManagers.length})
         </h3>
 
@@ -328,7 +328,7 @@ const InvitesTab = ({ userRole, message, setMessage, allVenues, managers, fetchS
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-sm font-medium text-green-700">
+                            <span className="text-sm font-medium text-custom-green">
                               {manager.first_name?.[0]}{manager.last_name?.[0]}
                             </span>
                           </div>

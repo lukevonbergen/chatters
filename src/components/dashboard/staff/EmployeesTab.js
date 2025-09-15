@@ -247,8 +247,8 @@ const EmployeesTab = ({
                 <p className="mb-4">
                   This will replace all <strong>{existingEmployeesCount}</strong> existing employees at <strong>{venueName}</strong> with <strong>{parsedEmployees.length}</strong> new employees from your CSV.
                 </p>
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                  <p className="text-sm text-orange-800">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-sm text-custom-yellow">
                     <strong>Warning:</strong> This action cannot be undone. All existing employee data will be permanently deleted.
                   </p>
                 </div>
@@ -346,7 +346,7 @@ const EmployeesTab = ({
               Need a CSV template? <a 
                 href="/employee-template.csv" 
                 download="employee-template.csv"
-                className="text-blue-600 hover:text-blue-700 underline"
+                className="text-custom-blue hover:text-blue-700 underline"
               >
                 Download sample file
               </a>
@@ -366,7 +366,7 @@ const EmployeesTab = ({
               placeholder="Search employees by name, email, role, phone..."
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-custom-blue focus:border-custom-blue text-sm"
             />
             {searchTerm && (
               <button
@@ -437,7 +437,7 @@ const EmployeesTab = ({
                       onClick={() => setCurrentPage(pageNum)}
                       className={`px-3 py-1 rounded-lg text-sm font-medium ${
                         currentPage === pageNum
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-custom-blue text-white'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >

@@ -16,25 +16,25 @@ const AlertModal = ({
     switch (type) {
       case 'success':
         return (
-          <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-custom-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         );
       case 'info':
         return (
-          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-custom-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
       case 'warning':
         return (
-          <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-custom-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.95-.833-2.72 0L4.094 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
         );
       default: // 'error'
         return (
-          <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-custom-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         );
@@ -48,7 +48,7 @@ const AlertModal = ({
       case 'info':
         return 'bg-blue-100';
       case 'warning':
-        return 'bg-orange-100';
+        return 'bg-yellow-100';
       default: // 'error'
         return 'bg-red-100';
     }
@@ -57,13 +57,13 @@ const AlertModal = ({
   const getButtonClasses = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-600 hover:bg-green-700';
+        return 'bg-custom-green hover:bg-custom-green-hover';
       case 'info':
-        return 'bg-blue-600 hover:bg-blue-700';
+        return 'bg-custom-blue hover:bg-custom-blue-hover';
       case 'warning':
-        return 'bg-orange-600 hover:bg-orange-700';
+        return 'bg-custom-yellow hover:bg-custom-yellow-hover';
       default: // 'error'
-        return 'bg-red-600 hover:bg-red-700';
+        return 'bg-custom-red hover:bg-custom-red-hover';
     }
   };
 

@@ -418,7 +418,7 @@ const ManageQuestions = () => {
               <p className="text-gray-600 text-sm lg:text-base">Create and organize customer feedback questions.</p>
             </div>
             <div className="bg-blue-50 px-4 py-2 rounded-lg">
-              <span className="text-blue-600 font-medium">Questions Active: {questions.length}/5</span>
+              <span className="text-custom-blue font-medium">Questions Active: {questions.length}/5</span>
             </div>
           </div>
         </div>

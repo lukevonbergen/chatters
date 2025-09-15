@@ -374,7 +374,7 @@ const CustomerFeedbackPage = () => {
   // Error state
   if (error) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen text-red-600 text-lg space-y-4 p-6">
+      <div className="flex flex-col justify-center items-center min-h-screen text-custom-red text-lg space-y-4 p-6">
         <div className="text-4xl">⚠️</div>
         <div className="text-center max-w-md">
           <div className="font-semibold mb-2">Unable to load feedback form</div>
@@ -382,7 +382,7 @@ const CustomerFeedbackPage = () => {
         </div>
         <button 
           onClick={() => window.location.reload()} 
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          className="px-6 py-3 bg-custom-blue text-white rounded-lg hover:bg-custom-blue-hover transition-colors"
         >
           Retry
         </button>
@@ -419,7 +419,7 @@ const CustomerFeedbackPage = () => {
                   href={venue.google_review_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  className="block w-full py-3 px-4 bg-custom-blue text-white rounded-lg font-medium hover:bg-custom-blue-hover transition-colors"
                 >
                   Leave a Google Review
                 </a>
@@ -430,7 +430,7 @@ const CustomerFeedbackPage = () => {
                   href={venue.tripadvisor_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-3 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  className="block w-full py-3 px-4 bg-custom-green text-white rounded-lg font-medium hover:bg-custom-green-hover transition-colors"
                 >
                   Review on TripAdvisor
                 </a>
@@ -450,7 +450,7 @@ const CustomerFeedbackPage = () => {
     
     // Default success state for non-positive feedback or no review links
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen text-green-600 space-y-4">
+      <div className="flex flex-col justify-center items-center min-h-screen text-custom-green space-y-4">
         <div className="text-4xl">✅</div>
         <div className="text-xl font-semibold text-center">Thanks for your feedback!</div>
         <div className="text-sm text-gray-500">Your response has been submitted successfully.</div>
@@ -586,11 +586,11 @@ const CustomerFeedbackPage = () => {
                 <button
                   onClick={handleAssistanceRequest}
                   disabled={assistanceLoading}
-                  className="w-full bg-orange-100 hover:bg-orange-200 border-2 border-orange-300 text-orange-800 py-3 px-4 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-yellow-100 hover:bg-yellow-200 border-2 border-yellow-300 text-custom-yellow py-3 px-4 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {assistanceLoading ? (
                     <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-custom-yellow mr-2"></div>
                       Requesting...
                     </div>
                   ) : (

@@ -50,7 +50,7 @@ const DeleteEmployeeModal = ({
             <button
               onClick={handleConfirm}
               disabled={loading}
-              className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm lg:text-base font-medium"
+              className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-red-600 text-white rounded-md hover:bg-custom-red-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm lg:text-base font-medium"
             >
               {loading ? 'Deleting...' : 'Delete Employee'}
             </button>

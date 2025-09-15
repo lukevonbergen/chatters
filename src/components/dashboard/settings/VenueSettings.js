@@ -9,7 +9,7 @@ const VenueSettings = ({ name, tableCount, address, onNameChange, onTableCountCh
         <h2 className="text-xl font-bold text-gray-900">Venue Settings</h2>
         <button
           onClick={() => setLocked(!locked)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium"
         >
           {locked ? 'Unlock' : 'Lock'}
         </button>

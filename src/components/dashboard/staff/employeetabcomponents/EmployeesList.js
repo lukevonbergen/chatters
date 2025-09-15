@@ -109,7 +109,7 @@ const EmployeesList = ({
                 
                 <button
                   onClick={() => onDownloadCSV && onDownloadCSV(venueData.venue.id)}
-                  className="text-sm sm:text-xs bg-green-100 text-green-700 px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-green-200 transition-colors duration-200 flex items-center justify-center font-medium"
+                  className="text-sm sm:text-xs bg-green-100 text-custom-green px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-green-200 transition-colors duration-200 flex items-center justify-center font-medium"
                 >
                   <Download className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
                   Download
@@ -178,7 +178,7 @@ const EmployeesList = ({
           
           <button
             onClick={() => onDownloadCSV && onDownloadCSV()}
-            className="text-sm sm:text-xs bg-green-100 text-green-700 px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-green-200 transition-colors duration-200 flex items-center justify-center font-medium"
+            className="text-sm sm:text-xs bg-green-100 text-custom-green px-4 py-2 sm:px-3 sm:py-1 rounded-md hover:bg-green-200 transition-colors duration-200 flex items-center justify-center font-medium"
           >
             <Download className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
             Download

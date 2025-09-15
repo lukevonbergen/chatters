@@ -381,11 +381,11 @@ const ManagersTab = ({
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
           <div className="flex-1">
             <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Managers</h2>
-            <p className="text-gray-600 text-sm lg:text-base">Manage your venue managers and their venue assignments.</p>
+            <p className="text-gray-600 text-sm">Manage your venue managers and their venue assignments.</p>
           </div>
           <button
             onClick={() => setShowAddForm(true)}
-            className="w-full sm:w-auto bg-black text-white px-4 lg:px-6 py-2 lg:py-3 rounded-md hover:bg-gray-800 transition-colors duration-200 text-sm lg:text-base font-medium"
+            className="w-full sm:w-auto bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium"
           >
             Add Manager
           </button>
@@ -412,7 +412,7 @@ const ManagersTab = ({
             <p className="text-gray-600 mb-4">Add your first manager to get started</p>
             <button
               onClick={() => setShowAddForm(true)}
-              className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors duration-200 font-medium"
+              className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium"
             >
               Add First Manager
             </button>
@@ -428,7 +428,7 @@ const ManagersTab = ({
               
               return editingManagerDetails?.user_id === manager.user_id ? (
                 // Edit mode - Venue assignments only
-                <div key={manager.user_id} className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div key={manager.user_id} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="space-y-3">
                     {/* Manager Info (Read-only) */}
                     <div className="flex items-center space-x-4">
@@ -470,7 +470,7 @@ const ManagersTab = ({
                       <button
                         onClick={handleSaveManagerDetails}
                         disabled={editDetailsLoading || editingManagerDetails.venue_ids.length === 0}
-                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2 text-sm bg-custom-green text-white rounded-lg hover:bg-custom-green-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                       >
                         {editDetailsLoading ? 'Saving...' : 'Update Venues'}
                       </button>
@@ -479,7 +479,7 @@ const ManagersTab = ({
                 </div>
               ) : (
                 // View mode
-                <div key={manager.user_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                <div key={manager.user_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   {/* Manager info in one line */}
                   <div className="flex items-center space-x-4 min-w-0 flex-1">
                     <div className="text-sm font-medium text-gray-900 truncate">
@@ -501,7 +501,7 @@ const ManagersTab = ({
                   <div className="flex items-center space-x-2 ml-4 flex-shrink-0">
                     <button 
                       onClick={() => handleEditManagerDetails(manager)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all duration-200"
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
                       title="Edit venue assignments"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -510,7 +510,7 @@ const ManagersTab = ({
                     </button>
                     <button 
                       onClick={() => setManagerToDelete(manager)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all duration-200"
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                       title="Delete manager"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -528,7 +528,7 @@ const ManagersTab = ({
       {/* Summary card */}
       <div className="mt-6 lg:mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 lg:p-6">
         <h3 className="text-base lg:text-lg font-medium text-blue-900 mb-3">Manager Summary</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm lg:text-base">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div className="flex justify-between sm:flex-col sm:justify-start">
             <span className="text-blue-700">Total Managers:</span>
             <span className="font-medium text-blue-900 sm:mt-1">{uniqueManagers.length}</span>
@@ -555,7 +555,7 @@ const ManagersTab = ({
                       type="text"
                       value={newManager.firstName}
                       onChange={(e) => setNewManager(prev => ({ ...prev, firstName: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       required
                     />
                   </div>
@@ -565,7 +565,7 @@ const ManagersTab = ({
                       type="text"
                       value={newManager.lastName}
                       onChange={(e) => setNewManager(prev => ({ ...prev, lastName: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       required
                     />
                   </div>
@@ -577,14 +577,14 @@ const ManagersTab = ({
                     type="email"
                     value={newManager.email}
                     onChange={(e) => setNewManager(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">Assign to Venues</label>
-                  <div className="border border-gray-200 rounded-md p-3 max-h-48 overflow-y-auto">
+                  <div className="border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto">
                     <div className="space-y-2">
                       {allVenues.map(venue => (
                         <label key={venue.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
@@ -594,7 +594,7 @@ const ManagersTab = ({
                             onChange={() => handleVenueToggle(venue.id)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                           />
-                          <span className="text-sm lg:text-base text-gray-700 flex-1">{venue.name}</span>
+                          <span className="text-sm text-gray-700 flex-1">{venue.name}</span>
                         </label>
                       ))}
                     </div>
@@ -609,14 +609,14 @@ const ManagersTab = ({
                       setShowAddForm(false);
                       setNewManager({ firstName: '', lastName: '', email: '', venueIds: [] });
                     }}
-                    className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 text-sm lg:text-base font-medium"
+                    className="w-full sm:w-auto px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={addFormLoading}
-                    className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm lg:text-base font-medium"
+                    className="w-full sm:w-auto px-6 py-2 bg-black text-white rounded-lg hover:bg-custom-black-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >
                     {addFormLoading ? 'Inviting...' : 'Invite Manager'}
                   </button>
@@ -639,13 +639,13 @@ const ManagersTab = ({
               <div className="space-y-4 lg:space-y-6">
                 {uniqueManagers.length === 0 ? (
                   <div className="text-center py-6 text-gray-500">
-                    <p className="text-sm lg:text-base mb-2">No managers available</p>
+                    <p className="text-sm mb-2">No managers available</p>
                     <p className="text-xs text-gray-400">Create a manager first using the "Add Manager" button</p>
                   </div>
                 ) : (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">Select Managers</label>
-                    <div className="border border-gray-200 rounded-md p-3 max-h-64 overflow-y-auto">
+                    <div className="border border-gray-200 rounded-lg p-3 max-h-64 overflow-y-auto">
                       <div className="space-y-2">
                         {uniqueManagers.map(manager => (
                           <label key={manager.user_id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
@@ -682,7 +682,7 @@ const ManagersTab = ({
                       setShowAssignForm(false);
                       setAssigningToVenue(null);
                     }}
-                    className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 text-sm lg:text-base font-medium"
+                    className="w-full sm:w-auto px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
                   >
                     Cancel
                   </button>
@@ -690,7 +690,7 @@ const ManagersTab = ({
                     <button
                       onClick={handleSaveManagerAssignments}
                       disabled={assignFormLoading}
-                      className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm lg:text-base font-medium"
+                      className="w-full sm:w-auto px-6 py-2 bg-custom-green text-white rounded-lg hover:bg-custom-green-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                     >
                       {assignFormLoading ? 'Saving...' : 'Save Assignments'}
                     </button>
@@ -714,7 +714,7 @@ const ManagersTab = ({
               <div className="space-y-4 lg:space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">Venue Access</label>
-                  <div className="border border-gray-200 rounded-md p-3 max-h-64 overflow-y-auto">
+                  <div className="border border-gray-200 rounded-lg p-3 max-h-64 overflow-y-auto">
                     <div className="space-y-2">
                       {allVenues.map(venue => (
                         <label key={venue.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
@@ -724,7 +724,7 @@ const ManagersTab = ({
                             onChange={() => handleEditVenueToggle(venue.id)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                           />
-                          <span className="text-sm lg:text-base text-gray-700 flex-1">{venue.name}</span>
+                          <span className="text-sm text-gray-700 flex-1">{venue.name}</span>
                         </label>
                       ))}
                     </div>
@@ -735,14 +735,14 @@ const ManagersTab = ({
                 <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t">
                   <button
                     onClick={() => setEditingManager(null)}
-                    className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 text-sm lg:text-base font-medium"
+                    className="w-full sm:w-auto px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveVenueAssignments}
                     disabled={editFormLoading}
-                    className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm lg:text-base font-medium"
+                    className="w-full sm:w-auto px-6 py-2 bg-custom-green text-white rounded-lg hover:bg-custom-green-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >
                     {editFormLoading ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -783,14 +783,14 @@ const ManagersTab = ({
                 <button
                   onClick={() => setManagerToDelete(null)}
                   disabled={deleteFormLoading}
-                  className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 text-sm lg:text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteManager}
                   disabled={deleteFormLoading}
-                  className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm lg:text-base font-medium"
+                  className="w-full sm:w-auto px-6 py-2 bg-custom-red text-white rounded-lg hover:bg-custom-red-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                 >
                   {deleteFormLoading ? 'Deleting...' : 'Delete Manager'}
                 </button>

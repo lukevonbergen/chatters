@@ -236,7 +236,7 @@ const VenueTab = ({
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   placeholder="Enter your venue name"
                 />
               </div>
@@ -254,14 +254,14 @@ const VenueTab = ({
                   placeholder="Address Line 1"
                   value={address.line1}
                   onChange={(e) => setAddress({...address, line1: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
                 <input
                   type="text"
                   placeholder="Address Line 2 (Optional)"
                   value={address.line2}
                   onChange={(e) => setAddress({...address, line2: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <input
@@ -269,14 +269,14 @@ const VenueTab = ({
                     placeholder="City"
                     value={address.city}
                     onChange={(e) => setAddress({...address, city: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                   <input
                     type="text"
                     placeholder="Postal Code"
                     value={address.postalCode}
                     onChange={(e) => setAddress({...address, postalCode: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                 </div>
               </div>
@@ -292,13 +292,13 @@ const VenueTab = ({
               <button
                 onClick={saveSettings}
                 disabled={loading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
             {message && (
-              <div className={`text-xs p-2 rounded-md mt-3 ${
+              <div className={`text-xs p-2 rounded-lg mt-3 ${
                 message.includes('success') 
                   ? 'text-green-700 bg-green-50 border border-green-200' 
                   : 'text-red-700 bg-red-50 border border-red-200'
@@ -337,7 +337,7 @@ const VenueTab = ({
                   placeholder="https://www.tripadvisor.com/your-venue"
                   value={tripadvisorLink}
                   onChange={(e) => setTripadvisorLink(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
               </div>
             </div>
@@ -356,7 +356,7 @@ const VenueTab = ({
                   placeholder="https://g.page/your-business/review"
                   value={googleReviewLink}
                   onChange={(e) => setGoogleReviewLink(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
               </div>
             </div>
@@ -371,13 +371,13 @@ const VenueTab = ({
               <button
                 onClick={saveReviewLinks}
                 disabled={reviewLinksLoading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {reviewLinksLoading ? 'Saving...' : 'Save Review Links'}
               </button>
             </div>
             {reviewLinksMessage && (
-              <div className={`text-xs p-2 rounded-md mt-3 ${
+              <div className={`text-xs p-2 rounded-lg mt-3 ${
                 reviewLinksMessage.includes('success') 
                   ? 'text-green-700 bg-green-50 border border-green-200' 
                   : 'text-red-700 bg-red-50 border border-red-200'
@@ -415,7 +415,7 @@ const VenueTab = ({
                 <select
                   value={sessionTimeoutHours}
                   onChange={(e) => setSessionTimeoutHours(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 >
                   <option value={1}>1 hour</option>
                   <option value={2}>2 hours (default)</option>
@@ -441,13 +441,13 @@ const VenueTab = ({
               <button
                 onClick={saveSessionTimeout}
                 disabled={sessionTimeoutLoading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {sessionTimeoutLoading ? 'Saving...' : 'Save Timeout Setting'}
               </button>
             </div>
             {sessionTimeoutMessage && (
-              <div className={`text-xs p-2 rounded-md mt-3 ${
+              <div className={`text-xs p-2 rounded-lg mt-3 ${
                 sessionTimeoutMessage.includes('success') 
                   ? 'text-green-700 bg-green-50 border border-green-200' 
                   : 'text-red-700 bg-red-50 border border-red-200'
@@ -477,7 +477,7 @@ const VenueTab = ({
                   type="text"
                   value={newVenue.name}
                   onChange={(e) => setNewVenue(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
                   placeholder="Enter the new venue name"
                   required
                 />
@@ -495,7 +495,7 @@ const VenueTab = ({
                       ...prev, 
                       address: { ...prev.address, line1: e.target.value }
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
@@ -506,7 +506,7 @@ const VenueTab = ({
                         ...prev, 
                         address: { ...prev.address, city: e.target.value }
                       }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
                     />
                     <input
                       type="text"
@@ -516,7 +516,7 @@ const VenueTab = ({
                         ...prev, 
                         address: { ...prev.address, postalCode: e.target.value }
                       }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
                     />
                   </div>
                 </div>
@@ -527,7 +527,7 @@ const VenueTab = ({
                 <button
                   type="submit"
                   disabled={venueLoading}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {venueLoading ? 'Creating Venue...' : 'Create New Venue'}
                 </button>
@@ -535,7 +535,7 @@ const VenueTab = ({
 
               {/* Venue Creation Message */}
               {venueMessage && (
-                <div className={`text-sm p-3 rounded-md ${
+                <div className={`text-sm p-3 rounded-lg ${
                   venueMessage.includes('success') 
                     ? 'text-green-700 bg-green-50 border border-green-200' 
                     : 'text-red-700 bg-red-50 border border-red-200'

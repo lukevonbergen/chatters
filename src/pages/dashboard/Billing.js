@@ -112,7 +112,7 @@ const BillingPage = () => {
         <div className="bg-white max-w-xl w-full rounded-2xl shadow-xl p-8">
           <div className="text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-custom-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.95-.833-2.72 0L4.094 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
@@ -125,7 +125,7 @@ const BillingPage = () => {
             </p>
             <button
               onClick={() => navigate('/dashboard')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              className="bg-custom-blue hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Return to Dashboard
             </button>
@@ -144,7 +144,7 @@ const BillingPage = () => {
           {/* Expired trial banner */}
           {trialInfo?.isExpired && (
             <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-800 text-sm font-medium">
+              <p className="text-custom-red text-sm font-medium">
                 ⚠️ Your trial has expired. Please upgrade to continue using Chatters.
               </p>
             </div>
@@ -161,7 +161,7 @@ const BillingPage = () => {
         <div className="space-y-4 mb-8">
           {/* Monthly Plan */}
           <label className={`flex items-center justify-between border rounded-lg p-4 cursor-pointer transition 
-            ${subscriptionType === 'monthly' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-400'}`}>
+            ${subscriptionType === 'monthly' ? 'border-custom-blue bg-blue-50' : 'border-gray-200 hover:border-gray-400'}`}>
             <div>
               <h2 className="font-semibold text-gray-800">Monthly Plan</h2>
               <p className="text-sm text-gray-600">Pay as you go. Cancel anytime.</p>
@@ -180,11 +180,11 @@ const BillingPage = () => {
 
           {/* Yearly Plan */}
           <label className={`flex items-center justify-between border rounded-lg p-4 cursor-pointer transition relative
-            ${subscriptionType === 'yearly' ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-400'}`}>
+            ${subscriptionType === 'yearly' ? 'border-custom-green bg-green-50' : 'border-gray-200 hover:border-gray-400'}`}>
             <div>
               <h2 className="font-semibold text-gray-800 flex items-center">
                 Yearly Plan
-                <span className="ml-2 bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                <span className="ml-2 bg-green-100 text-custom-green text-xs font-medium px-2 py-0.5 rounded-full">
                   Best value
                 </span>
               </h2>
@@ -207,7 +207,7 @@ const BillingPage = () => {
         <button
           onClick={handleCheckout}
           disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-700 transition text-white text-center font-medium py-3 px-6 rounded-lg"
+          className="w-full bg-custom-green hover:bg-green-700 transition text-white text-center font-medium py-3 px-6 rounded-lg"
         >
           {loading ? 'Redirecting…' : 'Upgrade and Continue'}
         </button>

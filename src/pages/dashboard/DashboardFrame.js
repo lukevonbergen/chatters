@@ -180,7 +180,7 @@ const UpdatedDashboardFrame = ({ children }) => {
             <Button
               onClick={() => navigate('/settings')}
               size="sm"
-              className="bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
+              className="bg-custom-black hover:bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
             >
               Upgrade Now
             </Button>
@@ -275,7 +275,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                           setSwitchingVenue(false);
                         }}
                         className={`w-full justify-start rounded-lg ${
-                          v.id === venueId ? 'bg-black text-white' : ''
+                          v.id === venueId ? 'bg-custom-black text-white' : ''
                         }`}
                       >
                         <span className="truncate">{v.name}</span>
@@ -313,7 +313,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="rounded-md px-3 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 cursor-pointer"
+                className="rounded-md px-3 py-2 text-custom-red hover:bg-red-100 hover:text-red-700 cursor-pointer"
                 onClick={async () => {
                   await supabase.auth.signOut();
                     // Clear custom remember-me flags
@@ -408,7 +408,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                             setMobileMenuOpen(false);
                           }}
                           className={`w-full justify-start rounded-lg ${
-                            v.id === venueId ? 'bg-black text-white' : ''
+                            v.id === venueId ? 'bg-custom-black text-white' : ''
                           }`}
                         >
                           {v.name}
@@ -434,7 +434,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                       }}
                       className={`w-full text-left block px-3 py-3 rounded-md text-base font-medium transition-colors ${
                         isActive
-                          ? 'bg-black text-white'
+                          ? 'bg-custom-black text-white'
                           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                       }`}
                     >
@@ -455,7 +455,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                   Account Settings
                 </button>
                 <button
-                  className="w-full text-left px-3 py-3 rounded-md text-base font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="w-full text-left px-3 py-3 rounded-md text-base font-medium text-custom-red hover:bg-red-50 hover:text-red-700"
                   onClick={async () => {
                     await supabase.auth.signOut();
                       // Clear custom remember-me flags
