@@ -8,8 +8,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-black text-white hover:bg-gray-900",
-        destructive: "bg-red-500 text-white hover:bg-red-600",
+        default: "bg-custom-black text-white hover:bg-custom-black-hover",
+        destructive: "bg-custom-red text-white hover:bg-custom-red-hover",
+        success: "bg-custom-green text-white hover:bg-custom-green-hover",
+        info: "bg-custom-blue text-white hover:bg-custom-blue-hover",
+        warning: "bg-custom-yellow text-white hover:bg-custom-yellow-hover",
         outline:
           "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground",
         subtle: "bg-muted text-muted-foreground hover:bg-muted/80",

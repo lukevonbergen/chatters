@@ -171,7 +171,7 @@ const TablesPage = () => {
             onClick={() => setActiveTab('unactioned')}
             className={`px-3 py-1 rounded-lg text-sm font-medium ${
               activeTab === 'unactioned'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-custom-blue text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
@@ -181,7 +181,7 @@ const TablesPage = () => {
             onClick={() => setActiveTab('actioned')}
             className={`px-3 py-1 rounded-lg text-sm font-medium ${
               activeTab === 'actioned'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-custom-blue text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
@@ -240,7 +240,7 @@ const FeedbackCard = ({ fb, onDelete, onToggleAction }) => {
           <div className="flex items-center gap-2">
             <h3 className="text-xl font-bold text-gray-900">Table {fb.table_number}</h3>
             {fb.is_actioned && (
-              <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
+              <span className="bg-green-100 text-custom-green text-xs px-2 py-1 rounded-full font-medium">
                 Actioned
               </span>
             )}
@@ -259,7 +259,7 @@ const FeedbackCard = ({ fb, onDelete, onToggleAction }) => {
               transition-colors duration-200
               ${fb.is_actioned
                 ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                : 'bg-green-500 text-white hover:bg-green-600'}
+                : 'bg-custom-green text-white hover:bg-custom-green-hover'}
             `}
           >
             {fb.is_actioned ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
@@ -270,7 +270,7 @@ const FeedbackCard = ({ fb, onDelete, onToggleAction }) => {
           <div className="relative">
             <button
               onClick={() => setShowDeleteConfirmation(!showDeleteConfirmation)}
-              className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              className="p-2 text-gray-400 hover:text-custom-red rounded-lg hover:bg-gray-100 transition-colors duration-200"
             >
               <Trash2 className="w-5 h-5" />
             </button>
@@ -287,7 +287,7 @@ const FeedbackCard = ({ fb, onDelete, onToggleAction }) => {
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="px-3 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded"
+                    className="px-3 py-1.5 text-sm font-medium text-white bg-custom-red hover:bg-red-600 rounded"
                   >
                     Delete
                   </button>
@@ -306,7 +306,7 @@ const FeedbackCard = ({ fb, onDelete, onToggleAction }) => {
             <span className="text-2xl font-bold text-gray-900">
               {calculateAverageRating(fb.questions)}
             </span>
-            <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+            <Star className="w-5 h-5 text-custom-yellow fill-custom-yellow" />
           </div>
         </div>
       </div>
@@ -327,7 +327,7 @@ const FeedbackCard = ({ fb, onDelete, onToggleAction }) => {
                   </p>
                   <div className="flex items-center gap-1">
                     <span className="font-medium">{question.rating}</span>
-                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                    <Star className="w-4 h-4 text-custom-yellow fill-custom-yellow" />
                   </div>
                 </div>
               </div>

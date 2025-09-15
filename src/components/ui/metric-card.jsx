@@ -12,32 +12,32 @@ export const reportColors = {
     accent: "text-slate-900"
   },
   success: {
-    bg: "bg-emerald-50",
-    border: "border-emerald-200", 
-    text: "text-emerald-900",
-    accent: "text-emerald-600",
-    icon: "text-emerald-600"
+    bg: "bg-green-50",
+    border: "border-green-200", 
+    text: "text-green-900",
+    accent: "text-custom-green",
+    icon: "text-custom-green"
   },
   warning: {
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-    text: "text-amber-900", 
-    accent: "text-amber-600",
-    icon: "text-amber-600"
+    bg: "bg-yellow-50",
+    border: "border-yellow-200",
+    text: "text-yellow-900", 
+    accent: "text-custom-yellow",
+    icon: "text-custom-yellow"
   },
   danger: {
     bg: "bg-red-50",
     border: "border-red-200",
     text: "text-red-900",
-    accent: "text-red-600", 
-    icon: "text-red-600"
+    accent: "text-custom-red", 
+    icon: "text-custom-red"
   },
   info: {
     bg: "bg-blue-50",
     border: "border-blue-200",
     text: "text-blue-900",
-    accent: "text-blue-600",
-    icon: "text-blue-600"
+    accent: "text-custom-blue",
+    icon: "text-custom-blue"
   },
   neutral: {
     bg: "bg-gray-50", 

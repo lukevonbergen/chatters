@@ -314,7 +314,7 @@ const EditEmployeeModal = ({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                className="w-full sm:w-auto px-6 py-2 bg-custom-green text-white rounded-lg hover:bg-custom-green-hover disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               >
                 {submitting ? (
                   <>

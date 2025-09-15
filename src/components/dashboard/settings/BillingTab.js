@@ -199,7 +199,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         <button
           onClick={handleCheckout}
           disabled={loading}
-          className="w-full sm:w-auto bg-black text-white px-6 lg:px-8 py-3 lg:py-4 rounded-md hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 text-sm lg:text-base font-medium"
+          className="w-full sm:w-auto bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 disabled:opacity-50 text-sm font-medium"
         >
           {loading ? 'Redirecting…' : 'Upgrade and Continue'}
         </button>

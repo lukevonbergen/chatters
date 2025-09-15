@@ -10,7 +10,7 @@ const BrandingSettings = ({ logo, onLogoUpload, primaryColor, secondaryColor, on
         <h2 className="text-xl font-bold text-gray-900">Branding Settings</h2>
         <button
           onClick={() => setLocked(!locked)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium"
         >
           {locked ? 'Unlock' : 'Lock'}
         </button>
@@ -34,7 +34,7 @@ const BrandingSettings = ({ logo, onLogoUpload, primaryColor, secondaryColor, on
           />
           <label
             htmlFor="logo-upload"
-            className={`bg-blue-600 text-white px-6 py-2 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors duration-200 ${
+            className={`bg-custom-green text-white px-6 py-2 rounded-lg cursor-pointer hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium ${
               locked ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -85,7 +85,7 @@ const BrandingSettings = ({ logo, onLogoUpload, primaryColor, secondaryColor, on
       {colorsUpdated && (
         <button
           onClick={onSaveColors}
-          className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          className="mt-4 bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={loading || locked}
         >
           {loading ? 'Saving...' : 'Save Colors'}
