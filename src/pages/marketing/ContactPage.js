@@ -46,18 +46,24 @@ const ContactPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>Contact Chatters | Speak to the team</title>
+        <title>Contact Chatters | Restaurant Software Demo & Support UK</title>
         <meta
           name="description"
-          content="Contact the Chatters team. Ask a question, request support, or book a demo. We’re here to help hospitality teams deliver 5-star guest experiences."
+          content="Book a Chatters demo or get support for your restaurant feedback system. Speak to our UK hospitality experts about improving guest satisfaction and preventing bad reviews. Quick response guaranteed."
+        />
+        <meta
+          name="keywords"
+          content="restaurant software support UK, hospitality feedback software demo, pub technology consultation, Chatters contact, restaurant feedback system support, UK hospitality software demo"
         />
         <link rel="canonical" href="https://getchatters.com/contact" />
-        <meta property="og:title" content="Contact Chatters" />
+        <meta property="og:title" content="Contact Chatters | Restaurant Software Demo & Support UK" />
         <meta
           property="og:description"
-          content="Get in touch with Chatters — support, sales, and general enquiries."
+          content="Book a Chatters demo or get support for your restaurant feedback system. Speak to our UK hospitality experts about improving guest satisfaction."
         />
         <meta property="og:type" content="website" />
+        <meta property="twitter:title" content="Contact Chatters | Restaurant Software Demo & Support UK" />
+        <meta property="twitter:description" content="Book a demo or get support for your restaurant feedback system. Speak to our UK hospitality experts." />
       </Helmet>
 
       {/* Overlay navbar for consistent hero overlap */}
@@ -65,8 +71,8 @@ const ContactPage = () => {
 
       {/* PageHeader hero */}
       <PageHeader
-        title="Contact Chatters"
-        description="Questions, demos, or support — we’re here to help. Send us a message and we’ll get back to you quickly."
+        title="Contact Chatters - UK Restaurant Software Experts"
+        description="Book a demo, get support, or speak to our UK hospitality technology team. We help restaurants, pubs, and hotels improve guest satisfaction and prevent negative reviews."
         backgroundGradient="from-white via-white to-purple-50"
         showSubtitle={true}
         subtitle="Support & Sales"

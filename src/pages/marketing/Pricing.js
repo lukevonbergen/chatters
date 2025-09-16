@@ -11,21 +11,23 @@ const PricingPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>Pricing | Chatters - Real-Time Guest Feedback Software</title>
+        <title>Restaurant Feedback Software Pricing UK | Flexible Plans | Chatters</title>
         <meta
           name="description"
-          content="Discover Chatters pricing and flexible plans tailored to your venue. Get real-time guest feedback, instant staff alerts, and boost 5-star reviews with Chatters."
+          content="Transparent pricing for UK restaurants, pubs & hotels. Chatters feedback management starts from just £149/month. No setup fees, unlimited staff users, 14-day free trial. Book a tailored quote today."
         />
         <meta
           name="keywords"
-          content="Chatters pricing, hospitality feedback software cost, guest feedback software, prevent bad reviews, customer feedback tool, venue experience platform"
+          content="restaurant feedback software pricing UK, hospitality software cost, pub management software prices, customer feedback system cost, restaurant technology pricing, Chatters pricing, UK hospitality software"
         />
-        <meta property="og:title" content="Chatters Pricing | Real-Time Feedback for Hospitality" />
+        <meta property="og:title" content="Restaurant Feedback Software Pricing UK | Chatters" />
         <meta 
           property="og:description" 
-          content="See how Chatters can fit your venue. Flexible plans with everything you need to capture feedback, resolve issues instantly, and delight guests." 
+          content="Transparent pricing for UK restaurants, pubs & hotels. Chatters feedback management starts from £149/month. No setup fees, unlimited staff users, 14-day free trial." 
         />
         <meta property="og:type" content="website" />
+        <meta property="twitter:title" content="Restaurant Feedback Software Pricing UK | Chatters" />
+        <meta property="twitter:description" content="Transparent pricing for UK restaurants, pubs & hotels. Chatters feedback management starts from £149/month. Free trial available." />
         <link rel="canonical" href="https://getchatters.com/pricing" />
       </Helmet>
 
@@ -34,8 +36,8 @@ const PricingPage = () => {
       <Navbar overlay />
 
       <PageHeader
-        title="Simple, Transparent Pricing Built for Growth"
-        description="Get everything you need to capture real-time feedback, empower your staff, and delight your guests — all with flexible plans that scale with you."
+        title="UK Restaurant Feedback Software Pricing - Transparent Plans for Every Venue"
+        description="Get everything you need to prevent negative reviews, capture real-time guest feedback, and empower your hospitality team — with flexible UK pricing that scales with your restaurant group."
         backgroundGradient="from-white to-green-100"
         showSubtitle={true}
         subtitle="Pricing"
