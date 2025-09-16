@@ -36,8 +36,10 @@ export default async function handler(req, res) {
         
         authUserId = userData.user.id;
         
-        // Send invitation email
-        const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
+        // Send invitation email with redirect to set-password page
+        const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
+          redirectTo: 'https://my.getchatters.com/set-password'
+        });
         if (inviteError) throw inviteError;
         
         // Create user record
@@ -82,7 +84,10 @@ export default async function handler(req, res) {
 
     const authUserId = userData.user.id;
 
-    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
+    // Send invitation email with redirect to set-password page
+    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
+      redirectTo: 'https://my.getchatters.com/set-password'
+    });
     if (inviteError) throw inviteError;
 
     const { error: userInsertError } = await supabase.from('users').insert([
