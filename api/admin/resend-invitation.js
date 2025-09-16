@@ -33,8 +33,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'User has already accepted the invitation' });
     }
 
-    // Resend invitation
-    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
+    // Resend invitation with redirect to set-password page
+    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
+      redirectTo: 'https://my.getchatters.com/set-password'
+    });
     if (inviteError) throw inviteError;
 
     return res.status(200).json({ 

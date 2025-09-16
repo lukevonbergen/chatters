@@ -19,6 +19,7 @@ const ManagersTab = ({
   const [managerToDelete, setManagerToDelete] = useState(null);
   const [editingManagerDetails, setEditingManagerDetails] = useState(null);
   const [editDetailsLoading, setEditDetailsLoading] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(null); // Track which user's email is being resent
 
   // Add manager form state
   const [newManager, setNewManager] = useState({
@@ -364,6 +365,38 @@ const ManagersTab = ({
     setEditingManagerDetails(null);
   };
 
+  // Check if manager has confirmed their email/set password
+  const hasManagerConfirmedEmail = (manager) => {
+    // Check if user has auth data and email is confirmed
+    return manager.users?.auth?.email_confirmed_at || manager.users?.auth?.last_sign_in_at;
+  };
+
+  // Resend invitation email
+  const handleResendInvitation = async (manager) => {
+    setResendingEmail(manager.user_id);
+    
+    try {
+      const res = await fetch('/api/admin/resend-invitation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: manager.users?.email }),
+      });
+
+      const result = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to resend invitation');
+      }
+
+      setMessage(`Invitation resent to ${manager.users?.email} successfully!`);
+      
+    } catch (error) {
+      setMessage('Failed to resend invitation: ' + error.message);
+    } finally {
+      setResendingEmail(null);
+    }
+  };
+
   // Handle venue toggle for editing manager details
   const handleEditManagerVenueToggle = (venueId) => {
     setEditingManagerDetails(prev => ({
@@ -508,6 +541,28 @@ const ManagersTab = ({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </button>
+                    
+                    {/* Resend invitation button - only show if manager hasn't confirmed email */}
+                    {!hasManagerConfirmedEmail(manager) && (
+                      <button 
+                        onClick={() => handleResendInvitation(manager)}
+                        disabled={resendingEmail === manager.user_id}
+                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Resend invitation email"
+                      >
+                        {resendingEmail === manager.user_id ? (
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                    
                     <button 
                       onClick={() => setManagerToDelete(manager)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"

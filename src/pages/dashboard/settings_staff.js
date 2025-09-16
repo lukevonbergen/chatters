@@ -94,7 +94,7 @@ const StaffPage = () => {
     // Get user IDs to fetch user data
     const userIds = [...new Set(staffData.map(s => s.user_id))];
     
-    // Get user data separately
+    // Get user data separately (including auth status)
     const userPromises = userIds.map(async (userId) => {
       const { data } = await supabase
         .from('users')
@@ -102,7 +102,16 @@ const StaffPage = () => {
         .eq('id', userId)
         .single();
       
-      return data;
+      // Get auth user data to check if they've confirmed their email/set password
+      let authData = null;
+      try {
+        const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+        authData = authUser?.user || null;
+      } catch (error) {
+        // Ignore auth errors - user might not have auth record yet
+      }
+      
+      return data ? { ...data, auth: authData } : null;
     });
     
     const userResults = await Promise.all(userPromises);
