@@ -19,8 +19,8 @@ const FeaturesPage = () => {
       icon: BarChart2,
     },
     {
-      title: 'Sentiment Analysis for Restaurant Reviews',
-      description: 'AI-powered guest sentiment tracking and recommendations to prevent negative TripAdvisor and Google reviews.',
+      title: 'Intelligent Sentiment Analysis for Restaurant Reviews',
+      description: 'Smart guest sentiment tracking and recommendations to prevent negative TripAdvisor and Google reviews.',
       icon: Zap,
     },
     {
@@ -35,7 +35,7 @@ const FeaturesPage = () => {
     },
     {
       title: 'Enterprise Security',
-      description: 'Bank-grade security with SOC 2 Type II compliance.',
+      description: 'Built on Supabase infrastructure with SOC 2 Type II compliance and bank-grade security.',
       icon: Lock,
     },
     {
@@ -107,7 +107,7 @@ const FeaturesPage = () => {
               "QR code feedback collection", 
               "Multi-location restaurant management",
               "Staff notification system",
-              "Guest sentiment analytics",
+              "Intelligent guest sentiment analytics",
               "Review prevention tools",
               "TripAdvisor & Google review routing",
               "Branded feedback forms",
@@ -232,7 +232,7 @@ const FeaturesPage = () => {
         faqs={[
           { 
             q: "What restaurant management features help improve guest satisfaction?", 
-            a: "Chatters includes real-time sentiment analysis, table-specific feedback tracking, staff performance metrics, and automated review routing to Google and TripAdvisor for satisfied guests. Our QR code system captures feedback instantly while guests are still in your venue." 
+            a: "Chatters includes intelligent sentiment analysis, table-specific feedback tracking, staff performance metrics, and automated review routing to Google and TripAdvisor for satisfied guests. Our QR code system captures feedback instantly while guests are still in your venue." 
           },
           { 
             q: "Do you offer analytics for restaurant group operations?", 

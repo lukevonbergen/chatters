@@ -72,7 +72,7 @@ const AboutUsPage = () => {
 
   const stats = [
     { number: '10s', label: 'Average Response Time', description: 'From guest feedback to staff notification' },
-    { number: '95%', label: 'Issue Resolution', description: 'Problems solved before guests leave' },
+    { number: '90%+', label: 'Issue Resolution', description: 'Problems solved before guests leave' },
     { number: '24/7', label: 'System Uptime', description: 'Reliable monitoring and alerts' },
     { number: '3-Click', label: 'Setup Process', description: 'QR codes live in minutes, not hours' },
   ];

@@ -33,7 +33,7 @@ const LandingPage = () => {
       "QR code feedback collection", 
       "Multi-location restaurant management",
       "Staff notification system",
-      "Guest sentiment analytics",
+      "Intelligent guest sentiment analytics",
       "Review prevention tools",
       "TripAdvisor & Google review routing"
     ],
@@ -132,7 +132,7 @@ const LandingPage = () => {
                 "name": "How does restaurant feedback software prevent negative TripAdvisor reviews?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Chatters captures guest concerns in real-time via QR codes at tables, alerting staff instantly so issues can be resolved before guests leave. This proactive approach prevents 95% of negative reviews from ever being posted online."
+                  "text": "Chatters captures guest concerns in real-time via QR codes at tables, alerting staff instantly so issues can be resolved before guests leave. This proactive approach prevents most negative reviews from ever being posted online."
                 }
               },
               {
@@ -172,7 +172,7 @@ const LandingPage = () => {
         sections={[
           {
             title: "Real-Time Restaurant Feedback Resolution",
-            description: "Monitor guest satisfaction in real-time with instant staff alerts. Chatters helps UK restaurants respond to customer feedback within minutes, preventing negative TripAdvisor reviews before they happen.",
+            description: "Monitor guest satisfaction in real-time with instant staff alerts. Chatters helps UK restaurants respond to customer feedback in real-time, preventing negative TripAdvisor reviews before they happen.",
             image: "/img/homepage/AlternatingSections/AverageResolutionTime-Chatters.svg",
             link: "/demo"
           },
@@ -355,7 +355,7 @@ const LandingPage = () => {
         gradientDirection="bg-gradient-to-b"
         defaultOpenIndex={0}
         faqs={[
-          { q: "How does restaurant feedback software prevent negative TripAdvisor reviews?", a: "Chatters captures guest concerns in real-time via QR codes at tables, alerting staff instantly so issues can be resolved before guests leave. This proactive approach prevents 95% of negative reviews from ever being posted online." },
+          { q: "How does restaurant feedback software prevent negative TripAdvisor reviews?", a: "Chatters captures guest concerns in real-time via QR codes at tables, alerting staff instantly so issues can be resolved before guests leave. This proactive approach prevents most negative reviews from ever being posted online." },
           { q: "What's the best customer feedback system for UK pub chains?", a: "Chatters is designed specifically for UK hospitality groups, offering multi-location management, role-based access for area managers, and real-time analytics across all venues from a single dashboard." },
           { q: "Can restaurant feedback software integrate with our existing POS system?", a: "Yes, Chatters integrates with major UK POS systems including Epos Now, TouchBistro, and Square. Our QR code system works independently while syncing valuable guest data with your existing operations." },
           { q: "How quickly do staff receive feedback alerts in busy restaurants?", a: "Staff receive push notifications within 10 seconds of guest submission. Alerts are prioritised by severity, ensuring critical issues reach managers immediately whilst routine requests go to floor staff." },
