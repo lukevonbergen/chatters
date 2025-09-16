@@ -13,36 +13,56 @@ export default async function handler(req, res) {
 
   const { email, firstName, lastName, venueId, venueIds, accountId, isFirstVenue } = req.body;
 
+  console.log('📥 Invite manager request:', { email, firstName, lastName, venueId, venueIds, accountId });
+
   if (!email || !firstName || !lastName || !accountId || (!venueId && !venueIds)) {
+    console.error('❌ Missing required fields:', { email: !!email, firstName: !!firstName, lastName: !!lastName, accountId: !!accountId, venueId: !!venueId, venueIds: !!venueIds });
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
     // Handle multiple venues if venueIds is provided
     if (venueIds && Array.isArray(venueIds)) {
+      console.log('🏢 Processing multiple venues:', venueIds);
+      
       // Check if user already exists
-      const { data: existingUser } = await supabase.auth.admin.listUsers();
+      const { data: existingUser, error: listError } = await supabase.auth.admin.listUsers();
+      if (listError) {
+        console.error('❌ Error listing users:', listError);
+        throw listError;
+      }
+      
       const userExists = existingUser.users.some(user => user.email === email);
+      console.log('👤 User exists:', userExists);
       
       let authUserId;
       
       if (!userExists) {
+        console.log('➕ Creating new user');
         // Create the user only once
         const { data: userData, error: createError } = await supabase.auth.admin.createUser({
           email,
           user_metadata: { firstName, lastName, invited_by_admin: true },
         });
-        if (createError) throw createError;
+        if (createError) {
+          console.error('❌ Error creating user:', createError);
+          throw createError;
+        }
         
         authUserId = userData.user.id;
         
         // Send invitation email with redirect to set-password page
+        console.log('📧 Sending invitation email');
         const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
           redirectTo: 'https://my.getchatters.com/set-password'
         });
-        if (inviteError) throw inviteError;
+        if (inviteError) {
+          console.error('❌ Error sending invite:', inviteError);
+          throw inviteError;
+        }
         
         // Create user record
+        console.log('👤 Creating user record');
         const { error: userInsertError } = await supabase.from('users').insert([
           {
             id: authUserId,
@@ -51,22 +71,53 @@ export default async function handler(req, res) {
             account_id: accountId,
           },
         ]);
-        if (userInsertError) throw userInsertError;
+        if (userInsertError) {
+          console.error('❌ Error creating user record:', userInsertError);
+          throw userInsertError;
+        }
       } else {
         // Get existing user ID
+        console.log('👤 Using existing user');
         const existingUserData = existingUser.users.find(user => user.email === email);
         authUserId = existingUserData.id;
       }
       
-      // Create staff records for all venues
-      const staffRecords = venueIds.map(vId => ({
-        user_id: authUserId,
-        venue_id: vId,
-        role: 'manager'
-      }));
+      // Check existing staff assignments
+      console.log('🔍 Checking existing staff assignments for user:', authUserId);
+      const { data: existingStaff, error: staffQueryError } = await supabase
+        .from('staff')
+        .select('venue_id')
+        .eq('user_id', authUserId);
+        
+      if (staffQueryError) {
+        console.error('❌ Error querying staff:', staffQueryError);
+        throw staffQueryError;
+      }
       
-      const { error: staffInsertError } = await supabase.from('staff').insert(staffRecords);
-      if (staffInsertError) throw staffInsertError;
+      const existingVenueIds = existingStaff ? existingStaff.map(s => s.venue_id) : [];
+      console.log('📍 Existing venue assignments:', existingVenueIds);
+      
+      // Only insert staff records for new venues
+      const newVenueIds = venueIds.filter(vId => !existingVenueIds.includes(vId));
+      console.log('➕ New venue assignments needed:', newVenueIds);
+      
+      if (newVenueIds.length > 0) {
+        const staffRecords = newVenueIds.map(vId => ({
+          user_id: authUserId,
+          venue_id: vId,
+          role: 'manager'
+        }));
+        
+        console.log('💼 Creating staff records:', staffRecords);
+        const { error: staffInsertError } = await supabase.from('staff').insert(staffRecords);
+        if (staffInsertError) {
+          console.error('❌ Error creating staff records:', staffInsertError);
+          throw staffInsertError;
+        }
+        console.log('✅ Staff records created successfully');
+      } else {
+        console.log('ℹ️ No new staff assignments needed');
+      }
       
       return res.status(200).json({ success: true, userId: authUserId });
     }
@@ -100,14 +151,25 @@ export default async function handler(req, res) {
     ]);
     if (userInsertError) throw userInsertError;
 
-    const { error: staffInsertError } = await supabase.from('staff').insert([
-      {
-        user_id: authUserId,
-        venue_id: venueId,
-        role: 'manager'
-      },
-    ]);
-    if (staffInsertError) throw staffInsertError;
+    // Check if staff assignment already exists
+    const { data: existingStaff } = await supabase
+      .from('staff')
+      .select('id')
+      .eq('user_id', authUserId)
+      .eq('venue_id', venueId)
+      .single();
+
+    // Only insert if staff assignment doesn't exist
+    if (!existingStaff) {
+      const { error: staffInsertError } = await supabase.from('staff').insert([
+        {
+          user_id: authUserId,
+          venue_id: venueId,
+          role: 'manager'
+        },
+      ]);
+      if (staffInsertError) throw staffInsertError;
+    }
 
     return res.status(200).json({ success: true, userId: authUserId });
   } catch (err) {
