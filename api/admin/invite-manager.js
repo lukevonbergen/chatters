@@ -80,6 +80,30 @@ export default async function handler(req, res) {
         console.log('👤 Using existing user');
         const existingUserData = existingUser.users.find(user => user.email === email);
         authUserId = existingUserData.id;
+        
+        // Ensure user record exists in public.users table
+        console.log('🔍 Checking if user record exists in public.users');
+        const { data: existingPublicUser, error: publicUserError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', authUserId)
+          .single();
+          
+        if (publicUserError || !existingPublicUser) {
+          console.log('➕ Creating missing public.users record for existing auth user');
+          const { error: userInsertError } = await supabase.from('users').insert([
+            {
+              id: authUserId,
+              email,
+              role: 'manager',
+              account_id: accountId,
+            },
+          ]);
+          if (userInsertError) {
+            console.error('❌ Error creating public user record:', userInsertError);
+            throw userInsertError;
+          }
+        }
       }
       
       // Check existing staff assignments
@@ -107,6 +131,40 @@ export default async function handler(req, res) {
           venue_id: vId,
           role: 'manager'
         }));
+        
+        // Verify user record exists before creating staff assignments (with retry)
+        console.log('🔍 Verifying user record exists in public.users table');
+        let userCheck = null;
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (!userCheck && attempts < maxAttempts) {
+          attempts++;
+          console.log(`🔄 Attempt ${attempts}/${maxAttempts} to find user record`);
+          
+          const { data, error } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', authUserId)
+            .single();
+            
+          if (!error && data) {
+            userCheck = data;
+            break;
+          }
+          
+          if (attempts < maxAttempts) {
+            console.log('⏳ User record not found, waiting 1 second before retry...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+          
+        if (!userCheck) {
+          console.error('❌ User record not found in public.users table after retries');
+          throw new Error('User record not found. Cannot create staff assignments.');
+        }
+        
+        console.log('✅ User record confirmed in public.users table');
         
         console.log('💼 Creating staff records:', staffRecords);
         const { error: staffInsertError } = await supabase.from('staff').insert(staffRecords);
@@ -161,6 +219,40 @@ export default async function handler(req, res) {
 
     // Only insert if staff assignment doesn't exist
     if (!existingStaff) {
+      // Verify user record exists before creating staff assignment (with retry)
+      console.log('🔍 Verifying user record exists in public.users table');
+      let userCheck = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (!userCheck && attempts < maxAttempts) {
+        attempts++;
+        console.log(`🔄 Attempt ${attempts}/${maxAttempts} to find user record`);
+        
+        const { data, error } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', authUserId)
+          .single();
+          
+        if (!error && data) {
+          userCheck = data;
+          break;
+        }
+        
+        if (attempts < maxAttempts) {
+          console.log('⏳ User record not found, waiting 1 second before retry...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+        
+      if (!userCheck) {
+        console.error('❌ User record not found in public.users table after retries');
+        throw new Error('User record not found. Cannot create staff assignment.');
+      }
+      
+      console.log('✅ User record confirmed in public.users table');
+      
       const { error: staffInsertError } = await supabase.from('staff').insert([
         {
           user_id: authUserId,
