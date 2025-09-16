@@ -20,6 +20,14 @@ const SetPasswordPage = () => {
     const params = new URLSearchParams(hash);
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token');
+    const type = params.get('type');
+
+    // Check if this is an invite link
+    if (type !== 'invite') {
+      setError('Invalid invitation link. This page is for invited users only.');
+      setIsLoading(false);
+      return;
+    }
 
     if (!accessToken || !refreshToken) {
       setError('Invalid or missing token.');
