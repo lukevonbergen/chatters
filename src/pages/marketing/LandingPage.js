@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Navbar from '../../components/marketing/layout/Navbar';
 import Hero from '../../components/marketing/pages/LandingPage/Hero.js';
@@ -193,7 +194,19 @@ const LandingPage = () => {
       <TestimonialsSection
         eyebrow="Testimonials"
         title="UK Restaurant Teams Prevent Bad Reviews with Chatters"
-        description="Real feedback from UK pub managers, restaurant operators, and hotel teams using our guest feedback software daily. See our <a href='/features' class='text-blue-600 hover:text-blue-700 underline'>complete feature list</a> or <a href='/pricing' class='text-blue-600 hover:text-blue-700 underline'>pricing options</a>."
+        description={
+          <>
+            Real feedback from UK pub managers, restaurant operators, and hotel teams using our guest feedback software daily. See our{' '}
+            <Link to="/features" className="text-blue-600 hover:text-blue-700 underline">
+              complete feature list
+            </Link>
+            {' '}or{' '}
+            <Link to="/pricing" className="text-blue-600 hover:text-blue-700 underline">
+              pricing options
+            </Link>
+            .
+          </>
+        }
         cols={{ base: 1, sm: 1, md: 2, lg: 3 }}
         dottedBackground
         orbGlow
