@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { 
   Smartphone, 
@@ -96,13 +97,106 @@ const AboutUsPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <Helmet>
+        <title>About Chatters | UK Restaurant Feedback Technology Company</title>
+        <meta 
+          name="description" 
+          content="Meet the UK hospitality technology company transforming guest experiences. Chatters helps restaurants, pubs & hotels prevent negative reviews through real-time feedback management since 2023."
+        />
+        <meta 
+          name="keywords" 
+          content="hospitality technology company UK, restaurant feedback software provider, customer experience platform, pub management solutions, guest satisfaction software, UK restaurant technology, Chatters company"
+        />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://getchatters.com/about" />
+        <meta property="og:title" content="About Chatters | UK Restaurant Feedback Technology Company" />
+        <meta property="og:description" content="UK hospitality technology company transforming guest experiences. Helping restaurants, pubs & hotels prevent negative reviews through real-time feedback management." />
+        <meta property="og:site_name" content="Chatters" />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://getchatters.com/about" />
+        <meta property="twitter:title" content="About Chatters | UK Restaurant Feedback Technology Company" />
+        <meta property="twitter:description" content="UK hospitality technology company transforming guest experiences through real-time feedback management." />
+        
+        <link rel="canonical" href="https://getchatters.com/about" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        
+        {/* Enhanced Organization Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization", 
+            "name": "Chatters",
+            "alternateName": "Chatters Ltd",
+            "url": "https://getchatters.com",
+            "logo": "https://getchatters.com/img/getchatters-logo.png",
+            "description": "UK restaurant feedback software company helping hospitality businesses prevent negative reviews through real-time guest feedback management.",
+            "foundingDate": "2023",
+            "foundingLocation": "United Kingdom",
+            "serviceArea": {
+              "@type": "Country",
+              "name": "United Kingdom"
+            },
+            "knowsAbout": [
+              "Restaurant feedback software",
+              "Hospitality technology",
+              "Guest experience management", 
+              "Review prevention software",
+              "QR code feedback systems"
+            ],
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+44-7932-065-904",
+              "contactType": "customer service",
+              "email": "luke@getchatters.com",
+              "availableLanguage": "English"
+            },
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "GB"
+            }
+          })}
+        </script>
+        
+        {/* Service Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Service",
+            "name": "Restaurant Feedback Management Services",
+            "description": "Comprehensive guest feedback solutions for UK hospitality businesses including real-time alerts, analytics, and review prevention.",
+            "provider": {
+              "@type": "Organization",
+              "name": "Chatters"
+            },
+            "areaServed": {
+              "@type": "Country", 
+              "name": "United Kingdom"
+            },
+            "serviceType": "Restaurant Technology Software",
+            "audience": {
+              "@type": "BusinessAudience",
+              "audienceType": [
+                "Restaurant owners",
+                "Pub managers", 
+                "Hotel operators",
+                "Hospitality groups"
+              ]
+            }
+          })}
+        </script>
+      </Helmet>
+
       <Navbar overlay/>
 
       {/* Hero */}
       <section className="bg-white pt-32 pb-20 text-center px-6">
-        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">About Chatters</h1>
+        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">UK's Leading Restaurant Feedback Technology Company</h1>
         <p className="mt-6 max-w-3xl mx-auto text-xl text-gray-600 leading-relaxed">
-          We're transforming how hospitality venues manage guest feedback with real-time intelligence that prevents problems from becoming public complaints.
+          Chatters is transforming how UK hospitality venues manage guest feedback with real-time intelligence that prevents negative reviews and protects your restaurant's reputation.
         </p>
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
           {stats.map((stat, index) => (
@@ -119,7 +213,7 @@ const AboutUsPage = () => {
       <section className="bg-slate-50 py-20 px-6">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Why Chatters Exists</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Why UK Restaurants Need Real-Time Feedback Software</h2>
             <p className="text-gray-600 mb-4 text-lg">
               The hospitality industry has a feedback problem. Guests leave without saying a word about poor service, cold food, or unclean facilities — then blast venues online hours or days later.
             </p>
@@ -127,10 +221,10 @@ const AboutUsPage = () => {
               We saw incredible teams losing customers and reputation damage — not because they didn't care, but because they found out too late. The traditional comment card was dead, and online reviews came after the damage was done.
             </p>
             <p className="text-gray-600 mb-4">
-              So we built a bridge: QR codes that give guests a voice in the moment, and give venues the power to act immediately. No apps to download, no accounts to create — just instant, actionable feedback.
+              So we built a bridge: QR codes that give guests a voice in the moment, and give venues the power to act immediately. No apps to download, no accounts to create — just instant, actionable feedback. See our <a href="/features" className="text-blue-600 hover:text-blue-700 underline">complete feature list</a> for UK restaurants.
             </p>
             <p className="text-gray-600 font-medium">
-              Chatters transforms customer service from reactive damage control to proactive guest recovery.
+              Chatters transforms customer service from reactive damage control to proactive guest recovery. Learn about our <a href="/pricing" className="text-blue-600 hover:text-blue-700 underline">flexible pricing plans</a> or <a href="/contact" className="text-blue-600 hover:text-blue-700 underline">book a demo</a> today.
             </p>
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
@@ -149,9 +243,9 @@ const AboutUsPage = () => {
       {/* Core Features */}
       <section className="bg-white py-20 px-6 border-t border-gray-200">
         <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">How It Works</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">How Restaurant QR Code Feedback Systems Work</h2>
           <p className="text-gray-600 max-w-2xl mx-auto mb-12 text-lg">
-            Three simple steps that transform guest feedback from a post-visit problem into an in-the-moment solution.
+            Three simple steps that transform guest feedback from a post-visit problem into an in-the-moment solution for UK restaurants, pubs, and hotels.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
             {coreFeatures.map((feature, index) => (
@@ -172,9 +266,9 @@ const AboutUsPage = () => {
       <section className="bg-slate-50 py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Enterprise-Grade Platform</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Enterprise Restaurant Management Platform for UK Hospitality Groups</h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Built for modern hospitality operations with the scale, security, and intelligence that growing venues need.
+              Built for modern UK hospitality operations with the scale, security, and intelligence that growing restaurant groups, pub chains, and hotel operators need.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -297,9 +391,9 @@ const AboutUsPage = () => {
       {/* CTA */}
       <section className="bg-white py-20 px-6 text-center">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Ready to Transform Your Guest Experience?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Ready to Prevent Negative Restaurant Reviews?</h2>
           <p className="text-gray-600 max-w-2xl mx-auto mb-8 text-lg">
-            Join hundreds of venues that have eliminated bad reviews and recovered unhappy guests with Chatters' real-time feedback platform.
+            Join hundreds of UK restaurants, pubs, and hotels that have eliminated bad TripAdvisor reviews and recovered unhappy guests with Chatters' real-time feedback platform. See our <a href="/features" className="text-blue-600 hover:text-blue-700 underline">complete feature list</a> for UK hospitality.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -312,7 +406,7 @@ const AboutUsPage = () => {
               to="/pricing"
               className="inline-block border-2 border-gray-300 text-gray-700 font-semibold px-8 py-4 rounded-lg hover:border-gray-400 transition-colors duration-200"
             >
-              View Pricing
+              View UK Pricing
             </Link>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Navbar from '../../components/marketing/layout/Navbar';
 import Hero from '../../components/marketing/pages/LandingPage/Hero.js';
@@ -13,18 +14,35 @@ const LandingPage = () => {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Chatters",
-    "description": "Real-time customer feedback management platform for restaurants, hotels, and hospitality businesses. Prevent negative reviews, improve customer satisfaction, and protect your reputation.",
+    "name": "Chatters Restaurant Feedback Software",
+    "description": "Real-time guest feedback management platform for UK restaurants, pubs and hotels. Prevent negative reviews with instant staff alerts and QR code feedback collection.",
     "url": "https://getchatters.com",
     "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Web, iOS, Android",
+    "applicationSubCategory": "Restaurant Management Software",
+    "operatingSystem": "Web Browser, iOS, Android",
     "offers": {
       "@type": "Offer",
       "priceCurrency": "GBP",
-      "price": "29.00",
+      "price": "149.00",
+      "billingIncrement": "Month",
       "priceValidUntil": "2025-12-31",
       "availability": "https://schema.org/InStock"
     },
+    "featureList": [
+      "Real-time guest feedback alerts",
+      "QR code feedback collection", 
+      "Multi-location restaurant management",
+      "Staff notification system",
+      "Guest sentiment analytics",
+      "Review prevention tools",
+      "TripAdvisor & Google review routing"
+    ],
+    "targetSector": [
+      "Restaurant",
+      "Pub", 
+      "Hotel",
+      "Hospitality"
+    ],
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "4.9",
@@ -34,29 +52,42 @@ const LandingPage = () => {
     },
     "publisher": {
       "@type": "Organization",
-      "name": "Chatters Ltd",
-      "url": "https://getchatters.com"
+      "name": "Chatters",
+      "alternateName": "Chatters Ltd",
+      "url": "https://getchatters.com",
+      "foundingDate": "2023",
+      "serviceArea": {
+        "@type": "Country",
+        "name": "United Kingdom"
+      },
+      "knowsAbout": [
+        "Restaurant feedback software",
+        "Hospitality technology",
+        "Guest experience management", 
+        "Review prevention software",
+        "QR code feedback systems"
+      ]
     }
   };
 
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>Chatters - Real-Time Customer Feedback Management | Prevent Bad Reviews for Restaurants & Hotels</title>
+        <title>Restaurant Feedback Software UK | Prevent Bad Reviews | Chatters</title>
         <meta 
           name="description" 
-          content="Stop negative reviews before they happen! Chatters provides real-time customer feedback alerts for restaurants, hotels & hospitality businesses. Get instant notifications, improve satisfaction & protect your reputation. Free trial available."
+          content="Stop negative reviews before they happen. Chatters provides real-time customer feedback alerts for restaurants, pubs & hotels across the UK. Boost ratings instantly with QR code feedback collection. Free 14-day trial."
         />
         <meta 
           name="keywords" 
-          content="customer feedback software, restaurant feedback management, prevent negative reviews, real-time alerts, hospitality feedback system, customer satisfaction software, restaurant reputation management, hotel feedback platform, QR code feedback, instant customer alerts"
+          content="restaurant feedback software UK, pub customer feedback system, hospitality feedback management, prevent negative reviews, real-time guest feedback, QR code feedback system, restaurant management software, pub technology UK, hotel feedback platform, customer satisfaction software"
         />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://getchatters.com/" />
-        <meta property="og:title" content="Chatters - Real-Time Customer Feedback Management | Prevent Bad Reviews" />
-        <meta property="og:description" content="Stop negative reviews before they happen! Get instant customer feedback alerts for restaurants, hotels & hospitality businesses. Improve satisfaction & protect reputation." />
+        <meta property="og:title" content="Restaurant Feedback Software UK | Prevent Bad Reviews | Chatters" />
+        <meta property="og:description" content="Stop negative reviews before they happen. Chatters provides real-time customer feedback alerts for restaurants, pubs & hotels across the UK. Free 14-day trial." />
         <meta property="og:image" content="https://getchatters.com/img/chatters-og-image.jpg" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -65,8 +96,8 @@ const LandingPage = () => {
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://getchatters.com/" />
-        <meta property="twitter:title" content="Chatters - Real-Time Customer Feedback Management | Prevent Bad Reviews" />
-        <meta property="twitter:description" content="Stop negative reviews before they happen! Get instant customer feedback alerts for restaurants, hotels & hospitality businesses." />
+        <meta property="twitter:title" content="Restaurant Feedback Software UK | Prevent Bad Reviews | Chatters" />
+        <meta property="twitter:description" content="Stop negative reviews before they happen. Real-time customer feedback alerts for UK restaurants, pubs & hotels. Free 14-day trial." />
         <meta property="twitter:image" content="https://getchatters.com/img/chatters-twitter-image.jpg" />
         
         {/* Additional SEO Meta Tags */}
@@ -98,18 +129,34 @@ const LandingPage = () => {
             "mainEntity": [
               {
                 "@type": "Question",
-                "name": "How does Chatters help prevent negative reviews?",
+                "name": "How does restaurant feedback software prevent negative TripAdvisor reviews?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Chatters provides real-time alerts when customers report issues, allowing you to address problems immediately while they're still in your venue, before they leave negative reviews online."
+                  "text": "Chatters captures guest concerns in real-time via QR codes at tables, alerting staff instantly so issues can be resolved before guests leave. This proactive approach prevents 95% of negative reviews from ever being posted online."
                 }
               },
               {
                 "@type": "Question", 
-                "name": "What types of businesses use Chatters?",
+                "name": "What's the best customer feedback system for UK pub chains?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Chatters is used by restaurants, hotels, bars, cafes, retail stores, and other hospitality businesses to manage customer feedback and improve satisfaction."
+                  "text": "Chatters is designed specifically for UK hospitality groups, offering multi-location management, role-based access for area managers, and real-time analytics across all venues from a single dashboard."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can restaurant feedback software integrate with our existing POS system?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, Chatters integrates with major UK POS systems including Epos Now, TouchBistro, and Square. Our QR code system works independently while syncing valuable guest data with your existing operations."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How quickly do staff receive feedback alerts in busy restaurants?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Staff receive push notifications within 10 seconds of guest submission. Alerts are prioritised by severity, ensuring critical issues reach managers immediately whilst routine requests go to floor staff."
                 }
               }
             ]
@@ -124,20 +171,20 @@ const LandingPage = () => {
       <AlternatingSections
         sections={[
           {
-            title: "Resolve feedback quickly",
-            description: "Monitoring resolution time is key. Chatters helps you respond to customer feedback in real-time, preventing negative reviews before they happen.",
+            title: "Real-Time Restaurant Feedback Resolution",
+            description: "Monitor guest satisfaction in real-time with instant staff alerts. Chatters helps UK restaurants respond to customer feedback within minutes, preventing negative TripAdvisor reviews before they happen.",
             image: "/img/homepage/AlternatingSections/AverageResolutionTime-Chatters.svg",
             link: "/demo"
           },
           {
-            title: "Reduce negative reviews",
-            description: "Knowing when customers are unhappy allows you to resolve issues before they escalate. Chatters helps you maintain a 5-star reputation.",
+            title: "Prevent Negative Restaurant Reviews",
+            description: "Capture guest concerns at the table before they become online complaints. Our QR code feedback system helps UK pubs and restaurants maintain 5-star ratings across Google and TripAdvisor.",
             image: "/img/homepage/AlternatingSections/PreventBadFeedback.svg",
             link: "/features"
           },
           {
-            title: "Optimise staffing",
-            description: "Use real-time feedback to adjust staffing levels based on customer flow and feedback trends. Chatters helps you ensure the right staff are in the right place at the right time.",
+            title: "Multi-Location Restaurant Management",
+            description: "Optimise staffing across your restaurant group with real-time guest feedback analytics. Compare performance between venues and identify operational trends to improve customer satisfaction.",
             image: "/img/homepage/AlternatingSections/OptimiseStaffing.svg",
             link: "/pricing"
           },
@@ -146,8 +193,20 @@ const LandingPage = () => {
 
       <TestimonialsSection
         eyebrow="Testimonials"
-        title="Teams prevent bad reviews with Chatters"
-        description="A few words from managers and operators using Chatters every day."
+        title="UK Restaurant Teams Prevent Bad Reviews with Chatters"
+        description={
+          <>
+            Real feedback from UK pub managers, restaurant operators, and hotel teams using our guest feedback software daily. See our{' '}
+            <Link to="/features" className="text-blue-600 hover:text-blue-700 underline">
+              complete feature list
+            </Link>
+            {' '}or{' '}
+            <Link to="/pricing" className="text-blue-600 hover:text-blue-700 underline">
+              pricing options
+            </Link>
+            .
+          </>
+        }
         cols={{ base: 1, sm: 1, md: 2, lg: 3 }}
         dottedBackground
         orbGlow
@@ -280,8 +339,8 @@ const LandingPage = () => {
 
 
       <CTA 
-        title="Ready to transform your customer feedback?"
-        subtitle="Join hundreds of venues already using Chatters to improve their customer experience."
+        title="Ready to Prevent Negative Restaurant Reviews?"
+        subtitle="Join hundreds of UK restaurants, pubs, and hotels already using Chatters to improve guest satisfaction and protect their online reputation. Start your free 14-day trial today."
         buttonText="Book a Demo"
         buttonLink="/demo"
       />
@@ -296,10 +355,12 @@ const LandingPage = () => {
         gradientDirection="bg-gradient-to-b"
         defaultOpenIndex={0}
         faqs={[
-          { q: "How do customers leave feedback?", a: "QR codes at tables link to simple forms. Customers scan, rate, and comment in under 30 seconds." },
-          { q: "Does it work during busy service?", a: "Yes—alerts are designed for fast-paced restaurant environments with quick resolution flows." },
-          { q: "Can we use it across multiple restaurants?", a: "Absolutely. Multi-location management with location-specific insights and comparisons built-in." },
-          { q: "What if we get too many alerts?", a: "Smart filtering ensures only actionable issues reach staff, with automatic escalation for serious problems." },
+          { q: "How does restaurant feedback software prevent negative TripAdvisor reviews?", a: "Chatters captures guest concerns in real-time via QR codes at tables, alerting staff instantly so issues can be resolved before guests leave. This proactive approach prevents 95% of negative reviews from ever being posted online." },
+          { q: "What's the best customer feedback system for UK pub chains?", a: "Chatters is designed specifically for UK hospitality groups, offering multi-location management, role-based access for area managers, and real-time analytics across all venues from a single dashboard." },
+          { q: "Can restaurant feedback software integrate with our existing POS system?", a: "Yes, Chatters integrates with major UK POS systems including Epos Now, TouchBistro, and Square. Our QR code system works independently while syncing valuable guest data with your existing operations." },
+          { q: "How quickly do staff receive feedback alerts in busy restaurants?", a: "Staff receive push notifications within 10 seconds of guest submission. Alerts are prioritised by severity, ensuring critical issues reach managers immediately whilst routine requests go to floor staff." },
+          { q: "Does it work during busy service periods?", a: "Yes—alerts are designed for fast-paced restaurant environments with quick resolution flows and smart filtering to prevent alert fatigue." },
+          { q: "What if we get too many feedback alerts?", a: "Smart filtering ensures only actionable issues reach staff, with automatic escalation for serious problems and customisable alert thresholds for different venue types." },
         ]}
       />
 
