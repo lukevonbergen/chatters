@@ -1,15 +1,22 @@
 // EmployeeCard.js - Individual employee display card
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Edit3, Trash2 } from 'lucide-react';
 
 const EmployeeCard = ({ employee, onEdit, onDelete }) => {
+  const navigate = useNavigate();
+  
   const handleEdit = () => {
     onEdit(employee);
   };
 
   const handleDelete = () => {
     onDelete(employee);
+  };
+
+  const handleViewDetails = () => {
+    navigate(`/staff-member/${employee.id}`);
   };
 
   return (
@@ -20,9 +27,12 @@ const EmployeeCard = ({ employee, onEdit, onDelete }) => {
         <div className="flex-1 min-w-0">
           {/* Name and role on first line */}
           <div className="flex items-center justify-between sm:justify-start">
-            <div className="text-sm font-medium text-gray-900 truncate mr-2">
+            <button
+              onClick={handleViewDetails}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate mr-2 text-left"
+            >
               {employee.first_name} {employee.last_name}
-            </div>
+            </button>
             {employee.role && (
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-custom-blue flex-shrink-0 sm:ml-3">
                 {employee.role}
