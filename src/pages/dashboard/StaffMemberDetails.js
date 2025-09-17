@@ -99,7 +99,7 @@ const StaffMemberDetails = () => {
         resolved_by, 
         resolved_at,
         rating,
-        feedback_text,
+        additional_feedback,
         table_number,
         created_at,
         venue_id,
@@ -118,8 +118,7 @@ const StaffMemberDetails = () => {
         id,
         resolved_by,
         resolved_at,
-        request_type,
-        description,
+        message,
         table_number,
         created_at,
         venue_id,
@@ -158,7 +157,7 @@ const StaffMemberDetails = () => {
             id: item.session_id,
             type: 'feedback',
             rating: item.rating,
-            content: item.feedback_text,
+            content: item.additional_feedback,
             table_number: item.table_number,
             created_at: item.created_at,
             resolved_at: item.resolved_at,
@@ -175,8 +174,7 @@ const StaffMemberDetails = () => {
         combinedData.push({
           id: request.id,
           type: 'assistance',
-          request_type: request.request_type,
-          content: request.description,
+          content: request.message,
           table_number: request.table_number,
           created_at: request.created_at,
           resolved_at: request.resolved_at,
@@ -216,7 +214,7 @@ const StaffMemberDetails = () => {
         `"${(item.content || '').replace(/"/g, '""')}"`,
         item.table_number || 'N/A',
         item.type === 'feedback' ? (item.rating || 'N/A') : 'N/A',
-        item.type === 'assistance' ? (item.request_type || 'N/A') : 'N/A',
+        item.type === 'assistance' ? 'Assistance' : 'N/A',
         `"${dayjs(item.created_at).format('YYYY-MM-DD HH:mm:ss')}"`,
         `"${dayjs(item.resolved_at).from(dayjs(item.created_at), true)}"`
       ].join(','))
@@ -401,7 +399,7 @@ const StaffMemberDetails = () => {
                           ? 'bg-red-100 text-red-800' 
                           : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {item.type === 'feedback' ? 'Negative Feedback' : item.request_type || 'Assistance'}
+                        {item.type === 'feedback' ? 'Negative Feedback' : 'Assistance'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
