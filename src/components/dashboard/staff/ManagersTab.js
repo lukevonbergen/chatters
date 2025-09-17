@@ -367,8 +367,11 @@ const ManagersTab = ({
 
   // Check if manager has confirmed their email/set password
   const hasManagerConfirmedEmail = (manager) => {
-    // Check if user has auth data and email is confirmed
-    return manager.users?.auth?.email_confirmed_at || manager.users?.auth?.last_sign_in_at;
+    // Check if user has a password hash in the users table - this means they've set their password
+    const hasPasswordHash = manager.users?.password_hash;
+    
+    // User is active if they have a password hash (meaning they've set their password)
+    return !!hasPasswordHash;
   };
 
   // Resend invitation email
@@ -451,131 +454,172 @@ const ManagersTab = ({
             </button>
           </div>
         ) : (
-          <div className="space-y-1">
-            {uniqueManagers.map(manager => {
-              // Get all venues for this manager
-              const managerVenues = managers
-                .filter(m => m.user_id === manager.user_id)
-                .map(m => allVenues.find(v => v.id === m.venue_id))
-                .filter(Boolean);
-              
-              return editingManagerDetails?.user_id === manager.user_id ? (
-                // Edit mode - Venue assignments only
-                <div key={manager.user_id} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="space-y-3">
-                    {/* Manager Info (Read-only) */}
-                    <div className="flex items-center space-x-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {manager.users?.first_name} {manager.users?.last_name}
-                      </div>
-                      <span className="text-xs text-gray-500">•</span>
-                      <div className="text-xs text-gray-500">{manager.users?.email}</div>
-                    </div>
-
-                    {/* Venue Assignment */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-2">Venue Access</label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto">
-                        {allVenues.map(venue => (
-                          <label key={venue.id} className="flex items-center space-x-2 text-xs">
-                            <input
-                              type="checkbox"
-                              checked={editingManagerDetails.venue_ids.includes(venue.id)}
-                              onChange={() => handleEditManagerVenueToggle(venue.id)}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-3 w-3"
-                              disabled={editDetailsLoading}
-                            />
-                            <span className="text-gray-700">{venue.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center justify-end space-x-2 pt-2 border-t border-blue-200">
-                      <button
-                        onClick={handleCancelEditManagerDetails}
-                        disabled={editDetailsLoading}
-                        className="px-3 py-1 text-xs border border-gray-300 text-gray-600 rounded hover:bg-gray-50 disabled:opacity-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveManagerDetails}
-                        disabled={editDetailsLoading || editingManagerDetails.venue_ids.length === 0}
-                        className="px-6 py-2 text-sm bg-custom-green text-white rounded-lg hover:bg-custom-green-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                      >
-                        {editDetailsLoading ? 'Saving...' : 'Update Venues'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                // View mode
-                <div key={manager.user_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  {/* Manager info in one line */}
-                  <div className="flex items-center space-x-4 min-w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {manager.users?.first_name} {manager.users?.last_name}
-                    </div>
-                    <div className="flex items-center space-x-3 text-xs text-gray-500">
-                      <span className="truncate">{manager.users?.email}</span>
-                      <span>•</span>
-                      <span>
-                        {managerVenues.length === 1 
-                          ? managerVenues[0]?.name 
-                          : `${managerVenues.length} venues`
-                        }
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="flex items-center space-x-2 ml-4 flex-shrink-0">
-                    <button 
-                      onClick={() => handleEditManagerDetails(manager)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                      title="Edit venue assignments"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Manager
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Venues
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {uniqueManagers.map((manager, index) => {
+                    // Get all venues for this manager
+                    const managerVenues = managers
+                      .filter(m => m.user_id === manager.user_id)
+                      .map(m => allVenues.find(v => v.id === m.venue_id))
+                      .filter(Boolean);
                     
-                    {/* Resend invitation button - only show if manager hasn't confirmed email */}
-                    {!hasManagerConfirmedEmail(manager) && (
-                      <button 
-                        onClick={() => handleResendInvitation(manager)}
-                        disabled={resendingEmail === manager.user_id}
-                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Resend invitation email"
-                      >
-                        {resendingEmail === manager.user_id ? (
-                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        ) : (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        )}
-                      </button>
-                    )}
+                    const isActive = hasManagerConfirmedEmail(manager);
                     
-                    <button 
-                      onClick={() => setManagerToDelete(manager)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                      title="Delete manager"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                    return editingManagerDetails?.user_id === manager.user_id ? (
+                      // Edit mode row
+                      <tr key={`edit-${manager.user_id}`} className="bg-blue-50">
+                        <td colSpan="5" className="px-6 py-4">
+                          <div className="space-y-4">
+                            <div className="flex items-center space-x-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {manager.users?.first_name} {manager.users?.last_name}
+                              </div>
+                              <span className="text-xs text-gray-500">•</span>
+                              <div className="text-xs text-gray-500">{manager.users?.email}</div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-2">Venue Access</label>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto">
+                                {allVenues.map(venue => (
+                                  <label key={venue.id} className="flex items-center space-x-2 text-xs">
+                                    <input
+                                      type="checkbox"
+                                      checked={editingManagerDetails.venue_ids.includes(venue.id)}
+                                      onChange={() => handleEditManagerVenueToggle(venue.id)}
+                                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-3 w-3"
+                                      disabled={editDetailsLoading}
+                                    />
+                                    <span className="text-gray-700">{venue.name}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-blue-200">
+                              <button
+                                onClick={handleCancelEditManagerDetails}
+                                disabled={editDetailsLoading}
+                                className="px-3 py-1 text-xs border border-gray-300 text-gray-600 rounded hover:bg-gray-50 disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={handleSaveManagerDetails}
+                                disabled={editDetailsLoading || editingManagerDetails.venue_ids.length === 0}
+                                className="px-4 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {editDetailsLoading ? 'Saving...' : 'Save'}
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      // View mode row
+                      <tr 
+                        key={manager.user_id}
+                        className={`hover:bg-blue-50 transition-colors duration-150 ${
+                          index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                        }`}
+                      >
+                        {/* Manager Name */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600 mr-3">
+                              {((manager.users?.first_name || '') + ' ' + (manager.users?.last_name || '')).split(' ').map(word => word[0]).join('').toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {manager.users?.first_name} {manager.users?.last_name}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Email */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600">
+                            {manager.users?.email}
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            isActive 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {isActive ? 'ACTIVE' : 'AWAITING RESPONSE'}
+                          </span>
+                        </td>
+
+                        {/* Venues */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600">
+                            {managerVenues.length === 1 
+                              ? managerVenues[0]?.name 
+                              : `${managerVenues.length} venues`
+                            }
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <button 
+                              onClick={() => handleEditManagerDetails(manager)}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              Edit
+                            </button>
+                            
+                            {!isActive && (
+                              <button 
+                                onClick={() => handleResendInvitation(manager)}
+                                disabled={resendingEmail === manager.user_id}
+                                className="text-green-600 hover:text-green-800 text-sm font-medium disabled:opacity-50"
+                              >
+                                {resendingEmail === manager.user_id ? 'Sending...' : 'Resend'}
+                              </button>
+                            )}
+                            
+                            <button 
+                              onClick={() => setManagerToDelete(manager)}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
               );
-            })}
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

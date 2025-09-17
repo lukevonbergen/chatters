@@ -98,20 +98,13 @@ const StaffPage = () => {
     const userPromises = userIds.map(async (userId) => {
       const { data } = await supabase
         .from('users')
-        .select('id, email, role, first_name, last_name')
+        .select('id, email, role, first_name, last_name, password_hash, created_at')
         .eq('id', userId)
         .single();
       
-      // Get auth user data to check if they've confirmed their email/set password
-      let authData = null;
-      try {
-        const { data: authUser } = await supabase.auth.admin.getUserById(userId);
-        authData = authUser?.user || null;
-      } catch (error) {
-        // Ignore auth errors - user might not have auth record yet
-      }
-      
-      return data ? { ...data, auth: authData } : null;
+      // Note: We now use password_hash field from users table instead of auth admin API
+      // This is more reliable and faster than making auth admin calls
+      return data;
     });
     
     const userResults = await Promise.all(userPromises);
