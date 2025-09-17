@@ -94,14 +94,16 @@ const StaffPage = () => {
     // Get user IDs to fetch user data
     const userIds = [...new Set(staffData.map(s => s.user_id))];
     
-    // Get user data separately
+    // Get user data separately (including auth status)
     const userPromises = userIds.map(async (userId) => {
       const { data } = await supabase
         .from('users')
-        .select('id, email, role, first_name, last_name')
+        .select('id, email, role, first_name, last_name, password_hash, created_at')
         .eq('id', userId)
         .single();
       
+      // Note: We now use password_hash field from users table instead of auth admin API
+      // This is more reliable and faster than making auth admin calls
       return data;
     });
     
