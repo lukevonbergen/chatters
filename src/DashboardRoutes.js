@@ -18,6 +18,7 @@ import TemplatesPage from './pages/dashboard/QRTemplates';
 import ReportsPage from './pages/dashboard/ReportsPage';
 import Settings_Staff from './pages/dashboard/settings_staff';
 import StaffLeaderboard from './pages/dashboard/Staff_Leaderboard';
+import StaffMemberDetails from './pages/dashboard/StaffMemberDetails';
 import BillingPage from './pages/dashboard/Billing';
 import FeedbackFeed from './pages/dashboard/FeedbackFeed';
 
@@ -80,6 +81,7 @@ const DashboardRoutes = () => {
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/staff" element={<Settings_Staff />} />
         <Route path="/staff/leaderboard" element={<StaffLeaderboard />} />
+        <Route path="/staff-member/:staffId" element={<StaffMemberDetails />} />
         <Route path="/feedbackfeed" element={<FeedbackFeed />} />
         <Route path="/settings/billing" element={<BillingPage />} />
       </Route>

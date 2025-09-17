@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import PageContainer from '../../components/dashboard/layout/PageContainer';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -9,6 +10,7 @@ dayjs.extend(relativeTime);
 
 const StaffLeaderboard = () => {
   const { venueId } = useVenue();
+  const navigate = useNavigate();
   usePageTitle('Staff Leaderboard');
   const [staffStats, setStaffStats] = useState([]);
   const [timeFilter, setTimeFilter] = useState('last7');
@@ -248,7 +250,12 @@ const StaffLeaderboard = () => {
                           {staff.name.split(' ').map(word => word[0]).join('').toUpperCase()}
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{staff.name}</div>
+                          <button
+                            onClick={() => navigate(`/staff-member/${staff.id}`)}
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
+                          >
+                            {staff.name}
+                          </button>
                           <div className="text-xs text-gray-500">
                             {staff.role}
                           </div>
