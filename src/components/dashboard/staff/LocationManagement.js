@@ -9,6 +9,7 @@ const LocationManagement = ({ venueId, onLocationUpdate }) => {
   const [editingLocation, setEditingLocation] = useState(null);
   const [newLocation, setNewLocation] = useState({ name: '', color: '#3B82F6' });
   const [draggedItem, setDraggedItem] = useState(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
 
   const defaultColors = [
     '#3B82F6', // Blue
@@ -93,24 +94,27 @@ const LocationManagement = ({ venueId, onLocationUpdate }) => {
     }
   };
 
-  const handleDeleteLocation = async (id) => {
-    if (!confirm('Are you sure you want to delete this location? Employees assigned to this location will have their location cleared.')) {
-      return;
-    }
+  const handleDeleteLocation = (location) => {
+    setDeleteConfirmation({
+      location,
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('staff_locations')
+            .delete()
+            .eq('id', location.id);
 
-    try {
-      const { error } = await supabase
-        .from('staff_locations')
-        .delete()
-        .eq('id', id);
+          if (error) throw error;
 
-      if (error) throw error;
-
-      setLocations(prev => prev.filter(l => l.id !== id));
-      onLocationUpdate?.();
-    } catch (error) {
-      console.error('Error deleting location:', error);
-    }
+          setLocations(prev => prev.filter(l => l.id !== location.id));
+          onLocationUpdate?.();
+          setDeleteConfirmation(null);
+        } catch (error) {
+          console.error('Error deleting location:', error);
+        }
+      },
+      onCancel: () => setDeleteConfirmation(null)
+    });
   };
 
   const handleToggleActive = async (id, isActive) => {
@@ -315,7 +319,7 @@ const LocationManagement = ({ venueId, onLocationUpdate }) => {
                 </button>
                 
                 <button
-                  onClick={() => handleDeleteLocation(location.id)}
+                  onClick={() => handleDeleteLocation(location)}
                   className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
                   title="Delete location"
                 >
@@ -326,6 +330,35 @@ const LocationManagement = ({ venueId, onLocationUpdate }) => {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Location</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete <strong>"{deleteConfirmation.location.name}"</strong>? 
+                Employees assigned to this location will have their location cleared. This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={deleteConfirmation.onCancel}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={deleteConfirmation.onConfirm}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                >
+                  Delete Location
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
