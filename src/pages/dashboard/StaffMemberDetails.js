@@ -89,8 +89,6 @@ const StaffMemberDetails = () => {
   const fetchResolvedItems = async (employeeId) => {
     const { start: fromDate } = getDateRange(timeFilter);
 
-    console.log('Fetching resolved items for employee:', employeeId, 'venue:', venueId, 'fromDate:', fromDate);
-
     // Fetch resolved feedback sessions
     let feedbackQuery = supabase
       .from('feedback')
@@ -134,11 +132,6 @@ const StaffMemberDetails = () => {
       { data: feedbackData, error: feedbackError },
       { data: assistanceData, error: assistanceError }
     ] = await Promise.all([feedbackQuery, assistanceQuery]);
-
-    console.log('Feedback data:', feedbackData);
-    console.log('Assistance data:', assistanceData);
-    console.log('Feedback error:', feedbackError);
-    console.log('Assistance error:', assistanceError);
 
     if (feedbackError || assistanceError) {
       console.error('Error fetching resolved items:', feedbackError || assistanceError);
