@@ -26,21 +26,8 @@ const EditEmployeeModal = ({
     venue_id: ''
   });
   const [availableLocations, setAvailableLocations] = useState([]);
+  const [availableRoles, setAvailableRoles] = useState([]);
   const [formErrors, setFormErrors] = useState({});
-
-  // Common employee roles
-  const commonRoles = [
-    'Server',
-    'Bartender',
-    'Host/Hostess',
-    'Cook',
-    'Chef',
-    'Kitchen Assistant',
-    'Busser',
-    'Manager',
-    'Assistant Manager',
-    'Cashier'
-  ];
 
   // Fetch available locations for the venue
   const fetchLocations = useCallback(async (venueIdToFetch) => {
@@ -65,6 +52,29 @@ const EditEmployeeModal = ({
     }
   }, []);
 
+  // Fetch available roles for the venue
+  const fetchRoles = useCallback(async (venueIdToFetch) => {
+    if (!venueIdToFetch) {
+      setAvailableRoles([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('staff_roles')
+        .select('*')
+        .eq('venue_id', venueIdToFetch)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setAvailableRoles(data || []);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      setAvailableRoles([]);
+    }
+  }, []);
+
   // Populate form when editing employee changes
   useEffect(() => {
     if (editingEmployee) {
@@ -78,21 +88,24 @@ const EditEmployeeModal = ({
         venue_id: editingEmployee.venue_id || ''
       });
       
-      // Fetch locations for the employee's venue
+      // Fetch locations and roles for the employee's venue
       if (editingEmployee.venue_id) {
         fetchLocations(editingEmployee.venue_id);
+        fetchRoles(editingEmployee.venue_id);
       }
     }
-  }, [editingEmployee, fetchLocations]);
+  }, [editingEmployee, fetchLocations, fetchRoles]);
 
-  // Fetch locations when venue_id changes in form
+  // Fetch locations and roles when venue_id changes in form
   useEffect(() => {
     if (formData.venue_id) {
       fetchLocations(formData.venue_id);
+      fetchRoles(formData.venue_id);
     } else {
       setAvailableLocations([]);
+      setAvailableRoles([]);
     }
-  }, [formData.venue_id, fetchLocations]);
+  }, [formData.venue_id, fetchLocations, fetchRoles]);
 
   const validateForm = () => {
     const errors = {};
@@ -332,14 +345,21 @@ const EditEmployeeModal = ({
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     formErrors.role ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  disabled={!formData.venue_id}
                 >
                   <option value="">Select a role</option>
-                  {commonRoles.map(role => (
-                    <option key={role} value={role}>{role}</option>
+                  {availableRoles.map(role => (
+                    <option key={role.id} value={role.name}>{role.name}</option>
                   ))}
                 </select>
                 {formErrors.role && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.role}</p>
+                )}
+                {!formData.venue_id && (
+                  <p className="mt-1 text-xs text-gray-500">Select a venue first</p>
+                )}
+                {formData.venue_id && availableRoles.length === 0 && (
+                  <p className="mt-1 text-xs text-gray-500">No roles configured for this venue</p>
                 )}
               </div>
 
