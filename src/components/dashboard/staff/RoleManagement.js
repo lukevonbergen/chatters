@@ -9,6 +9,7 @@ const RoleManagement = ({ venueId, onRoleUpdate }) => {
   const [editingRole, setEditingRole] = useState(null);
   const [newRole, setNewRole] = useState({ name: '', color: '#3B82F6', description: '' });
   const [draggedItem, setDraggedItem] = useState(null);
+  const [dragOverItem, setDragOverItem] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
 
   const defaultColors = [
@@ -140,32 +141,43 @@ const RoleManagement = ({ venueId, onRoleUpdate }) => {
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e, overIndex) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    
+    if (draggedItem !== null && draggedItem !== overIndex) {
+      setDragOverItem(overIndex);
+      
+      // Create a temporary reordered array for visual feedback
+      const reorderedRoles = [...roles];
+      const draggedRole = reorderedRoles[draggedItem];
+      
+      // Remove dragged item
+      reorderedRoles.splice(draggedItem, 1);
+      // Insert at new position
+      reorderedRoles.splice(overIndex, 0, draggedRole);
+      
+      setRoles(reorderedRoles);
+      setDraggedItem(overIndex); // Update the dragged item index
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverItem(null);
   };
 
   const handleDrop = async (e, dropIndex) => {
     e.preventDefault();
     
-    if (draggedItem === null || draggedItem === dropIndex) return;
-
-    const reorderedRoles = [...roles];
-    const draggedRole = reorderedRoles[draggedItem];
-    
-    // Remove dragged item
-    reorderedRoles.splice(draggedItem, 1);
-    // Insert at new position
-    reorderedRoles.splice(dropIndex, 0, draggedRole);
-
     // Update display_order for all items
-    const updatedRoles = reorderedRoles.map((role, index) => ({
+    const updatedRoles = roles.map((role, index) => ({
       ...role,
       display_order: index + 1
     }));
 
     setRoles(updatedRoles);
     setDraggedItem(null);
+    setDragOverItem(null);
 
     // Update in database
     try {
@@ -320,10 +332,15 @@ const RoleManagement = ({ venueId, onRoleUpdate }) => {
               key={role.id}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={handleDragOver}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, index)}
-              className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-move ${
+              className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-move transition-all duration-200 ${
                 !role.is_active ? 'opacity-60' : ''
+              } ${
+                draggedItem === index ? 'shadow-lg scale-105 bg-blue-50 border-blue-300' : ''
+              } ${
+                dragOverItem === index ? 'border-blue-400 bg-blue-25' : ''
               }`}
             >
               <GripVertical className="w-4 h-4 text-gray-400" />

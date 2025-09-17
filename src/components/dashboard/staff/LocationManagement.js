@@ -9,6 +9,7 @@ const LocationManagement = ({ venueId, onLocationUpdate }) => {
   const [editingLocation, setEditingLocation] = useState(null);
   const [newLocation, setNewLocation] = useState({ name: '', color: '#3B82F6' });
   const [draggedItem, setDraggedItem] = useState(null);
+  const [dragOverItem, setDragOverItem] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
 
   const defaultColors = [
@@ -126,32 +127,43 @@ const LocationManagement = ({ venueId, onLocationUpdate }) => {
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e, overIndex) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    
+    if (draggedItem !== null && draggedItem !== overIndex) {
+      setDragOverItem(overIndex);
+      
+      // Create a temporary reordered array for visual feedback
+      const reorderedLocations = [...locations];
+      const draggedLocation = reorderedLocations[draggedItem];
+      
+      // Remove dragged item
+      reorderedLocations.splice(draggedItem, 1);
+      // Insert at new position
+      reorderedLocations.splice(overIndex, 0, draggedLocation);
+      
+      setLocations(reorderedLocations);
+      setDraggedItem(overIndex); // Update the dragged item index
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverItem(null);
   };
 
   const handleDrop = async (e, dropIndex) => {
     e.preventDefault();
     
-    if (draggedItem === null || draggedItem === dropIndex) return;
-
-    const reorderedLocations = [...locations];
-    const draggedLocation = reorderedLocations[draggedItem];
-    
-    // Remove dragged item
-    reorderedLocations.splice(draggedItem, 1);
-    // Insert at new position
-    reorderedLocations.splice(dropIndex, 0, draggedLocation);
-
     // Update display_order for all items
-    const updatedLocations = reorderedLocations.map((location, index) => ({
+    const updatedLocations = locations.map((location, index) => ({
       ...location,
       display_order: index + 1
     }));
 
     setLocations(updatedLocations);
     setDraggedItem(null);
+    setDragOverItem(null);
 
     // Update in database
     try {
@@ -258,10 +270,15 @@ const LocationManagement = ({ venueId, onLocationUpdate }) => {
               key={location.id}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={handleDragOver}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, index)}
-              className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-move ${
+              className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-move transition-all duration-200 ${
                 !location.is_active ? 'opacity-60' : ''
+              } ${
+                draggedItem === index ? 'shadow-lg scale-105 bg-blue-50 border-blue-300' : ''
+              } ${
+                dragOverItem === index ? 'border-blue-400 bg-blue-25' : ''
               }`}
             >
               <GripVertical className="w-4 h-4 text-gray-400" />
