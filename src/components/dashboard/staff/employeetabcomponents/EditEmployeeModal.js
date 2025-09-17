@@ -22,8 +22,10 @@ const EditEmployeeModal = ({
     email: '',
     phone: '',
     role: '',
+    location: '',
     venue_id: ''
   });
+  const [availableLocations, setAvailableLocations] = useState([]);
   const [formErrors, setFormErrors] = useState({});
 
   // Common employee roles
@@ -40,6 +42,29 @@ const EditEmployeeModal = ({
     'Cashier'
   ];
 
+  // Fetch available locations for the venue
+  const fetchLocations = useCallback(async (venueIdToFetch) => {
+    if (!venueIdToFetch) {
+      setAvailableLocations([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('staff_locations')
+        .select('*')
+        .eq('venue_id', venueIdToFetch)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setAvailableLocations(data || []);
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      setAvailableLocations([]);
+    }
+  }, []);
+
   // Populate form when editing employee changes
   useEffect(() => {
     if (editingEmployee) {
@@ -49,10 +74,25 @@ const EditEmployeeModal = ({
         email: editingEmployee.email || '',
         phone: editingEmployee.phone || '',
         role: editingEmployee.role || '',
+        location: editingEmployee.location || '',
         venue_id: editingEmployee.venue_id || ''
       });
+      
+      // Fetch locations for the employee's venue
+      if (editingEmployee.venue_id) {
+        fetchLocations(editingEmployee.venue_id);
+      }
     }
-  }, [editingEmployee]);
+  }, [editingEmployee, fetchLocations]);
+
+  // Fetch locations when venue_id changes in form
+  useEffect(() => {
+    if (formData.venue_id) {
+      fetchLocations(formData.venue_id);
+    } else {
+      setAvailableLocations([]);
+    }
+  }, [formData.venue_id, fetchLocations]);
 
   const validateForm = () => {
     const errors = {};
@@ -280,26 +320,51 @@ const EditEmployeeModal = ({
               </div>
             )}
 
-            {/* Role */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Role *
-              </label>
-              <select
-                value={formData.role}
-                onChange={(e) => handleInputChange('role', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  formErrors.role ? 'border-red-300' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select a role</option>
-                {commonRoles.map(role => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
-              {formErrors.role && (
-                <p className="mt-1 text-sm text-red-600">{formErrors.role}</p>
-              )}
+            {/* Role and Location */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Role *
+                </label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => handleInputChange('role', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    formErrors.role ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Select a role</option>
+                  {commonRoles.map(role => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+                {formErrors.role && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.role}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location
+                </label>
+                <select
+                  value={formData.location}
+                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={!formData.venue_id}
+                >
+                  <option value="">Select a location</option>
+                  {availableLocations.map(location => (
+                    <option key={location.id} value={location.name}>{location.name}</option>
+                  ))}
+                </select>
+                {!formData.venue_id && (
+                  <p className="mt-1 text-xs text-gray-500">Select a venue first</p>
+                )}
+                {formData.venue_id && availableLocations.length === 0 && (
+                  <p className="mt-1 text-xs text-gray-500">No locations configured for this venue</p>
+                )}
+              </div>
             </div>
 
             {/* Submit Buttons */}

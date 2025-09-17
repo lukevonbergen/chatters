@@ -33,11 +33,18 @@ const EmployeeCard = ({ employee, onEdit, onDelete }) => {
             >
               {employee.first_name} {employee.last_name}
             </button>
-            {employee.role && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-custom-blue flex-shrink-0 sm:ml-3">
-                {employee.role}
-              </span>
-            )}
+            <div className="flex items-center space-x-2 flex-shrink-0 sm:ml-3">
+              {employee.role && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-custom-blue">
+                  {employee.role}
+                </span>
+              )}
+              {employee.location && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                  {employee.location}
+                </span>
+              )}
+            </div>
           </div>
           
           {/* Contact info on second line */}
