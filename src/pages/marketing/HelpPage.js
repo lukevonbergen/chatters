@@ -14,7 +14,7 @@ const HelpPage = () => {
     const handleScroll = () => {
       const sections = [
         'overview', 'getting-started', 'qr-codes', 'kiosk-mode', 'assistance-requests', 
-        'troubleshooting', 'customization', 'analytics', 'billing', 'team-management',
+        'troubleshooting', 'customisation', 'analytics', 'billing', 'team-management',
         'training', 'faq', 'contact'
       ];
       
@@ -50,7 +50,7 @@ const HelpPage = () => {
     { id: 'kiosk-mode', title: 'Kiosk Mode', icon: MessageSquare },
     { id: 'assistance-requests', title: 'Assistance Requests', icon: Zap },
     { id: 'troubleshooting', title: 'Troubleshooting', icon: AlertTriangle },
-    { id: 'customization', title: 'Customization', icon: Settings },
+    { id: 'customisation', title: 'customisation', icon: Settings },
     { id: 'analytics', title: 'Analytics & Reports', icon: BarChart3 },
     { id: 'billing', title: 'Billing & Account', icon: FileText },
     { id: 'team-management', title: 'Team Management', icon: Users },
@@ -129,7 +129,7 @@ const HelpPage = () => {
         <title>Help Center | Chatters - Complete User Guide & Support</title>
         <meta 
           name="description" 
-          content="Complete help guide for Chatters customer feedback platform. Learn setup, troubleshooting, customization, and best practices for restaurants and hospitality businesses."
+          content="Complete help guide for Chatters customer feedback platform. Learn setup, troubleshooting, customisation, and best practices for restaurants and hospitality businesses."
         />
         <meta 
           name="keywords" 
@@ -516,11 +516,11 @@ const HelpPage = () => {
                 </div>
               </section>
 
-              {/* Customization Section */}
-              <section id="customization" className="mb-16">
+              {/* customisation Section */}
+              <section id="customisation" className="mb-16">
                 <h2 className="text-3xl font-bold text-primary mb-6 font-satoshi flex items-center">
                   <Settings className="w-8 h-8 mr-3 text-brand" />
-                  Customization
+                  customisation
                 </h2>
                 
                 <div className="mb-8">
