@@ -79,24 +79,37 @@ const GoogleReviewsCard = () => {
   };
 
   const performSearch = async (query) => {
+    console.log('🔍 Performing search for:', query);
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      if (!token) return;
+      console.log('🔑 Token exists:', !!token);
+      if (!token) {
+        console.error('❌ No authentication token');
+        return;
+      }
 
-      const response = await fetch(`/api/google?action=places-search&query=${encodeURIComponent(query)}&type=autocomplete`, {
+      const url = `/api/google?action=places-search&query=${encodeURIComponent(query)}&type=autocomplete`;
+      console.log('📡 Fetching:', url);
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Search results:', data);
         setSearchResults(data.suggestions || []);
       } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Search failed:', response.status, errorData);
         setSearchResults([]);
       }
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('💥 Search error:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
