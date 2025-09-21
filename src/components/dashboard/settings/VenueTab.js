@@ -6,6 +6,8 @@ import GoogleReviewsCard from './GoogleReviewsCard';
 const VenueTab = ({ 
   name, setName,
   address, setAddress,
+  phone, setPhone,
+  website, setWebsite,
   tripadvisorLink, setTripadvisorLink,
   googleReviewLink, setGoogleReviewLink,
   saveSettings,
@@ -280,6 +282,40 @@ const VenueTab = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Phone Number */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <p className="text-xs text-gray-500">Contact number for your venue</p>
+              </div>
+              <div className="lg:col-span-2">
+                <input
+                  type="tel"
+                  value={phone || ''}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+44 1234 567890"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Website */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                <p className="text-xs text-gray-500">Your venue's website URL</p>
+              </div>
+              <div className="lg:col-span-2">
+                <input
+                  type="url"
+                  value={website || ''}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://www.yourvenue.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
               </div>
             </div>
           </div>

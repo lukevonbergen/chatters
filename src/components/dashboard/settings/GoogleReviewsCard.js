@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useVenue } from '../../../context/VenueContext';
 import { supabase } from '../../../utils/supabase';
+import VenuePreviewModal from './VenuePreviewModal';
 
 const GoogleReviewsCard = () => {
   const { venueId } = useVenue();
@@ -12,13 +13,18 @@ const GoogleReviewsCard = () => {
   const [message, setMessage] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [googleMapUrl, setGoogleMapUrl] = useState('');
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [currentVenueData, setCurrentVenueData] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
   const searchTimeoutRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  // Load current Google rating on mount
+  // Load current Google rating and venue data on mount
   useEffect(() => {
     if (venueId) {
       loadCurrentRating();
+      loadCurrentVenueData();
     }
   }, [venueId]);
 
@@ -53,6 +59,23 @@ const GoogleReviewsCard = () => {
       }
     } catch (error) {
       console.error('Error loading current rating:', error);
+    }
+  };
+
+  const loadCurrentVenueData = async () => {
+    try {
+      const { data: venue, error } = await supabase
+        .from('venues')
+        .select('id, name, address, phone, website, venue_locked')
+        .eq('id', venueId)
+        .single();
+
+      if (!error && venue) {
+        setCurrentVenueData(venue);
+        setIsLocked(venue.venue_locked || false);
+      }
+    } catch (error) {
+      console.error('Error loading venue data:', error);
     }
   };
 
@@ -116,10 +139,47 @@ const GoogleReviewsCard = () => {
   };
 
   const selectPlace = async (place) => {
-    setLoading(true);
-    setMessage('');
+    if (isLocked) {
+      setMessage('Error: Venue is already locked to a Google listing');
+      return;
+    }
+
     setShowDropdown(false);
     setSearchQuery(place.description);
+    setLoading(true);
+
+    try {
+      // Fetch full venue details from Google
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`/api/google?action=place-details&placeId=${place.place_id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const venueData = await response.json();
+        setSelectedPlace({ ...place, ...venueData });
+        setShowPreviewModal(true);
+      } else {
+        const error = await response.json();
+        setMessage(`Error fetching venue details: ${error.error}`);
+      }
+    } catch (error) {
+      setMessage(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmVenue = async (autoPopulate) => {
+    if (!selectedPlace) return;
+
+    setLoading(true);
+    setMessage('');
+    setShowPreviewModal(false);
 
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
@@ -132,14 +192,19 @@ const GoogleReviewsCard = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          place_id: place.place_id
+          place_id: selectedPlace.place_id,
+          venue_data: selectedPlace,
+          auto_populate: autoPopulate
         })
       });
 
       if (response.ok) {
-        setMessage('Google listing linked successfully!');
+        setMessage('Google listing linked successfully and venue locked!');
+        setIsLocked(true);
+        setSelectedPlace(null);
         setTimeout(() => {
           loadCurrentRating();
+          loadCurrentVenueData();
         }, 1000);
       } else {
         const error = await response.json();
@@ -153,7 +218,7 @@ const GoogleReviewsCard = () => {
   };
 
   const handleGoogleMapUrl = async () => {
-    if (!googleMapUrl.trim()) return;
+    if (!googleMapUrl.trim() || isLocked) return;
 
     setLoading(true);
     setMessage('');
@@ -194,26 +259,21 @@ const GoogleReviewsCard = () => {
         return;
       }
 
+      // Get full venue details and show preview modal
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const response = await fetch(`/api/google?action=update-venue&venueId=${venueId}`, {
-        method: 'PATCH',
+      const detailsResponse = await fetch(`/api/google?action=place-details&placeId=${placeId}`, {
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          place_id: placeId
-        })
+        }
       });
 
-      if (response.ok) {
-        setMessage('Google listing linked successfully!');
+      if (detailsResponse.ok) {
+        const venueData = await detailsResponse.json();
+        setSelectedPlace(venueData);
+        setShowPreviewModal(true);
         setGoogleMapUrl('');
-        setTimeout(() => {
-          loadCurrentRating();
-        }, 1000);
       } else {
-        const error = await response.json();
+        const error = await detailsResponse.json();
         setMessage(`Error: ${error.error}`);
       }
     } catch (error) {
@@ -260,20 +320,40 @@ const GoogleReviewsCard = () => {
         </div>
       )}
 
-      {/* Search Section */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Find your business listing
-          </label>
-          <div className="relative" ref={dropdownRef}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearchInput(e.target.value)}
-              placeholder="Search for your business name + city/postcode"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+      {/* Locked Status */}
+      {isLocked && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center">
+            <div className="text-green-500 mr-3">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h4 className="font-medium text-green-800">Google Venue Locked</h4>
+              <p className="text-sm text-green-700">
+                Your venue is linked to Google and cannot be changed. This ensures rating progression tracking.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Section - Only show if not locked */}
+      {!isLocked && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Find your business listing
+            </label>
+            <div className="relative" ref={dropdownRef}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                placeholder="Search for your business name + city/postcode"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             
             {/* Search Dropdown */}
             {showDropdown && (searchResults.length > 0 || isSearching) && (
@@ -301,29 +381,30 @@ const GoogleReviewsCard = () => {
           </div>
         </div>
 
-        {/* Google Maps URL Fallback */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Or paste Google Maps URL
-          </label>
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={googleMapUrl}
-              onChange={(e) => setGoogleMapUrl(e.target.value)}
-              placeholder="https://maps.google.com/..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <button
-              onClick={handleGoogleMapUrl}
-              disabled={loading || !googleMapUrl.trim()}
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50"
-            >
-              Link
-            </button>
+          {/* Google Maps URL Fallback */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Or paste Google Maps URL
+            </label>
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={googleMapUrl}
+                onChange={(e) => setGoogleMapUrl(e.target.value)}
+                placeholder="https://maps.google.com/..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <button
+                onClick={handleGoogleMapUrl}
+                disabled={loading || !googleMapUrl.trim()}
+                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50"
+              >
+                Link
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Messages */}
       {message && (
@@ -348,6 +429,19 @@ const GoogleReviewsCard = () => {
           </div>
         </div>
       )}
+
+      {/* Venue Preview Modal */}
+      <VenuePreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => {
+          setShowPreviewModal(false);
+          setSelectedPlace(null);
+        }}
+        onConfirm={handleConfirmVenue}
+        venueData={selectedPlace}
+        currentVenueData={currentVenueData}
+        isLoading={loading}
+      />
     </div>
   );
 };

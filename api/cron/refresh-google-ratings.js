@@ -75,7 +75,7 @@ export default async function handler(req, res) {
             const googleData = await fetchGooglePlaceDetails(venue.place_id);
             processedCount++;
 
-            // Upsert the rating data
+            // Upsert the rating data in cache table
             const { error: upsertError } = await supabaseAdmin
               .from('external_ratings')
               .upsert({
@@ -91,6 +91,28 @@ export default async function handler(req, res) {
 
             if (upsertError) {
               throw new Error(`Database upsert failed: ${upsertError.message}`);
+            }
+
+            // Store historical rating every other day for progression tracking
+            const shouldStoreHistorical = await shouldStoreHistoricalRating(venue.id);
+            if (shouldStoreHistorical && googleData.rating) {
+              const { error: historyError } = await supabaseAdmin
+                .from('historical_ratings')
+                .insert({
+                  venue_id: venue.id,
+                  source: 'google',
+                  rating: googleData.rating,
+                  ratings_count: googleData.user_ratings_total,
+                  is_initial: false,
+                  recorded_at: new Date().toISOString()
+                });
+
+              if (historyError) {
+                console.warn(`⚠️ Failed to store historical rating for ${venue.name}: ${historyError.message}`);
+                // Don't fail the whole operation for historical storage
+              } else {
+                console.log(`📊 Stored historical rating for ${venue.name}`);
+              }
             }
 
             console.log(`✅ Updated ${venue.name}: ${googleData.rating} ⭐ (${googleData.user_ratings_total} reviews)`);
@@ -142,6 +164,35 @@ export default async function handler(req, res) {
       processed: processedCount,
       errors: errorCount
     });
+  }
+}
+
+async function shouldStoreHistoricalRating(venueId) {
+  try {
+    // Get the most recent historical rating for this venue
+    const { data: lastHistorical } = await supabaseAdmin
+      .from('historical_ratings')
+      .select('recorded_at')
+      .eq('venue_id', venueId)
+      .eq('source', 'google')
+      .order('recorded_at', { ascending: false })
+      .limit(1);
+
+    // If no historical data exists, don't store (initial should be handled during venue setup)
+    if (!lastHistorical || lastHistorical.length === 0) {
+      return false;
+    }
+
+    // Check if it's been at least 2 days since last historical record
+    const lastRecorded = new Date(lastHistorical[0].recorded_at);
+    const now = new Date();
+    const hoursSinceLastRecord = (now - lastRecorded) / (1000 * 60 * 60);
+    
+    // Store historical data every 48 hours (2 days)
+    return hoursSinceLastRecord >= 48;
+  } catch (error) {
+    console.error('Error checking historical rating schedule:', error);
+    return false; // Fail safe - don't store if we can't determine
   }
 }
 
