@@ -56,7 +56,8 @@ const EmployeesTab = ({
           employee.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           employee.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           employee.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          employee.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+          employee.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          employee.location?.toLowerCase().includes(searchTerm.toLowerCase())
         )
       : visibleEmployees;
     
@@ -93,6 +94,7 @@ const EmployeesTab = ({
             employee.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             employee.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             employee.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            employee.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             venue.name?.toLowerCase().includes(searchTerm.toLowerCase())
           )
         : venueEmployees;
@@ -363,7 +365,7 @@ const EmployeesTab = ({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search employees by name, email, role, phone..."
+              placeholder="Search employees by name, email, role, phone, location..."
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-custom-blue focus:border-custom-blue text-sm"

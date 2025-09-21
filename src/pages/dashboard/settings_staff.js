@@ -7,6 +7,8 @@ import { useVenue } from '../../context/VenueContext';
 // Import tab components
 import ManagersTab from '../../components/dashboard/staff/ManagersTab';
 import EmployeesTab from '../../components/dashboard/staff/EmployeesTab';
+import LocationManagement from '../../components/dashboard/staff/LocationManagement';
+import RoleManagement from '../../components/dashboard/staff/RoleManagement';
 
 const StaffPage = () => {
   usePageTitle('Staff');
@@ -25,6 +27,8 @@ const StaffPage = () => {
       { id: 'Managers', label: 'Managers' }
     ] : []),
     { id: 'Employees', label: 'Employees' },
+    { id: 'Roles', label: 'Roles' },
+    { id: 'Locations', label: 'Locations' },
   ];
 
   const handleTabChange = (tabId) => {
@@ -231,6 +235,10 @@ const StaffPage = () => {
         return <ManagersTab {...tabProps} />;
       case 'Employees':
         return <EmployeesTab {...tabProps} />;
+      case 'Roles':
+        return <RoleManagement venueId={venueId} onRoleUpdate={fetchStaffData} />;
+      case 'Locations':
+        return <LocationManagement venueId={venueId} onLocationUpdate={fetchStaffData} />;
       default:
         return userRole === 'master'
           ? <ManagersTab {...tabProps} />

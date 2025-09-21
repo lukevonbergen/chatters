@@ -100,7 +100,7 @@ const StaffLeaderboard = () => {
     // Fetch employee details (staff are stored in employees table)
     const { data: employeeData, error: employeeError } = await supabase
       .from('employees')
-      .select('id, first_name, last_name, role')
+      .select('id, first_name, last_name, role, location')
       .in('id', allEmployeeIds);
 
     if (employeeError) {
@@ -113,6 +113,7 @@ const StaffLeaderboard = () => {
         id: e.id,
         name: `${e.first_name} ${e.last_name}`,
         role: e.role,
+        location: e.location,
         feedbackResolved: feedbackCounts[e.id] || 0,
         assistanceResolved: assistanceCounts[e.id] || 0,
         totalResolved: (feedbackCounts[e.id] || 0) + (assistanceCounts[e.id] || 0),
@@ -256,8 +257,15 @@ const StaffLeaderboard = () => {
                           >
                             {staff.name}
                           </button>
-                          <div className="text-xs text-gray-500">
-                            {staff.role}
+                          <div className="flex items-center space-x-2 text-xs">
+                            {staff.role && (
+                              <span className="text-gray-500">{staff.role}</span>
+                            )}
+                            {staff.location && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                {staff.location}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
