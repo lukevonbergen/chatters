@@ -364,7 +364,7 @@ const EnhancedAdminDashboard = () => {
         .from('venues')
         .select(`
           *,
-          accounts(id, name, is_paid, trial_ends_at),
+          accounts:account_id(id, name, is_paid, trial_ends_at, demo_account),
           external_ratings(rating, ratings_count, fetched_at),
           staff(id, users(email, first_name, last_name, role))
         `)
@@ -909,9 +909,26 @@ const VenueDetailsModal = ({ venue, onClose, onUpdate }) => {
 
     setSaving(true);
     try {
+      // Filter out only updatable venue fields (exclude relations)
+      const venueFields = {
+        name: editingData.name,
+        address: editingData.address,
+        phone: editingData.phone,
+        website: editingData.website,
+        table_count: editingData.table_count,
+        primary_color: editingData.primary_color,
+        secondary_color: editingData.secondary_color,
+        venue_locked: editingData.venue_locked,
+        session_timeout_hours: editingData.session_timeout_hours,
+        feedback_hours: editingData.feedback_hours,
+        tripadvisor_link: editingData.tripadvisor_link,
+        google_review_link: editingData.google_review_link,
+        place_id: editingData.place_id
+      };
+
       const { error } = await supabase
         .from('venues')
-        .update(editingData)
+        .update(venueFields)
         .eq('id', venue.id);
 
       if (error) throw error;
@@ -1480,21 +1497,14 @@ const VenueAnalytics = ({ venue }) => {
           .eq('venue_id', venue.id)
           .gte('created_at', getDateRange(timeRange));
 
-        // Fetch review platform clicks/interactions
-        const { data: reviewInteractions } = await supabase
-          .from('review_interactions')
-          .select('*')
-          .eq('venue_id', venue.id)
-          .gte('created_at', getDateRange(timeRange));
-
         // Process analytics data
         const processedAnalytics = {
           feedback: processFeedbackData(feedbackData || []),
-          reviews: processReviewData(reviewInteractions || []),
+          reviews: { byPlatform: {}, total: 0 }, // No review interactions data available
           overview: {
             totalFeedback: feedbackData?.length || 0,
             averageRating: calculateAverageRating(feedbackData || []),
-            reviewClicks: reviewInteractions?.length || 0,
+            reviewClicks: 0, // No review interactions data available
             activeStaff: venue.staff?.length || 0
           }
         };
