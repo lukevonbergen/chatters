@@ -29,6 +29,8 @@ const SettingsPage = () => {
   const [secondaryColor, setSecondaryColor] = useState('#52c41a');
   const [loading, setLoading] = useState(false);
   const [tableCount, setTableCount] = useState('');
+  const [phone, setPhone] = useState('');
+  const [website, setWebsite] = useState('');
   const [tripadvisorLink, setTripadvisorLink] = useState('');
   const [googleReviewLink, setGoogleReviewLink] = useState('');
   const [address, setAddress] = useState({
@@ -76,7 +78,7 @@ const SettingsPage = () => {
       // Fetch venue data
       const { data: venueData, error: venueError } = await supabase
         .from('venues')
-        .select('id, name, logo, primary_color, secondary_color, table_count, address, tripadvisor_link, google_review_link')
+        .select('id, name, logo, primary_color, secondary_color, table_count, address, phone, website, tripadvisor_link, google_review_link')
         .eq('id', venueId)
         .single();
 
@@ -111,6 +113,8 @@ const SettingsPage = () => {
       setPrimaryColor(venueData.primary_color || '#1890ff');
       setSecondaryColor(venueData.secondary_color || '#52c41a');
       setTableCount(venueData.table_count || '');
+      setPhone(venueData.phone || '');
+      setWebsite(venueData.website || '');
       setTripadvisorLink(venueData.tripadvisor_link || '');
       setGoogleReviewLink(venueData.google_review_link || '');
       setAddress(venueData.address || {
@@ -169,6 +173,8 @@ const SettingsPage = () => {
         secondary_color: secondaryColor,
         table_count: tableCount,
         address,
+        phone,
+        website,
         tripadvisor_link: tripadvisorLink,
         google_review_link: googleReviewLink,
       };
@@ -235,6 +241,8 @@ const SettingsPage = () => {
     secondaryColor, setSecondaryColor,
     tableCount, setTableCount,
     address, setAddress,
+    phone, setPhone,
+    website, setWebsite,
     tripadvisorLink, setTripadvisorLink,
     googleReviewLink, setGoogleReviewLink,
     

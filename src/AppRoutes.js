@@ -5,7 +5,7 @@ import { supabase } from './utils/supabase';
 
 // Admin
 import AdminFrame from './pages/admin/AdminFrame';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import EnhancedAdminDashboard from './pages/admin/EnhancedAdminDashboard';
 // import CreateUserPage from './pages/admin/CreateUserPage' // if/when you have it
 
 // Everything else (dashboard + kiosk + auth)
@@ -74,7 +74,7 @@ export default function AppRoutes() {
           </AdminGuard>
         }
       >
-        <Route index element={<AdminDashboard />} />
+        <Route index element={<EnhancedAdminDashboard />} />
         {/* <Route path="create-user" element={<CreateUserPage />} /> */}
       </Route>
 

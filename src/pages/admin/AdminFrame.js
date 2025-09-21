@@ -67,42 +67,9 @@ const AdminFrame = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="text-lg font-bold text-gray-800">
-            Chatters Admin Center
-          </div>
-          <div className="relative" ref={dropdownRef}>
-            <button onClick={() => setDropdownOpen(prev => !prev)}>
-              <img
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo.email || 'A')}`}
-                className="w-8 h-8 rounded-full border"
-                alt="avatar"
-              />
-            </button>
-            {dropdownOpen && (
-              <div className="absolute right-0 top-10 bg-white border rounded shadow w-56 z-50">
-                <div className="px-4 py-3 text-sm text-gray-700 border-b">
-                  <div className="font-medium">{userInfo.email}</div>
-                  <div className="text-xs text-gray-500">{userInfo.role}</div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                >
-                  <LogOut className="inline-block w-4 h-4 mr-1" />
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">{children}</main>
+    <div className="min-h-screen">
+      {/* Main content - let the dashboard handle its own layout */}
+      {children}
     </div>
   );
 };

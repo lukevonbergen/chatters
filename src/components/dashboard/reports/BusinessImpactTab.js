@@ -4,6 +4,7 @@ import React from 'react';
 import RevenueProjection from './RevenueProjection';
 import PerformanceSummaryTile from './PerformanceSummaryTile';
 import PeakHoursAnalysisTile from './PeakHoursAnalysisTile';
+import GoogleRatingsTrendTile from './GoogleRatingsTrendTile';
 
 const BusinessImpactTab = ({
   venueId,
@@ -22,6 +23,10 @@ const BusinessImpactTab = ({
       </div>
 
       <div className="space-y-6 lg:space-y-8">
+        <GoogleRatingsTrendTile 
+          venueId={venueId} 
+        />
+
         <RevenueProjection 
           venueId={venueId} 
         />
