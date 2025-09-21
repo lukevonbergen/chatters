@@ -266,6 +266,7 @@ async function handleAutocomplete(req, res, query, apiKey) {
   const url = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
   url.searchParams.append('input', query);
   url.searchParams.append('types', 'establishment');
+  url.searchParams.append('components', 'country:gb'); // Restrict to UK only
   url.searchParams.append('key', apiKey);
 
   const response = await fetch(url.toString());
@@ -296,6 +297,7 @@ async function handleFindPlace(req, res, query, apiKey) {
   url.searchParams.append('input', query);
   url.searchParams.append('inputtype', 'textquery');
   url.searchParams.append('fields', 'place_id,name,formatted_address,rating,user_ratings_total');
+  url.searchParams.append('locationbias', 'country:gb'); // Bias results to UK
   url.searchParams.append('key', apiKey);
 
   const response = await fetch(url.toString());

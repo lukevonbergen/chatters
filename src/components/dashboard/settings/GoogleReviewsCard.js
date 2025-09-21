@@ -12,7 +12,6 @@ const GoogleReviewsCard = () => {
   const [message, setMessage] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [googleMapUrl, setGoogleMapUrl] = useState('');
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const searchTimeoutRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -224,29 +223,6 @@ const GoogleReviewsCard = () => {
     }
   };
 
-  const refreshRating = async () => {
-    setIsRefreshing(true);
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const response = await fetch(`/api/google?action=ratings&venueId=${venueId}&forceRefresh=1`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentRating(data);
-        setMessage('Rating refreshed successfully!');
-      } else {
-        setMessage('Failed to refresh rating');
-      }
-    } catch (error) {
-      setMessage('Error refreshing rating');
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
 
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -260,23 +236,14 @@ const GoogleReviewsCard = () => {
       {/* Current Rating Display */}
       {currentRating && (
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl font-bold text-gray-900">
-                {currentRating.rating ? currentRating.rating.toFixed(1) : 'N/A'}
-              </div>
-              <div className="text-yellow-500 text-xl">⭐</div>
-              <div className="text-sm text-gray-600">
-                ({currentRating.ratings_count || 0} reviews)
-              </div>
+          <div className="flex items-center space-x-3">
+            <div className="text-2xl font-bold text-gray-900">
+              {currentRating.rating ? currentRating.rating.toFixed(1) : 'N/A'}
             </div>
-            <button
-              onClick={refreshRating}
-              disabled={isRefreshing}
-              className="px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isRefreshing ? 'Refreshing...' : 'Refresh Now'}
-            </button>
+            <div className="text-yellow-500 text-xl">⭐</div>
+            <div className="text-sm text-gray-600">
+              ({currentRating.ratings_count || 0} reviews)
+            </div>
           </div>
           
           {/* Attribution */}
