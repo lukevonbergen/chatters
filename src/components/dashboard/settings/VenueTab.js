@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import FeedbackTimeSelection from './venuetabcomponents/FeedbackTimeSelection';
+import GoogleReviewsCard from './GoogleReviewsCard';
 
 const VenueTab = ({ 
   name, setName,
@@ -387,6 +388,9 @@ const VenueTab = ({
             )}
           </div>
         </div>
+
+        {/* Google Reviews Integration */}
+        <GoogleReviewsCard />
 
         {/* Section 3: Session Timeout Settings */}
         <div className="bg-white border border-gray-200 rounded-lg">
