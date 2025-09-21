@@ -19,6 +19,13 @@ const supabaseClient = createClient(
 );
 
 export default async function handler(req, res) {
+  console.log('🔧 Google API called:', req.method, req.url);
+  console.log('🔧 Query params:', req.query);
+  console.log('🔧 Environment check:', {
+    google_api_key: !!process.env.GOOGLE_MAPS_API_KEY,
+    supabase_service_role: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+  });
+
   const { action } = req.query;
 
   try {
@@ -26,15 +33,17 @@ export default async function handler(req, res) {
       case 'ratings':
         return await handleRatings(req, res);
       case 'places-search':
+        console.log('🔧 Handling places-search');
         return await handlePlacesSearch(req, res);
       case 'update-venue':
         return await handleUpdateVenue(req, res);
       default:
-        return res.status(400).json({ error: 'Invalid action parameter' });
+        console.log('🔧 Invalid action:', action);
+        return res.status(400).json({ error: 'Invalid action parameter', received_action: action });
     }
   } catch (error) {
-    console.error('Google API error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('💥 Google API error:', error);
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 }
 
