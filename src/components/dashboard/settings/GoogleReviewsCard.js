@@ -40,7 +40,7 @@ const GoogleReviewsCard = () => {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token) return;
 
-      const response = await fetch(`/api/ratings/google?venueId=${venueId}`, {
+      const response = await fetch(`/api/google?action=ratings&venueId=${venueId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -83,7 +83,7 @@ const GoogleReviewsCard = () => {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token) return;
 
-      const response = await fetch(`/api/google/places-search?query=${encodeURIComponent(query)}&type=autocomplete`, {
+      const response = await fetch(`/api/google?action=places-search&query=${encodeURIComponent(query)}&type=autocomplete`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -113,7 +113,7 @@ const GoogleReviewsCard = () => {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch(`/api/venues/${venueId}`, {
+      const response = await fetch(`/api/google?action=update-venue&venueId=${venueId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ const GoogleReviewsCard = () => {
         if (pidMatch) {
           // For complex URLs, we'll need to use Find Place API
           const token = (await supabase.auth.getSession()).data.session?.access_token;
-          const response = await fetch(`/api/google/places-search?query=${encodeURIComponent(googleMapUrl)}&type=findplace`, {
+          const response = await fetch(`/api/google?action=places-search&query=${encodeURIComponent(googleMapUrl)}&type=findplace`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -183,7 +183,7 @@ const GoogleReviewsCard = () => {
       }
 
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const response = await fetch(`/api/venues/${venueId}`, {
+      const response = await fetch(`/api/google?action=update-venue&venueId=${venueId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -215,7 +215,7 @@ const GoogleReviewsCard = () => {
     setIsRefreshing(true);
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const response = await fetch(`/api/ratings/google?venueId=${venueId}&forceRefresh=1`, {
+      const response = await fetch(`/api/google?action=ratings&venueId=${venueId}&forceRefresh=1`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

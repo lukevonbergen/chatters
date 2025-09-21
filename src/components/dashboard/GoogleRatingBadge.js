@@ -22,7 +22,7 @@ const GoogleRatingBadge = ({ showAttribution = true, className = '' }) => {
         return;
       }
 
-      const response = await fetch(`/api/ratings/google?venueId=${venueId}`, {
+      const response = await fetch(`/api/google?action=ratings&venueId=${venueId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
