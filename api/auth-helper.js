@@ -54,3 +54,49 @@ export async function requireAdminRole(req) {
 
   return userData;
 }
+
+export async function authenticateVenueAccess(req, venueId) {
+  const userData = await authenticateAdmin(req);
+  
+  // Admin users have access to all venues
+  if (userData.role === 'admin') {
+    return userData;
+  }
+
+  // Master users have access to venues in their account
+  if (userData.role === 'master') {
+    const { data: venue, error } = await supabaseClient
+      .from('venues')
+      .select('account_id')
+      .eq('id', venueId)
+      .single();
+
+    if (error || !venue) {
+      throw new Error('Venue not found');
+    }
+
+    if (venue.account_id !== userData.account_id) {
+      throw new Error('Access denied. Venue not in your account.');
+    }
+
+    return userData;
+  }
+
+  // Manager users have access to venues they're assigned to via staff table
+  if (userData.role === 'manager') {
+    const { data: staffRecord, error } = await supabaseClient
+      .from('staff')
+      .select('venue_id')
+      .eq('user_id', userData.id)
+      .eq('venue_id', venueId)
+      .single();
+
+    if (error || !staffRecord) {
+      throw new Error('Access denied. You are not assigned to this venue.');
+    }
+
+    return userData;
+  }
+
+  throw new Error('Insufficient permissions');
+}
