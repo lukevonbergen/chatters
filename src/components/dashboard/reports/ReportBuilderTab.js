@@ -631,8 +631,8 @@ const ReportBuilderTab = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Custom Report Builder</h2>
-        <p className="text-gray-600">Generate custom reports by selecting date ranges, locations, and report types.</p>
+        <h2 className="text-base lg:text-lg font-medium text-gray-900 mb-1">Custom Report Builder</h2>
+        <p className="text-sm text-gray-600">Generate custom reports by selecting date ranges, locations, and report types.</p>
       </div>
 
       {/* Report Configuration */}
