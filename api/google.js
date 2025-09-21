@@ -200,12 +200,16 @@ async function handlePlacesSearch(req, res) {
 
 // Handle venue update (PATCH /api/google?action=update-venue&venueId=...)
 async function handleUpdateVenue(req, res) {
+  console.log('🔧 Update venue called:', { venueId: req.query.venueId, method: req.method });
+  
   if (req.method !== 'PATCH') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { venueId } = req.query;
   const { place_id } = req.body;
+
+  console.log('🔧 Update venue params:', { venueId, place_id, hasBody: !!req.body });
 
   if (!venueId) {
     return res.status(400).json({ error: 'venueId parameter is required' });
@@ -216,6 +220,7 @@ async function handleUpdateVenue(req, res) {
   }
 
   // Authenticate and check venue access
+  console.log('🔧 Authenticating venue access...');
   await authenticateVenueAccess(req, venueId);
 
   // Validate place_id format
@@ -235,8 +240,9 @@ async function handleUpdateVenue(req, res) {
     }
   }
 
-  // Update the venue
-  const { data, error } = await supabaseClient
+  // Update the venue (use admin client for write operations)
+  console.log('🔧 Updating venue in database...');
+  const { data, error } = await supabaseAdmin
     .from('venues')
     .update({ place_id })
     .eq('id', venueId)
@@ -244,10 +250,11 @@ async function handleUpdateVenue(req, res) {
     .single();
 
   if (error) {
-    console.error('Database error:', error);
-    return res.status(500).json({ error: 'Failed to update venue' });
+    console.error('💥 Database error:', error);
+    return res.status(500).json({ error: 'Failed to update venue', details: error.message });
   }
 
+  console.log('✅ Venue updated successfully:', data);
   return res.status(200).json({
     message: 'Venue updated successfully',
     venue: data
