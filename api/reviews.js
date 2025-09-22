@@ -11,6 +11,7 @@ const GOOGLE_VENUE_DETAILS_FIELDS = 'place_id,name,formatted_address,formatted_p
 const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const TRIPADVISOR_API_KEY = process.env.TRIPADVISOR_API_KEY;
 
+
 // Create Supabase clients
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL,
@@ -869,7 +870,12 @@ async function searchTripAdvisor(query) {
       address_obj: location.address_obj
     }));
   } else {
-    throw new Error(`TripAdvisor API error: ${data.error || 'Unknown error'}`);
+    // Handle specific TripAdvisor error types
+    if (data.Message && data.Message.includes('not authorized')) {
+      throw new Error('TripAdvisor API key unauthorized - this is likely due to domain restrictions. Remove domain restrictions from your TripAdvisor API key to allow server-side requests.');
+    }
+    
+    throw new Error(`TripAdvisor API error: ${data.error || data.message || data.Message || `HTTP ${response.status} ${response.statusText}`}`);
   }
 }
 

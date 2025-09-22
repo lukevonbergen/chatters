@@ -133,6 +133,12 @@ const GoogleReviewsCard = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Unified search results:', data);
+        
+        // Check if TripAdvisor had errors and show a message
+        if (data.tripadvisor?.error && data.tripadvisor.error.includes('unauthorized')) {
+          setMessage('TripAdvisor search unavailable - please remove domain restrictions from your TripAdvisor API key to enable server-side requests. Google search is still working.');
+        }
+        
         setSearchResults({
           google: data.google.suggestions || [],
           tripadvisor: data.tripadvisor.suggestions || [],
