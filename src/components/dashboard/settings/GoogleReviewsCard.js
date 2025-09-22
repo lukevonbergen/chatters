@@ -17,6 +17,8 @@ const GoogleReviewsCard = () => {
   const [currentVenueData, setCurrentVenueData] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [canGenerateReviewLink, setCanGenerateReviewLink] = useState(false);
+  const [generateLinkLoading, setGenerateLinkLoading] = useState(false);
   const searchTimeoutRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -66,13 +68,15 @@ const GoogleReviewsCard = () => {
     try {
       const { data: venue, error } = await supabase
         .from('venues')
-        .select('id, name, address, phone, website, venue_locked')
+        .select('id, name, address, phone, website, venue_locked, place_id, google_review_link')
         .eq('id', venueId)
         .single();
 
       if (!error && venue) {
         setCurrentVenueData(venue);
         setIsLocked(venue.venue_locked || false);
+        // Check if we can generate a review link (has place_id but no google_review_link)
+        setCanGenerateReviewLink(venue.place_id && !venue.google_review_link);
       }
     } catch (error) {
       console.error('Error loading venue data:', error);
@@ -217,6 +221,40 @@ const GoogleReviewsCard = () => {
     }
   };
 
+  const handleGenerateReviewLink = async () => {
+    if (!currentVenueData?.place_id) return;
+
+    setGenerateLinkLoading(true);
+    setMessage('');
+
+    try {
+      const googleReviewLink = `https://search.google.com/local/writereview?placeid=${currentVenueData.place_id}`;
+      
+      // Update the venue with the generated review link
+      const { error } = await supabase
+        .from('venues')
+        .update({ google_review_link: googleReviewLink })
+        .eq('id', venueId);
+
+      if (error) {
+        throw error;
+      }
+
+      setMessage('Google review link generated and saved successfully!');
+      setCanGenerateReviewLink(false);
+      
+      // Reload venue data to reflect the change
+      setTimeout(() => {
+        loadCurrentVenueData();
+      }, 1000);
+
+    } catch (error) {
+      setMessage(`Error generating review link: ${error.message}`);
+    } finally {
+      setGenerateLinkLoading(false);
+    }
+  };
+
   const handleGoogleMapUrl = async () => {
     if (!googleMapUrl.trim() || isLocked) return;
 
@@ -323,18 +361,31 @@ const GoogleReviewsCard = () => {
       {/* Locked Status */}
       {isLocked && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center">
-            <div className="text-green-500 mr-3">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-              </svg>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="text-green-500 mr-3">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-medium text-green-800">Google Venue Locked</h4>
+                <p className="text-sm text-green-700">
+                  Your venue is linked to Google and cannot be changed. This ensures rating progression tracking.
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-medium text-green-800">Google Venue Locked</h4>
-              <p className="text-sm text-green-700">
-                Your venue is linked to Google and cannot be changed. This ensures rating progression tracking.
-              </p>
-            </div>
+            
+            {/* Generate Review Link Button */}
+            {canGenerateReviewLink && (
+              <button
+                onClick={handleGenerateReviewLink}
+                disabled={generateLinkLoading}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {generateLinkLoading ? 'Generating...' : 'Generate Review Link'}
+              </button>
+            )}
           </div>
         </div>
       )}

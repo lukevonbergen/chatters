@@ -343,10 +343,14 @@ async function handleUpdateVenue(req, res) {
     }
   }
 
+  // Generate Google review link from place_id
+  const googleReviewLink = `https://search.google.com/local/writereview?placeid=${place_id}`;
+
   // Prepare venue update data
   let updateData = { 
     place_id, 
-    venue_locked: true // Lock venue after setting Google place
+    venue_locked: true, // Lock venue after setting Google place
+    google_review_link: googleReviewLink // Always set the Google review link
   };
 
   // If auto-populate is enabled and venue_data is provided, update basic info

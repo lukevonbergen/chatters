@@ -59,6 +59,12 @@ const VenuePreviewModal = ({
       .join(', ');
   };
 
+  // Generate Google review link from place_id
+  const generateGoogleReviewLink = (placeId) => {
+    if (!placeId) return '';
+    return `https://search.google.com/local/writereview?placeid=${placeId}`;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -157,12 +163,78 @@ const VenuePreviewModal = ({
                 )}
                 {getFieldComparison(venueData.phone, currentVenueData?.phone, 'Phone')}
                 {getFieldComparison(venueData.website, currentVenueData?.website, 'Website')}
+                
+                {/* Google Review Link - Always show when auto-populate is enabled */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Google Review Link
+                    </label>
+                    <div className="p-3 bg-gray-50 rounded-md text-sm">
+                      {currentVenueData?.google_review_link ? (
+                        <a 
+                          href={currentVenueData.google_review_link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 break-all"
+                        >
+                          {currentVenueData.google_review_link}
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 italic">Not set</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Generated Google Review Link
+                      <span className="text-green-600 ml-1">(New)</span>
+                    </label>
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm">
+                      <a 
+                        href={generateGoogleReviewLink(venueData.place_id)} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 break-all"
+                      >
+                        {generateGoogleReviewLink(venueData.place_id)}
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {/* Note about conflicts */}
               <div className="mt-4 p-3 bg-gray-50 rounded-md">
                 <p className="text-sm text-gray-600">
                   <span className="font-medium">Note:</span> After auto-population, you can still edit any fields in the venue settings if needed.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Google Review Link - Always show regardless of auto-populate */}
+          {!autoPopulate && (
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Google Review Link</h3>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    This Google review link will be automatically added to your venue settings:
+                  </span>
+                </div>
+                <div className="p-3 bg-white border border-blue-300 rounded-md">
+                  <a 
+                    href={generateGoogleReviewLink(venueData.place_id)} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 break-all text-sm"
+                  >
+                    {generateGoogleReviewLink(venueData.place_id)}
+                  </a>
+                </div>
+                <p className="text-xs text-gray-600 mt-2">
+                  Customers can use this link to leave reviews directly on your Google Business listing.
                 </p>
               </div>
             </div>
