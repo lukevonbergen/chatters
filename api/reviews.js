@@ -412,32 +412,50 @@ async function handleTripAdvisorAction(req, res, action) {
 }
 
 async function handleTripAdvisorRatings(req, res) {
+  console.log('🟠 [TripAdvisor] handleTripAdvisorRatings called');
+  console.log('🟠 [TripAdvisor] Request method:', req.method);
+  console.log('🟠 [TripAdvisor] Query params:', req.query);
+  
   if (req.method !== 'GET') {
+    console.log('❌ [TripAdvisor] Invalid method:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { venueId, forceRefresh = '0' } = req.query;
+  console.log('🟠 [TripAdvisor] venueId:', venueId, 'forceRefresh:', forceRefresh);
+  
   if (!venueId) {
+    console.log('❌ [TripAdvisor] Missing venueId parameter');
     return res.status(400).json({ error: 'venueId parameter is required' });
   }
 
+  console.log('🔐 [TripAdvisor] Authenticating venue access for venueId:', venueId);
   await authenticateVenueAccess(req, venueId);
+  console.log('✅ [TripAdvisor] Authentication successful');
 
+  console.log('🟠 [TripAdvisor] Fetching venue data from database');
   const { data: venue, error: venueError } = await supabaseClient
     .from('venues')
     .select('id, tripadvisor_location_id, name')
     .eq('id', venueId)
     .single();
 
+  console.log('🟠 [TripAdvisor] Database query result:', { venue, venueError });
+
   if (venueError || !venue) {
+    console.log('❌ [TripAdvisor] Venue not found:', venueError);
     return res.status(404).json({ error: 'Venue not found' });
   }
 
+  console.log('🟠 [TripAdvisor] Venue found:', venue.name, 'TripAdvisor ID:', venue.tripadvisor_location_id);
+
   if (!venue.tripadvisor_location_id) {
+    console.log('❌ [TripAdvisor] No TripAdvisor location ID configured for venue');
     return res.status(404).json({ error: 'Venue has no TripAdvisor location ID configured' });
   }
 
   // Check cache unless force refresh
+  console.log('🟠 [TripAdvisor] Checking cache (forceRefresh:', forceRefresh, ')');
   if (forceRefresh !== '1') {
     const { data: cachedRating } = await supabaseClient
       .from('external_ratings')
@@ -446,12 +464,15 @@ async function handleTripAdvisorRatings(req, res) {
       .eq('source', 'tripadvisor')
       .single();
 
+    console.log('🟠 [TripAdvisor] Cached rating found:', !!cachedRating);
     if (cachedRating) {
       const fetchedAt = new Date(cachedRating.fetched_at);
       const now = new Date();
       const hoursSinceUpdate = (now - fetchedAt) / (1000 * 60 * 60);
+      console.log('🟠 [TripAdvisor] Cache age:', hoursSinceUpdate.toFixed(2), 'hours (TTL:', TRIPADVISOR_RATINGS_TTL_HOURS, 'hours)');
 
       if (hoursSinceUpdate < TRIPADVISOR_RATINGS_TTL_HOURS) {
+        console.log('✅ [TripAdvisor] Returning cached rating');
         return res.status(200).json({
           source: 'tripadvisor',
           rating: cachedRating.rating ? parseFloat(cachedRating.rating) : null,
@@ -459,16 +480,29 @@ async function handleTripAdvisorRatings(req, res) {
           fetched_at: cachedRating.fetched_at,
           cached: true
         });
+      } else {
+        console.log('⏰ [TripAdvisor] Cache expired, fetching fresh data');
       }
+    } else {
+      console.log('🟠 [TripAdvisor] No cached rating found');
     }
+  } else {
+    console.log('🔄 [TripAdvisor] Force refresh requested, skipping cache');
   }
 
   // Fetch fresh data from TripAdvisor
+  console.log('📡 [TripAdvisor] Fetching fresh data from API for location ID:', venue.tripadvisor_location_id);
   try {
     const tripAdvisorData = await fetchTripAdvisorLocationDetails(venue.tripadvisor_location_id);
+    console.log('✅ [TripAdvisor] API response received:', {
+      rating: tripAdvisorData.rating,
+      num_reviews: tripAdvisorData.num_reviews,
+      location_id: tripAdvisorData.location_id
+    });
     
     // Cache the result
-    await supabaseAdmin
+    console.log('💾 [TripAdvisor] Caching rating data to database');
+    const cacheResult = await supabaseAdmin
       .from('external_ratings')
       .upsert({
         venue_id: venueId,
@@ -479,19 +513,33 @@ async function handleTripAdvisorRatings(req, res) {
       }, {
         onConflict: 'venue_id,source'
       });
+    
+    if (cacheResult.error) {
+      console.error('⚠️ [TripAdvisor] Failed to cache rating:', cacheResult.error);
+    } else {
+      console.log('✅ [TripAdvisor] Rating cached successfully');
+    }
 
-    return res.status(200).json({
+    const responseData = {
       source: 'tripadvisor',
       rating: tripAdvisorData.rating,
       ratings_count: tripAdvisorData.num_reviews,
       fetched_at: new Date().toISOString(),
       cached: false
-    });
+    };
+    console.log('✅ [TripAdvisor] Sending response:', responseData);
+    return res.status(200).json(responseData);
 
   } catch (tripAdvisorError) {
-    console.error('TripAdvisor API error:', tripAdvisorError);
+    console.error('💥 [TripAdvisor] API error occurred:', {
+      message: tripAdvisorError.message,
+      stack: tripAdvisorError.stack,
+      venue_id: venueId,
+      location_id: venue.tripadvisor_location_id
+    });
     
     // Try to return stale cached data
+    console.log('🔄 [TripAdvisor] Attempting to retrieve stale cached data as fallback');
     const { data: staleRating } = await supabaseClient
       .from('external_ratings')
       .select('*')
@@ -500,6 +548,11 @@ async function handleTripAdvisorRatings(req, res) {
       .single();
 
     if (staleRating) {
+      console.log('✅ [TripAdvisor] Returning stale cached data:', {
+        rating: staleRating.rating,
+        ratings_count: staleRating.ratings_count,
+        fetched_at: staleRating.fetched_at
+      });
       return res.status(200).json({
         source: 'tripadvisor',
         rating: staleRating.rating ? parseFloat(staleRating.rating) : null,
@@ -510,57 +563,91 @@ async function handleTripAdvisorRatings(req, res) {
       });
     }
 
+    console.log('❌ [TripAdvisor] No fallback data available, returning error');
+    const errorReason = getErrorReason(tripAdvisorError);
+    console.log('❌ [TripAdvisor] Error reason classified as:', errorReason);
     return res.status(503).json({
       status: 'temporary_unavailable',
-      reason: getErrorReason(tripAdvisorError)
+      reason: errorReason
     });
   }
 }
 
 async function handleTripAdvisorLocationSearch(req, res) {
+  console.log('🟠 [TripAdvisor] handleTripAdvisorLocationSearch called');
+  console.log('🟠 [TripAdvisor] Request method:', req.method);
+  console.log('🟠 [TripAdvisor] Query params:', req.query);
+  
   if (req.method !== 'GET') {
+    console.log('❌ [TripAdvisor] Invalid method:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  console.log('🔐 [TripAdvisor] Authenticating admin access');
   await authenticateAdmin(req);
+  console.log('✅ [TripAdvisor] Admin authentication successful');
 
   const { query } = req.query;
+  console.log('🟠 [TripAdvisor] Search query:', query);
+  
   if (!query) {
+    console.log('❌ [TripAdvisor] Missing query parameter');
     return res.status(400).json({ error: 'query parameter is required' });
   }
 
+  console.log('🟠 [TripAdvisor] Checking API key configuration');
   if (!TRIPADVISOR_API_KEY) {
+    console.log('❌ [TripAdvisor] API key not configured');
     return res.status(503).json({ 
       status: 'temporary_unavailable', 
       reason: 'tripadvisor_api_not_configured' 
     });
   }
+  console.log('✅ [TripAdvisor] API key found');
 
   try {
     const url = `https://api.content.tripadvisor.com/api/v1/location/search?key=${TRIPADVISOR_API_KEY}&searchQuery=${encodeURIComponent(query)}&language=en`;
+    console.log('📡 [TripAdvisor] Making API request to:', url.replace(TRIPADVISOR_API_KEY, '[REDACTED]'));
     
     const response = await fetch(url);
+    console.log('📡 [TripAdvisor] API response status:', response.status, response.statusText);
+    
     const data = await response.json();
+    console.log('📡 [TripAdvisor] API response data:', JSON.stringify(data, null, 2));
 
     if (response.ok && data.data) {
-      const suggestions = data.data.map(location => ({
-        location_id: location.location_id,
-        name: location.name,
-        address: location.address_obj ? {
-          street1: location.address_obj.street1 || '',
-          street2: location.address_obj.street2 || '',
-          city: location.address_obj.city || '',
-          state: location.address_obj.state || '',
-          country: location.address_obj.country || '',
-          postalcode: location.address_obj.postalcode || ''
-        } : null,
-        rating: location.rating,
-        num_reviews: location.num_reviews,
-        description: `${location.name}${location.address_obj ? `, ${location.address_obj.city || ''}` : ''}`
-      }));
+      console.log('✅ [TripAdvisor] Search successful, found', data.data.length, 'locations');
+      const suggestions = data.data.map((location, index) => {
+        console.log(`🟠 [TripAdvisor] Processing location ${index + 1}:`, {
+          location_id: location.location_id,
+          name: location.name,
+          city: location.address_obj?.city,
+          rating: location.rating,
+          num_reviews: location.num_reviews
+        });
+        
+        return {
+          location_id: location.location_id,
+          name: location.name,
+          address: location.address_obj ? {
+            street1: location.address_obj.street1 || '',
+            street2: location.address_obj.street2 || '',
+            city: location.address_obj.city || '',
+            state: location.address_obj.state || '',
+            country: location.address_obj.country || '',
+            postalcode: location.address_obj.postalcode || ''
+          } : null,
+          rating: location.rating,
+          num_reviews: location.num_reviews,
+          description: `${location.name}${location.address_obj ? `, ${location.address_obj.city || ''}` : ''}`
+        };
+      });
 
+      console.log('✅ [TripAdvisor] Returning', suggestions.length, 'processed suggestions');
       return res.status(200).json({ suggestions });
     } else {
+      console.log('❌ [TripAdvisor] Search failed or no data returned');
+      console.log('❌ [TripAdvisor] Error details:', data.error || 'Unknown error');
       return res.status(503).json({
         status: 'temporary_unavailable',
         reason: 'tripadvisor_api_error',
@@ -568,7 +655,11 @@ async function handleTripAdvisorLocationSearch(req, res) {
       });
     }
   } catch (error) {
-    console.error('TripAdvisor search error:', error);
+    console.error('💥 [TripAdvisor] Search error occurred:', {
+      message: error.message,
+      stack: error.stack,
+      query: query
+    });
     return res.status(503).json({
       status: 'temporary_unavailable',
       reason: 'network_error',
@@ -578,22 +669,44 @@ async function handleTripAdvisorLocationSearch(req, res) {
 }
 
 async function handleTripAdvisorLocationDetails(req, res) {
+  console.log('🟠 [TripAdvisor] handleTripAdvisorLocationDetails called');
+  console.log('🟠 [TripAdvisor] Request method:', req.method);
+  console.log('🟠 [TripAdvisor] Query params:', req.query);
+  
   if (req.method !== 'GET') {
+    console.log('❌ [TripAdvisor] Invalid method:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  console.log('🔐 [TripAdvisor] Authenticating admin access');
   await authenticateAdmin(req);
+  console.log('✅ [TripAdvisor] Admin authentication successful');
 
   const { locationId } = req.query;
+  console.log('🟠 [TripAdvisor] Location ID:', locationId);
+  
   if (!locationId) {
+    console.log('❌ [TripAdvisor] Missing locationId parameter');
     return res.status(400).json({ error: 'locationId parameter is required' });
   }
 
   try {
+    console.log('📡 [TripAdvisor] Fetching location details for ID:', locationId);
     const locationData = await fetchTripAdvisorLocationDetails(locationId);
+    console.log('✅ [TripAdvisor] Location details retrieved:', {
+      location_id: locationData.location_id,
+      name: locationData.name,
+      rating: locationData.rating,
+      num_reviews: locationData.num_reviews,
+      hasAddress: !!locationData.structured_address
+    });
     return res.status(200).json(locationData);
   } catch (error) {
-    console.error('Location details error:', error);
+    console.error('💥 [TripAdvisor] Location details error:', {
+      message: error.message,
+      stack: error.stack,
+      locationId: locationId
+    });
     return res.status(503).json({
       status: 'temporary_unavailable',
       reason: 'tripadvisor_api_error',
@@ -603,18 +716,34 @@ async function handleTripAdvisorLocationDetails(req, res) {
 }
 
 async function handleTripAdvisorUpdateVenue(req, res) {
+  console.log('🟠 [TripAdvisor] handleTripAdvisorUpdateVenue called');
+  console.log('🟠 [TripAdvisor] Request method:', req.method);
+  console.log('🟠 [TripAdvisor] Query params:', req.query);
+  console.log('🟠 [TripAdvisor] Request body:', req.body);
+  
   if (req.method !== 'PATCH') {
+    console.log('❌ [TripAdvisor] Invalid method:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { venueId } = req.query;
   const { location_id, venue_data, auto_populate } = req.body;
+  
+  console.log('🟠 [TripAdvisor] Update params:', {
+    venueId,
+    location_id,
+    auto_populate,
+    hasVenueData: !!venue_data
+  });
 
   if (!venueId || !location_id) {
+    console.log('❌ [TripAdvisor] Missing required parameters');
     return res.status(400).json({ error: 'venueId and location_id are required' });
   }
 
+  console.log('🔐 [TripAdvisor] Authenticating venue access for venueId:', venueId);
   await authenticateVenueAccess(req, venueId);
+  console.log('✅ [TripAdvisor] Venue access authenticated');
 
   // Generate TripAdvisor review link
   const tripAdvisorReviewLink = `https://www.tripadvisor.com/UserReviewEdit-g${location_id}`;
@@ -648,12 +777,19 @@ async function handleTripAdvisorUpdateVenue(req, res) {
   }
 
   // Store initial rating
+  console.log('💾 [TripAdvisor] Fetching and storing initial rating data');
   try {
     const tripAdvisorData = await fetchTripAdvisorLocationDetails(location_id);
+    console.log('✅ [TripAdvisor] Initial rating data fetched:', {
+      rating: tripAdvisorData.rating,
+      num_reviews: tripAdvisorData.num_reviews,
+      location_id: tripAdvisorData.location_id
+    });
     
     if (tripAdvisorData.rating) {
+      console.log('💾 [TripAdvisor] Storing initial rating in historical_ratings table');
       // Historical ratings
-      await supabaseAdmin
+      const histResult = await supabaseAdmin
         .from('historical_ratings')
         .insert({
           venue_id: venueId,
@@ -663,9 +799,16 @@ async function handleTripAdvisorUpdateVenue(req, res) {
           is_initial: true,
           recorded_at: new Date().toISOString()
         });
+      
+      if (histResult.error) {
+        console.error('⚠️ [TripAdvisor] Failed to store historical rating:', histResult.error);
+      } else {
+        console.log('✅ [TripAdvisor] Historical rating stored successfully');
+      }
 
+      console.log('💾 [TripAdvisor] Caching rating in external_ratings table');
       // Cache
-      await supabaseAdmin
+      const cacheResult = await supabaseAdmin
         .from('external_ratings')
         .upsert({
           venue_id: venueId,
@@ -676,9 +819,22 @@ async function handleTripAdvisorUpdateVenue(req, res) {
         }, {
           onConflict: 'venue_id,source'
         });
+      
+      if (cacheResult.error) {
+        console.error('⚠️ [TripAdvisor] Failed to cache rating:', cacheResult.error);
+      } else {
+        console.log('✅ [TripAdvisor] Rating cached successfully');
+      }
+    } else {
+      console.log('⚠️ [TripAdvisor] No rating found in initial data, skipping rating storage');
     }
   } catch (ratingError) {
-    console.error('Failed to fetch initial rating:', ratingError);
+    console.error('💥 [TripAdvisor] Failed to fetch initial rating:', {
+      message: ratingError.message,
+      stack: ratingError.stack,
+      location_id: location_id,
+      venueId: venueId
+    });
   }
 
   return res.status(200).json({
@@ -773,17 +929,33 @@ async function fetchGooglePlaceDetails(placeId) {
 }
 
 async function fetchTripAdvisorLocationDetails(locationId) {
+  console.log('🟠 [TripAdvisor] fetchTripAdvisorLocationDetails called for ID:', locationId);
+  
   if (!TRIPADVISOR_API_KEY) {
+    console.log('❌ [TripAdvisor] API key not configured');
     throw new Error('TripAdvisor API key not configured');
   }
+  console.log('✅ [TripAdvisor] API key found');
 
   const url = `https://api.content.tripadvisor.com/api/v1/location/${locationId}/details?key=${TRIPADVISOR_API_KEY}&language=en&currency=USD`;
+  console.log('📡 [TripAdvisor] Making API request to:', url.replace(TRIPADVISOR_API_KEY, '[REDACTED]'));
   
   const response = await fetch(url);
+  console.log('📡 [TripAdvisor] API response status:', response.status, response.statusText);
+  
   const data = await response.json();
+  console.log('📡 [TripAdvisor] Raw API response:', JSON.stringify(data, null, 2));
 
   if (response.ok && data) {
+    console.log('✅ [TripAdvisor] Valid response received');
     const location = data;
+    console.log('🟠 [TripAdvisor] Processing location data:', {
+      location_id: location.location_id,
+      name: location.name,
+      hasAddressObj: !!location.address_obj,
+      rating: location.rating,
+      num_reviews: location.num_reviews
+    });
     
     let structuredAddress = {
       line1: '',
@@ -795,6 +967,7 @@ async function fetchTripAdvisorLocationDetails(locationId) {
     };
 
     if (location.address_obj) {
+      console.log('🟠 [TripAdvisor] Processing address object:', location.address_obj);
       structuredAddress = {
         line1: location.address_obj.street1 || '',
         line2: location.address_obj.street2 || '',
@@ -803,9 +976,11 @@ async function fetchTripAdvisorLocationDetails(locationId) {
         postalCode: location.address_obj.postalcode || '',
         country: location.address_obj.country || ''
       };
+    } else {
+      console.log('⚠️ [TripAdvisor] No address object found in response');
     }
 
-    return {
+    const result = {
       location_id: location.location_id,
       name: location.name,
       formatted_address: location.address,
@@ -815,7 +990,23 @@ async function fetchTripAdvisorLocationDetails(locationId) {
       rating: location.rating ? parseFloat(location.rating) : null,
       num_reviews: location.num_reviews || 0
     };
+    
+    console.log('✅ [TripAdvisor] Returning processed location data:', {
+      location_id: result.location_id,
+      name: result.name,
+      rating: result.rating,
+      num_reviews: result.num_reviews,
+      hasStructuredAddress: !!result.structured_address.city
+    });
+    
+    return result;
   } else {
+    console.log('❌ [TripAdvisor] API error response:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: data.error || 'Unknown error',
+      data: data
+    });
     throw new Error(`TripAdvisor API error: ${data.error || 'Unknown error'}`);
   }
 }
@@ -849,33 +1040,60 @@ async function searchGoogle(query) {
 }
 
 async function searchTripAdvisor(query) {
+  console.log('🟠 [TripAdvisor] searchTripAdvisor called for query:', query);
+  
   if (!TRIPADVISOR_API_KEY) {
+    console.log('❌ [TripAdvisor] API key not configured for unified search');
     throw new Error('TripAdvisor API key not configured');
   }
+  console.log('✅ [TripAdvisor] API key found for unified search');
 
   const url = `https://api.content.tripadvisor.com/api/v1/location/search?key=${TRIPADVISOR_API_KEY}&searchQuery=${encodeURIComponent(query)}&language=en`;
+  console.log('📡 [TripAdvisor] Unified search API request to:', url.replace(TRIPADVISOR_API_KEY, '[REDACTED]'));
   
   const response = await fetch(url);
+  console.log('📡 [TripAdvisor] Unified search response status:', response.status, response.statusText);
+  
   const data = await response.json();
+  console.log('📡 [TripAdvisor] Unified search response data:', JSON.stringify(data, null, 2));
 
   if (response.ok && data.data) {
-    return data.data.map(location => ({
-      platform: 'tripadvisor',
-      location_id: location.location_id,
-      name: location.name,
-      description: `${location.name}${location.address_obj ? `, ${location.address_obj.city || ''}` : ''}`,
-      address: location.address_obj ? `${location.address_obj.city || ''}, ${location.address_obj.country || ''}` : '',
-      rating: location.rating,
-      num_reviews: location.num_reviews,
-      address_obj: location.address_obj
-    }));
+    console.log('✅ [TripAdvisor] Unified search successful, processing', data.data.length, 'results');
+    const results = data.data.map((location, index) => {
+      console.log(`🟠 [TripAdvisor] Processing unified search result ${index + 1}:`, {
+        location_id: location.location_id,
+        name: location.name,
+        city: location.address_obj?.city,
+        rating: location.rating,
+        num_reviews: location.num_reviews
+      });
+      
+      return {
+        platform: 'tripadvisor',
+        location_id: location.location_id,
+        name: location.name,
+        description: `${location.name}${location.address_obj ? `, ${location.address_obj.city || ''}` : ''}`,
+        address: location.address_obj ? `${location.address_obj.city || ''}, ${location.address_obj.country || ''}` : '',
+        rating: location.rating,
+        num_reviews: location.num_reviews,
+        address_obj: location.address_obj
+      };
+    });
+    
+    console.log('✅ [TripAdvisor] Returning', results.length, 'processed unified search results');
+    return results;
   } else {
+    console.log('❌ [TripAdvisor] Unified search failed');
+    
     // Handle specific TripAdvisor error types
     if (data.Message && data.Message.includes('not authorized')) {
+      console.log('❌ [TripAdvisor] Authorization error - likely domain restrictions');
       throw new Error('TripAdvisor API key unauthorized - this is likely due to domain restrictions. Remove domain restrictions from your TripAdvisor API key to allow server-side requests.');
     }
     
-    throw new Error(`TripAdvisor API error: ${data.error || data.message || data.Message || `HTTP ${response.status} ${response.statusText}`}`);
+    const errorMsg = `TripAdvisor API error: ${data.error || data.message || data.Message || `HTTP ${response.status} ${response.statusText}`}`;
+    console.log('❌ [TripAdvisor] Unified search error:', errorMsg);
+    throw new Error(errorMsg);
   }
 }
 
