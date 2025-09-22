@@ -910,28 +910,49 @@ const VenueDetailsModal = ({ venue, onClose, onUpdate }) => {
     setSaving(true);
     try {
       // Filter out only updatable venue fields (exclude relations)
-      const venueFields = {
-        name: editingData.name,
-        address: editingData.address,
-        phone: editingData.phone,
-        website: editingData.website,
-        table_count: editingData.table_count,
-        primary_color: editingData.primary_color,
-        secondary_color: editingData.secondary_color,
-        venue_locked: editingData.venue_locked,
-        session_timeout_hours: editingData.session_timeout_hours,
-        feedback_hours: editingData.feedback_hours,
-        tripadvisor_link: editingData.tripadvisor_link,
-        google_review_link: editingData.google_review_link,
-        place_id: editingData.place_id
-      };
+      const venueFields = {};
+      
+      // Only include fields that have actually changed and are valid
+      if (editingData.name !== undefined) venueFields.name = editingData.name;
+      if (editingData.address !== undefined) venueFields.address = editingData.address;
+      if (editingData.phone !== undefined) venueFields.phone = editingData.phone;
+      if (editingData.website !== undefined) venueFields.website = editingData.website;
+      if (editingData.table_count !== undefined) venueFields.table_count = editingData.table_count;
+      if (editingData.primary_color !== undefined) venueFields.primary_color = editingData.primary_color;
+      if (editingData.secondary_color !== undefined) venueFields.secondary_color = editingData.secondary_color;
+      if (editingData.venue_locked !== undefined) venueFields.venue_locked = editingData.venue_locked;
+      if (editingData.session_timeout_hours !== undefined) venueFields.session_timeout_hours = editingData.session_timeout_hours;
+      if (editingData.feedback_hours !== undefined) venueFields.feedback_hours = editingData.feedback_hours;
+      if (editingData.tripadvisor_link !== undefined) venueFields.tripadvisor_link = editingData.tripadvisor_link;
+      if (editingData.google_review_link !== undefined) venueFields.google_review_link = editingData.google_review_link;
+      if (editingData.place_id !== undefined) venueFields.place_id = editingData.place_id;
 
-      const { error } = await supabase
+      // Check current user and permissions
+      const { data: currentUser } = await supabase.auth.getUser();
+      console.log('Current user:', currentUser.user?.email, 'ID:', currentUser.user?.id);
+      
+      console.log('Updating venue with fields:', venueFields);
+      console.log('Venue ID:', venue.id);
+
+      const { data, error, count } = await supabase
         .from('venues')
         .update(venueFields)
-        .eq('id', venue.id);
+        .eq('id', venue.id)
+        .select(); // Add select to return updated data
 
-      if (error) throw error;
+      console.log('Supabase response:', { data, error, count });
+
+      if (error) {
+        console.error('Supabase error details:', error);
+        if (error.code === 'PGRST116' || error.message?.includes('RLS')) {
+          throw new Error('Permission denied: Admin RLS policy missing. Please contact support to add the admin venue management policy.');
+        }
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No rows were updated - venue may not exist or you may not have permission to edit this venue');
+      }
 
       onUpdate(editingData);
       setEditingData(null);

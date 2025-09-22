@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useVenue } from '../../../context/VenueContext';
 import { supabase } from '../../../utils/supabase';
 import UnifiedVenuePreviewModal from './UnifiedVenuePreviewModal';
 
-const GoogleReviewsCard = () => {
+const UnifiedReviewsCard = () => {
   const { venueId } = useVenue();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState({ google: [], tripadvisor: [], matched_venues: [] });
@@ -12,8 +12,7 @@ const GoogleReviewsCard = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [googleMapUrl, setGoogleMapUrl] = useState('');
-  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [selectedVenues, setSelectedVenues] = useState(null);
   const [currentVenueData, setCurrentVenueData] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
@@ -22,18 +21,38 @@ const GoogleReviewsCard = () => {
   const searchTimeoutRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  const loadCurrentRatings = useCallback(async () => {
+  // Load current ratings and venue data on mount
+  useEffect(() => {
+    if (venueId) {
+      loadCurrentRatings();
+      loadCurrentVenueData();
+    }
+  }, [venueId]);
+
+  // Handle clicks outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const loadCurrentRatings = async () => {
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token) return;
 
       // Load Google rating
-      const googleResponse = await fetch(`/api/reviews?platform=google&action=ratings&venueId=${venueId}`, {
+      const googleResponse = await fetch(`/api/google?action=ratings&venueId=${venueId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
       // Load TripAdvisor rating
-      const tripAdvisorResponse = await fetch(`/api/reviews?platform=tripadvisor&action=ratings&venueId=${venueId}`, {
+      const tripAdvisorResponse = await fetch(`/api/tripadvisor?action=ratings&venueId=${venueId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -46,9 +65,9 @@ const GoogleReviewsCard = () => {
     } catch (error) {
       console.error('Error loading current ratings:', error);
     }
-  }, [venueId]);
+  };
 
-  const loadCurrentVenueData = useCallback(async () => {
+  const loadCurrentVenueData = async () => {
     try {
       const { data: venue, error } = await supabase
         .from('venues')
@@ -68,27 +87,7 @@ const GoogleReviewsCard = () => {
     } catch (error) {
       console.error('Error loading venue data:', error);
     }
-  }, [venueId]);
-
-  // Load current ratings and venue data on mount
-  useEffect(() => {
-    if (venueId) {
-      loadCurrentRatings();
-      loadCurrentVenueData();
-    }
-  }, [venueId, loadCurrentRatings, loadCurrentVenueData]);
-
-  // Handle clicks outside dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  };
 
   const handleSearchInput = (value) => {
     setSearchQuery(value);
@@ -115,13 +114,12 @@ const GoogleReviewsCard = () => {
     console.log('🔍 Performing unified search for:', query);
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      console.log('🔑 Token exists:', !!token);
       if (!token) {
         console.error('❌ No authentication token');
         return;
       }
 
-      const url = `/api/reviews?platform=unified&action=search&query=${encodeURIComponent(query)}`;
+      const url = `/api/unified-search?query=${encodeURIComponent(query)}`;
       console.log('📡 Fetching:', url);
 
       const response = await fetch(url, {
@@ -151,71 +149,193 @@ const GoogleReviewsCard = () => {
     }
   };
 
+  const selectMatchedVenue = async (matchedVenue) => {
+    if (isLocked) {
+      setMessage('Error: Venue is already locked to existing listings');
+      return;
+    }
 
+    setShowDropdown(false);
+    setSearchQuery(`${matchedVenue.google.name} (Matched)`);
+    setLoading(true);
 
-  const handleGoogleMapUrl = async () => {
-    if (!googleMapUrl.trim() || isLocked) return;
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      // Fetch full details for both platforms
+      const [googleResponse, tripAdvisorResponse] = await Promise.allSettled([
+        fetch(`/api/google?action=place-details&placeId=${matchedVenue.google.place_id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`/api/tripadvisor?action=location-details&locationId=${matchedVenue.tripadvisor.location_id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      const venueDetails = {
+        google: googleResponse.status === 'fulfilled' && googleResponse.value.ok ? 
+          await googleResponse.value.json() : null,
+        tripadvisor: tripAdvisorResponse.status === 'fulfilled' && tripAdvisorResponse.value.ok ? 
+          await tripAdvisorResponse.value.json() : null
+      };
+
+      setSelectedVenues(venueDetails);
+      setShowPreviewModal(true);
+    } catch (error) {
+      setMessage(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectSingleVenue = async (venue, platform) => {
+    if (isLocked) {
+      setMessage('Error: Venue is already locked to existing listings');
+      return;
+    }
+
+    setShowDropdown(false);
+    setSearchQuery(venue.name || venue.description);
+    setLoading(true);
+
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      let venueDetails = { google: null, tripadvisor: null };
+
+      if (platform === 'google') {
+        const response = await fetch(`/api/google?action=place-details&placeId=${venue.place_id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          venueDetails.google = await response.json();
+        }
+      } else if (platform === 'tripadvisor') {
+        const response = await fetch(`/api/tripadvisor?action=location-details&locationId=${venue.location_id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          venueDetails.tripadvisor = await response.json();
+        }
+      }
+
+      setSelectedVenues(venueDetails);
+      setShowPreviewModal(true);
+    } catch (error) {
+      setMessage(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmVenues = async (autoPopulate) => {
+    if (!selectedVenues) return;
 
     setLoading(true);
     setMessage('');
+    setShowPreviewModal(false);
 
     try {
-      // Extract place_id from Google Maps URL
-      const placeIdMatch = googleMapUrl.match(/place_id=([^&]+)/);
-      const dataMatch = googleMapUrl.match(/data=([^&]+)/);
-      
-      let placeId = null;
-      
-      if (placeIdMatch) {
-        placeId = placeIdMatch[1];
-      } else if (dataMatch) {
-        // Handle encoded URLs - this is a simplified extraction
-        const decoded = decodeURIComponent(dataMatch[1]);
-        const pidMatch = decoded.match(/0x[a-f0-9]+:0x[a-f0-9]+/);
-        if (pidMatch) {
-          // For complex URLs, we'll need to use Find Place API
-          const token = (await supabase.auth.getSession()).data.session?.access_token;
-          const response = await fetch(`/api/reviews?platform=google&action=places-search&query=${encodeURIComponent(googleMapUrl)}&type=findplace`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.places && data.places.length > 0) {
-              placeId = data.places[0].place_id;
-            }
-          }
-        }
-      }
-
-      if (!placeId) {
-        setMessage('Could not extract Place ID from URL. Please use the search instead.');
-        return;
-      }
-
-      // Get full venue details and show preview modal
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const detailsResponse = await fetch(`/api/reviews?platform=google&action=place-details&placeId=${placeId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      if (!token) throw new Error('Not authenticated');
 
-      if (detailsResponse.ok) {
-        const venueData = await detailsResponse.json();
-        setSelectedPlace(venueData);
-        setShowPreviewModal(true);
-        setGoogleMapUrl('');
+      const updates = [];
+
+      // Update Google venue if selected
+      if (selectedVenues.google) {
+        updates.push(
+          fetch(`/api/google?action=update-venue&venueId=${venueId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              place_id: selectedVenues.google.place_id,
+              venue_data: selectedVenues.google,
+              auto_populate: autoPopulate
+            })
+          })
+        );
+      }
+
+      // Update TripAdvisor venue if selected
+      if (selectedVenues.tripadvisor) {
+        updates.push(
+          fetch(`/api/tripadvisor?action=update-venue&venueId=${venueId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              location_id: selectedVenues.tripadvisor.location_id,
+              venue_data: selectedVenues.tripadvisor,
+              auto_populate: autoPopulate
+            })
+          })
+        );
+      }
+
+      const results = await Promise.allSettled(updates);
+      const successful = results.filter(r => r.status === 'fulfilled' && r.value.ok);
+
+      if (successful.length === updates.length) {
+        setMessage('Venue listings linked successfully and venue locked!');
+        setIsLocked(true);
+        setSelectedVenues(null);
+        setTimeout(() => {
+          loadCurrentRatings();
+          loadCurrentVenueData();
+        }, 1000);
       } else {
-        const error = await detailsResponse.json();
-        setMessage(`Error: ${error.error}`);
+        const failedResults = results.filter(r => r.status === 'rejected' || !r.value.ok);
+        setMessage(`Partial success: ${successful.length}/${updates.length} platforms linked. Some updates failed.`);
       }
     } catch (error) {
       setMessage(`Error: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateReviewLink = async (platform) => {
+    if (!currentVenueData) return;
+
+    const platformData = platform === 'google' ? 
+      { id: currentVenueData.place_id, field: 'google_review_link' } :
+      { id: currentVenueData.tripadvisor_location_id, field: 'tripadvisor_link' };
+
+    if (!platformData.id) return;
+
+    setGenerateLinkLoading(prev => ({ ...prev, [platform]: true }));
+    setMessage('');
+
+    try {
+      const reviewLink = platform === 'google' ?
+        `https://search.google.com/local/writereview?placeid=${platformData.id}` :
+        `https://www.tripadvisor.com/UserReviewEdit-g${platformData.id}`;
+      
+      const { error } = await supabase
+        .from('venues')
+        .update({ [platformData.field]: reviewLink })
+        .eq('id', venueId);
+
+      if (error) throw error;
+
+      setMessage(`${platform.charAt(0).toUpperCase() + platform.slice(1)} review link generated successfully!`);
+      setCanGenerateReviewLinks(prev => ({ ...prev, [platform]: false }));
+      
+      setTimeout(() => {
+        loadCurrentVenueData();
+      }, 1000);
+
+    } catch (error) {
+      setMessage(`Error generating ${platform} review link: ${error.message}`);
+    } finally {
+      setGenerateLinkLoading(prev => ({ ...prev, [platform]: false }));
     }
   };
 
@@ -258,201 +378,12 @@ const GoogleReviewsCard = () => {
     );
   };
 
-  const handleGenerateReviewLink = async (platform) => {
-    if (!currentVenueData) return;
-
-    const platformData = platform === 'google' ? 
-      { id: currentVenueData.place_id, field: 'google_review_link' } :
-      { id: currentVenueData.tripadvisor_location_id, field: 'tripadvisor_link' };
-
-    if (!platformData.id) return;
-
-    setGenerateLinkLoading(prev => ({ ...prev, [platform]: true }));
-    setMessage('');
-
-    try {
-      const reviewLink = platform === 'google' ?
-        `https://search.google.com/local/writereview?placeid=${platformData.id}` :
-        `https://www.tripadvisor.com/UserReviewEdit-g${platformData.id}`;
-      
-      const { error } = await supabase
-        .from('venues')
-        .update({ [platformData.field]: reviewLink })
-        .eq('id', venueId);
-
-      if (error) throw error;
-
-      setMessage(`${platform.charAt(0).toUpperCase() + platform.slice(1)} review link generated successfully!`);
-      setCanGenerateReviewLinks(prev => ({ ...prev, [platform]: false }));
-      
-      setTimeout(() => {
-        loadCurrentVenueData();
-      }, 1000);
-
-    } catch (error) {
-      setMessage(`Error generating ${platform} review link: ${error.message}`);
-    } finally {
-      setGenerateLinkLoading(prev => ({ ...prev, [platform]: false }));
-    }
-  };
-
-  const selectMatchedVenue = async (matchedVenue) => {
-    if (isLocked) {
-      setMessage('Error: Venue is already locked to existing listings');
-      return;
-    }
-
-    setShowDropdown(false);
-    setSearchQuery(`${matchedVenue.google.name} (Matched)`);
-    setLoading(true);
-
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      if (!token) throw new Error('Not authenticated');
-
-      // Fetch full details for both platforms
-      const [googleResponse, tripAdvisorResponse] = await Promise.allSettled([
-        fetch(`/api/reviews?platform=google&action=place-details&placeId=${matchedVenue.google.place_id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`/api/reviews?platform=tripadvisor&action=location-details&locationId=${matchedVenue.tripadvisor.location_id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
-
-      const venueDetails = {
-        google: googleResponse.status === 'fulfilled' && googleResponse.value.ok ? 
-          await googleResponse.value.json() : null,
-        tripadvisor: tripAdvisorResponse.status === 'fulfilled' && tripAdvisorResponse.value.ok ? 
-          await tripAdvisorResponse.value.json() : null
-      };
-
-      setSelectedPlace(venueDetails);
-      setShowPreviewModal(true);
-    } catch (error) {
-      setMessage(`Error: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const selectSingleVenue = async (venue, platform) => {
-    if (isLocked) {
-      setMessage('Error: Venue is already locked to existing listings');
-      return;
-    }
-
-    setShowDropdown(false);
-    setSearchQuery(venue.name || venue.description);
-    setLoading(true);
-
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      if (!token) throw new Error('Not authenticated');
-
-      let venueDetails = { google: null, tripadvisor: null };
-
-      if (platform === 'google') {
-        const response = await fetch(`/api/reviews?platform=google&action=place-details&placeId=${venue.place_id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          venueDetails.google = await response.json();
-        }
-      } else if (platform === 'tripadvisor') {
-        const response = await fetch(`/api/reviews?platform=tripadvisor&action=location-details&locationId=${venue.location_id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          venueDetails.tripadvisor = await response.json();
-        }
-      }
-
-      setSelectedPlace(venueDetails);
-      setShowPreviewModal(true);
-    } catch (error) {
-      setMessage(`Error: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirmVenues = async (autoPopulate) => {
-    if (!selectedPlace) return;
-
-    setLoading(true);
-    setMessage('');
-    setShowPreviewModal(false);
-
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      if (!token) throw new Error('Not authenticated');
-
-      const updates = [];
-
-      // Update Google venue if selected
-      if (selectedPlace.google) {
-        updates.push(
-          fetch(`/api/reviews?platform=google&action=update-venue&venueId=${venueId}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              place_id: selectedPlace.google.place_id,
-              venue_data: selectedPlace.google,
-              auto_populate: autoPopulate
-            })
-          })
-        );
-      }
-
-      // Update TripAdvisor venue if selected
-      if (selectedPlace.tripadvisor) {
-        updates.push(
-          fetch(`/api/reviews?platform=tripadvisor&action=update-venue&venueId=${venueId}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              location_id: selectedPlace.tripadvisor.location_id,
-              venue_data: selectedPlace.tripadvisor,
-              auto_populate: autoPopulate
-            })
-          })
-        );
-      }
-
-      const results = await Promise.allSettled(updates);
-      const successful = results.filter(r => r.status === 'fulfilled' && r.value.ok);
-
-      if (successful.length === updates.length) {
-        setMessage('Venue listings linked successfully and venue locked!');
-        setIsLocked(true);
-        setSelectedPlace(null);
-        setTimeout(() => {
-          loadCurrentRatings();
-          loadCurrentVenueData();
-        }, 1000);
-      } else {
-        setMessage(`Partial success: ${successful.length}/${updates.length} platforms linked. Some updates failed.`);
-      }
-    } catch (error) {
-      setMessage(`Error: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200">
       <div className="mb-6">
         <h3 className="text-lg font-medium text-gray-900 mb-2">Review Platform Integration</h3>
         <p className="text-sm text-gray-600">
-          Link your Google Business and TripAdvisor listings to display ratings and track review performance across platforms.
+          Link your Google Business and TripAdvisor listings to display ratings and track review performance.
         </p>
       </div>
 
@@ -467,19 +398,17 @@ const GoogleReviewsCard = () => {
       {/* Locked Status */}
       {isLocked && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="text-green-500 mr-3">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="font-medium text-green-800">Google Venue Locked</h4>
-                <p className="text-sm text-green-700">
-                  Your venue is linked to Google and cannot be changed. This ensures rating progression tracking.
-                </p>
-              </div>
+          <div className="flex items-center">
+            <div className="text-green-500 mr-3">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h4 className="font-medium text-green-800">Venue Integration Locked</h4>
+              <p className="text-sm text-green-700">
+                Your venue is linked to review platforms and cannot be changed. This ensures rating progression tracking.
+              </p>
             </div>
           </div>
         </div>
@@ -593,30 +522,6 @@ const GoogleReviewsCard = () => {
             )}
           </div>
         </div>
-
-          {/* Google Maps URL Fallback */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Or paste Google Maps URL
-            </label>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={googleMapUrl}
-                onChange={(e) => setGoogleMapUrl(e.target.value)}
-                placeholder="https://maps.google.com/..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <button
-                onClick={handleGoogleMapUrl}
-                disabled={loading || !googleMapUrl.trim()}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50"
-              >
-                Link
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Messages */}
@@ -643,15 +548,15 @@ const GoogleReviewsCard = () => {
         </div>
       )}
 
-      {/* Venue Preview Modal */}
+      {/* Unified Venue Preview Modal */}
       <UnifiedVenuePreviewModal
         isOpen={showPreviewModal}
         onClose={() => {
           setShowPreviewModal(false);
-          setSelectedPlace(null);
+          setSelectedVenues(null);
         }}
         onConfirm={handleConfirmVenues}
-        venueData={selectedPlace}
+        venueData={selectedVenues}
         currentVenueData={currentVenueData}
         isLoading={loading}
       />
@@ -659,4 +564,4 @@ const GoogleReviewsCard = () => {
   );
 };
 
-export default GoogleReviewsCard;
+export default UnifiedReviewsCard;
