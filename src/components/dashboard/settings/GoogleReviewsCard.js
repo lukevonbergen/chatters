@@ -22,26 +22,6 @@ const GoogleReviewsCard = () => {
   const searchTimeoutRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  // Load current ratings and venue data on mount
-  useEffect(() => {
-    if (venueId) {
-      loadCurrentRatings();
-      loadCurrentVenueData();
-    }
-  }, [venueId, loadCurrentRatings, loadCurrentVenueData]);
-
-  // Handle clicks outside dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const loadCurrentRatings = useCallback(async () => {
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
@@ -89,6 +69,26 @@ const GoogleReviewsCard = () => {
       console.error('Error loading venue data:', error);
     }
   }, [venueId]);
+
+  // Load current ratings and venue data on mount
+  useEffect(() => {
+    if (venueId) {
+      loadCurrentRatings();
+      loadCurrentVenueData();
+    }
+  }, [venueId, loadCurrentRatings, loadCurrentVenueData]);
+
+  // Handle clicks outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearchInput = (value) => {
     setSearchQuery(value);
