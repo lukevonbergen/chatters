@@ -143,29 +143,38 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
   };
 
   // Combine and prepare chart data
-  // Create a map of all unique dates
-  const allDates = new Set();
-  historicalData.google.forEach(point => allDates.add(point.recorded_at));
-  historicalData.tripadvisor.forEach(point => allDates.add(point.recorded_at));
+  // Always show last 7 days including today
+  const last7Days = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(now.getDate() - i);
+    date.setHours(0, 0, 0, 0);
+    last7Days.push(date.toISOString().split('T')[0]);
+  }
   
-  const sortedDates = Array.from(allDates).sort();
-  
-  // Create labels from dates
-  const labels = sortedDates.map(date => 
-    new Date(date).toLocaleDateString('en-GB', { 
+  // Create labels from the 7 days
+  const labels = last7Days.map(dateStr => 
+    new Date(dateStr).toLocaleDateString('en-GB', { 
       month: 'short', 
       day: 'numeric' 
     })
   );
   
-  // Create data arrays for each platform
-  const googleData = sortedDates.map(date => {
-    const point = historicalData.google.find(p => p.recorded_at === date);
+  // Create data arrays for each platform, matching to the 7 days
+  const googleData = last7Days.map(dateStr => {
+    const point = historicalData.google.find(p => {
+      const recordedDate = new Date(p.recorded_at).toISOString().split('T')[0];
+      return recordedDate === dateStr;
+    });
     return point ? parseFloat(point.rating) : null;
   });
   
-  const tripadvisorData = sortedDates.map(date => {
-    const point = historicalData.tripadvisor.find(p => p.recorded_at === date);
+  const tripadvisorData = last7Days.map(dateStr => {
+    const point = historicalData.tripadvisor.find(p => {
+      const recordedDate = new Date(p.recorded_at).toISOString().split('T')[0];
+      return recordedDate === dateStr;
+    });
     return point ? parseFloat(point.rating) : null;
   });
 
@@ -198,22 +207,7 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: true,
-        position: 'top',
-        align: 'start',
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          padding: 20,
-          font: {
-            size: 13,
-            weight: '500'
-          },
-          color: '#374151',
-          boxWidth: 8,
-          boxHeight: 8
-        },
-        onClick: null
+        display: false
       },
       tooltip: {
         enabled: true,
@@ -290,8 +284,8 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
       mode: 'nearest',
       intersect: true
     },
-    barPercentage: 0.95,
-    categoryPercentage: 0.6
+    barPercentage: 1.0,
+    categoryPercentage: 0.5
   };
 
   if (loading) {
