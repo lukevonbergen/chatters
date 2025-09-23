@@ -1,5 +1,6 @@
 // /api/reviews.js
 // Consolidated review platform APIs (Google, TripAdvisor, Unified Search)
+// Force deployment update
 import { createClient } from '@supabase/supabase-js';
 import { authenticateVenueAccess, authenticateAdmin } from './auth-helper.js';
 
