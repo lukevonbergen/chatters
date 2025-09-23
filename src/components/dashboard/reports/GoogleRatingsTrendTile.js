@@ -71,18 +71,37 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
         tripadvisor: tripadvisorCurrent
       });
       
+      // Use external_ratings as fallback if no historical data exists
+      const googleHistoricalWithFallback = (googleHistorical && googleHistorical.length > 0) 
+        ? googleHistorical 
+        : (googleCurrent ? [{
+            rating: googleCurrent.rating,
+            ratings_count: googleCurrent.ratings_count,
+            recorded_at: googleCurrent.fetched_at,
+            is_initial: true
+          }] : []);
+      
+      const tripadvisorHistoricalWithFallback = (tripadvisorHistorical && tripadvisorHistorical.length > 0)
+        ? tripadvisorHistorical
+        : (tripadvisorCurrent ? [{
+            rating: tripadvisorCurrent.rating,
+            ratings_count: tripadvisorCurrent.ratings_count,
+            recorded_at: tripadvisorCurrent.fetched_at,
+            is_initial: true
+          }] : []);
+      
       setHistoricalData({
-        google: googleHistorical || [],
-        tripadvisor: tripadvisorHistorical || []
+        google: googleHistoricalWithFallback,
+        tripadvisor: tripadvisorHistoricalWithFallback
       });
 
       // Calculate KPI data for both platforms
       const newKpiData = {};
 
       // Google KPIs
-      if (googleHistorical && googleHistorical.length > 0) {
-        const initialRating = googleHistorical.find(r => r.is_initial)?.rating;
-        const latestRating = googleCurrent?.rating || googleHistorical[googleHistorical.length - 1]?.rating;
+      if (googleHistoricalWithFallback && googleHistoricalWithFallback.length > 0) {
+        const initialRating = googleHistoricalWithFallback.find(r => r.is_initial)?.rating;
+        const latestRating = googleCurrent?.rating || googleHistoricalWithFallback[googleHistoricalWithFallback.length - 1]?.rating;
 
         if (initialRating && latestRating) {
           const change = latestRating - initialRating;
@@ -98,9 +117,9 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
       }
 
       // TripAdvisor KPIs
-      if (tripadvisorHistorical && tripadvisorHistorical.length > 0) {
-        const initialRating = tripadvisorHistorical.find(r => r.is_initial)?.rating;
-        const latestRating = tripadvisorCurrent?.rating || tripadvisorHistorical[tripadvisorHistorical.length - 1]?.rating;
+      if (tripadvisorHistoricalWithFallback && tripadvisorHistoricalWithFallback.length > 0) {
+        const initialRating = tripadvisorHistoricalWithFallback.find(r => r.is_initial)?.rating;
+        const latestRating = tripadvisorCurrent?.rating || tripadvisorHistoricalWithFallback[tripadvisorHistoricalWithFallback.length - 1]?.rating;
 
         if (initialRating && latestRating) {
           const change = latestRating - initialRating;
@@ -158,14 +177,18 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
         data: googleData,
         backgroundColor: '#4285F4',
         borderColor: '#4285F4',
-        borderWidth: 1,
+        borderWidth: 0,
+        borderRadius: 4,
+        barThickness: 12,
       },
       {
         label: 'TripAdvisor Rating',
         data: tripadvisorData,
         backgroundColor: '#00AA6C',
         borderColor: '#00AA6C',
-        borderWidth: 1,
+        borderWidth: 0,
+        borderRadius: 4,
+        barThickness: 12,
       }
     ]
   };
@@ -177,14 +200,31 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
       legend: {
         display: true,
         position: 'top',
+        align: 'start',
         labels: {
           usePointStyle: true,
-          padding: 15,
+          pointStyle: 'circle',
+          padding: 20,
+          font: {
+            size: 13,
+            weight: '500'
+          },
+          color: '#374151'
         }
       },
       tooltip: {
         mode: 'index',
         intersect: false,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        cornerRadius: 8,
+        titleFont: {
+          size: 13,
+          weight: '600'
+        },
+        bodyFont: {
+          size: 12
+        },
         callbacks: {
           label: function(context) {
             if (context.parsed.y === null) return null;
@@ -201,7 +241,12 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
         },
         ticks: {
           color: '#6B7280',
-          fontSize: 12,
+          font: {
+            size: 11
+          },
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 15
         }
       },
       y: {
@@ -210,12 +255,19 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
         min: 1,
         max: 5,
         grid: {
-          color: '#F3F4F6',
+          color: '#E5E7EB',
+          drawBorder: false,
+        },
+        border: {
+          display: false
         },
         ticks: {
           color: '#6B7280',
-          fontSize: 12,
+          font: {
+            size: 11
+          },
           stepSize: 0.5,
+          padding: 8,
           callback: function(value) {
             return value.toFixed(1);
           }
@@ -225,7 +277,9 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
     interaction: {
       mode: 'index',
       intersect: false
-    }
+    },
+    barPercentage: 0.7,
+    categoryPercentage: 0.8
   };
 
   if (loading) {
