@@ -18,6 +18,7 @@ const UnifiedReviewsCard = () => {
   const [showTripadvisorDropdown, setShowTripadvisorDropdown] = useState(false);
   const [selectedVenues, setSelectedVenues] = useState(null);
   const [currentVenueData, setCurrentVenueData] = useState(null);
+  const [initialDates, setInitialDates] = useState({ google: null, tripadvisor: null });
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [canGenerateReviewLinks, setCanGenerateReviewLinks] = useState({ google: false, tripadvisor: false });
@@ -32,6 +33,7 @@ const UnifiedReviewsCard = () => {
     if (venueId) {
       loadCurrentRatings();
       loadCurrentVenueData();
+      loadInitialDates();
     }
   }, [venueId]);
 
@@ -96,6 +98,37 @@ const UnifiedReviewsCard = () => {
       }
     } catch (error) {
       console.error('Error loading venue data:', error);
+    }
+  };
+
+  const loadInitialDates = async () => {
+    try {
+      const { data: googleInitial } = await supabase
+        .from('historical_ratings')
+        .select('recorded_at')
+        .eq('venue_id', venueId)
+        .eq('source', 'google')
+        .eq('is_initial', true)
+        .order('recorded_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      const { data: tripadvisorInitial } = await supabase
+        .from('historical_ratings')
+        .select('recorded_at')
+        .eq('venue_id', venueId)
+        .eq('source', 'tripadvisor')
+        .eq('is_initial', true)
+        .order('recorded_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      setInitialDates({
+        google: googleInitial?.recorded_at || null,
+        tripadvisor: tripadvisorInitial?.recorded_at || null
+      });
+    } catch (error) {
+      console.error('Error loading initial dates:', error);
     }
   };
 
@@ -405,7 +438,6 @@ const UnifiedReviewsCard = () => {
           <div className="text-2xl font-bold text-gray-900">
             {rating.rating ? rating.rating.toFixed(1) : 'N/A'}
           </div>
-          <div className="text-yellow-500 text-xl">⭐</div>
           <div className="text-sm text-gray-600">
             ({rating.ratings_count || 0} reviews)
           </div>
@@ -415,9 +447,15 @@ const UnifiedReviewsCard = () => {
             <div dangerouslySetInnerHTML={{ __html: rating.attributions[0] }} />
           </div>
         )}
-        <div className="mt-2 text-xs text-gray-500">
-          Last updated: {new Date(rating.fetched_at).toLocaleString()}
-          {rating.cached && ' (cached)'}
+        <div className="mt-2 space-y-1">
+          {initialDates[platform] && (
+            <div className="text-xs text-gray-500">
+              Created at: {new Date(initialDates[platform]).toLocaleDateString('en-GB')}
+            </div>
+          )}
+          <div className="text-xs text-gray-500">
+            Last updated: {new Date(rating.fetched_at).toLocaleDateString('en-GB')}
+          </div>
         </div>
       </div>
     );
