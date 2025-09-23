@@ -25,6 +25,7 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
   const [historicalData, setHistoricalData] = useState({ google: [], tripadvisor: [] });
   const [loading, setLoading] = useState(true);
   const [kpiData, setKpiData] = useState({ google: null, tripadvisor: null });
+  const [dateRange, setDateRange] = useState(7);
 
   useEffect(() => {
     if (venueId) {
@@ -143,26 +144,30 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
   };
 
   // Combine and prepare chart data
-  // Always show last 7 days including today
-  const last7Days = [];
-  const now = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(now.getDate() - i);
-    date.setHours(0, 0, 0, 0);
-    last7Days.push(date.toISOString().split('T')[0]);
-  }
+  // Generate date range based on selected period
+  const generateDateRange = (days) => {
+    const dateArray = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      dateArray.push(dateStr);
+    }
+    return dateArray;
+  };
   
-  // Create labels from the 7 days
-  const labels = last7Days.map(dateStr => 
-    new Date(dateStr).toLocaleDateString('en-GB', { 
+  const selectedDays = generateDateRange(dateRange);
+  
+  // Create labels from the selected days
+  const labels = selectedDays.map(dateStr => 
+    new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { 
       month: 'short', 
       day: 'numeric' 
     })
   );
   
-  // Create data arrays for each platform, matching to the 7 days
-  const googleData = last7Days.map(dateStr => {
+  // Create data arrays for each platform, matching to the selected days
+  const googleData = selectedDays.map(dateStr => {
     const point = historicalData.google.find(p => {
       const recordedDate = new Date(p.recorded_at).toISOString().split('T')[0];
       return recordedDate === dateStr;
@@ -170,7 +175,7 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
     return point ? parseFloat(point.rating) : null;
   });
   
-  const tripadvisorData = last7Days.map(dateStr => {
+  const tripadvisorData = selectedDays.map(dateStr => {
     const point = historicalData.tripadvisor.find(p => {
       const recordedDate = new Date(p.recorded_at).toISOString().split('T')[0];
       return recordedDate === dateStr;
@@ -187,8 +192,8 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
         backgroundColor: '#4285F4',
         borderColor: '#4285F4',
         borderWidth: 0,
-        borderRadius: 6,
-        barThickness: 20,
+        borderRadius: 3,
+        barThickness: 18,
       },
       {
         label: 'TripAdvisor Rating',
@@ -196,8 +201,8 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
         backgroundColor: '#00AA6C',
         borderColor: '#00AA6C',
         borderWidth: 0,
-        borderRadius: 6,
-        barThickness: 20,
+        borderRadius: 3,
+        barThickness: 18,
       }
     ]
   };
@@ -226,6 +231,9 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
         bodyFont: {
           size: 14,
           weight: '600'
+        },
+        animation: {
+          duration: 0
         },
         callbacks: {
           title: function(tooltipItems) {
@@ -284,8 +292,8 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
       mode: 'nearest',
       intersect: true
     },
-    barPercentage: 1.0,
-    categoryPercentage: 0.5
+    barPercentage: 0.85,
+    categoryPercentage: 0.8
   };
 
   if (loading) {
@@ -327,7 +335,41 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200">
       <div className="mb-6">
-        <h3 className="text-base lg:text-lg font-medium text-gray-900 mb-1">Review Platform Ratings Trend</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-base lg:text-lg font-medium text-gray-900">Review Platform Ratings Trend</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setDateRange(3)}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                dateRange === 3
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              3 days
+            </button>
+            <button
+              onClick={() => setDateRange(7)}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                dateRange === 7
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              7 days
+            </button>
+            <button
+              onClick={() => setDateRange(14)}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                dateRange === 14
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              14 days
+            </button>
+          </div>
+        </div>
         <p className="text-sm text-gray-600">
           Track your Google and TripAdvisor rating progression over time
         </p>
@@ -337,85 +379,57 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* Google Current Rating */}
         {currentRatings.google && (
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-600 font-medium">Google</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {currentRatings.google.rating.toFixed(1)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {currentRatings.google.ratings_count} reviews
-                </p>
-              </div>
-              <div className="text-blue-500 text-2xl">⭐</div>
-            </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Google Rating</p>
+            <p className="text-3xl font-bold text-gray-900 mb-1">
+              {currentRatings.google.rating.toFixed(1)}
+            </p>
+            <p className="text-sm text-gray-500">
+              {currentRatings.google.ratings_count.toLocaleString()} reviews
+            </p>
           </div>
         )}
 
         {/* TripAdvisor Current Rating */}
         {currentRatings.tripadvisor && (
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-600 font-medium">TripAdvisor</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {currentRatings.tripadvisor.rating.toFixed(1)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {currentRatings.tripadvisor.ratings_count} reviews
-                </p>
-              </div>
-              <div className="text-green-500 text-2xl">⭐</div>
-            </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">TripAdvisor Rating</p>
+            <p className="text-3xl font-bold text-gray-900 mb-1">
+              {currentRatings.tripadvisor.rating.toFixed(1)}
+            </p>
+            <p className="text-sm text-gray-500">
+              {currentRatings.tripadvisor.ratings_count.toLocaleString()} reviews
+            </p>
           </div>
         )}
 
         {/* Google Change */}
         {kpiData.google && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Google Change</p>
-                <p className={`text-2xl font-bold ${
-                  kpiData.google.change >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {kpiData.google.change >= 0 ? '+' : ''}{kpiData.google.change.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {kpiData.google.percentChange >= 0 ? '+' : ''}{kpiData.google.percentChange.toFixed(1)}%
-                </p>
-              </div>
-              <div className={`text-2xl ${
-                kpiData.google.change >= 0 ? 'text-green-500' : 'text-red-500'
-              }`}>
-                {kpiData.google.change >= 0 ? '↗️' : '↘️'}
-              </div>
-            </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Google Change</p>
+            <p className={`text-3xl font-bold mb-1 ${
+              kpiData.google.change >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {kpiData.google.change >= 0 ? '+' : ''}{kpiData.google.change.toFixed(2)}
+            </p>
+            <p className="text-sm text-gray-500">
+              {kpiData.google.percentChange >= 0 ? '+' : ''}{kpiData.google.percentChange.toFixed(1)}% from initial
+            </p>
           </div>
         )}
 
         {/* TripAdvisor Change */}
         {kpiData.tripadvisor && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">TripAdvisor Change</p>
-                <p className={`text-2xl font-bold ${
-                  kpiData.tripadvisor.change >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {kpiData.tripadvisor.change >= 0 ? '+' : ''}{kpiData.tripadvisor.change.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {kpiData.tripadvisor.percentChange >= 0 ? '+' : ''}{kpiData.tripadvisor.percentChange.toFixed(1)}%
-                </p>
-              </div>
-              <div className={`text-2xl ${
-                kpiData.tripadvisor.change >= 0 ? 'text-green-500' : 'text-red-500'
-              }`}>
-                {kpiData.tripadvisor.change >= 0 ? '↗️' : '↘️'}
-              </div>
-            </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">TripAdvisor Change</p>
+            <p className={`text-3xl font-bold mb-1 ${
+              kpiData.tripadvisor.change >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {kpiData.tripadvisor.change >= 0 ? '+' : ''}{kpiData.tripadvisor.change.toFixed(2)}
+            </p>
+            <p className="text-sm text-gray-500">
+              {kpiData.tripadvisor.percentChange >= 0 ? '+' : ''}{kpiData.tripadvisor.percentChange.toFixed(1)}% from initial
+            </p>
           </div>
         )}
       </div>
@@ -426,15 +440,6 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
           <Bar data={chartData} options={chartOptions} />
         </div>
       )}
-
-      {/* Attribution */}
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <p className="text-xs text-gray-500">
-          {currentRatings.google && `Google data last updated: ${new Date(currentRatings.google.fetched_at).toLocaleString()}`}
-          {currentRatings.google && currentRatings.tripadvisor && ' • '}
-          {currentRatings.tripadvisor && `TripAdvisor data last updated: ${new Date(currentRatings.tripadvisor.fetched_at).toLocaleString()}`}
-        </p>
-      </div>
     </div>
   );
 };
