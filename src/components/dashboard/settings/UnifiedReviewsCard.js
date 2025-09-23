@@ -447,9 +447,9 @@ const UnifiedReviewsCard = () => {
       {!isLocked && (
         <div className="space-y-6">
           {/* Google Search */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              🔵 Find your Google Business listing
+          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              🔵 Link with Google listing
             </label>
             <div className="relative" ref={googleDropdownRef}>
               <input
@@ -457,7 +457,7 @@ const UnifiedReviewsCard = () => {
                 value={googleSearchQuery}
                 onChange={(e) => handleGoogleSearchInput(e.target.value)}
                 placeholder="Search for your business on Google..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 disabled={isLocked || currentVenueData?.place_id}
               />
             
@@ -494,9 +494,9 @@ const UnifiedReviewsCard = () => {
           </div>
 
           {/* TripAdvisor Search */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              🟢 Find your TripAdvisor listing
+          <div className="p-4 border border-green-200 rounded-lg bg-green-50">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              🟢 Link with TripAdvisor listing
             </label>
             <div className="relative" ref={tripadvisorDropdownRef}>
               <input
@@ -504,7 +504,7 @@ const UnifiedReviewsCard = () => {
                 value={tripadvisorSearchQuery}
                 onChange={(e) => handleTripadvisorSearchInput(e.target.value)}
                 placeholder="Search for your business on TripAdvisor..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 disabled={currentVenueData?.tripadvisor_location_id}
               />
             
