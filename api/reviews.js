@@ -305,10 +305,10 @@ async function handleGoogleUpdateVenue(req, res) {
 
   await authenticateVenueAccess(req, venueId);
 
-  // Check if venue is already locked
+  // Check if Google integration is already locked
   const { data: existingVenue, error: venueCheckError } = await supabaseAdmin
     .from('venues')
-    .select('venue_locked, place_id')
+    .select('google_integration_locked, place_id')
     .eq('id', venueId)
     .single();
 
@@ -316,9 +316,9 @@ async function handleGoogleUpdateVenue(req, res) {
     return res.status(500).json({ error: 'Failed to check venue status' });
   }
 
-  if (existingVenue.venue_locked && existingVenue.place_id) {
+  if (existingVenue.google_integration_locked && existingVenue.place_id) {
     return res.status(403).json({ 
-      error: 'Venue is locked', 
+      error: 'Google integration is locked', 
       message: 'Google venue can only be set once and cannot be changed.' 
     });
   }
@@ -329,7 +329,8 @@ async function handleGoogleUpdateVenue(req, res) {
   // Prepare update data
   let updateData = { 
     place_id,
-    google_review_link: googleReviewLink
+    google_review_link: googleReviewLink,
+    google_integration_locked: true
   };
 
   if (auto_populate && venue_data) {
@@ -347,7 +348,7 @@ async function handleGoogleUpdateVenue(req, res) {
     .from('venues')
     .update(updateData)
     .eq('id', venueId)
-    .select('id, name, place_id, venue_locked')
+    .select('id, name, place_id, google_integration_locked')
     .single();
 
   if (error) {
@@ -759,13 +760,32 @@ async function handleTripAdvisorUpdateVenue(req, res, referer) {
   await authenticateVenueAccess(req, venueId);
   console.log('✅ [TripAdvisor] Venue access authenticated');
 
+  // Check if TripAdvisor integration is already locked
+  const { data: existingVenue, error: venueCheckError } = await supabaseAdmin
+    .from('venues')
+    .select('tripadvisor_integration_locked, tripadvisor_location_id')
+    .eq('id', venueId)
+    .single();
+
+  if (venueCheckError) {
+    return res.status(500).json({ error: 'Failed to check venue status' });
+  }
+
+  if (existingVenue.tripadvisor_integration_locked && existingVenue.tripadvisor_location_id) {
+    return res.status(403).json({ 
+      error: 'TripAdvisor integration is locked', 
+      message: 'TripAdvisor venue can only be set once and cannot be changed.' 
+    });
+  }
+
   // Generate TripAdvisor review link
   const tripAdvisorReviewLink = `https://www.tripadvisor.com/UserReviewEdit-g${location_id}`;
 
   // Prepare update data
   let updateData = { 
     tripadvisor_location_id: location_id,
-    tripadvisor_link: tripAdvisorReviewLink
+    tripadvisor_link: tripAdvisorReviewLink,
+    tripadvisor_integration_locked: true
   };
 
   if (auto_populate && venue_data) {
@@ -783,7 +803,7 @@ async function handleTripAdvisorUpdateVenue(req, res, referer) {
     .from('venues')
     .update(updateData)
     .eq('id', venueId)
-    .select('id, name, tripadvisor_location_id')
+    .select('id, name, tripadvisor_location_id, tripadvisor_integration_locked')
     .single();
 
   if (error) {

@@ -80,13 +80,13 @@ const UnifiedReviewsCard = () => {
     try {
       const { data: venue, error } = await supabase
         .from('venues')
-        .select('id, name, address, phone, website, venue_locked, place_id, google_review_link, tripadvisor_location_id, tripadvisor_link')
+        .select('id, name, address, phone, website, google_integration_locked, tripadvisor_integration_locked, place_id, google_review_link, tripadvisor_location_id, tripadvisor_link')
         .eq('id', venueId)
         .single();
 
       if (!error && venue) {
         setCurrentVenueData(venue);
-        // Only lock if BOTH platforms are connected
+        // Only lock UI if BOTH platforms are connected
         setIsLocked(venue.place_id && venue.tripadvisor_location_id);
         // Check if we can generate review links
         setCanGenerateReviewLinks({
@@ -202,6 +202,11 @@ const UnifiedReviewsCard = () => {
   };
 
   const selectGoogleVenue = async (venue) => {
+    if (currentVenueData?.google_integration_locked) {
+      setMessage('Error: Google listing is locked and cannot be changed');
+      return;
+    }
+    
     if (currentVenueData?.place_id) {
       setMessage('Error: Google listing is already connected');
       return;
@@ -234,6 +239,11 @@ const UnifiedReviewsCard = () => {
   };
 
   const selectTripadvisorVenue = async (venue) => {
+    if (currentVenueData?.tripadvisor_integration_locked) {
+      setMessage('Error: TripAdvisor listing is locked and cannot be changed');
+      return;
+    }
+    
     if (currentVenueData?.tripadvisor_location_id) {
       setMessage('Error: TripAdvisor listing is already connected');
       return;
@@ -464,7 +474,7 @@ const UnifiedReviewsCard = () => {
                 onChange={(e) => handleGoogleSearchInput(e.target.value)}
                 placeholder="Search for your business on Google..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                disabled={isLocked || currentVenueData?.place_id}
+                disabled={currentVenueData?.google_integration_locked || currentVenueData?.place_id}
               />
             
             {/* Google Search Dropdown */}
@@ -511,7 +521,7 @@ const UnifiedReviewsCard = () => {
                 onChange={(e) => handleTripadvisorSearchInput(e.target.value)}
                 placeholder="Search for your business on TripAdvisor..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                disabled={currentVenueData?.tripadvisor_location_id}
+                disabled={currentVenueData?.tripadvisor_integration_locked || currentVenueData?.tripadvisor_location_id}
               />
             
             {/* TripAdvisor Search Dropdown */}
