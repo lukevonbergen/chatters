@@ -178,8 +178,8 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
         backgroundColor: '#4285F4',
         borderColor: '#4285F4',
         borderWidth: 0,
-        borderRadius: 4,
-        barThickness: 12,
+        borderRadius: 6,
+        barThickness: 20,
       },
       {
         label: 'TripAdvisor Rating',
@@ -187,8 +187,8 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
         backgroundColor: '#00AA6C',
         borderColor: '#00AA6C',
         borderWidth: 0,
-        borderRadius: 4,
-        barThickness: 12,
+        borderRadius: 6,
+        barThickness: 20,
       }
     ]
   };
@@ -209,26 +209,38 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
             size: 13,
             weight: '500'
           },
-          color: '#374151'
-        }
+          color: '#374151',
+          boxWidth: 8,
+          boxHeight: 8
+        },
+        onClick: null
       },
       tooltip: {
-        mode: 'index',
-        intersect: false,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        enabled: true,
+        mode: 'nearest',
+        intersect: true,
+        backgroundColor: '#1F2937',
+        titleColor: '#F9FAFB',
+        bodyColor: '#F9FAFB',
         padding: 12,
         cornerRadius: 8,
+        displayColors: false,
         titleFont: {
-          size: 13,
-          weight: '600'
+          size: 12,
+          weight: '500'
         },
         bodyFont: {
-          size: 12
+          size: 14,
+          weight: '600'
         },
         callbacks: {
+          title: function(tooltipItems) {
+            const item = tooltipItems[0];
+            return item.dataset.label;
+          },
           label: function(context) {
             if (context.parsed.y === null) return null;
-            return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}⭐`;
+            return `${context.parsed.y.toFixed(1)} ⭐`;
           }
         }
       },
@@ -240,7 +252,7 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
           display: false,
         },
         ticks: {
-          color: '#6B7280',
+          color: '#9CA3AF',
           font: {
             size: 11
           },
@@ -262,7 +274,7 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
           display: false
         },
         ticks: {
-          color: '#6B7280',
+          color: '#9CA3AF',
           font: {
             size: 11
           },
@@ -275,11 +287,11 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
       },
     },
     interaction: {
-      mode: 'index',
-      intersect: false
+      mode: 'nearest',
+      intersect: true
     },
-    barPercentage: 0.7,
-    categoryPercentage: 0.8
+    barPercentage: 0.95,
+    categoryPercentage: 0.6
   };
 
   if (loading) {
