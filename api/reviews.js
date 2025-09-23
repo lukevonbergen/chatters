@@ -29,6 +29,10 @@ export default async function handler(req, res) {
   console.log('🔧 Query params:', req.query);
 
   const { platform, action } = req.query;
+  
+  // Get the referer from the request headers for TripAdvisor API calls
+  const referer = req.headers.origin || req.headers.referer || 'https://my.getchatters.com';
+  console.log('🔧 Request origin/referer:', referer);
 
   try {
     // Route based on platform and action
@@ -398,24 +402,28 @@ async function handleGoogleUpdateVenue(req, res) {
 // =============================================================================
 
 async function handleTripAdvisorAction(req, res, action) {
+  // Get referer for TripAdvisor API calls
+  const referer = req.headers.origin || req.headers.referer || 'https://my.getchatters.com';
+  
   switch (action) {
     case 'ratings':
-      return await handleTripAdvisorRatings(req, res);
+      return await handleTripAdvisorRatings(req, res, referer);
     case 'location-search':
-      return await handleTripAdvisorLocationSearch(req, res);
+      return await handleTripAdvisorLocationSearch(req, res, referer);
     case 'location-details':
-      return await handleTripAdvisorLocationDetails(req, res);
+      return await handleTripAdvisorLocationDetails(req, res, referer);
     case 'update-venue':
-      return await handleTripAdvisorUpdateVenue(req, res);
+      return await handleTripAdvisorUpdateVenue(req, res, referer);
     default:
       return res.status(400).json({ error: 'Invalid TripAdvisor action', received: action });
   }
 }
 
-async function handleTripAdvisorRatings(req, res) {
+async function handleTripAdvisorRatings(req, res, referer) {
   console.log('🟠 [TripAdvisor] handleTripAdvisorRatings called');
   console.log('🟠 [TripAdvisor] Request method:', req.method);
   console.log('🟠 [TripAdvisor] Query params:', req.query);
+  console.log('🟠 [TripAdvisor] Using referer:', referer);
   
   if (req.method !== 'GET') {
     console.log('❌ [TripAdvisor] Invalid method:', req.method);
@@ -494,7 +502,7 @@ async function handleTripAdvisorRatings(req, res) {
   // Fetch fresh data from TripAdvisor
   console.log('📡 [TripAdvisor] Fetching fresh data from API for location ID:', venue.tripadvisor_location_id);
   try {
-    const tripAdvisorData = await fetchTripAdvisorLocationDetails(venue.tripadvisor_location_id);
+    const tripAdvisorData = await fetchTripAdvisorLocationDetails(venue.tripadvisor_location_id, referer);
     console.log('✅ [TripAdvisor] API response received:', {
       rating: tripAdvisorData.rating,
       num_reviews: tripAdvisorData.num_reviews,
@@ -574,10 +582,11 @@ async function handleTripAdvisorRatings(req, res) {
   }
 }
 
-async function handleTripAdvisorLocationSearch(req, res) {
+async function handleTripAdvisorLocationSearch(req, res, referer) {
   console.log('🟠 [TripAdvisor] handleTripAdvisorLocationSearch called');
   console.log('🟠 [TripAdvisor] Request method:', req.method);
   console.log('🟠 [TripAdvisor] Query params:', req.query);
+  console.log('🟠 [TripAdvisor] Using referer:', referer);
   
   if (req.method !== 'GET') {
     console.log('❌ [TripAdvisor] Invalid method:', req.method);
@@ -612,7 +621,7 @@ async function handleTripAdvisorLocationSearch(req, res) {
     
     const response = await fetch(url, {
       headers: {
-        'Referer': 'https://dev-001.my.getchatters.com'
+        'Referer': referer
       }
     });
     console.log('📡 [TripAdvisor] API response status:', response.status, response.statusText);
@@ -673,10 +682,11 @@ async function handleTripAdvisorLocationSearch(req, res) {
   }
 }
 
-async function handleTripAdvisorLocationDetails(req, res) {
+async function handleTripAdvisorLocationDetails(req, res, referer) {
   console.log('🟠 [TripAdvisor] handleTripAdvisorLocationDetails called');
   console.log('🟠 [TripAdvisor] Request method:', req.method);
   console.log('🟠 [TripAdvisor] Query params:', req.query);
+  console.log('🟠 [TripAdvisor] Using referer:', referer);
   
   if (req.method !== 'GET') {
     console.log('❌ [TripAdvisor] Invalid method:', req.method);
@@ -697,7 +707,7 @@ async function handleTripAdvisorLocationDetails(req, res) {
 
   try {
     console.log('📡 [TripAdvisor] Fetching location details for ID:', locationId);
-    const locationData = await fetchTripAdvisorLocationDetails(locationId);
+    const locationData = await fetchTripAdvisorLocationDetails(locationId, referer);
     console.log('✅ [TripAdvisor] Location details retrieved:', {
       location_id: locationData.location_id,
       name: locationData.name,
@@ -720,11 +730,12 @@ async function handleTripAdvisorLocationDetails(req, res) {
   }
 }
 
-async function handleTripAdvisorUpdateVenue(req, res) {
+async function handleTripAdvisorUpdateVenue(req, res, referer) {
   console.log('🟠 [TripAdvisor] handleTripAdvisorUpdateVenue called');
   console.log('🟠 [TripAdvisor] Request method:', req.method);
   console.log('🟠 [TripAdvisor] Query params:', req.query);
   console.log('🟠 [TripAdvisor] Request body:', req.body);
+  console.log('🟠 [TripAdvisor] Using referer:', referer);
   
   if (req.method !== 'PATCH') {
     console.log('❌ [TripAdvisor] Invalid method:', req.method);
@@ -784,7 +795,7 @@ async function handleTripAdvisorUpdateVenue(req, res) {
   // Store initial rating
   console.log('💾 [TripAdvisor] Fetching and storing initial rating data');
   try {
-    const tripAdvisorData = await fetchTripAdvisorLocationDetails(location_id);
+    const tripAdvisorData = await fetchTripAdvisorLocationDetails(location_id, referer);
     console.log('✅ [TripAdvisor] Initial rating data fetched:', {
       rating: tripAdvisorData.rating,
       num_reviews: tripAdvisorData.num_reviews,
@@ -873,11 +884,15 @@ async function handleUnifiedSearch(req, res) {
     return res.status(400).json({ error: 'query parameter is required' });
   }
 
+  // Get referer for TripAdvisor API calls
+  const referer = req.headers.origin || req.headers.referer || 'https://my.getchatters.com';
+  console.log('🔧 [Unified Search] Using referer:', referer);
+
   try {
     // Search both platforms simultaneously
     const [googleResults, tripAdvisorResults] = await Promise.allSettled([
       searchGoogle(query),
-      searchTripAdvisor(query)
+      searchTripAdvisor(query, referer)
     ]);
 
     const response = {
@@ -933,8 +948,9 @@ async function fetchGooglePlaceDetails(placeId) {
   }
 }
 
-async function fetchTripAdvisorLocationDetails(locationId) {
+async function fetchTripAdvisorLocationDetails(locationId, referer = 'https://my.getchatters.com') {
   console.log('🟠 [TripAdvisor] fetchTripAdvisorLocationDetails called for ID:', locationId);
+  console.log('🟠 [TripAdvisor] Using referer:', referer);
   
   if (!TRIPADVISOR_API_KEY) {
     console.log('❌ [TripAdvisor] API key not configured');
@@ -947,7 +963,7 @@ async function fetchTripAdvisorLocationDetails(locationId) {
   
   const response = await fetch(url, {
     headers: {
-      'Referer': 'https://dev-001.my.getchatters.com'
+      'Referer': referer
     }
   });
   console.log('📡 [TripAdvisor] API response status:', response.status, response.statusText);
@@ -1048,8 +1064,9 @@ async function searchGoogle(query) {
   }
 }
 
-async function searchTripAdvisor(query) {
+async function searchTripAdvisor(query, referer = 'https://my.getchatters.com') {
   console.log('🟠 [TripAdvisor] searchTripAdvisor called for query:', query);
+  console.log('🟠 [TripAdvisor] Using referer:', referer);
   
   if (!TRIPADVISOR_API_KEY) {
     console.log('❌ [TripAdvisor] API key not configured for unified search');
@@ -1062,7 +1079,7 @@ async function searchTripAdvisor(query) {
   
   const response = await fetch(url, {
     headers: {
-      'Referer': 'https://dev-001.my.getchatters.com'
+      'Referer': referer
     }
   });
   console.log('📡 [TripAdvisor] Unified search response status:', response.status, response.statusText);
