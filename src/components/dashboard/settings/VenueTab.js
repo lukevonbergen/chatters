@@ -306,7 +306,7 @@ const VenueTab = ({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
               <div className="lg:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                <p className="text-xs text-gray-500">Your venue's website URL</p>
+                <p className="text-xs text-gray-500">Your venue's web URL</p>
               </div>
               <div className="lg:col-span-2">
                 <input
