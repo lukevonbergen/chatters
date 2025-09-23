@@ -610,7 +610,11 @@ async function handleTripAdvisorLocationSearch(req, res) {
     const url = `https://api.content.tripadvisor.com/api/v1/location/search?key=${TRIPADVISOR_API_KEY}&searchQuery=${encodeURIComponent(query)}&language=en`;
     console.log('📡 [TripAdvisor] Making API request to:', url.replace(TRIPADVISOR_API_KEY, '[REDACTED]'));
     
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'Referer': 'https://dev-001.my.getchatters.com'
+      }
+    });
     console.log('📡 [TripAdvisor] API response status:', response.status, response.statusText);
     
     const data = await response.json();
@@ -941,7 +945,11 @@ async function fetchTripAdvisorLocationDetails(locationId) {
   const url = `https://api.content.tripadvisor.com/api/v1/location/${locationId}/details?key=${TRIPADVISOR_API_KEY}&language=en&currency=USD`;
   console.log('📡 [TripAdvisor] Making API request to:', url.replace(TRIPADVISOR_API_KEY, '[REDACTED]'));
   
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      'Referer': 'https://dev-001.my.getchatters.com'
+    }
+  });
   console.log('📡 [TripAdvisor] API response status:', response.status, response.statusText);
   
   const data = await response.json();
@@ -1052,7 +1060,11 @@ async function searchTripAdvisor(query) {
   const url = `https://api.content.tripadvisor.com/api/v1/location/search?key=${TRIPADVISOR_API_KEY}&searchQuery=${encodeURIComponent(query)}&language=en`;
   console.log('📡 [TripAdvisor] Unified search API request to:', url.replace(TRIPADVISOR_API_KEY, '[REDACTED]'));
   
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      'Referer': 'https://dev-001.my.getchatters.com'
+    }
+  });
   console.log('📡 [TripAdvisor] Unified search response status:', response.status, response.statusText);
   
   const data = await response.json();
