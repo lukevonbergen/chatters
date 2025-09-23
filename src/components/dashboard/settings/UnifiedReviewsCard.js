@@ -5,21 +5,27 @@ import UnifiedVenuePreviewModal from './UnifiedVenuePreviewModal';
 
 const UnifiedReviewsCard = () => {
   const { venueId } = useVenue();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState({ google: [], tripadvisor: [], matched_venues: [] });
-  const [isSearching, setIsSearching] = useState(false);
+  const [googleSearchQuery, setGoogleSearchQuery] = useState('');
+  const [tripadvisorSearchQuery, setTripadvisorSearchQuery] = useState('');
+  const [googleResults, setGoogleResults] = useState([]);
+  const [tripadvisorResults, setTripadvisorResults] = useState([]);
+  const [isSearchingGoogle, setIsSearchingGoogle] = useState(false);
+  const [isSearchingTripadvisor, setIsSearchingTripadvisor] = useState(false);
   const [currentRatings, setCurrentRatings] = useState({ google: null, tripadvisor: null });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showGoogleDropdown, setShowGoogleDropdown] = useState(false);
+  const [showTripadvisorDropdown, setShowTripadvisorDropdown] = useState(false);
   const [selectedVenues, setSelectedVenues] = useState(null);
   const [currentVenueData, setCurrentVenueData] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [canGenerateReviewLinks, setCanGenerateReviewLinks] = useState({ google: false, tripadvisor: false });
   const [generateLinkLoading, setGenerateLinkLoading] = useState({ google: false, tripadvisor: false });
-  const searchTimeoutRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const googleSearchTimeoutRef = useRef(null);
+  const tripadvisorSearchTimeoutRef = useRef(null);
+  const googleDropdownRef = useRef(null);
+  const tripadvisorDropdownRef = useRef(null);
 
   // Load current ratings and venue data on mount
   useEffect(() => {
@@ -29,11 +35,14 @@ const UnifiedReviewsCard = () => {
     }
   }, [venueId]);
 
-  // Handle clicks outside dropdown
+  // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
+      if (googleDropdownRef.current && !googleDropdownRef.current.contains(event.target)) {
+        setShowGoogleDropdown(false);
+      }
+      if (tripadvisorDropdownRef.current && !tripadvisorDropdownRef.current.contains(event.target)) {
+        setShowTripadvisorDropdown(false);
       }
     };
 
@@ -71,13 +80,14 @@ const UnifiedReviewsCard = () => {
     try {
       const { data: venue, error } = await supabase
         .from('venues')
-        .select('id, name, address, phone, website, venue_locked, place_id, google_review_link, tripadvisor_location_id, tripadvisor_link')
+        .select('id, name, address, phone, website, google_integration_locked, tripadvisor_integration_locked, place_id, google_review_link, tripadvisor_location_id, tripadvisor_link')
         .eq('id', venueId)
         .single();
 
       if (!error && venue) {
         setCurrentVenueData(venue);
-        setIsLocked(venue.venue_locked || false);
+        // Only lock UI if BOTH platforms are connected
+        setIsLocked(venue.place_id && venue.tripadvisor_location_id);
         // Check if we can generate review links
         setCanGenerateReviewLinks({
           google: venue.place_id && !venue.google_review_link,
@@ -89,29 +99,46 @@ const UnifiedReviewsCard = () => {
     }
   };
 
-  const handleSearchInput = (value) => {
-    setSearchQuery(value);
-    setShowDropdown(value.length > 2);
+  const handleGoogleSearchInput = (value) => {
+    setGoogleSearchQuery(value);
+    setShowGoogleDropdown(value.length > 2);
 
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
+    if (googleSearchTimeoutRef.current) {
+      clearTimeout(googleSearchTimeoutRef.current);
     }
 
-    // Debounce search
     if (value.length > 2) {
-      setIsSearching(true);
-      searchTimeoutRef.current = setTimeout(() => {
-        performUnifiedSearch(value);
+      setIsSearchingGoogle(true);
+      googleSearchTimeoutRef.current = setTimeout(() => {
+        performGoogleSearch(value);
       }, 300);
     } else {
-      setSearchResults({ google: [], tripadvisor: [], matched_venues: [] });
-      setIsSearching(false);
+      setGoogleResults([]);
+      setIsSearchingGoogle(false);
     }
   };
 
-  const performUnifiedSearch = async (query) => {
-    console.log('🔍 Performing unified search for:', query);
+  const handleTripadvisorSearchInput = (value) => {
+    setTripadvisorSearchQuery(value);
+    setShowTripadvisorDropdown(value.length > 2);
+
+    if (tripadvisorSearchTimeoutRef.current) {
+      clearTimeout(tripadvisorSearchTimeoutRef.current);
+    }
+
+    if (value.length > 2) {
+      setIsSearchingTripadvisor(true);
+      tripadvisorSearchTimeoutRef.current = setTimeout(() => {
+        performTripadvisorSearch(value);
+      }, 300);
+    } else {
+      setTripadvisorResults([]);
+      setIsSearchingTripadvisor(false);
+    }
+  };
+
+  const performGoogleSearch = async (query) => {
+    console.log('🔍 Performing Google search for:', query);
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token) {
@@ -119,69 +146,91 @@ const UnifiedReviewsCard = () => {
         return;
       }
 
-      const url = `/api/reviews?platform=unified&action=search&query=${encodeURIComponent(query)}`;
+      const url = `/api/reviews?platform=google&action=places-search&query=${encodeURIComponent(query)}`;
       console.log('📡 Fetching:', url);
 
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      console.log('📡 Response status:', response.status);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Unified search results:', data);
-        setSearchResults({
-          google: data.google.suggestions || [],
-          tripadvisor: data.tripadvisor.suggestions || [],
-          matched_venues: data.matched_venues || []
-        });
+        console.log('✅ Google search results:', data);
+        setGoogleResults(data.suggestions || []);
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('❌ Search failed:', response.status, errorData);
-        setSearchResults({ google: [], tripadvisor: [], matched_venues: [] });
+        console.error('❌ Google search failed:', response.status);
+        setGoogleResults([]);
       }
     } catch (error) {
-      console.error('💥 Search error:', error);
-      setSearchResults({ google: [], tripadvisor: [], matched_venues: [] });
+      console.error('💥 Google search error:', error);
+      setGoogleResults([]);
     } finally {
-      setIsSearching(false);
+      setIsSearchingGoogle(false);
     }
   };
 
-  const selectMatchedVenue = async (matchedVenue) => {
-    if (isLocked) {
-      setMessage('Error: Venue is already locked to existing listings');
+  const performTripadvisorSearch = async (query) => {
+    console.log('🔍 Performing TripAdvisor search for:', query);
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) {
+        console.error('❌ No authentication token');
+        return;
+      }
+
+      const url = `/api/reviews?platform=tripadvisor&action=location-search&query=${encodeURIComponent(query)}`;
+      console.log('📡 Fetching:', url);
+
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ TripAdvisor search results:', data);
+        setTripadvisorResults(data.suggestions || []);
+      } else {
+        console.error('❌ TripAdvisor search failed:', response.status);
+        setTripadvisorResults([]);
+      }
+    } catch (error) {
+      console.error('💥 TripAdvisor search error:', error);
+      setTripadvisorResults([]);
+    } finally {
+      setIsSearchingTripadvisor(false);
+    }
+  };
+
+  const selectGoogleVenue = async (venue) => {
+    if (currentVenueData?.google_integration_locked) {
+      setMessage('Error: Google listing is locked and cannot be changed');
+      return;
+    }
+    
+    if (currentVenueData?.place_id) {
+      setMessage('Error: Google listing is already connected');
       return;
     }
 
-    setShowDropdown(false);
-    setSearchQuery(`${matchedVenue.google.name} (Matched)`);
+    setShowGoogleDropdown(false);
+    setGoogleSearchQuery(venue.description);
     setLoading(true);
 
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token) throw new Error('Not authenticated');
 
-      // Fetch full details for both platforms
-      const [googleResponse, tripAdvisorResponse] = await Promise.allSettled([
-        fetch(`/api/reviews?platform=google&action=place-details&placeId=${matchedVenue.google.place_id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`/api/reviews?platform=tripadvisor&action=location-details&locationId=${matchedVenue.tripadvisor.location_id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
+      const response = await fetch(`/api/reviews?platform=google&action=place-details&placeId=${venue.place_id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
-      const venueDetails = {
-        google: googleResponse.status === 'fulfilled' && googleResponse.value.ok ? 
-          await googleResponse.value.json() : null,
-        tripadvisor: tripAdvisorResponse.status === 'fulfilled' && tripAdvisorResponse.value.ok ? 
-          await tripAdvisorResponse.value.json() : null
-      };
-
-      setSelectedVenues(venueDetails);
-      setShowPreviewModal(true);
+      if (response.ok) {
+        const googleDetails = await response.json();
+        setSelectedVenues({ google: googleDetails, tripadvisor: null });
+        setShowPreviewModal(true);
+      } else {
+        setMessage('Error fetching Google venue details');
+      }
     } catch (error) {
       setMessage(`Error: ${error.message}`);
     } finally {
@@ -189,40 +238,36 @@ const UnifiedReviewsCard = () => {
     }
   };
 
-  const selectSingleVenue = async (venue, platform) => {
-    if (isLocked) {
-      setMessage('Error: Venue is already locked to existing listings');
+  const selectTripadvisorVenue = async (venue) => {
+    if (currentVenueData?.tripadvisor_integration_locked) {
+      setMessage('Error: TripAdvisor listing is locked and cannot be changed');
       return;
     }
-
-    setShowDropdown(false);
-    setSearchQuery(venue.name || venue.description);
+    
+    if (currentVenueData?.tripadvisor_location_id) {
+      setMessage('Error: TripAdvisor listing is already connected');
+      return;
+    }
+    
+    setShowTripadvisorDropdown(false);
+    setTripadvisorSearchQuery(venue.name);
     setLoading(true);
 
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token) throw new Error('Not authenticated');
 
-      let venueDetails = { google: null, tripadvisor: null };
+      const response = await fetch(`/api/reviews?platform=tripadvisor&action=location-details&locationId=${venue.location_id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
-      if (platform === 'google') {
-        const response = await fetch(`/api/reviews?platform=google&action=place-details&placeId=${venue.place_id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          venueDetails.google = await response.json();
-        }
-      } else if (platform === 'tripadvisor') {
-        const response = await fetch(`/api/reviews?platform=tripadvisor&action=location-details&locationId=${venue.location_id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          venueDetails.tripadvisor = await response.json();
-        }
+      if (response.ok) {
+        const tripadvisorDetails = await response.json();
+        setSelectedVenues({ google: null, tripadvisor: tripadvisorDetails });
+        setShowPreviewModal(true);
+      } else {
+        setMessage('Error fetching TripAdvisor venue details');
       }
-
-      setSelectedVenues(venueDetails);
-      setShowPreviewModal(true);
     } catch (error) {
       setMessage(`Error: ${error.message}`);
     } finally {
@@ -405,9 +450,9 @@ const UnifiedReviewsCard = () => {
               </svg>
             </div>
             <div>
-              <h4 className="font-medium text-green-800">Venue Integration Locked</h4>
+              <h4 className="font-medium text-green-800">All Platforms Connected</h4>
               <p className="text-sm text-green-700">
-                Your venue is linked to review platforms and cannot be changed. This ensures rating progression tracking.
+                Both Google and TripAdvisor listings are connected. This ensures accurate rating progression tracking.
               </p>
             </div>
           </div>
@@ -416,109 +461,103 @@ const UnifiedReviewsCard = () => {
 
       {/* Search Section - Only show if not locked */}
       {!isLocked && (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Find your business across review platforms
+        <div className="space-y-6">
+          {/* Google Search */}
+          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              🔵 Link with Google listing
             </label>
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={googleDropdownRef}>
               <input
                 type="text"
-                value={searchQuery}
-                onChange={(e) => handleSearchInput(e.target.value)}
-                placeholder="Search for your business name + city/postcode"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={googleSearchQuery}
+                onChange={(e) => handleGoogleSearchInput(e.target.value)}
+                placeholder="Search for your business on Google..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={currentVenueData?.google_integration_locked || currentVenueData?.place_id}
               />
             
-            {/* Search Dropdown */}
-            {showDropdown && (
+            {/* Google Search Dropdown */}
+            {showGoogleDropdown && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                {isSearching ? (
-                  <div className="px-3 py-2 text-sm text-gray-500">Searching...</div>
+                {isSearchingGoogle ? (
+                  <div className="px-3 py-2 text-sm text-gray-500">Searching Google...</div>
+                ) : googleResults.length > 0 ? (
+                  googleResults.map((result, index) => (
+                    <button
+                      key={`google-${index}`}
+                      onClick={() => selectGoogleVenue(result)}
+                      className="w-full px-3 py-2 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-medium text-sm text-gray-900 flex items-center">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                          Google
+                        </span>
+                        {result.structured_formatting?.main_text || result.description}
+                      </div>
+                      <div className="text-xs text-gray-500">{result.structured_formatting?.secondary_text || result.description}</div>
+                    </button>
+                  ))
                 ) : (
-                  <>
-                    {/* Matched venues first */}
-                    {searchResults.matched_venues.map((match, index) => (
-                      <button
-                        key={`match-${index}`}
-                        onClick={() => selectMatchedVenue(match)}
-                        className="w-full px-3 py-3 text-left hover:bg-blue-50 border-b border-gray-100"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium text-sm text-gray-900 flex items-center">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mr-2">
-                                Perfect Match
-                              </span>
-                              {match.google.name}
-                            </div>
-                            <div className="text-xs text-gray-500">{match.google.address}</div>
-                            <div className="text-xs text-blue-600 mt-1">
-                              Found on both Google & TripAdvisor
-                            </div>
-                          </div>
-                          <div className="text-right text-xs text-gray-500">
-                            {Math.round(match.similarity_score.overall * 100)}% match
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-
-                    {/* Individual Google results */}
-                    {searchResults.google.length > 0 && (
-                      <>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-500 bg-gray-50">
-                          Google Places
-                        </div>
-                        {searchResults.google.map((result, index) => (
-                          <button
-                            key={`google-${index}`}
-                            onClick={() => selectSingleVenue(result, 'google')}
-                            className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100"
-                          >
-                            <div className="font-medium text-sm text-gray-900 flex items-center">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-2">
-                                Google
-                              </span>
-                              {result.name}
-                            </div>
-                            <div className="text-xs text-gray-500">{result.address}</div>
-                          </button>
-                        ))}
-                      </>
-                    )}
-
-                    {/* Individual TripAdvisor results */}
-                    {searchResults.tripadvisor.length > 0 && (
-                      <>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-500 bg-gray-50">
-                          TripAdvisor
-                        </div>
-                        {searchResults.tripadvisor.map((result, index) => (
-                          <button
-                            key={`tripadvisor-${index}`}
-                            onClick={() => selectSingleVenue(result, 'tripadvisor')}
-                            className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                          >
-                            <div className="font-medium text-sm text-gray-900 flex items-center">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 mr-2">
-                                TripAdvisor
-                              </span>
-                              {result.name}
-                            </div>
-                            <div className="text-xs text-gray-500">{result.address}</div>
-                            {result.rating && (
-                              <div className="text-xs text-gray-600 mt-1">
-                                ⭐ {result.rating} ({result.num_reviews} reviews)
-                              </div>
-                            )}
-                          </button>
-                        ))}
-                      </>
-                    )}
-                  </>
+                  <div className="px-3 py-2 text-sm text-gray-500">No results found</div>
                 )}
               </div>
+            )}
+            </div>
+            {currentVenueData?.place_id && (
+              <p className="mt-1 text-xs text-green-600">✓ Google listing connected</p>
+            )}
+          </div>
+
+          {/* TripAdvisor Search */}
+          <div className="p-4 border border-green-200 rounded-lg bg-green-50">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              🟢 Link with TripAdvisor listing
+            </label>
+            <div className="relative" ref={tripadvisorDropdownRef}>
+              <input
+                type="text"
+                value={tripadvisorSearchQuery}
+                onChange={(e) => handleTripadvisorSearchInput(e.target.value)}
+                placeholder="Search for your business on TripAdvisor..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                disabled={currentVenueData?.tripadvisor_integration_locked || currentVenueData?.tripadvisor_location_id}
+              />
+            
+            {/* TripAdvisor Search Dropdown */}
+            {showTripadvisorDropdown && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {isSearchingTripadvisor ? (
+                  <div className="px-3 py-2 text-sm text-gray-500">Searching TripAdvisor...</div>
+                ) : tripadvisorResults.length > 0 ? (
+                  tripadvisorResults.map((result, index) => (
+                    <button
+                      key={`tripadvisor-${index}`}
+                      onClick={() => selectTripadvisorVenue(result)}
+                      className="w-full px-3 py-2 text-left hover:bg-green-50 border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-medium text-sm text-gray-900 flex items-center">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mr-2">
+                          TripAdvisor
+                        </span>
+                        {result.name}
+                      </div>
+                      <div className="text-xs text-gray-500">{result.address?.city}, {result.address?.country}</div>
+                      {result.rating && (
+                        <div className="text-xs text-gray-600 mt-1">
+                          ⭐ {result.rating} ({result.num_reviews} reviews)
+                        </div>
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-sm text-gray-500">No results found</div>
+                )}
+              </div>
+            )}
+            </div>
+            {currentVenueData?.tripadvisor_location_id && (
+              <p className="mt-1 text-xs text-green-600">✓ TripAdvisor listing connected</p>
             )}
           </div>
         </div>
