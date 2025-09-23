@@ -47,12 +47,12 @@ const UnifiedReviewsCard = () => {
       if (!token) return;
 
       // Load Google rating
-      const googleResponse = await fetch(`/api/google?action=ratings&venueId=${venueId}`, {
+      const googleResponse = await fetch(`/api/reviews?platform=google&action=ratings&venueId=${venueId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
       // Load TripAdvisor rating
-      const tripAdvisorResponse = await fetch(`/api/tripadvisor?action=ratings&venueId=${venueId}`, {
+      const tripAdvisorResponse = await fetch(`/api/reviews?platform=tripadvisor&action=ratings&venueId=${venueId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -119,7 +119,7 @@ const UnifiedReviewsCard = () => {
         return;
       }
 
-      const url = `/api/unified-search?query=${encodeURIComponent(query)}`;
+      const url = `/api/reviews?platform=unified&action=search&query=${encodeURIComponent(query)}`;
       console.log('📡 Fetching:', url);
 
       const response = await fetch(url, {
@@ -165,10 +165,10 @@ const UnifiedReviewsCard = () => {
 
       // Fetch full details for both platforms
       const [googleResponse, tripAdvisorResponse] = await Promise.allSettled([
-        fetch(`/api/google?action=place-details&placeId=${matchedVenue.google.place_id}`, {
+        fetch(`/api/reviews?platform=google&action=place-details&placeId=${matchedVenue.google.place_id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch(`/api/tripadvisor?action=location-details&locationId=${matchedVenue.tripadvisor.location_id}`, {
+        fetch(`/api/reviews?platform=tripadvisor&action=location-details&locationId=${matchedVenue.tripadvisor.location_id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -206,14 +206,14 @@ const UnifiedReviewsCard = () => {
       let venueDetails = { google: null, tripadvisor: null };
 
       if (platform === 'google') {
-        const response = await fetch(`/api/google?action=place-details&placeId=${venue.place_id}`, {
+        const response = await fetch(`/api/reviews?platform=google&action=place-details&placeId=${venue.place_id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
           venueDetails.google = await response.json();
         }
       } else if (platform === 'tripadvisor') {
-        const response = await fetch(`/api/tripadvisor?action=location-details&locationId=${venue.location_id}`, {
+        const response = await fetch(`/api/reviews?platform=tripadvisor&action=location-details&locationId=${venue.location_id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -246,7 +246,7 @@ const UnifiedReviewsCard = () => {
       // Update Google venue if selected
       if (selectedVenues.google) {
         updates.push(
-          fetch(`/api/google?action=update-venue&venueId=${venueId}`, {
+          fetch(`/api/reviews?platform=google&action=update-venue&venueId=${venueId}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -264,7 +264,7 @@ const UnifiedReviewsCard = () => {
       // Update TripAdvisor venue if selected
       if (selectedVenues.tripadvisor) {
         updates.push(
-          fetch(`/api/tripadvisor?action=update-venue&venueId=${venueId}`, {
+          fetch(`/api/reviews?platform=tripadvisor&action=update-venue&venueId=${venueId}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
