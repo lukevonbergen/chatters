@@ -86,7 +86,8 @@ const UnifiedReviewsCard = () => {
 
       if (!error && venue) {
         setCurrentVenueData(venue);
-        setIsLocked(venue.venue_locked || false);
+        // Only lock if BOTH platforms are connected
+        setIsLocked(venue.place_id && venue.tripadvisor_location_id);
         // Check if we can generate review links
         setCanGenerateReviewLinks({
           google: venue.place_id && !venue.google_review_link,
@@ -201,8 +202,8 @@ const UnifiedReviewsCard = () => {
   };
 
   const selectGoogleVenue = async (venue) => {
-    if (isLocked) {
-      setMessage('Error: Google venue is already locked');
+    if (currentVenueData?.place_id) {
+      setMessage('Error: Google listing is already connected');
       return;
     }
 
@@ -233,6 +234,11 @@ const UnifiedReviewsCard = () => {
   };
 
   const selectTripadvisorVenue = async (venue) => {
+    if (currentVenueData?.tripadvisor_location_id) {
+      setMessage('Error: TripAdvisor listing is already connected');
+      return;
+    }
+    
     setShowTripadvisorDropdown(false);
     setTripadvisorSearchQuery(venue.name);
     setLoading(true);
@@ -434,9 +440,9 @@ const UnifiedReviewsCard = () => {
               </svg>
             </div>
             <div>
-              <h4 className="font-medium text-green-800">Venue Integration Locked</h4>
+              <h4 className="font-medium text-green-800">All Platforms Connected</h4>
               <p className="text-sm text-green-700">
-                Your venue is linked to review platforms and cannot be changed. This ensures rating progression tracking.
+                Both Google and TripAdvisor listings are connected. This ensures accurate rating progression tracking.
               </p>
             </div>
           </div>

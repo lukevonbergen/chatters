@@ -328,8 +328,7 @@ async function handleGoogleUpdateVenue(req, res) {
 
   // Prepare update data
   let updateData = { 
-    place_id, 
-    venue_locked: true,
+    place_id,
     google_review_link: googleReviewLink
   };
 
@@ -391,9 +390,8 @@ async function handleGoogleUpdateVenue(req, res) {
   }
 
   return res.status(200).json({
-    message: 'Venue updated and locked successfully',
-    venue: data,
-    locked: true
+    message: 'Google listing connected successfully',
+    venue: data
   });
 }
 
