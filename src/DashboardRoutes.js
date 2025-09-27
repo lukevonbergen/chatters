@@ -9,7 +9,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 import SetPasswordPage from './pages/auth/set-password';
 
 // Venue‑aware app pages
-import DashboardPage from './pages/dashboard/Dashboard';
+import DashboardPage from './pages/dashboard/DashboardNew';
 import ManageQuestions from './pages/dashboard/ManageQuestions';
 import Floorplan from './pages/dashboard/Floorplan';
 import TablesDashboard from './pages/dashboard/Dashboard_Tables';
