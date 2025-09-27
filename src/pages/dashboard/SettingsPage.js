@@ -9,6 +9,7 @@ import ProfileTab from '../../components/dashboard/settings/ProfileTab';
 import VenueTab from '../../components/dashboard/settings/VenueTab';
 import BrandingTab from '../../components/dashboard/settings/BrandingTab';
 import BillingTab from '../../components/dashboard/settings/BillingTab';
+import IntegrationsTab from '../../components/dashboard/settings/IntegrationsTab';
 
 const SettingsPage = () => {
   usePageTitle('Settings');
@@ -49,6 +50,7 @@ const SettingsPage = () => {
   const navItems = [
     { id: 'Profile', label: 'Profile' },
     { id: 'Venue', label: 'Venue' },
+    { id: 'Integrations', label: 'Integrations' },
     { id: 'Branding', label: 'Branding' },
     ...(userRole === 'master' ? [{ id: 'Billing', label: 'Billing' }] : []),
   ];
@@ -264,6 +266,8 @@ const SettingsPage = () => {
         return <ProfileTab {...tabProps} />;
       case 'Venue':
         return <VenueTab {...tabProps} />;
+      case 'Integrations':
+        return <IntegrationsTab />;
       case 'Branding':
         return <BrandingTab {...tabProps} />;
       case 'Billing':
