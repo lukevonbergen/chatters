@@ -5,7 +5,7 @@ import VenueSelector from '../../components/dashboard/overview/VenueSelector';
 import OverviewStats from '../../components/dashboard/overview/OverviewStats';
 import QuickActions from '../../components/dashboard/overview/QuickActions';
 import RecentActivity from '../../components/dashboard/overview/RecentActivity';
-import GoogleRatingsTrendTile from '../../components/dashboard/reports/GoogleRatingsTrendTile';
+import RatingsTrendBar from '../../components/dashboard/reports/RatingsTrendBar';
 import usePageTitle from '../../hooks/usePageTitle';
 import useOverviewStats from '../../hooks/useOverviewStats';
 import { useVenue } from '../../context/VenueContext';
@@ -224,7 +224,7 @@ const DashboardNew = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Rating Trends Chart */}
           <div className="lg:col-span-2">
-            <GoogleRatingsTrendTile venueId={venueId} />
+            <RatingsTrendBar venueId={venueId} />
           </div>
           
           {/* Recent Activity */}
