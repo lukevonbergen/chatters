@@ -629,12 +629,6 @@ const ReportBuilderTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-base lg:text-lg font-medium text-gray-900 mb-1">Custom Report Builder</h2>
-        <p className="text-sm text-gray-600">Generate custom reports by selecting date ranges, locations, and report types.</p>
-      </div>
-
       {/* Report Configuration */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <h3 className="text-base font-medium text-gray-900 mb-3">Report Configuration</h3>

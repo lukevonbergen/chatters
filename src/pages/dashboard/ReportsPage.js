@@ -3,27 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
-import PageContainer from '../../components/dashboard/layout/PageContainer';
+import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
 
-// Import tab components
-import BusinessImpactTab from '../../components/dashboard/reports/BusinessImpactTab';
-import PerformanceDashboardTab from '../../components/dashboard/reports/PerformanceDashboardTab';
-import CustomerInsightsTab from '../../components/dashboard/reports/CustomerInsightsTab';
-import QuickMetricsTab from '../../components/dashboard/reports/QuickMetricsTab';
+// Import main reports component
 import FeedbackTab from '../../components/dashboard/reports/FeedbackTab';
-import ReportBuilderTab from '../../components/dashboard/reports/ReportBuilderTab';
 
 const ReportsPage = () => {
   usePageTitle('Reports');
   const navigate = useNavigate();
   const { venueId } = useVenue();
   
-  // State for active tab
-  const [activeTab, setActiveTab] = useState('Feedback');
-  // Add mobile menu state
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Simplified - removed internal tab logic
   
   // Data state
   const [feedbackSessions, setFeedbackSessions] = useState([]);
@@ -123,21 +115,7 @@ const ReportsPage = () => {
 
   const satisfactionTrend = getDailySatisfactionTrend(feedbackSessions);
 
-  // Navigation items
-  const navItems = [
-    { id: 'Feedback', label: 'Feedback' },
-    { id: 'Performance', label: 'Performance' },
-    { id: 'Business', label: 'Impact' },
-    { id: 'Insights', label: 'Insights' },
-    { id: 'Metrics', label: 'Metrics' },
-    { id: 'Builder', label: 'Builder' },
-  ];
-
-  // Close mobile menu when tab changes
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    setIsMobileMenuOpen(false);
-  };
+  // Removed navigation items - using dedicated routes now
 
   // Props to pass to tab components
   const tabProps = {
@@ -156,110 +134,26 @@ const ReportsPage = () => {
     allRatings,
   };
 
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case 'Performance':
-        return <PerformanceDashboardTab {...tabProps} />;
-      case 'Business':
-        return <BusinessImpactTab {...tabProps} />;
-      case 'Insights':
-        return <CustomerInsightsTab {...tabProps} />;
-      case 'Metrics':
-        return <QuickMetricsTab {...tabProps} />;
-      case 'Feedback':
-        return <FeedbackTab {...tabProps} />;
-      case 'Builder':
-        return <ReportBuilderTab />;
-      default:
-        return <PerformanceDashboardTab {...tabProps} />;
-    }
-  };
+  // Removed renderActiveTab - using dedicated routes now
 
   if (!venueId) {
     return null;
   }
 
   return (
-    <PageContainer>
-      <div className="max-w-none lg:max-w-7xl">
-        {/* Header */}
-        <div className="mb-6 lg:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-            <div>
-              <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Reports</h1>
-              <p className="text-gray-600 text-sm lg:text-base">Track customer feedback performance and satisfaction metrics.</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                Real-time
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Tab Selector */}
-        <div className="lg:hidden mb-6">
-          <div className="relative">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="w-full bg-white border border-gray-300 rounded-md px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <span className="block truncate">
-                {navItems.find(item => item.id === activeTab)?.label || 'Select Tab'}
-              </span>
-              <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </span>
-            </button>
-
-            {isMobileMenuOpen && (
-              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleTabChange(item.id)}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                      activeTab === item.id ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-700'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* Desktop Sidebar - Hidden on mobile */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
-            <nav className="space-y-1">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full text-left px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                    activeTab === item.id
-                      ? 'bg-gray-100 text-gray-900'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            {renderActiveTab()}
-          </div>
-        </div>
-      </div>
-    </PageContainer>
+    <div className="space-y-6">
+      <ChartCard
+        title="Analytics Dashboard"
+        subtitle="Track customer feedback performance and satisfaction metrics"
+        actions={
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+            Real-time
+          </span>
+        }
+      >
+        <FeedbackTab {...tabProps} />
+      </ChartCard>
+    </div>
   );
 };
 

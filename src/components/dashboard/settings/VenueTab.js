@@ -203,11 +203,6 @@ const VenueTab = ({
 
   return (
     <div className="max-w-none lg:max-w-4xl">
-      {/* Page Header */}
-      <div className="mb-6">
-        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">Venue Settings</h2>
-        <p className="text-gray-600 text-sm">Configure your venue information and feedback collection preferences.</p>
-      </div>
 
       <div className="space-y-6">
         

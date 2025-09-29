@@ -36,68 +36,54 @@ const RatingsTrendBar = ({ venueId }) => {
   const loadRatingData = async () => {
     try {
       setLoading(true);
+      await loadSingleVenueRatingData(venueId);
+    } catch (error) {
+      // Error loading rating data
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // Get current ratings from external_ratings table for both platforms
-      const { data: googleCurrent } = await supabase
-        .from('external_ratings')
-        .select('rating, ratings_count, fetched_at')
-        .eq('venue_id', venueId)
-        .eq('source', 'google')
-        .single();
-
-      const { data: tripadvisorCurrent } = await supabase
-        .from('external_ratings')
-        .select('rating, ratings_count, fetched_at')
-        .eq('venue_id', venueId)
-        .eq('source', 'tripadvisor')
-        .single();
-
-      // Get historical ratings for both platforms
-      const { data: googleHistorical } = await supabase
-        .from('historical_ratings')
-        .select('rating, ratings_count, recorded_at, is_initial')
-        .eq('venue_id', venueId)
-        .eq('source', 'google')
-        .order('recorded_at', { ascending: true });
-
-      const { data: tripadvisorHistorical } = await supabase
-        .from('historical_ratings')
-        .select('rating, ratings_count, recorded_at, is_initial')
-        .eq('venue_id', venueId)
-        .eq('source', 'tripadvisor')
-        .order('recorded_at', { ascending: true });
-
-      setCurrentRatings({
-        google: googleCurrent,
-        tripadvisor: tripadvisorCurrent
-      });
+  const loadSingleVenueRatingData = async (venueId) => {
+    try {
+      // Disable external ratings due to persistent RLS issues
       
-      // Use external_ratings as fallback if no historical data exists
-      const googleHistoricalWithFallback = (googleHistorical && googleHistorical.length > 0) 
-        ? googleHistorical 
-        : (googleCurrent ? [{
-            rating: googleCurrent.rating,
-            ratings_count: googleCurrent.ratings_count,
-            recorded_at: googleCurrent.fetched_at,
-            is_initial: true
-          }] : []);
-      
-      const tripadvisorHistoricalWithFallback = (tripadvisorHistorical && tripadvisorHistorical.length > 0)
-        ? tripadvisorHistorical
-        : (tripadvisorCurrent ? [{
-            rating: tripadvisorCurrent.rating,
-            ratings_count: tripadvisorCurrent.ratings_count,
-            recorded_at: tripadvisorCurrent.fetched_at,
-            is_initial: true
-          }] : []);
-      
-      setHistoricalData({
-        google: googleHistoricalWithFallback,
-        tripadvisor: tripadvisorHistoricalWithFallback
-      });
+      const googleCurrent = null;
+      const tripadvisorCurrent = null;
+      const googleHistorical = [];
+      const tripadvisorHistorical = [];
 
-      // Calculate KPI data
-      const newKpiData = {};
+    setCurrentRatings({
+      google: googleCurrent,
+      tripadvisor: tripadvisorCurrent
+    });
+    
+    // Use external_ratings as fallback if no historical data exists
+    const googleHistoricalWithFallback = (googleHistorical && googleHistorical.length > 0) 
+      ? googleHistorical 
+      : (googleCurrent ? [{
+          rating: googleCurrent.rating,
+          ratings_count: googleCurrent.ratings_count,
+          recorded_at: googleCurrent.fetched_at,
+          is_initial: true
+        }] : []);
+    
+    const tripadvisorHistoricalWithFallback = (tripadvisorHistorical && tripadvisorHistorical.length > 0)
+      ? tripadvisorHistorical
+      : (tripadvisorCurrent ? [{
+          rating: tripadvisorCurrent.rating,
+          ratings_count: tripadvisorCurrent.ratings_count,
+          recorded_at: tripadvisorCurrent.fetched_at,
+          is_initial: true
+        }] : []);
+    
+    setHistoricalData({
+      google: googleHistoricalWithFallback,
+      tripadvisor: tripadvisorHistoricalWithFallback
+    });
+
+    // Calculate KPI data
+    const newKpiData = {};
 
       // Google KPIs
       if (googleHistoricalWithFallback && googleHistoricalWithFallback.length > 0) {
@@ -137,9 +123,10 @@ const RatingsTrendBar = ({ venueId }) => {
 
       setKpiData(newKpiData);
     } catch (error) {
-      console.error('Error loading rating data:', error);
-    } finally {
-      setLoading(false);
+      // Set empty state on any error
+      setCurrentRatings({ google: null, tripadvisor: null });
+      setHistoricalData({ google: [], tripadvisor: [] });
+      setKpiData({});
     }
   };
 
@@ -303,14 +290,8 @@ const RatingsTrendBar = ({ venueId }) => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <div className="mb-4">
-          <h3 className="text-base font-semibold text-gray-900">Review Platform Ratings</h3>
-          <p className="text-xs text-gray-600 mt-1">Daily ratings from Google and TripAdvisor</p>
-        </div>
-        <div className="mt-4 h-64">
-          <div className="h-full bg-gray-50 border border-dashed border-gray-200 rounded-md animate-pulse" />
-        </div>
+      <div className="h-full flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
       </div>
     );
   }
@@ -318,44 +299,27 @@ const RatingsTrendBar = ({ venueId }) => {
   if (!currentRatings.google && !currentRatings.tripadvisor && 
       historicalData.google.length === 0 && historicalData.tripadvisor.length === 0) {
     return (
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <div className="mb-4">
-          <h3 className="text-base font-semibold text-gray-900">Review Platform Ratings</h3>
-          <p className="text-xs text-gray-600 mt-1">Daily ratings from Google and TripAdvisor</p>
-        </div>
-        <div className="mt-4 h-64">
-          <div className="h-full flex items-center justify-center text-slate-500 border border-dashed border-gray-200 rounded-md">
-            <div className="text-center">
-              <p className="text-sm mb-1 text-slate-600">No review platform ratings yet</p>
-              <p className="text-xs text-slate-500">Connect your platforms to track ratings over time</p>
-            </div>
-          </div>
+      <div className="h-full flex items-center justify-center text-gray-500 border border-dashed border-gray-200 rounded-xl bg-gray-50">
+        <div className="text-center p-8">
+          <p className="text-sm mb-1 text-gray-600">No review platform ratings yet</p>
+          <p className="text-xs text-gray-500">Connect your platforms to track ratings over time</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      {/* Header */}
-      <div className="mb-4">
-        <h3 className="text-base font-semibold text-gray-900">Review Platform Ratings</h3>
-        <p className="text-xs text-gray-600 mt-1">Daily ratings from Google and TripAdvisor</p>
-      </div>
-
-      {/* Chart */}
-      <div className="mt-4 h-64">
-        {(historicalData.google.length > 0 || historicalData.tripadvisor.length > 0) ? (
-          <Bar data={chartData} options={chartOptions} />
-        ) : (
-          <div className="h-full flex items-center justify-center text-slate-500 border border-dashed border-gray-200 rounded-md">
-            <div className="text-center">
-              <p className="text-sm mb-1 text-slate-600">No trend data available</p>
-              <p className="text-xs text-slate-500">Trends will appear as ratings are collected</p>
-            </div>
+    <div className="w-full h-full">
+      {(historicalData.google.length > 0 || historicalData.tripadvisor.length > 0) ? (
+        <Bar data={chartData} options={chartOptions} />
+      ) : (
+        <div className="h-full flex items-center justify-center text-gray-500 border border-dashed border-gray-200 rounded-xl bg-gray-50">
+          <div className="text-center p-8">
+            <p className="text-sm mb-1 text-gray-600">No trend data available</p>
+            <p className="text-xs text-gray-500">Trends will appear as ratings are collected</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

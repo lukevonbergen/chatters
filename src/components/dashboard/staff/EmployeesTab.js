@@ -338,7 +338,6 @@ const EmployeesTab = ({
       <div className="mb-6 lg:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
           <div>
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Employees</h2>
             <p className="text-gray-600 text-sm">
               {userRole === 'master' 
                 ? 'View and manage employees across all venues.' 

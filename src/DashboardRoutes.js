@@ -22,6 +22,27 @@ import StaffMemberDetails from './pages/dashboard/StaffMemberDetails';
 import BillingPage from './pages/dashboard/Billing';
 import FeedbackFeed from './pages/dashboard/FeedbackFeed';
 
+// New dedicated sub-pages
+import ReportBuilderPage from './pages/dashboard/ReportBuilder';
+import CustomerInsightsPage from './pages/dashboard/CustomerInsights';
+import PerformanceDashboardPage from './pages/dashboard/PerformanceDashboard';
+import StaffRolesPage from './pages/dashboard/StaffRoles';
+import StaffLocationsPage from './pages/dashboard/StaffLocations';
+import VenueSettingsPage from './pages/dashboard/VenueSettings';
+import IntegrationsSettingsPage from './pages/dashboard/IntegrationsSettings';
+
+// Additional new pages for updated menu structure
+import FeedbackQRPage from './pages/dashboard/FeedbackQR';
+import FeedbackQuestionsPage from './pages/dashboard/FeedbackQuestions';
+import ReportsFeedbackPage from './pages/dashboard/ReportsFeedback';
+import ReportsImpactPage from './pages/dashboard/ReportsImpact';
+import ReportsMetricsPage from './pages/dashboard/ReportsMetrics';
+import StaffManagersPage from './pages/dashboard/StaffManagers';
+import StaffEmployeesPage from './pages/dashboard/StaffEmployees';
+import SettingsBrandingPage from './pages/dashboard/SettingsBranding';
+import AccountProfilePage from './pages/dashboard/AccountProfile';
+import AccountBillingPage from './pages/dashboard/AccountBilling';
+
 // Kiosk (venue‑aware, no dashboard frame)
 import KioskPage from './pages/dashboard/KioskPage';
 
@@ -32,15 +53,15 @@ import CustomerFeedbackPage from './pages/dashboard/CustomerFeedback';
 import TestDashboardPage from './pages/admin/TestDashboardPage';
 
 // Frames & context
-import DashboardFrame from './pages/dashboard/DashboardFrame';
+import ModernDashboardFrame from './components/dashboard/layout/ModernDashboardFrame';
 import { VenueProvider } from './context/VenueContext';
 
-// Wrap all authenticated dashboard pages once: VenueProvider + DashboardFrame
+// Wrap all authenticated dashboard pages once: VenueProvider + ModernDashboardFrame
 const DashboardShell = () => (
   <VenueProvider>
-    <DashboardFrame>
+    <ModernDashboardFrame>
       <Outlet />
-    </DashboardFrame>
+    </ModernDashboardFrame>
   </VenueProvider>
 );
 
@@ -73,17 +94,54 @@ const DashboardRoutes = () => {
       {/* Authenticated app: venue context + dashboard frame */}
       <Route element={<DashboardShell />}>
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/questions" element={<ManageQuestions />} />
-        <Route path="/floorplan" element={<Floorplan />} />
-        <Route path="/tablefeedback" element={<TablesDashboard />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/templates" element={<TemplatesPage />} />
-        <Route path="/reports" element={<ReportsPage />} />
-        <Route path="/staff" element={<Settings_Staff />} />
-        <Route path="/staff/leaderboard" element={<StaffLeaderboard />} />
-        <Route path="/staff-member/:staffId" element={<StaffMemberDetails />} />
+        
+        {/* Feedback Section */}
+        <Route path="/feedback/qr" element={<FeedbackQRPage />} />
+        <Route path="/feedback/questions" element={<FeedbackQuestionsPage />} />
+        
+        {/* Legacy feedback routes (redirects or keep for compatibility) */}
+        <Route path="/questions" element={<Navigate to="/feedback/questions" replace />} />
         <Route path="/feedbackfeed" element={<FeedbackFeed />} />
-        <Route path="/settings/billing" element={<BillingPage />} />
+        <Route path="/tablefeedback" element={<TablesDashboard />} />
+        
+        {/* Reports Section */}
+        <Route path="/reports/feedback" element={<ReportsFeedbackPage />} />
+        <Route path="/reports/performance" element={<PerformanceDashboardPage />} />
+        <Route path="/reports/impact" element={<ReportsImpactPage />} />
+        <Route path="/reports/insights" element={<CustomerInsightsPage />} />
+        <Route path="/reports/metrics" element={<ReportsMetricsPage />} />
+        <Route path="/reports/builder" element={<ReportBuilderPage />} />
+        
+        {/* Legacy reports routes */}
+        <Route path="/reports" element={<Navigate to="/reports/feedback" replace />} />
+        <Route path="/templates" element={<TemplatesPage />} />
+        
+        {/* Staff Section */}
+        <Route path="/staff/leaderboard" element={<StaffLeaderboard />} />
+        <Route path="/staff/managers" element={<StaffManagersPage />} />
+        <Route path="/staff/employees" element={<StaffEmployeesPage />} />
+        <Route path="/staff/roles" element={<StaffRolesPage />} />
+        <Route path="/staff/locations" element={<StaffLocationsPage />} />
+        <Route path="/staff-member/:staffId" element={<StaffMemberDetails />} />
+        
+        {/* Legacy staff routes */}
+        <Route path="/staff" element={<Navigate to="/staff/leaderboard" replace />} />
+        
+        {/* Settings Section */}
+        <Route path="/settings/venues" element={<VenueSettingsPage />} />
+        <Route path="/settings/branding" element={<SettingsBrandingPage />} />
+        <Route path="/settings/integrations" element={<IntegrationsSettingsPage />} />
+        
+        {/* Legacy settings routes */}
+        <Route path="/settings" element={<Navigate to="/settings/venues" replace />} />
+        <Route path="/settings/billing" element={<Navigate to="/account/billing" replace />} />
+        
+        {/* Account Settings Section */}
+        <Route path="/account/profile" element={<AccountProfilePage />} />
+        <Route path="/account/billing" element={<AccountBillingPage />} />
+        
+        {/* Other */}
+        <Route path="/floorplan" element={<Floorplan />} />
       </Route>
 
       {/* Default / legacy */}

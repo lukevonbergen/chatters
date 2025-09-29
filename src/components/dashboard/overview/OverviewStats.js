@@ -1,54 +1,102 @@
-import React from 'react';
-import { TrendingUp, Users, Star, Clock, AlertTriangle, CheckCircle, Activity, Target } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { TrendingUp, Users, Star, Clock, AlertTriangle, CheckCircle, Activity, Target, Building2, ChevronDown, Check } from 'lucide-react';
+import useOverviewStats from '../../../hooks/useOverviewStats';
+import useMultiVenueStats from '../../../hooks/useMultiVenueStats';
+import { useVenue } from '../../../context/VenueContext';
+import { MetricCard, StatsGrid, ChartCard } from '../layout/ModernCard';
 
-const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendDirection, color = 'blue' }) => {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 border-blue-100',
-    green: 'bg-green-50 text-green-600 border-green-100',
-    amber: 'bg-amber-50 text-amber-600 border-amber-100',
-    purple: 'bg-purple-50 text-purple-600 border-purple-100',
-    red: 'bg-red-50 text-red-600 border-red-100',
-    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100'
-  };
+// StatCard component removed - using MetricCard from ModernCard instead
 
-  const trendColors = {
-    up: 'text-green-600',
-    down: 'text-red-600',
-    neutral: 'text-gray-500'
-  };
-
-  return (
-    <div className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all duration-200">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-3">
-            <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-              <Icon className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-medium text-gray-600">{title}</h3>
-          </div>
-          
-          <div className="space-y-1">
-            <div className="text-2xl font-bold text-gray-900">{value}</div>
-            {subtitle && (
-              <div className="text-sm text-gray-500">{subtitle}</div>
-            )}
-          </div>
-        </div>
-
-        {trend && (
-          <div className={`flex items-center gap-1 text-sm font-medium ${trendColors[trendDirection]}`}>
-            <TrendingUp className={`w-4 h-4 ${trendDirection === 'down' ? 'rotate-180' : ''}`} />
-            <span>{trend}</span>
-          </div>
-        )}
-      </div>
-    </div>
+const OverviewStats = () => {
+  const { venueId, allVenues, setCurrentVenue } = useVenue();
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedVenueIds, setSelectedVenueIds] = useState([]);
+  const dropdownRef = useRef(null);
+  
+  // Use multi-venue stats when multiple venues selected, single stats otherwise
+  const isMultiMode = selectedVenueIds.length > 1;
+  const { stats: multiStats, loading: multiLoading, venueBreakdowns } = useMultiVenueStats(
+    selectedVenueIds,
+    isMultiMode
   );
-};
+  
+  const { stats: singleStats, loading: singleLoading } = useOverviewStats(
+    selectedVenueIds.length === 1 ? selectedVenueIds[0] : venueId
+  );
+  
+  const stats = isMultiMode ? multiStats : singleStats;
+  const loading = isMultiMode ? multiLoading : singleLoading;
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-const OverviewStats = ({ stats, loading }) => {
-  if (loading) {
+  // Initialize with current venue
+  useEffect(() => {
+    if (venueId && !selectedVenueIds.includes(venueId)) {
+      setSelectedVenueIds([venueId]);
+    }
+  }, [venueId, selectedVenueIds]);
+
+  // Track initial load completion
+  useEffect(() => {
+    if (!loading && isInitialLoad) {
+      setIsInitialLoad(false);
+    }
+  }, [loading, isInitialLoad]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleVenueToggle = (venueIdToToggle) => {
+    if (selectedVenueIds.includes(venueIdToToggle)) {
+      // Remove from selection
+      const newSelection = selectedVenueIds.filter(id => id !== venueIdToToggle);
+      // Ensure at least one venue is selected
+      if (newSelection.length === 0) {
+        setSelectedVenueIds([venueId]);
+      } else {
+        setSelectedVenueIds(newSelection);
+        // If only one venue left, update the global context
+        if (newSelection.length === 1) {
+          setCurrentVenue(newSelection[0]);
+        }
+      }
+    } else {
+      // Add to selection
+      setSelectedVenueIds([...selectedVenueIds, venueIdToToggle]);
+    }
+  };
+
+  const handleSelectAll = () => {
+    setSelectedVenueIds(allVenues.map(v => v.id));
+  };
+
+  const handleClearAll = () => {
+    setSelectedVenueIds([venueId]);
+    setCurrentVenue(venueId);
+  };
+
+  const getDisplayText = () => {
+    const count = selectedVenueIds.length;
+    const total = allVenues?.length || 0;
+    
+    if (count === 1) {
+      const selectedVenue = allVenues?.find(v => v.id === selectedVenueIds[0]);
+      return selectedVenue?.name || 'Select Venue';
+    }
+    
+    return count === total ? 'All venues' : `${count} venues`;
+  };
+
+  // Only show full loading state on initial load
+  if (loading && isInitialLoad) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[...Array(8)].map((_, i) => (
@@ -69,87 +117,169 @@ const OverviewStats = ({ stats, loading }) => {
     );
   }
 
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {/* Today's Sessions */}
-      <StatCard
-        icon={Users}
-        title="Today's Sessions"
-        value={stats?.todaySessions || '0'}
-        subtitle="Customer interactions"
-        trend={stats?.sessionsTrend}
-        trendDirection={stats?.sessionsTrendDirection}
-        color="blue"
-      />
+    <div>
+      {/* Header with Venue Selector */}
+      <ChartCard
+        title="Today's Overview"
+        className="mb-8"
+        actions={
+          allVenues && allVenues.length > 1 && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors min-w-0 bg-white"
+              >
+                <Building2 className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <span className="truncate max-w-48">{getDisplayText()}</span>
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-      {/* Average Satisfaction */}
-      <StatCard
-        icon={Star}
-        title="Satisfaction Score"
-        value={stats?.avgSatisfaction ? `${stats.avgSatisfaction}/5` : '--'}
-        subtitle="Today's average"
-        trend={stats?.satisfactionTrend}
-        trendDirection={stats?.satisfactionTrendDirection}
-        color="amber"
-      />
+              {/* Dropdown */}
+              {isOpen && (
+                <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
+                  {/* Controls */}
+                  <div className="p-4 border-b border-gray-100 flex justify-between">
+                    <button
+                      onClick={handleSelectAll}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors"
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={handleClearAll}
+                      className="text-sm text-gray-600 hover:text-gray-700 font-semibold transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  </div>
 
-      {/* Response Time */}
-      <StatCard
-        icon={Clock}
-        title="Avg Response Time"
-        value={stats?.avgResponseTime || '--'}
-        subtitle="To assistance requests"
-        trend={stats?.responseTimeTrend}
-        trendDirection={stats?.responseTimeTrendDirection}
-        color="green"
-      />
+                  <div className="max-h-64 overflow-y-auto p-2">
+                    {allVenues.map((venue) => {
+                      const isSelected = selectedVenueIds.includes(venue.id);
 
-      {/* Completion Rate */}
-      <StatCard
-        icon={Target}
-        title="Completion Rate"
-        value={stats?.completionRate ? `${stats.completionRate}%` : '--'}
-        subtitle="Issues resolved"
-        trend={stats?.completionTrend}
-        trendDirection={stats?.completionTrendDirection}
-        color="purple"
-      />
+                      return (
+                        <div
+                          key={venue.id}
+                          onClick={() => handleVenueToggle(venue.id)}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                            isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}} // Handled by parent div onClick
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="truncate flex-1 font-medium">{venue.name}</span>
+                          {isSelected && (
+                            <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        }
+      >
+        {/* Stats Grid */}
+        <StatsGrid>
+          {/* Today's Sessions */}
+          <MetricCard
+            icon={Users}
+            title="Today's Sessions"
+            value={stats?.todaySessions || '0'}
+            subtitle="Customer interactions"
+            trend={stats?.sessionsTrend}
+            trendDirection={stats?.sessionsTrendDirection}
+            color="blue"
+            venueBreakdowns={venueBreakdowns}
+            allVenues={allVenues}
+            field="sessions"
+          />
 
-      {/* Active Alerts */}
-      <StatCard
-        icon={AlertTriangle}
-        title="Active Alerts"
-        value={stats?.activeAlerts || '0'}
-        subtitle="Requiring attention"
-        color={stats?.activeAlerts > 0 ? 'red' : 'green'}
-      />
+          {/* Average Satisfaction */}
+          <MetricCard
+            icon={Star}
+            title="Satisfaction Score"
+            value={stats?.avgSatisfaction ? `${stats.avgSatisfaction}/5` : '--'}
+            subtitle="Today's average"
+            trend={stats?.satisfactionTrend}
+            trendDirection={stats?.satisfactionTrendDirection}
+            color="amber"
+            venueBreakdowns={venueBreakdowns}
+            allVenues={allVenues}
+            field="avgSatisfaction"
+          />
 
-      {/* Resolved Today */}
-      <StatCard
-        icon={CheckCircle}
-        title="Resolved Today"
-        value={stats?.resolvedToday || '0'}
-        subtitle="Issues closed"
-        color="green"
-      />
+          {/* Response Time */}
+          <MetricCard
+            icon={Clock}
+            title="Avg Response Time"
+            value={stats?.avgResponseTime || '--'}
+            subtitle="To assistance requests"
+            trend={stats?.responseTimeTrend}
+            trendDirection={stats?.responseTimeTrendDirection}
+            color="green"
+          />
 
-      {/* Current Activity */}
-      <StatCard
-        icon={Activity}
-        title="Current Activity"
-        value={stats?.currentActivity || 'Low'}
-        subtitle="Venue traffic level"
-        color="indigo"
-      />
+          {/* Completion Rate */}
+          <MetricCard
+            icon={Target}
+            title="Completion Rate"
+            value={stats?.completionRate ? `${stats.completionRate}%` : '--'}
+            subtitle="Issues resolved"
+            trend={stats?.completionTrend}
+            trendDirection={stats?.completionTrendDirection}
+            color="purple"
+          />
 
-      {/* Peak Hour */}
-      <StatCard
-        icon={TrendingUp}
-        title="Today's Peak"
-        value={stats?.peakHour || '--'}
-        subtitle="Busiest time"
-        color="purple"
-      />
+          {/* Active Alerts */}
+          <MetricCard
+            icon={AlertTriangle}
+            title="Active Alerts"
+            value={stats?.activeAlerts || '0'}
+            subtitle="Requiring attention"
+            color={stats?.activeAlerts > 0 ? 'red' : 'green'}
+            venueBreakdowns={venueBreakdowns}
+            allVenues={allVenues}
+            field="activeAlerts"
+          />
+
+          {/* Resolved Today */}
+          <MetricCard
+            icon={CheckCircle}
+            title="Resolved Today"
+            value={stats?.resolvedToday || '0'}
+            subtitle="Issues closed"
+            color="green"
+          />
+
+          {/* Current Activity */}
+          <MetricCard
+            icon={Activity}
+            title="Current Activity"
+            value={stats?.currentActivity || 'Low'}
+            subtitle="Traffic level"
+            color="indigo"
+          />
+
+          {/* Peak Hour */}
+          <MetricCard
+            icon={TrendingUp}
+            title="Today's Peak"
+            value={stats?.peakHour || '--'}
+            subtitle="Busiest time"
+            color="purple"
+          />
+        </StatsGrid>
+      </ChartCard>
     </div>
   );
 };

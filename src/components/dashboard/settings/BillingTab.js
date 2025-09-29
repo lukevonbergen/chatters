@@ -123,8 +123,6 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
   return (
     <div className="max-w-none lg:max-w-2xl">
       <div className="mb-6 lg:mb-8">
-        <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Billing & Subscription</h2>
-        <p className="text-gray-600 text-sm">Manage your subscription and billing information.</p>
         
         {/* Expired trial banner */}
         {trialInfo?.isExpired && (

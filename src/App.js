@@ -1,5 +1,6 @@
 // App.js
 import './index.css';
+import './styles/modern-dashboard.css';
 import React, { useEffect, useState } from 'react';
 import { ModalProvider } from './context/ModalContext';
 import { LoadingProvider } from './context/LoadingContext';

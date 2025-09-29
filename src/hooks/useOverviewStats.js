@@ -29,7 +29,7 @@ const useOverviewStats = (venueId) => {
       // Fetch today's feedback sessions
       const { data: todayFeedback } = await supabase
         .from('feedback')
-        .select('id, satisfaction_rating, created_at')
+        .select('id, rating, created_at')
         .eq('venue_id', venueId)
         .gte('created_at', todayStart.toISOString())
         .order('created_at', { ascending: false });
@@ -37,7 +37,7 @@ const useOverviewStats = (venueId) => {
       // Fetch yesterday's feedback for comparison
       const { data: yesterdayFeedback } = await supabase
         .from('feedback')
-        .select('id, satisfaction_rating')
+        .select('id, rating')
         .eq('venue_id', venueId)
         .gte('created_at', yesterdayStart.toISOString())
         .lt('created_at', todayStart.toISOString());
@@ -63,12 +63,12 @@ const useOverviewStats = (venueId) => {
       const yesterdaySessions = yesterdayFeedback?.length || 0;
       
       // Average satisfaction
-      const todayRatings = todayFeedback?.filter(f => f.satisfaction_rating).map(f => f.satisfaction_rating) || [];
+      const todayRatings = todayFeedback?.filter(f => f.rating).map(f => f.rating) || [];
       const avgSatisfaction = todayRatings.length > 0 
         ? (todayRatings.reduce((a, b) => a + b, 0) / todayRatings.length).toFixed(1)
         : null;
 
-      const yesterdayRatings = yesterdayFeedback?.filter(f => f.satisfaction_rating).map(f => f.satisfaction_rating) || [];
+      const yesterdayRatings = yesterdayFeedback?.filter(f => f.rating).map(f => f.rating) || [];
       const yesterdayAvgSatisfaction = yesterdayRatings.length > 0 
         ? yesterdayRatings.reduce((a, b) => a + b, 0) / yesterdayRatings.length
         : null;
@@ -135,7 +135,6 @@ const useOverviewStats = (venueId) => {
 
     } catch (err) {
       setError(err);
-      console.error('Error fetching overview stats:', err);
     } finally {
       setLoading(false);
     }

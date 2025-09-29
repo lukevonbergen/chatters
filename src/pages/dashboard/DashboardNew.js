@@ -1,21 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
-import PageContainer from '../../components/dashboard/layout/PageContainer';
-import VenueSelector from '../../components/dashboard/overview/VenueSelector';
 import OverviewStats from '../../components/dashboard/overview/OverviewStats';
-import QuickActions from '../../components/dashboard/overview/QuickActions';
 import RecentActivity from '../../components/dashboard/overview/RecentActivity';
 import RatingsTrendBar from '../../components/dashboard/reports/RatingsTrendBar';
+import { ChartCard, ActivityCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
-import useOverviewStats from '../../hooks/useOverviewStats';
 import { useVenue } from '../../context/VenueContext';
-import { Sparkles, TrendingUp, Activity } from 'lucide-react';
+import { Sparkles, Activity, TrendingUp, Calendar, Users, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DashboardNew = () => {
   usePageTitle('Overview');
   const { venueId, venueName, allVenues, userRole } = useVenue();
-  const { stats, loading: statsLoading } = useOverviewStats(venueId);
   const [recentActivity, setRecentActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [userName, setUserName] = useState('');
@@ -124,7 +120,7 @@ const DashboardNew = () => {
       // Get recent feedback and assistance requests
       const { data: feedback } = await supabase
         .from('feedback')
-        .select('id, table_number, satisfaction_rating, feedback_comment, created_at')
+        .select('id, table_number, rating, additional_feedback, created_at')
         .eq('venue_id', venueId)
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
@@ -173,104 +169,103 @@ const DashboardNew = () => {
   }
 
   return (
-    <PageContainer>
-      {/* Header */}
+    <div className="space-y-8">
+      {/* Welcome Header */}
       <div className="mb-8">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <Sparkles className="w-6 h-6 text-blue-600" />
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-                {getGreeting()}{userName ? `, ${userName}` : ''}
-              </h1>
-            </div>
-            
-            <p className="text-gray-600 mb-1">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {getGreeting()}{userName ? `, ${userName}` : ''}
+            </h1>
+            <p className="text-gray-600 mt-1">
               Welcome back to <span className="font-semibold text-gray-800">{venueName}</span>
             </p>
-            
-            {getMultiVenueGreeting() && (
-              <p className="text-sm text-blue-600 font-medium">
-                {getMultiVenueGreeting()}
-              </p>
-            )}
           </div>
-          
-          <VenueSelector />
         </div>
+        
+        {getMultiVenueGreeting() && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mt-4">
+            <p className="text-sm text-blue-700 font-medium flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              {getMultiVenueGreeting()}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Overview Stats */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-6">
-          <TrendingUp className="w-5 h-5 text-gray-600" />
-          <h2 className="text-xl font-semibold text-gray-900">Today's Overview</h2>
-        </div>
-        <OverviewStats stats={stats} loading={statsLoading} />
-      </div>
-
-      {/* Quick Actions */}
-      <div className="mb-8">
-        <QuickActions venueId={venueId} userRole={userRole} />
-      </div>
+      <OverviewStats />
 
       {/* Performance & Activity */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-6">
-          <Activity className="w-5 h-5 text-gray-600" />
-          <h2 className="text-xl font-semibold text-gray-900">Performance & Activity</h2>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        {/* Rating Trends Chart */}
+        <div className="xl:col-span-3">
+          <ChartCard
+            title="Review Platform Ratings"
+            subtitle="Daily ratings from Google and TripAdvisor"
+          >
+            <div className="h-64">
+              <RatingsTrendBar venueId={venueId} />
+            </div>
+          </ChartCard>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Rating Trends Chart */}
-          <div className="lg:col-span-2">
-            <RatingsTrendBar venueId={venueId} />
-          </div>
-          
-          {/* Recent Activity */}
-          <div>
+        {/* Recent Activity */}
+        <div>
+          <ChartCard title="Recent Activity" subtitle="Last 24 hours">
             <RecentActivity activities={recentActivity} loading={activityLoading} />
-          </div>
+          </ChartCard>
         </div>
       </div>
 
-      {/* Insights & Tips */}
-      <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-6 border border-blue-100">
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-white rounded-xl shadow-sm">
-            <Sparkles className="w-6 h-6 text-blue-600" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Smart Insights
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Based on your venue's performance, here are some recommendations to improve customer satisfaction:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white/60 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-1">Response Time</h4>
-                <p className="text-sm text-gray-600">
-                  {stats?.avgResponseTime 
-                    ? `Average ${stats.avgResponseTime} - consider optimizing staff workflows`
-                    : 'Track assistance response times to identify improvement opportunities'
-                  }
-                </p>
+      {/* Smart Insights */}
+      <ChartCard
+        title="Smart Insights"
+        subtitle="AI-powered recommendations based on your venue's performance"
+        className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-200"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white/80 rounded-xl p-6 border border-white/50 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <TrendingUp className="w-5 h-5 text-green-600" />
               </div>
-              <div className="bg-white/60 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-1">Peak Hours</h4>
-                <p className="text-sm text-gray-600">
-                  {stats?.peakHour 
-                    ? `Busiest at ${stats.peakHour} - ensure adequate staffing`
-                    : 'Monitor busy periods to optimize staff scheduling'
-                  }
-                </p>
-              </div>
+              <h4 className="font-semibold text-gray-900">Response Time</h4>
             </div>
+            <p className="text-sm text-gray-600">
+              Track assistance response times to identify improvement opportunities and enhance customer satisfaction.
+            </p>
+          </div>
+          
+          <div className="bg-white/80 rounded-xl p-6 border border-white/50 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Calendar className="w-5 h-5 text-purple-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900">Peak Hours</h4>
+            </div>
+            <p className="text-sm text-gray-600">
+              Monitor busy periods to optimize staff scheduling and ensure adequate coverage during high-demand times.
+            </p>
+          </div>
+
+          <div className="bg-white/80 rounded-xl p-6 border border-white/50 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Star className="w-5 h-5 text-amber-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900">Satisfaction Trends</h4>
+            </div>
+            <p className="text-sm text-gray-600">
+              Analyze customer feedback patterns to identify areas for service improvement and staff training.
+            </p>
           </div>
         </div>
-      </div>
-    </PageContainer>
+      </ChartCard>
+    </div>
   );
 };
 

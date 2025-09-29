@@ -96,15 +96,15 @@ const RecentActivity = ({ activities, loading }) => {
   // Transform different activity types into consistent format
   const normalizedActivities = (activities || []).map(activity => {
     // Handle feedback sessions
-    if (activity.feedback_comment || activity.satisfaction_rating) {
+    if (activity.additional_feedback || activity.rating) {
       return {
         icon: MessageSquare,
         title: `Customer feedback from Table ${activity.table_number || 'Unknown'}`,
-        description: activity.feedback_comment || 'Rating submitted',
+        description: activity.additional_feedback || 'Rating submitted',
         timestamp: formatTime(activity.created_at),
-        status: activity.satisfaction_rating >= 4 ? 'success' : 
-                activity.satisfaction_rating >= 3 ? 'warning' : 'error',
-        rating: activity.satisfaction_rating
+        status: activity.rating >= 4 ? 'success' : 
+                activity.rating >= 3 ? 'warning' : 'error',
+        rating: activity.rating
       };
     }
     
