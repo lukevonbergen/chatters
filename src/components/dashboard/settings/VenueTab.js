@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import FeedbackTimeSelection from './venuetabcomponents/FeedbackTimeSelection';
-import UnifiedReviewsCard from './UnifiedReviewsCard';
 
 const VenueTab = ({ 
   name, setName,
@@ -204,11 +203,6 @@ const VenueTab = ({
 
   return (
     <div className="max-w-none lg:max-w-4xl">
-      {/* Page Header */}
-      <div className="mb-6">
-        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">Venue Settings</h2>
-        <p className="text-gray-600 text-sm">Configure your venue information and feedback collection preferences.</p>
-      </div>
 
       <div className="space-y-6">
         
@@ -433,8 +427,6 @@ const VenueTab = ({
           </div>
         </div>
 
-        {/* Google Reviews Integration */}
-        <UnifiedReviewsCard />
 
         {/* Section 3: Session Timeout Settings */}
         <div className="bg-white border border-gray-200 rounded-lg">

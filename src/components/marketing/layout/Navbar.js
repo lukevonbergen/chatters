@@ -23,7 +23,7 @@ const Navbar = ({ overlay = false }) => {
   ];
 
   const solutionsLinks = [
-    { name: 'Restaurants', path: '/solutions/restaurants', description: 'Optimize dining experiences', icon: <Utensils className="w-5 h-5" /> },
+    { name: 'Restaurants', path: '/solutions/restaurants', description: 'Optimise dining experiences', icon: <Utensils className="w-5 h-5" /> },
     { name: 'Hotels', path: '/solutions/hotels', description: 'Enhance guest satisfaction', icon: <Building className="w-5 h-5" /> },
     { name: 'Retail', path: '/solutions/retail', description: 'Improve customer service', icon: <ShoppingBag className="w-5 h-5" /> },
     { name: 'Events', path: '/solutions/events', description: 'Perfect event feedback', icon: <Calendar className="w-5 h-5" /> },

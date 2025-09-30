@@ -98,10 +98,6 @@ const BrandingTab = ({
 
   return (
     <div className="max-w-none lg:max-w-2xl">
-      <div className="mb-6 lg:mb-8">
-        <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Branding</h2>
-        <p className="text-gray-600 text-sm">Customize your venue's appearance and branding.</p>
-      </div>
 
       <div className="space-y-8">
         {/* Logo Section */}

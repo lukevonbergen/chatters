@@ -3,21 +3,16 @@ import { supabase } from '../../utils/supabase';
 import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
-
-// Import tab components
 import ManagersTab from '../../components/dashboard/staff/ManagersTab';
-import EmployeesTab from '../../components/dashboard/staff/EmployeesTab';
 
-const StaffPage = () => {
-  usePageTitle('Staff');
+const StaffManagersPage = () => {
+  usePageTitle('Managers');
   const { venueId, userRole, allVenues, loading: venueLoading } = useVenue();
 
   const [managers, setManagers] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-
-  // Removed tab navigation - using dedicated routes now
 
   useEffect(() => {
     if (venueLoading) return;
@@ -62,7 +57,6 @@ const StaffPage = () => {
 
     const venueIds = allVenues.map(v => v.id);
 
-    // First get staff data
     const { data: staffData, error: staffError } = await supabase
       .from('staff')
       .select(`
@@ -78,10 +72,8 @@ const StaffPage = () => {
       return;
     }
 
-    // Get user IDs to fetch user data
     const userIds = [...new Set(staffData.map(s => s.user_id))];
     
-    // Get user data separately (including auth status)
     const userPromises = userIds.map(async (userId) => {
       const { data } = await supabase
         .from('users')
@@ -89,21 +81,17 @@ const StaffPage = () => {
         .eq('id', userId)
         .single();
       
-      // Note: We now use password_hash field from users table instead of auth admin API
-      // This is more reliable and faster than making auth admin calls
       return data;
     });
     
     const userResults = await Promise.all(userPromises);
     const usersData = userResults.filter(user => user !== null);
 
-    // Get venue data separately  
     const { data: venuesData } = await supabase
       .from('venues')
       .select('id, name')
       .in('id', venueIds);
 
-    // Manually join the data
     const staffWithJoins = staffData.map(staff => {
       const foundUser = usersData?.find(u => u.id === staff.user_id);
       const foundVenue = venuesData?.find(v => v.id === staff.venue_id);
@@ -225,8 +213,8 @@ const StaffPage = () => {
   return (
     <div className="space-y-6">
       <ChartCard
-        title="Staff Management"
-        subtitle="Manage your team members and their venue access"
+        title="Manager Management"
+        subtitle="Manage manager accounts and venue access permissions"
       >
         {loading && (
           <div className="flex items-center justify-center py-12">
@@ -234,11 +222,7 @@ const StaffPage = () => {
           </div>
         )}
         
-        {!loading && (
-          userRole === 'master' 
-            ? <ManagersTab {...tabProps} />
-            : <EmployeesTab {...tabProps} />
-        )}
+        {!loading && <ManagersTab {...tabProps} />}
 
         {message && (
           <div className={`mt-4 p-3 rounded-md text-sm ${
@@ -254,4 +238,4 @@ const StaffPage = () => {
   );
 };
 
-export default StaffPage;
+export default StaffManagersPage;

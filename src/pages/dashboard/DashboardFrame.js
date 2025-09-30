@@ -4,6 +4,7 @@ import { useLoading } from '../../context/LoadingContext';
 import { useEffect, useState } from 'react';
 import { supabase, setAuthStorage } from '../../utils/supabase';
 import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown, FiExternalLink } from 'react-icons/fi';
+import { Building2, Check } from 'lucide-react';
 
 import { Button } from '../../components/ui/button';
 import {
@@ -244,22 +245,30 @@ const UpdatedDashboardFrame = ({ children }) => {
                   <div title={venueName}>
                     <Button
                       variant="outline"
-                      className="w-[140px] md:w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm truncate whitespace-nowrap bg-white"
+                      className="w-[140px] md:w-[200px] justify-between font-medium text-gray-700 border rounded-xl shadow-sm bg-white"
                     >
                       {switchingVenue ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
-                          <span className="text-sm text-muted-foreground hidden md:inline">Switching...</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin flex-shrink-0" />
+                          <span className="text-sm text-muted-foreground hidden md:inline truncate">Switching...</span>
                         </div>
                       ) : (
-                        venueName || 'Select Venue'
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Building2 className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                          <span className="truncate">{venueName || 'Select Venue'}</span>
+                        </div>
                       )}
-                      <FiChevronDown className="ml-2 h-4 w-4 text-gray-400" />
+                      <FiChevronDown className="ml-2 h-4 w-4 text-gray-400 flex-shrink-0" />
                     </Button>
                   </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-[140px] md:w-[200px] p-2 rounded-xl shadow-md bg-white">
-                  <div className="flex flex-col space-y-1">
+                  <div className="p-2 border-b border-gray-100">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wide px-3 py-2">
+                      Switch Venue
+                    </div>
+                  </div>
+                  <div className="p-2">
                     {allVenues.map((v) => (
                       <Button
                         key={v.id}
@@ -274,14 +283,36 @@ const UpdatedDashboardFrame = ({ children }) => {
                           setPopoverOpen(false);
                           setSwitchingVenue(false);
                         }}
-                        className={`w-full justify-start rounded-lg ${
+                        className={`w-full justify-between rounded-lg mb-1 ${
                           v.id === venueId ? 'bg-custom-black text-white' : ''
                         }`}
                       >
-                        <span className="truncate">{v.name}</span>
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="font-medium truncate">{v.name}</span>
+                        </div>
+                        {v.id === venueId && (
+                          <Check className="w-4 h-4 text-white flex-shrink-0" />
+                        )}
                       </Button>
                     ))}
                   </div>
+                  
+                  {userRole === 'master' && (
+                    <div className="p-2 border-t border-gray-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          navigate('/settings?tab=Venue');
+                          setPopoverOpen(false);
+                        }}
+                        className="w-full justify-start rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      >
+                        + Add New Venue
+                      </Button>
+                    </div>
+                  )}
                 </PopoverContent>
               </Popover>
             ) : (
@@ -380,18 +411,26 @@ const UpdatedDashboardFrame = ({ children }) => {
                       className="w-full justify-between font-medium text-gray-700 border rounded-xl shadow-sm bg-white"
                     >
                       {switchingVenue ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
-                          <span className="text-sm text-muted-foreground">Switching...</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin flex-shrink-0" />
+                          <span className="text-sm text-muted-foreground truncate">Switching...</span>
                         </div>
                       ) : (
-                        venueName || 'Select Venue'
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Building2 className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                          <span className="truncate">{venueName || 'Select Venue'}</span>
+                        </div>
                       )}
-                      <FiChevronDown className="ml-2 h-4 w-4 text-gray-400" />
+                      <FiChevronDown className="ml-2 h-4 w-4 text-gray-400 flex-shrink-0" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72 p-2 rounded-xl shadow-md bg-white" side="bottom" align="start">
-                    <div className="flex flex-col space-y-1">
+                    <div className="p-2 border-b border-gray-100">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide px-3 py-2">
+                        Switch Venue
+                      </div>
+                    </div>
+                    <div className="p-2">
                       {allVenues.map((v) => (
                         <Button
                           key={v.id}
@@ -407,14 +446,37 @@ const UpdatedDashboardFrame = ({ children }) => {
                             setSwitchingVenue(false);
                             setMobileMenuOpen(false);
                           }}
-                          className={`w-full justify-start rounded-lg ${
+                          className={`w-full justify-between rounded-lg mb-1 ${
                             v.id === venueId ? 'bg-custom-black text-white' : ''
                           }`}
                         >
-                          {v.name}
+                          <div className="flex items-center gap-3">
+                            <Building2 className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium">{v.name}</span>
+                          </div>
+                          {v.id === venueId && (
+                            <Check className="w-4 h-4 text-white" />
+                          )}
                         </Button>
                       ))}
                     </div>
+                    
+                    {userRole === 'master' && (
+                      <div className="p-2 border-t border-gray-100">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigate('/settings?tab=Venue');
+                            setPopoverOpen(false);
+                            setMobileMenuOpen(false);
+                          }}
+                          className="w-full justify-start rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        >
+                          + Add New Venue
+                        </Button>
+                      </div>
+                    )}
                   </PopoverContent>
                 </Popover>
               </div>

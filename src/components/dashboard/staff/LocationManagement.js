@@ -192,7 +192,6 @@ const LocationManagement = ({ venueId, onLocationUpdate }) => {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Staff Locations</h3>
         <button
           onClick={() => setShowAddForm(true)}
           className="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors flex items-center"

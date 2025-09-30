@@ -1,27 +1,17 @@
-// ManageQuestions.js — Refactored with tabbed interface like ReportsPage
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../utils/supabase';
 import { DragDropContext } from 'react-beautiful-dnd';
-// Removed PageContainer import - using modern layout
+import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
 import AlertModal from '../../components/ui/AlertModal';
-
-// Import tab components
-import QRCodeTab from '../../components/dashboard/feedback/QRCodeTab';
 import QuestionManagementTab from '../../components/dashboard/feedback/QuestionManagementTab';
 
-const ManageQuestions = () => {
-  usePageTitle('Feedback Manager');
+const FeedbackQuestionsPage = () => {
+  usePageTitle('Question Management');
   const { venueId } = useVenue();
 
-  // State for active tab
-  const [activeTab, setActiveTab] = useState('QRCode');
-  // Add mobile menu state
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // All your existing state variables
+  // All state variables from ManageQuestions
   const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [editingQuestionId, setEditingQuestionId] = useState(null);
@@ -48,18 +38,6 @@ const ManageQuestions = () => {
   const filteredSuggestedQuestions = suggestedQuestions.filter(
     (question) => !addedSuggestedQuestions.includes(question)
   );
-
-  // Navigation items
-  const navItems = [
-    { id: 'QRCode', label: 'QR Code & Sharing' },
-    { id: 'Questions', label: 'Question Management' },
-  ];
-
-  // Close mobile menu when tab changes
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    setIsMobileMenuOpen(false);
-  };
 
   useEffect(() => {
     if (!venueId) return;
@@ -151,20 +129,6 @@ const ManageQuestions = () => {
     }
   };
 
-  const handleAddInactiveQuestion = async (inactiveQuestion) => {
-    const { error } = await supabase
-      .from('questions')
-      .update({ active: true, order: questions.length + 1 })
-      .eq('id', inactiveQuestion.id);
-
-    if (error) {
-      console.error('Error re-adding inactive question:', error);
-    } else {
-      fetchQuestions(venueId);
-      fetchInactiveQuestions(venueId);
-    }
-  };
-
   const checkForDuplicateQuestion = async (questionText, isActive = true) => {
     const { data, error } = await supabase
       .from('questions')
@@ -179,6 +143,94 @@ const ManageQuestions = () => {
     }
 
     return data.length > 0;
+  };
+
+  const handleEditQuestion = (questionId) => {
+    const question = questions.find(q => q.id === questionId);
+    if (question) {
+      setEditingQuestionId(questionId);
+      setEditingQuestionText(question.question);
+    }
+  };
+
+  const handleSaveEditQuestion = async () => {
+    if (!editingQuestionText.trim()) {
+      setAlertModal({
+        type: 'warning',
+        title: 'Invalid Question',
+        message: 'Question cannot be empty.'
+      });
+      return;
+    }
+
+    if (editingQuestionText.length > 100) {
+      setAlertModal({
+        type: 'warning',
+        title: 'Question Too Long',
+        message: 'Question cannot exceed 100 characters.'
+      });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('questions')
+      .update({ question: editingQuestionText })
+      .eq('id', editingQuestionId);
+
+    if (error) {
+      console.error('Error updating question:', error);
+    } else {
+      setQuestions(questions.map(q => 
+        q.id === editingQuestionId 
+          ? { ...q, question: editingQuestionText }
+          : q
+      ));
+      setEditingQuestionId(null);
+      setEditingQuestionText('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingQuestionId(null);
+    setEditingQuestionText('');
+  };
+
+  const handleDeleteQuestion = async (questionId) => {
+    const { error } = await supabase
+      .from('questions')
+      .update({ active: false })
+      .eq('id', questionId);
+
+    if (error) {
+      console.error('Error marking question as inactive:', error);
+    } else {
+      setQuestions(questions.filter((q) => q.id !== questionId));
+      fetchInactiveQuestions(venueId);
+    }
+  };
+
+  const handleActivateQuestion = async (questionId) => {
+    if (questions.length >= 5) {
+      setSelectedInactiveQuestion(inactiveQuestions.find(q => q.id === questionId));
+      setReplacementSource('inactive');
+      setIsReplaceModalOpen(true);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('questions')
+      .update({ active: true, order: questions.length })
+      .eq('id', questionId);
+
+    if (error) {
+      console.error('Error activating question:', error);
+    } else {
+      const activatedQuestion = inactiveQuestions.find(q => q.id === questionId);
+      setInactiveQuestions(inactiveQuestions.filter(q => q.id !== questionId));
+      if (activatedQuestion) {
+        setQuestions([...questions, { ...activatedQuestion, active: true, order: questions.length }]);
+      }
+    }
   };
 
   const handleReplaceQuestion = async (questionIdToReplace) => {
@@ -248,37 +300,23 @@ const ManageQuestions = () => {
     setIsReplaceModalOpen(false);
   };
 
+  const handleAddInactiveQuestion = async (inactiveQuestion) => {
+    const { error } = await supabase
+      .from('questions')
+      .update({ active: true, order: questions.length + 1 })
+      .eq('id', inactiveQuestion.id);
+
+    if (error) {
+      console.error('Error re-adding inactive question:', error);
+    } else {
+      fetchQuestions(venueId);
+      fetchInactiveQuestions(venueId);
+    }
+  };
+
   const handleNewQuestionChange = (e) => {
     setNewQuestion(e.target.value);
     setDuplicateError('');
-  };
-
-  const onDragEnd = async (result) => {
-    if (!result.destination) return;
-
-    const reorderedQuestions = Array.from(questions);
-    const [movedQuestion] = reorderedQuestions.splice(result.source.index, 1);
-    reorderedQuestions.splice(result.destination.index, 0, movedQuestion);
-
-    setQuestions(reorderedQuestions);
-
-    const updates = reorderedQuestions.map((q, index) => ({
-      id: q.id,
-      order: index + 1,
-    }));
-
-    for (const update of updates) {
-      const { error } = await supabase
-        .from('questions')
-        .update({ order: update.order })
-        .eq('id', update.id);
-
-      if (error) {
-        console.error('Error updating question order:', error);
-        fetchQuestions(venueId);
-        return;
-      }
-    }
   };
 
   const startEditingQuestion = (questionId, questionText) => {
@@ -331,150 +369,31 @@ const ManageQuestions = () => {
     }
   };
 
-  const handleDeleteQuestion = async (questionId) => {
-    const { error } = await supabase
-      .from('questions')
-      .update({ active: false })
-      .eq('id', questionId);
+  const onDragEnd = async (result) => {
+    if (!result.destination) return;
 
-    if (error) {
-      console.error('Error marking question as inactive:', error);
-    } else {
-      setQuestions(questions.filter((q) => q.id !== questionId));
-      fetchInactiveQuestions(venueId);
-    }
-  };
+    const reorderedQuestions = Array.from(questions);
+    const [movedQuestion] = reorderedQuestions.splice(result.source.index, 1);
+    reorderedQuestions.splice(result.destination.index, 0, movedQuestion);
 
-  const handleEditQuestion = (questionId) => {
-    const question = questions.find(q => q.id === questionId);
-    if (question) {
-      setEditingQuestionId(questionId);
-      setEditingQuestionText(question.question);
-    }
-  };
+    setQuestions(reorderedQuestions);
 
-  const handleSaveEditQuestion = async () => {
-    if (!editingQuestionText.trim()) {
-      setAlertModal({
-        type: 'warning',
-        title: 'Invalid Question',
-        message: 'Question cannot be empty.'
-      });
-      return;
-    }
+    const updates = reorderedQuestions.map((q, index) => ({
+      id: q.id,
+      order: index + 1,
+    }));
 
-    if (editingQuestionText.length > 100) {
-      setAlertModal({
-        type: 'warning',
-        title: 'Question Too Long',
-        message: 'Question cannot exceed 100 characters.'
-      });
-      return;
-    }
+    for (const update of updates) {
+      const { error } = await supabase
+        .from('questions')
+        .update({ order: update.order })
+        .eq('id', update.id);
 
-    const { error } = await supabase
-      .from('questions')
-      .update({ question: editingQuestionText })
-      .eq('id', editingQuestionId);
-
-    if (error) {
-      console.error('Error updating question:', error);
-    } else {
-      setQuestions(questions.map(q => 
-        q.id === editingQuestionId 
-          ? { ...q, question: editingQuestionText }
-          : q
-      ));
-      setEditingQuestionId(null);
-      setEditingQuestionText('');
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingQuestionId(null);
-    setEditingQuestionText('');
-  };
-
-  const handleActivateQuestion = async (questionId) => {
-    if (questions.length >= 5) {
-      setSelectedInactiveQuestion(inactiveQuestions.find(q => q.id === questionId));
-      setReplacementSource('inactive');
-      setIsReplaceModalOpen(true);
-      return;
-    }
-
-    const { error } = await supabase
-      .from('questions')
-      .update({ active: true, order: questions.length })
-      .eq('id', questionId);
-
-    if (error) {
-      console.error('Error activating question:', error);
-    } else {
-      const activatedQuestion = inactiveQuestions.find(q => q.id === questionId);
-      setInactiveQuestions(inactiveQuestions.filter(q => q.id !== questionId));
-      if (activatedQuestion) {
-        setQuestions([...questions, { ...activatedQuestion, active: true, order: questions.length }]);
+      if (error) {
+        console.error('Error updating question order:', error);
+        fetchQuestions(venueId);
+        return;
       }
-    }
-  };
-
-  const feedbackUrl = `${window.location.origin}/feedback/${venueId}`;
-
-  // Props to pass to tab components
-  const tabProps = {
-    // Data
-    questions,
-    newQuestion,
-    editingQuestionId,
-    editingQuestionText,
-    inactiveQuestions,
-    searchTerm,
-    isReplaceModalOpen,
-    selectedInactiveQuestion,
-    pendingNewQuestion,
-    replacementSource,
-    duplicateError,
-    addedSuggestedQuestions,
-    suggestedQuestions,
-    filteredSuggestedQuestions,
-    feedbackUrl,
-    venueId,
-    qrCodeRef,
-
-    // Setters
-    setNewQuestion,
-    setEditingQuestionId,
-    setEditingQuestionText,
-    setSearchTerm,
-    setIsReplaceModalOpen,
-    setSelectedInactiveQuestion,
-    setPendingNewQuestion,
-    setReplacementSource,
-    setDuplicateError,
-
-    // Actions
-    handleAddQuestion,
-    handleAddInactiveQuestion,
-    handleReplaceQuestion,
-    onReplaceQuestion: handleReplaceQuestion,
-    handleNewQuestionChange,
-    onDragEnd,
-    startEditingQuestion,
-    cancelEditingQuestion,
-    handleEditTextChange,
-    saveEditedQuestion,
-    handleDeleteQuestion,
-  };
-
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case 'QRCode':
-        return <QRCodeTab {...tabProps} />;
-      case 'Questions':
-        return <QuestionManagementTab {...tabProps} />;
-      default:
-        return <QuestionManagementTab {...tabProps} />;
     }
   };
 
@@ -484,21 +403,15 @@ const ManageQuestions = () => {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Feedback Questions</h2>
-            <p className="text-gray-600">Create and organize customer feedback questions for your venue.</p>
-          </div>
+      <ChartCard
+        title="Question Management"
+        subtitle="Create and organize customer feedback questions for your venue"
+        actions={
           <div className="bg-blue-50 px-4 py-2 rounded-xl border border-blue-200">
             <span className="text-blue-700 font-semibold">Active: {questions.length}/5</span>
           </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+        }
+      >
         <DragDropContext onDragEnd={onDragEnd}>
           <QuestionManagementTab
             questions={questions}
@@ -544,9 +457,8 @@ const ManageQuestions = () => {
             saveEditedQuestion={saveEditedQuestion}
           />
         </DragDropContext>
-      </div>
+      </ChartCard>
 
-      {/* Alert Modal */}
       <AlertModal
         isOpen={!!alertModal}
         onClose={() => setAlertModal(null)}
@@ -558,4 +470,4 @@ const ManageQuestions = () => {
   );
 };
 
-export default ManageQuestions;
+export default FeedbackQuestionsPage;

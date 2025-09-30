@@ -375,13 +375,6 @@ const QuestionManagementTab = ({
 
   return (
     <div className="max-w-none">
-      <div className="mb-6">
-        <h2 className="text-base lg:text-lg font-medium text-gray-900 mb-1">Question Management</h2>
-        <p className="text-sm text-gray-600">
-          Create, organize, and manage your customer feedback questions
-        </p>
-      </div>
-
       <div className="space-y-8">
         <SuggestedQuestionsSection 
           filteredSuggestedQuestions={filteredSuggestedQuestions}

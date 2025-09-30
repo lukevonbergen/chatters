@@ -416,8 +416,6 @@ const ManagersTab = ({
       <div className="mb-6 lg:mb-8">
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
           <div className="flex-1">
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Managers</h2>
-            <p className="text-gray-600 text-sm">Manage your venue managers and their venue assignments.</p>
           </div>
           <button
             onClick={() => setShowAddForm(true)}

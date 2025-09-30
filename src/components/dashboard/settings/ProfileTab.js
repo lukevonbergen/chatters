@@ -51,10 +51,6 @@ const ProfileTab = ({
 
   return (
     <div className="max-w-none lg:max-w-2xl">
-      <div className="mb-6 lg:mb-8">
-        <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Profile</h2>
-        <p className="text-gray-600 text-sm">This is how others will see you on the site.</p>
-      </div>
 
       <div className="space-y-4 lg:space-y-6">
         <div>
