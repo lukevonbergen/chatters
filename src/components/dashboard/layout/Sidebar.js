@@ -95,6 +95,7 @@ const navItems = [
     color: 'text-gray-600',
     subItems: [
       { label: 'Venues', path: '/settings/venues', icon: Building2 },
+      { label: 'Feedback Settings', path: '/settings/feedback', icon: MessageSquare },
       { label: 'Branding', path: '/settings/branding', icon: Palette },
       { label: 'Integrations', path: '/settings/integrations', icon: Activity }
     ]
@@ -102,16 +103,28 @@ const navItems = [
 ];
 
 // Account settings items for bottom section
-const accountItems = [
-  { label: 'Profile', path: '/account/profile', icon: User },
-  { label: 'Billing', path: '/account/billing', icon: CreditCard }
-];
+const getAccountItems = (userRole, trialInfo) => {
+  const items = [
+    { label: 'Profile', path: '/account/profile', icon: User }
+  ];
+  
+  // Show billing for master users OR if trial is expired (special billing access)
+  if (userRole === 'master' || trialInfo?.isExpired) {
+    items.push({ label: 'Billing', path: '/account/billing', icon: CreditCard });
+  }
+  
+  return items;
+};
 
 const Sidebar = ({ collapsed, setCollapsed }) => {
   const [activeSubmenu, setActiveSubmenu] = useState(null);
+  const [trialInfo, setTrialInfo] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { userRole } = useVenue();
+  
+  // Get account items based on user role and trial status
+  const accountItems = getAccountItems(userRole, trialInfo);
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -120,6 +133,67 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   const hasActiveSubitem = (subItems) => {
     return subItems?.some(subItem => isActive(subItem.path));
   };
+
+  // Fetch trial information for billing access control
+  React.useEffect(() => {
+    const fetchTrialInfo = async () => {
+      if (userRole !== 'master' && userRole !== 'manager') return;
+      
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const userId = authData?.user?.id;
+        if (!userId) return;
+
+        // Get user account info
+        const { data: userRow } = await supabase
+          .from('users')
+          .select('account_id, role')
+          .eq('id', userId)
+          .single();
+
+        if (!userRow) return;
+
+        // For managers, get account_id through their venue
+        let accountIdToCheck = userRow.account_id;
+        if (userRow.role === 'manager' && !accountIdToCheck) {
+          const { data: staffRow } = await supabase
+            .from('staff')
+            .select('venues!inner(account_id)')
+            .eq('user_id', userId)
+            .limit(1)
+            .single();
+            
+          accountIdToCheck = staffRow?.venues?.account_id;
+        }
+
+        if (!accountIdToCheck) return;
+
+        // Fetch account trial/subscription info
+        const { data: accountData } = await supabase
+          .from('accounts')
+          .select('trial_ends_at, stripe_subscription_id')
+          .eq('id', accountIdToCheck)
+          .single();
+
+        if (accountData) {
+          const trialEndsAt = accountData.trial_ends_at ? new Date(accountData.trial_ends_at) : null;
+          const now = new Date();
+          const isExpired = trialEndsAt && now > trialEndsAt && !accountData.stripe_subscription_id;
+          const isActive = trialEndsAt && now <= trialEndsAt && !accountData.stripe_subscription_id;
+          
+          setTrialInfo({
+            isExpired,
+            isActive,
+            trialEndsAt
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching trial info:', error);
+      }
+    };
+
+    fetchTrialInfo();
+  }, [userRole]);
 
   // Auto-open submenu based on current route
   React.useEffect(() => {

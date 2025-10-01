@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 const FeedbackTab = ({ feedbackSessions, assistanceRequests }) => {
-  const [dateFilter, setDateFilter] = useState('last7');
+  const [dateFilter, setDateFilter] = useState('all');
   const getFilteredSessions = (sessions, filter) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -125,6 +125,7 @@ const FeedbackTab = ({ feedbackSessions, assistanceRequests }) => {
               onChange={(e) => setDateFilter(e.target.value)}
               className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
+              <option value="all">All Time</option>
               <option value="thisWeek">This Week</option>
               <option value="last7">Last 7 Days</option>
               <option value="last14">Last 14 Days</option>

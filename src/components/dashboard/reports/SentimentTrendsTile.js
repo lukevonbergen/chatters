@@ -2,7 +2,53 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { TrendingUp, TrendingDown, Calendar, Smile, Frown, Meh } from 'lucide-react';
 
-const SentimentTrendsTile = ({ venueId }) => {
+function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return x; }
+function toISO(d) { return d.toISOString(); }
+
+function rangeISO(preset, fromStr, toStr) {
+  const now = new Date();
+  switch (preset) {
+    case 'today': {
+      return { start: toISO(startOfDay(now)), end: toISO(endOfDay(now)) };
+    }
+    case 'yesterday': {
+      const y = new Date(now); y.setDate(now.getDate() - 1);
+      return { start: toISO(startOfDay(y)), end: toISO(endOfDay(y)) };
+    }
+    case 'thisWeek': {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      return { start: toISO(startOfDay(startOfWeek)), end: toISO(endOfDay(now)) };
+    }
+    case 'last7': {
+      const s = new Date(now); s.setDate(now.getDate() - 6);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last14': {
+      const s = new Date(now); s.setDate(now.getDate() - 13);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last30': {
+      const s = new Date(now); s.setDate(now.getDate() - 29);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'all': {
+      // For 'all' timeframe, limit to last 2 years to avoid performance issues
+      const s = new Date(now); s.setFullYear(now.getFullYear() - 2);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'custom': {
+      const s = fromStr ? startOfDay(new Date(fromStr)) : startOfDay(new Date(0));
+      const e = toStr ? endOfDay(new Date(toStr)) : endOfDay(now);
+      return { start: toISO(s), end: toISO(e) };
+    }
+    default:
+      return { start: toISO(startOfDay(new Date(0))), end: toISO(endOfDay(now)) };
+  }
+}
+
+const SentimentTrendsTile = ({ venueId, timeframe = 'last30' }) => {
   const [sentimentData, setSentimentData] = useState([]);
   const [weeklyTrend, setWeeklyTrend] = useState([]);
   const [currentSentiment, setCurrentSentiment] = useState(null);
@@ -12,15 +58,19 @@ const SentimentTrendsTile = ({ venueId }) => {
   useEffect(() => {
     if (!venueId) return;
     fetchSentimentTrends();
-  }, [venueId]);
+  }, [venueId, timeframe]);
 
   const fetchSentimentTrends = async () => {
     setLoading(true);
+    
+    const { start, end } = rangeISO(timeframe);
     
     const { data, error } = await supabase
       .from('feedback')
       .select('created_at, sentiment, rating')
       .eq('venue_id', venueId)
+      .gte('created_at', start)
+      .lte('created_at', end)
       .not('created_at', 'is', null)
       .order('created_at', { ascending: true });
 
@@ -30,15 +80,16 @@ const SentimentTrendsTile = ({ venueId }) => {
       return;
     }
 
-    // Group by day for the last 30 days
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    // Calculate the number of days in the timeframe
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
     
     const dailyData = {};
     
-    // Initialize last 30 days
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    // Initialize days for the selected timeframe
+    for (let i = 0; i < daysDiff; i++) {
+      const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
       const key = date.toISOString().split('T')[0];
       dailyData[key] = {
         date: key,
@@ -51,16 +102,14 @@ const SentimentTrendsTile = ({ venueId }) => {
     // Process feedback data
     data.forEach(item => {
       const date = new Date(item.created_at);
-      if (date >= thirtyDaysAgo) {
-        const key = date.toISOString().split('T')[0];
-        if (dailyData[key]) {
-          if (item.sentiment) {
-            dailyData[key].sentiments[item.sentiment]++;
-            dailyData[key].total++;
-          }
-          if (item.rating) {
-            dailyData[key].ratings.push(item.rating);
-          }
+      const key = date.toISOString().split('T')[0];
+      if (dailyData[key]) {
+        if (item.sentiment) {
+          dailyData[key].sentiments[item.sentiment]++;
+          dailyData[key].total++;
+        }
+        if (item.rating) {
+          dailyData[key].ratings.push(item.rating);
         }
       }
     });
@@ -163,7 +212,7 @@ const SentimentTrendsTile = ({ venueId }) => {
             Sentiment Trends
           </h3>
           <p className="text-sm text-gray-600">
-            Customer emotion patterns over the last 30 days
+            Customer emotion patterns for selected timeframe
           </p>
         </div>
       </div>

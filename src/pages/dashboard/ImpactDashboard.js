@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
-import PerformanceDashboardTab from '../../components/dashboard/reports/PerformanceDashboardTab';
+import ImpactDashboardTab from '../../components/dashboard/reports/ImpactDashboardTab';
 
-const PerformanceDashboardPage = () => {
-  usePageTitle('Performance Dashboard');
+const ImpactDashboardPage = () => {
+  usePageTitle('Impact Dashboard');
   const { venueId } = useVenue();
-  const [timeframe, setTimeframe] = useState('last7');
+  const [timeframe, setTimeframe] = useState('last30');
 
   if (!venueId) {
     return null;
@@ -16,8 +16,8 @@ const PerformanceDashboardPage = () => {
   return (
     <div className="space-y-6">
       <ChartCard
-        title="Performance Dashboard"
-        subtitle="Track key performance metrics and trends"
+        title="Impact Dashboard"
+        subtitle="Track Google and TripAdvisor ratings progression"
         actions={
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium text-gray-700">Period:</label>
@@ -36,10 +36,10 @@ const PerformanceDashboardPage = () => {
           </div>
         }
       >
-        <PerformanceDashboardTab venueId={venueId} timeframe={timeframe} />
+        <ImpactDashboardTab venueId={venueId} timeframe={timeframe} />
       </ChartCard>
     </div>
   );
 };
 
-export default PerformanceDashboardPage;
+export default ImpactDashboardPage;

@@ -3,10 +3,11 @@ import { supabase } from '../../utils/supabase';
 import OverviewStats from '../../components/dashboard/overview/OverviewStats';
 import RecentActivity from '../../components/dashboard/overview/RecentActivity';
 import RatingsTrendBar from '../../components/dashboard/reports/RatingsTrendBar';
+import RatingsTrendChart from '../../components/dashboard/reports/RatingsTrendChart';
 import { ChartCard, ActivityCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
-import { Sparkles, Activity, TrendingUp, Calendar, Users, Star } from 'lucide-react';
+import { Activity, TrendingUp, Calendar, Users, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DashboardNew = () => {
@@ -172,18 +173,13 @@ const DashboardNew = () => {
     <div className="space-y-8">
       {/* Welcome Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {getGreeting()}{userName ? `, ${userName}` : ''}
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Welcome back to <span className="font-semibold text-gray-800">{venueName}</span>
-            </p>
-          </div>
+        <div className="mb-3">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {getGreeting()}{userName ? `, ${userName}` : ''}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Welcome back to <span className="font-semibold text-gray-800">{venueName}</span>
+          </p>
         </div>
         
         {getMultiVenueGreeting() && (
@@ -199,72 +195,22 @@ const DashboardNew = () => {
       {/* Overview Stats */}
       <OverviewStats />
 
-      {/* Performance & Activity */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-        {/* Rating Trends Chart */}
-        <div className="xl:col-span-3">
-          <ChartCard
-            title="Review Platform Ratings"
-            subtitle="Daily ratings from Google and TripAdvisor"
-          >
-            <div className="h-64">
-              <RatingsTrendBar venueId={venueId} />
-            </div>
-          </ChartCard>
-        </div>
+      {/* Charts and Activity - Full Width */}
+      <div className="space-y-8">
+        {/* Ratings Impact Chart from Impact Tab */}
+        <ChartCard
+          title="Ratings Impact Analysis"
+          subtitle="Track your Google and TripAdvisor ratings progress over time"
+        >
+          <RatingsTrendChart venueId={venueId} timeframe="last30" />
+        </ChartCard>
         
-        {/* Recent Activity */}
-        <div>
-          <ChartCard title="Recent Activity" subtitle="Last 24 hours">
-            <RecentActivity activities={recentActivity} loading={activityLoading} />
-          </ChartCard>
-        </div>
+        {/* Recent Activity - Full Width */}
+        <ChartCard title="Recent Activity" subtitle="Customer interactions from the last 24 hours">
+          <RecentActivity activities={recentActivity} loading={activityLoading} />
+        </ChartCard>
       </div>
 
-      {/* Smart Insights */}
-      <ChartCard
-        title="Smart Insights"
-        subtitle="AI-powered recommendations based on your venue's performance"
-        className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-200"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white/80 rounded-xl p-6 border border-white/50 backdrop-blur-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900">Response Time</h4>
-            </div>
-            <p className="text-sm text-gray-600">
-              Track assistance response times to identify improvement opportunities and enhance customer satisfaction.
-            </p>
-          </div>
-          
-          <div className="bg-white/80 rounded-xl p-6 border border-white/50 backdrop-blur-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Calendar className="w-5 h-5 text-purple-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900">Peak Hours</h4>
-            </div>
-            <p className="text-sm text-gray-600">
-              Monitor busy periods to optimize staff scheduling and ensure adequate coverage during high-demand times.
-            </p>
-          </div>
-
-          <div className="bg-white/80 rounded-xl p-6 border border-white/50 backdrop-blur-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Star className="w-5 h-5 text-amber-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900">Satisfaction Trends</h4>
-            </div>
-            <p className="text-sm text-gray-600">
-              Analyze customer feedback patterns to identify areas for service improvement and staff training.
-            </p>
-          </div>
-        </div>
-      </ChartCard>
     </div>
   );
 };

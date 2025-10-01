@@ -142,15 +142,7 @@ const ReportsPage = () => {
 
   return (
     <div className="space-y-6">
-      <ChartCard
-        title="Analytics Dashboard"
-        subtitle="Track customer feedback performance and satisfaction metrics"
-        actions={
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-            Real-time
-          </span>
-        }
-      >
+      <ChartCard>
         <FeedbackTab {...tabProps} />
       </ChartCard>
     </div>

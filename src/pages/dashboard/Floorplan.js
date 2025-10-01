@@ -1,7 +1,7 @@
 // File: Floorplan.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../utils/supabase';
-import PageContainer from '../../components/dashboard/layout/PageContainer';
+import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import { v4 as uuidv4 } from 'uuid';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
@@ -272,44 +272,55 @@ const Floorplan = () => {
   }
 
   return (
-    <PageContainer>
-      <div className="mb-4">
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Floor Plan</h1>
-      </div>
+    <div className="w-full">
+      <ChartCard
+        title="Floor Plan"
+        subtitle="Manage your venue layout and table arrangements"
+        actions={
+          !editMode ? (
+            <button
+              onClick={handleToggleEdit}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Edit Layout
+            </button>
+          ) : null
+        }
+      >
+        <div className="space-y-6">
+          <EditControls
+            editMode={editMode}
+            hasUnsavedChanges={hasUnsavedChanges}
+            saving={saving}
+            tables={tables}
+            onToggleEdit={handleToggleEdit}
+            onAddTable={handleAddTable}
+            onSaveLayout={handleSaveLayout}
+            onClearAllTables={handleClearAllTables}
+            onShowAlert={setAlertModal}
+          />
+          
+          <ZoneSelector
+            zones={zones}
+            selectedZoneId={selectedZoneId}
+            editMode={editMode}
+            onZoneSelect={handleZoneSelect}
+            onZoneRename={handleZoneRename}
+            onZoneDelete={handleZoneDelete}
+            onCreateZone={handleCreateZone}
+          />
 
-      <EditControls
-        editMode={editMode}
-        hasUnsavedChanges={hasUnsavedChanges}
-        saving={saving}
-        tables={tables}
-        onToggleEdit={handleToggleEdit}
-        onAddTable={handleAddTable}
-        onSaveLayout={handleSaveLayout}
-        onClearAllTables={handleClearAllTables}
-        onShowAlert={setAlertModal}
-      />
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
-        <ZoneSelector
-          zones={zones}
-          selectedZoneId={selectedZoneId}
-          editMode={editMode}
-          onZoneSelect={handleZoneSelect}
-          onZoneRename={handleZoneRename}
-          onZoneDelete={handleZoneDelete}
-          onCreateZone={handleCreateZone}
-        />
-
-        <FloorPlanCanvas
-          ref={layoutRef}
-          tables={tables}
-          selectedZoneId={selectedZoneId}
-          editMode={editMode}
-          onTableDrag={handleTableDrag}
-          onRemoveTable={handleRemoveTable}
-          onTableResize={handleTableResize}
-        />
-      </div>
+          <FloorPlanCanvas
+            ref={layoutRef}
+            tables={tables}
+            selectedZoneId={selectedZoneId}
+            editMode={editMode}
+            onTableDrag={handleTableDrag}
+            onRemoveTable={handleRemoveTable}
+            onTableResize={handleTableResize}
+          />
+        </div>
+      </ChartCard>
 
       {/* Exit Edit Confirmation Modal */}
       <ConfirmationModal
@@ -362,7 +373,7 @@ const Floorplan = () => {
         message={alertModal?.message}
         type={alertModal?.type}
       />
-    </PageContainer>
+    </div>
   );
 };
 

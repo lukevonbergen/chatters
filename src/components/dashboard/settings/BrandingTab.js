@@ -97,10 +97,11 @@ const BrandingTab = ({
   };
 
   return (
-    <div className="max-w-none lg:max-w-2xl">
-
-      <div className="space-y-8">
-        {/* Logo Section */}
+    <div className="w-full">
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        {/* Left Column - Logo Section */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Logo</h3>
@@ -108,17 +109,17 @@ const BrandingTab = ({
           </div>
 
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="flex flex-col items-center space-y-4">
               {logo && (
                 <div className="flex-shrink-0">
                   <img 
                     src={logo} 
                     alt="Logo" 
-                    className="w-16 h-16 lg:w-20 lg:h-20 object-cover rounded-md border border-gray-200" 
+                    className="w-24 h-24 lg:w-32 lg:h-32 object-cover rounded-lg border border-gray-200 shadow-sm" 
                   />
                 </div>
               )}
-              <div className="flex-1">
+              <div className="w-full">
                 <input
                   type="file"
                   accept="image/*"
@@ -126,7 +127,7 @@ const BrandingTab = ({
                   disabled={logoLoading}
                   className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer disabled:opacity-50"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 mt-1 text-center">
                   Recommended: Square image, minimum 100x100px
                 </p>
               </div>
@@ -145,7 +146,7 @@ const BrandingTab = ({
           </div>
         </div>
 
-        {/* Colors Section */}
+        {/* Right Column - Colors Section */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Brand Colors</h3>
@@ -247,6 +248,7 @@ const BrandingTab = ({
             )}
           </div>
         </div>
+      
       </div>
     </div>
   );

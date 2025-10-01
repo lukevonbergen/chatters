@@ -4,6 +4,8 @@ import useOverviewStats from '../../../hooks/useOverviewStats';
 import useMultiVenueStats from '../../../hooks/useMultiVenueStats';
 import { useVenue } from '../../../context/VenueContext';
 import { MetricCard, StatsGrid, ChartCard } from '../layout/ModernCard';
+import GoogleRatingKPITile from '../reports/GoogleRatingKPITile';
+import TripAdvisorRatingKPITile from '../reports/TripAdvisorRatingKPITile';
 
 // StatCard component removed - using MetricCard from ModernCard instead
 
@@ -189,15 +191,13 @@ const OverviewStats = () => {
         }
       >
         {/* Stats Grid */}
-        <StatsGrid>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {/* Today's Sessions */}
           <MetricCard
             icon={Users}
             title="Today's Sessions"
             value={stats?.todaySessions || '0'}
             subtitle="Customer interactions"
-            trend={stats?.sessionsTrend}
-            trendDirection={stats?.sessionsTrendDirection}
             color="blue"
             venueBreakdowns={venueBreakdowns}
             allVenues={allVenues}
@@ -210,8 +210,6 @@ const OverviewStats = () => {
             title="Satisfaction Score"
             value={stats?.avgSatisfaction ? `${stats.avgSatisfaction}/5` : '--'}
             subtitle="Today's average"
-            trend={stats?.satisfactionTrend}
-            trendDirection={stats?.satisfactionTrendDirection}
             color="amber"
             venueBreakdowns={venueBreakdowns}
             allVenues={allVenues}
@@ -223,9 +221,7 @@ const OverviewStats = () => {
             icon={Clock}
             title="Avg Response Time"
             value={stats?.avgResponseTime || '--'}
-            subtitle="To assistance requests"
-            trend={stats?.responseTimeTrend}
-            trendDirection={stats?.responseTimeTrendDirection}
+            subtitle="To all feedback"
             color="green"
           />
 
@@ -235,8 +231,6 @@ const OverviewStats = () => {
             title="Completion Rate"
             value={stats?.completionRate ? `${stats.completionRate}%` : '--'}
             subtitle="Issues resolved"
-            trend={stats?.completionTrend}
-            trendDirection={stats?.completionTrendDirection}
             color="purple"
           />
 
@@ -278,7 +272,13 @@ const OverviewStats = () => {
             subtitle="Busiest time"
             color="purple"
           />
-        </StatsGrid>
+
+          {/* Google Rating */}
+          <GoogleRatingKPITile venueId={selectedVenueIds.length === 1 ? selectedVenueIds[0] : null} />
+
+          {/* TripAdvisor Rating */}
+          <TripAdvisorRatingKPITile venueId={selectedVenueIds.length === 1 ? selectedVenueIds[0] : null} />
+        </div>
       </ChartCard>
     </div>
   );

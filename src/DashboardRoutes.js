@@ -42,6 +42,7 @@ import StaffEmployeesPage from './pages/dashboard/StaffEmployees';
 import SettingsBrandingPage from './pages/dashboard/SettingsBranding';
 import AccountProfilePage from './pages/dashboard/AccountProfile';
 import AccountBillingPage from './pages/dashboard/AccountBilling';
+import FeedbackSettings from './pages/dashboard/FeedbackSettings';
 
 // Kiosk (venue‑aware, no dashboard frame)
 import KioskPage from './pages/dashboard/KioskPage';
@@ -129,6 +130,7 @@ const DashboardRoutes = () => {
         
         {/* Settings Section */}
         <Route path="/settings/venues" element={<VenueSettingsPage />} />
+        <Route path="/settings/feedback" element={<FeedbackSettings />} />
         <Route path="/settings/branding" element={<SettingsBrandingPage />} />
         <Route path="/settings/integrations" element={<IntegrationsSettingsPage />} />
         

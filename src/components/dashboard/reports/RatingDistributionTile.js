@@ -1,8 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
-import { BarChart3, Star, Users } from 'lucide-react';
+import { BarChart3, Star } from 'lucide-react';
 
-export default function RatingDistributionTile({ venueId }) {
+function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return x; }
+function toISO(d) { return d.toISOString(); }
+
+function rangeISO(preset, fromStr, toStr) {
+  const now = new Date();
+  switch (preset) {
+    case 'today': {
+      return { start: toISO(startOfDay(now)), end: toISO(endOfDay(now)) };
+    }
+    case 'yesterday': {
+      const y = new Date(now); y.setDate(now.getDate() - 1);
+      return { start: toISO(startOfDay(y)), end: toISO(endOfDay(y)) };
+    }
+    case 'thisWeek': {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      return { start: toISO(startOfDay(startOfWeek)), end: toISO(endOfDay(now)) };
+    }
+    case 'last7': {
+      const s = new Date(now); s.setDate(now.getDate() - 6);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last14': {
+      const s = new Date(now); s.setDate(now.getDate() - 13);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last30': {
+      const s = new Date(now); s.setDate(now.getDate() - 29);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'all': {
+      return { start: toISO(startOfDay(new Date(0))), end: toISO(endOfDay(now)) };
+    }
+    case 'custom': {
+      const s = fromStr ? startOfDay(new Date(fromStr)) : startOfDay(new Date(0));
+      const e = toStr ? endOfDay(new Date(toStr)) : endOfDay(now);
+      return { start: toISO(s), end: toISO(e) };
+    }
+    default:
+      return { start: toISO(startOfDay(new Date(0))), end: toISO(endOfDay(now)) };
+  }
+}
+
+export default function RatingDistributionTile({ venueId, timeframe = 'last30' }) {
   const [rows, setRows] = useState([]); // [{rating, count, pct}]
   const [total, setTotal] = useState(0);
   const [avg, setAvg] = useState(0);
@@ -12,15 +56,19 @@ export default function RatingDistributionTile({ venueId }) {
     if (!venueId) return;
     fetchRatingDistribution();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [venueId]);
+  }, [venueId, timeframe]);
 
   async function fetchRatingDistribution() {
     setLoading(true);
+
+    const { start, end } = rangeISO(timeframe);
 
     const { data, error } = await supabase
       .from('feedback')
       .select('rating')
       .eq('venue_id', venueId)
+      .gte('created_at', start)
+      .lte('created_at', end)
       .not('rating', 'is', null)
       .gte('rating', 1)
       .lte('rating', 5);
@@ -61,11 +109,17 @@ export default function RatingDistributionTile({ venueId }) {
 
   const maxCount = Math.max(0, ...rows.map(d => d.count));
 
-  // Monochrome fill + subtle alpha ramp to match PeakHours aesthetic
+  // Response time analytics color scheme
   const fillWidth = (count) => (maxCount ? (count / maxCount) * 100 : 0);
-  const band = (intensity /*0..1*/) => {
-    const a = intensity === 0 ? 0.08 : 0.15 + 0.85 * Math.min(1, Math.max(0, intensity));
-    return { backgroundColor: `rgba(15,23,42,${a})` }; // slate-900 with variable alpha
+  const getRatingColor = (rating) => {
+    switch(rating) {
+      case 5: return 'bg-green-500';
+      case 4: return 'bg-green-400';
+      case 3: return 'bg-yellow-500';
+      case 2: return 'bg-orange-500';
+      case 1: return 'bg-red-600';
+      default: return 'bg-gray-200';
+    }
   };
 
   const noData = !loading && total === 0;
@@ -75,8 +129,7 @@ export default function RatingDistributionTile({ venueId }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-gray-600" />
+          <h3 className="text-base font-semibold text-gray-900">
             Customer Satisfaction
           </h3>
           <p className="text-xs text-gray-600 mt-1">How guests rate their experience (1–5)</p>
@@ -85,11 +138,9 @@ export default function RatingDistributionTile({ venueId }) {
         {/* Compact overall card */}
         <div className="rounded-md border border-gray-100 p-3 text-right min-w-[132px]">
           <div className="flex items-center justify-end gap-1">
-            <Star className="w-4 h-4 text-gray-700" />
             <span className="text-2xl font-bold text-gray-900 tabular-nums">{avg}</span>
           </div>
           <div className="text-[11px] text-gray-600 mt-1 flex items-center justify-end gap-1">
-            <Users className="w-3.5 h-3.5 text-gray-500" />
             {total} reviews
           </div>
         </div>
@@ -134,10 +185,9 @@ export default function RatingDistributionTile({ venueId }) {
                 </div>
                 <div className="relative bg-gray-100 rounded-full h-3 overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-500"
+                    className={`h-full rounded-full transition-all duration-500 ${getRatingColor(rating)}`}
                     style={{
-                      width: `${fillWidth(count)}%`,
-                      ...band(maxCount ? count / maxCount : 0)
+                      width: `${fillWidth(count)}%`
                     }}
                   />
                 </div>
@@ -164,14 +214,18 @@ export default function RatingDistributionTile({ venueId }) {
           {/* Legend / hint */}
           <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-200">
             <div className="flex items-center gap-2 text-[11px] text-gray-600">
-              <span>Bar fill:</span>
+              <span>Rating colors:</span>
               <div className="flex items-center gap-1">
-                <span className="inline-block w-4 h-3 rounded" style={{background:'rgba(15,23,42,0.12)'}} />
-                <span>Low</span>
-                <span className="inline-block w-4 h-3 rounded" style={{background:'rgba(15,23,42,0.5)'}} />
-                <span>Medium</span>
-                <span className="inline-block w-4 h-3 rounded" style={{background:'rgba(15,23,42,1)'}} />
-                <span>High</span>
+                <span className="inline-block w-3 h-3 rounded bg-green-500" />
+                <span>5★</span>
+                <span className="inline-block w-3 h-3 rounded bg-green-400" />
+                <span>4★</span>
+                <span className="inline-block w-3 h-3 rounded bg-yellow-500" />
+                <span>3★</span>
+                <span className="inline-block w-3 h-3 rounded bg-orange-500" />
+                <span>2★</span>
+                <span className="inline-block w-3 h-3 rounded bg-red-600" />
+                <span>1★</span>
               </div>
             </div>
             <div className="text-[11px] text-gray-600">

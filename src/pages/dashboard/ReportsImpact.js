@@ -1,47 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
-import { Target, TrendingUp, Users, Clock } from 'lucide-react';
+import GoogleRatingKPITile from '../../components/dashboard/reports/GoogleRatingKPITile';
+import TripAdvisorRatingKPITile from '../../components/dashboard/reports/TripAdvisorRatingKPITile';
+import RatingsTrendChart from '../../components/dashboard/reports/RatingsTrendChart';
+// Removed unused icon imports
 
 const ReportsImpactPage = () => {
   usePageTitle('Impact Reports');
   const { venueId } = useVenue();
+  const [timeframe, setTimeframe] = useState('last30');
 
-  const impactMetrics = [
-    {
-      title: 'Customer Retention',
-      value: '85%',
-      change: '+12%',
-      trend: 'up',
-      icon: Users,
-      color: 'green'
-    },
-    {
-      title: 'Response Rate',
-      value: '92%',
-      change: '+8%',
-      trend: 'up',
-      icon: Target,
-      color: 'blue'
-    },
-    {
-      title: 'Issue Resolution Time',
-      value: '2.3 hours',
-      change: '-45%',
-      trend: 'down',
-      icon: Clock,
-      color: 'purple'
-    },
-    {
-      title: 'Overall Satisfaction',
-      value: '4.6/5',
-      change: '+0.3',
-      trend: 'up',
-      icon: TrendingUp,
-      color: 'emerald'
-    }
-  ];
+  // Removed static metrics to focus on real ratings data
 
   if (!venueId) {
     return null;
@@ -52,35 +23,38 @@ const ReportsImpactPage = () => {
       <ChartCard
         title="Impact Analysis"
         subtitle="Measure the real-world impact of your feedback initiatives"
+        actions={
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Period:</label>
+            <select
+              value={timeframe}
+              onChange={(e) => setTimeframe(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="today">Today</option>
+              <option value="thisWeek">This Week</option>
+              <option value="last7">Last 7 Days</option>
+              <option value="last14">Last 14 Days</option>
+              <option value="last30">Last 30 Days</option>
+              <option value="all">All Time</option>
+            </select>
+          </div>
+        }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {impactMetrics.map((metric, index) => {
-            const Icon = metric.icon;
-            const isPositive = metric.trend === 'up' || (metric.trend === 'down' && metric.title.includes('Time'));
-            
-            return (
-              <div key={index} className="bg-gray-50 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg bg-${metric.color}-100`}>
-                    <Icon className={`w-6 h-6 text-${metric.color}-600`} />
-                  </div>
-                  <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                    isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    {metric.change}
-                  </span>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-1">{metric.value}</h3>
-                <p className="text-gray-600 text-sm">{metric.title}</p>
-              </div>
-            );
-          })}
-        </div>
+        <div className="space-y-6 lg:space-y-8">
+          {/* Row 1: Ratings KPIs */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+            <div className="lg:col-span-1 h-full">
+              <GoogleRatingKPITile venueId={venueId} />
+            </div>
+            <div className="lg:col-span-1 h-full">
+              <TripAdvisorRatingKPITile venueId={venueId} />
+            </div>
+          </div>
 
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Impact Timeline</h3>
-          <div className="bg-gray-50 rounded-xl p-6">
-            <p className="text-gray-600 text-center">Impact timeline visualization coming soon</p>
+          {/* Row 2: Ratings trend chart */}
+          <div>
+            <RatingsTrendChart venueId={venueId} timeframe={timeframe} />
           </div>
         </div>
       </ChartCard>

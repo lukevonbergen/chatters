@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
-import PageContainer from '../../components/dashboard/layout/PageContainer';
+import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
 import dayjs from 'dayjs';
@@ -167,14 +167,11 @@ const StaffLeaderboard = () => {
   };
 
   return (
-    <PageContainer>
-      <div className="mb-6 lg:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-          <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Staff Leaderboard</h1>
-            <p className="text-gray-600 text-sm lg:text-base">Track staff performance and feedback resolution rates.</p>
-          </div>
-          
+    <div className="w-full">
+      <ChartCard
+        title="Staff Leaderboard"
+        subtitle="Track staff performance and feedback resolution rates"
+        actions={
           <div className="flex items-center space-x-4">
             {/* Date Filter */}
             <div className="flex items-center space-x-2">
@@ -200,11 +197,10 @@ const StaffLeaderboard = () => {
               Export CSV
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Staff Leaderboard Table */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        }
+      >
+        {/* Staff Leaderboard Table */}
+        <div className="overflow-hidden">
         {staffStats.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -301,8 +297,9 @@ const StaffLeaderboard = () => {
             </div>
           </div>
         )}
-      </div>
-    </PageContainer>
+        </div>
+      </ChartCard>
+    </div>
   );
 };
 

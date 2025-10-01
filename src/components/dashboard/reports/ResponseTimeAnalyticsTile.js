@@ -2,7 +2,51 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 
-const ResponseTimeAnalyticsTile = ({ venueId }) => {
+function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return x; }
+function toISO(d) { return d.toISOString(); }
+
+function rangeISO(preset, fromStr, toStr) {
+  const now = new Date();
+  switch (preset) {
+    case 'today': {
+      return { start: toISO(startOfDay(now)), end: toISO(endOfDay(now)) };
+    }
+    case 'yesterday': {
+      const y = new Date(now); y.setDate(now.getDate() - 1);
+      return { start: toISO(startOfDay(y)), end: toISO(endOfDay(y)) };
+    }
+    case 'thisWeek': {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      return { start: toISO(startOfDay(startOfWeek)), end: toISO(endOfDay(now)) };
+    }
+    case 'last7': {
+      const s = new Date(now); s.setDate(now.getDate() - 6);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last14': {
+      const s = new Date(now); s.setDate(now.getDate() - 13);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last30': {
+      const s = new Date(now); s.setDate(now.getDate() - 29);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'all': {
+      return { start: toISO(startOfDay(new Date(0))), end: toISO(endOfDay(now)) };
+    }
+    case 'custom': {
+      const s = fromStr ? startOfDay(new Date(fromStr)) : startOfDay(new Date(0));
+      const e = toStr ? endOfDay(new Date(toStr)) : endOfDay(now);
+      return { start: toISO(s), end: toISO(e) };
+    }
+    default:
+      return { start: toISO(startOfDay(new Date(0))), end: toISO(endOfDay(now)) };
+  }
+}
+
+const ResponseTimeAnalyticsTile = ({ venueId, timeframe = 'all' }) => {
   const [responseData, setResponseData] = useState([]);
   const [averageTime, setAverageTime] = useState(0);
   const [medianTime, setMedianTime] = useState(0);
@@ -14,24 +58,59 @@ const ResponseTimeAnalyticsTile = ({ venueId }) => {
     if (!venueId) return;
     fetchResponseTimeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [venueId]);
+  }, [venueId, timeframe]);
 
   const fetchResponseTimeData = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    
+    const { start, end } = rangeISO(timeframe);
+    
+    // Fetch resolved feedback sessions (same as AverageResolutionTimeTile)
+    const { data: feedbackData, error: feedbackError } = await supabase
       .from('feedback')
+      .select('session_id, created_at, resolved_at')
+      .eq('venue_id', venueId)
+      .not('resolved_at', 'is', null)
+      .gte('resolved_at', start)
+      .lte('resolved_at', end);
+
+    // Fetch resolved assistance requests (same as AverageResolutionTimeTile)
+    const { data: assistanceData, error: assistanceError } = await supabase
+      .from('assistance_requests')
       .select('created_at, resolved_at')
       .eq('venue_id', venueId)
       .not('resolved_at', 'is', null)
-      .not('created_at', 'is', null);
+      .gte('resolved_at', start)
+      .lte('resolved_at', end);
 
-    if (error) {
-      console.error('Error fetching response time data:', error);
+    if (feedbackError || assistanceError) {
+      console.error('Error fetching response time data:', feedbackError || assistanceError);
       setLoading(false);
       return;
     }
 
-    const responseTimes = (data || [])
+    // Group feedback by session_id to get one resolution time per session (same as AverageResolutionTimeTile)
+    const sessionResolutions = [];
+    if (feedbackData?.length) {
+      const sessionMap = new Map();
+      feedbackData.forEach(item => {
+        if (!sessionMap.has(item.session_id)) {
+          sessionMap.set(item.session_id, {
+            created_at: item.created_at,
+            resolved_at: item.resolved_at
+          });
+        }
+      });
+      sessionResolutions.push(...sessionMap.values());
+    }
+
+    // Combine session resolutions with assistance request resolutions (same as AverageResolutionTimeTile)
+    const allResolutions = [
+      ...sessionResolutions,
+      ...(assistanceData || [])
+    ];
+
+    const responseTimes = allResolutions
       .map(item => {
         const created = new Date(item.created_at);
         const resolved = new Date(item.resolved_at);
@@ -107,14 +186,14 @@ const ResponseTimeAnalyticsTile = ({ venueId }) => {
   };
 
   return (
-    <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+    <div className="relative bg-white border border-gray-200 rounded-lg p-6">
       {/* Header */}
       <div className="mb-4">
         <h3 className="text-base font-semibold text-gray-900">
           Response Time Analytics
         </h3>
         <p className="text-xs text-gray-600 mt-1">
-          How quickly your team responds to customer feedback
+          How quickly your team responds to customer feedback and assistance requests
         </p>
       </div>
 

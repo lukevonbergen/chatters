@@ -37,6 +37,7 @@ const mainMenuItems = [
   { id: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
   { id: 'staff', label: 'Staff', icon: Users, path: '/staff' },
   { id: 'floorplan', label: 'Floor Plan', icon: Map, path: '/floorplan' },
+  { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
 const subMenuItems = {
@@ -59,6 +60,25 @@ const ModernHeader = ({ sidebarCollapsed }) => {
 
   const getCurrentSection = () => {
     const currentPath = location.pathname;
+    
+    // Special handling for different path patterns
+    if (currentPath.startsWith('/settings/')) {
+      return mainMenuItems.find(item => item.id === 'settings') || mainMenuItems[0];
+    }
+    
+    if (currentPath.startsWith('/feedback/') || currentPath === '/questions' || currentPath === '/feedbackfeed') {
+      return mainMenuItems.find(item => item.id === 'feedback') || mainMenuItems[0];
+    }
+    
+    if (currentPath.startsWith('/reports/')) {
+      return mainMenuItems.find(item => item.id === 'reports') || mainMenuItems[0];
+    }
+    
+    if (currentPath.startsWith('/staff/')) {
+      return mainMenuItems.find(item => item.id === 'staff') || mainMenuItems[0];
+    }
+    
+    // Default path-based matching
     const currentItem = mainMenuItems.find(item => 
       currentPath === item.path || currentPath.startsWith(item.path + '/')
     );
@@ -68,6 +88,29 @@ const ModernHeader = ({ sidebarCollapsed }) => {
   const getCurrentSubItems = () => {
     const currentSection = getCurrentSection();
     return subMenuItems[currentSection.id] || [];
+  };
+
+  const getSubtitleForSection = () => {
+    const currentPath = location.pathname;
+    
+    // Settings subtitles
+    if (currentPath.startsWith('/settings/')) {
+      if (currentPath === '/settings/venues') return 'Venue information and settings';
+      if (currentPath === '/settings/feedback') return 'Feedback configuration';
+      if (currentPath === '/settings/branding') return 'Brand colors and logo';
+      if (currentPath === '/settings/integrations') return 'Third-party integrations';
+      return 'Account configuration';
+    }
+    
+    // Feedback subtitles
+    if (currentSection.id === 'feedback') {
+      if (currentPath === '/questions' || currentPath === '/feedback/questions') return 'Manage feedback questions';
+      if (currentPath === '/feedbackfeed') return 'Live feedback feed';
+      if (currentPath === '/feedback/qr') return 'QR code configuration';
+      return 'Manage customer feedback';
+    }
+    
+    return 'Welcome to your dashboard';
   };
 
   const handleNavigation = (path) => {
@@ -116,11 +159,11 @@ const ModernHeader = ({ sidebarCollapsed }) => {
             </h1>
             <p className="text-sm text-gray-500">
               {currentSection.id === 'overview' && 'Welcome to your dashboard'}
-              {currentSection.id === 'feedback' && 'Manage customer feedback'}
+              {currentSection.id === 'feedback' && getSubtitleForSection()}
               {currentSection.id === 'reports' && 'Analytics and insights'}
               {currentSection.id === 'staff' && 'Team management'}
               {currentSection.id === 'floorplan' && 'Venue layout'}
-              {currentSection.id === 'settings' && 'Account configuration'}
+              {currentSection.id === 'settings' && getSubtitleForSection()}
             </p>
           </div>
         </div>
@@ -162,7 +205,12 @@ const ModernHeader = ({ sidebarCollapsed }) => {
                   <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-0 rounded-xl shadow-lg">
+              <PopoverContent 
+                className="w-64 p-0 rounded-xl shadow-xl border border-gray-200 bg-white z-[100] relative" 
+                side="bottom" 
+                align="end"
+                sideOffset={8}
+              >
                 <div className="p-3 border-b border-gray-100">
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Switch Venue

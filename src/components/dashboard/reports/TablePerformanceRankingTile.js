@@ -1,8 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
-import { MapPin, BarChart3 } from 'lucide-react';
 
-export default function TablePerformanceRankingTile({ venueId }) {
+function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return x; }
+function toISO(d) { return d.toISOString(); }
+
+function rangeISO(preset, fromStr, toStr) {
+  const now = new Date();
+  switch (preset) {
+    case 'today': {
+      return { start: toISO(startOfDay(now)), end: toISO(endOfDay(now)) };
+    }
+    case 'yesterday': {
+      const y = new Date(now); y.setDate(now.getDate() - 1);
+      return { start: toISO(startOfDay(y)), end: toISO(endOfDay(y)) };
+    }
+    case 'thisWeek': {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      return { start: toISO(startOfDay(startOfWeek)), end: toISO(endOfDay(now)) };
+    }
+    case 'last7': {
+      const s = new Date(now); s.setDate(now.getDate() - 6);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last14': {
+      const s = new Date(now); s.setDate(now.getDate() - 13);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last30': {
+      const s = new Date(now); s.setDate(now.getDate() - 29);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'all': {
+      return { start: toISO(startOfDay(new Date(0))), end: toISO(endOfDay(now)) };
+    }
+    case 'custom': {
+      const s = fromStr ? startOfDay(new Date(fromStr)) : startOfDay(new Date(0));
+      const e = toStr ? endOfDay(new Date(toStr)) : endOfDay(now);
+      return { start: toISO(s), end: toISO(e) };
+    }
+    default:
+      return { start: toISO(startOfDay(new Date(0))), end: toISO(endOfDay(now)) };
+  }
+}
+
+export default function TablePerformanceRankingTile({ venueId, timeframe = 'last30' }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -10,15 +53,19 @@ export default function TablePerformanceRankingTile({ venueId }) {
     if (!venueId) return;
     fetchTablePerformance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [venueId]);
+  }, [venueId, timeframe]);
 
   async function fetchTablePerformance() {
     setLoading(true);
+
+    const { start, end } = rangeISO(timeframe);
 
     const { data, error } = await supabase
       .from('feedback')
       .select('table_number, rating')
       .eq('venue_id', venueId)
+      .gte('created_at', start)
+      .lte('created_at', end)
       .not('rating', 'is', null)
       .not('table_number', 'is', null);
 
@@ -77,8 +124,7 @@ export default function TablePerformanceRankingTile({ venueId }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <div>
-          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-gray-600" />
+          <h3 className="text-base font-semibold text-gray-900">
             Table Performance Ranking
           </h3>
           <p className="text-xs text-gray-600 mt-1">
@@ -96,27 +142,27 @@ export default function TablePerformanceRankingTile({ venueId }) {
         </div>
       ) : noData ? (
         <div className="text-center py-10">
-          <MapPin className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <div className="text-sm text-gray-600">No table data yet — rankings will appear once feedback comes in.</div>
         </div>
       ) : (
-        <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+        <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 'calc(100vh - 400px)', minHeight: '300px' }}>
           {rows.map((r, idx) => (
             <div
               key={r.table}
               className="rounded-md border border-gray-100 p-3 hover:bg-gray-50 transition-colors"
               title={`Table ${r.table} • ${r.average}★ avg from ${r.totalFeedback} responses`}
             >
-              <div className="flex items-center justify-between gap-3">
-                {/* Left: rank + table */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="text-xs font-semibold text-gray-700 w-8 text-right">#{idx + 1}</div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">Table {r.table}</div>
-                    <div className="text-[11px] text-gray-600">{r.totalFeedback} response{r.totalFeedback !== 1 ? 's' : ''}</div>
-                  </div>
+              <div className="grid grid-cols-3 gap-3 items-center">
+                {/* Left: table number */}
+                <div className="text-left">
+                  <div className="text-sm font-medium text-gray-900">Table {r.table}</div>
                 </div>
 
+                {/* Center: rating count - aligned column */}
+                <div className="text-center">
+                  <div className="text-sm font-medium text-gray-900 tabular-nums">{r.totalFeedback}</div>
+                  <div className="text-[11px] text-gray-600">rating{r.totalFeedback !== 1 ? 's' : ''}</div>
+                </div>
 
                 {/* Right: average */}
                 <div className="text-right">

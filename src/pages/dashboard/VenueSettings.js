@@ -14,8 +14,6 @@ const VenueSettingsPage = () => {
   const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
-  const [tripadvisorLink, setTripadvisorLink] = useState('');
-  const [googleReviewLink, setGoogleReviewLink] = useState('');
   const [address, setAddress] = useState({
     line1: '',
     line2: '',
@@ -25,8 +23,6 @@ const VenueSettingsPage = () => {
     country: '',
   });
   const [message, setMessage] = useState('');
-  const [reviewLinksLoading, setReviewLinksLoading] = useState(false);
-  const [reviewLinksMessage, setReviewLinksMessage] = useState('');
 
   // Fetch venue data
   useEffect(() => {
@@ -38,7 +34,7 @@ const VenueSettingsPage = () => {
       // Fetch venue data
       const { data: venueData, error: venueError } = await supabase
         .from('venues')
-        .select('id, name, address, phone, website, tripadvisor_link, google_review_link')
+        .select('id, name, address, phone, website')
         .eq('id', venueId)
         .single();
 
@@ -51,8 +47,6 @@ const VenueSettingsPage = () => {
       setName(venueData.name || '');
       setPhone(venueData.phone || '');
       setWebsite(venueData.website || '');
-      setTripadvisorLink(venueData.tripadvisor_link || '');
-      setGoogleReviewLink(venueData.google_review_link || '');
       setAddress(venueData.address || {
         line1: '',
         line2: '',
@@ -101,34 +95,6 @@ const VenueSettingsPage = () => {
     }
   };
 
-  // Save review links
-  const saveReviewLinks = async () => {
-    if (!venueId) return;
-
-    setReviewLinksLoading(true);
-    setReviewLinksMessage('');
-
-    try {
-      const { error } = await supabase
-        .from('venues')
-        .update({
-          tripadvisor_link: tripadvisorLink,
-          google_review_link: googleReviewLink,
-        })
-        .eq('id', venueId);
-
-      if (error) {
-        throw error;
-      }
-
-      setReviewLinksMessage('Review links updated successfully!');
-    } catch (error) {
-      console.error('Error updating review links:', error);
-      setReviewLinksMessage('Failed to update review links: ' + error.message);
-    } finally {
-      setReviewLinksLoading(false);
-    }
-  };
 
   if (!venueId) {
     return null;
@@ -149,16 +115,9 @@ const VenueSettingsPage = () => {
           setPhone={setPhone}
           website={website}
           setWebsite={setWebsite}
-          tripadvisorLink={tripadvisorLink}
-          setTripadvisorLink={setTripadvisorLink}
-          googleReviewLink={googleReviewLink}
-          setGoogleReviewLink={setGoogleReviewLink}
           saveSettings={saveSettings}
-          saveReviewLinks={saveReviewLinks}
           loading={loading}
-          reviewLinksLoading={reviewLinksLoading}
           message={message}
-          reviewLinksMessage={reviewLinksMessage}
           userRole={userRole}
           currentVenueId={venueId}
         />
