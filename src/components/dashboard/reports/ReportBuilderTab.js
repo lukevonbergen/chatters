@@ -52,6 +52,19 @@ const ReportBuilderTab = () => {
       }
     },
     {
+      label: 'Last 14 days',
+      getValue: () => {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 14);
+        return {
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          label: 'Last 14 days'
+        };
+      }
+    },
+    {
       label: 'Last 30 days',
       getValue: () => {
         const endDate = new Date();
@@ -104,14 +117,14 @@ const ReportBuilderTab = () => {
       }
     },
     {
-      label: 'All time',
+      label: 'All-time',
       getValue: () => {
         const endDate = new Date();
         const startDate = new Date('2020-01-01'); // Set a reasonable start date for "all time"
         return {
           startDate: startDate.toISOString().split('T')[0],
           endDate: endDate.toISOString().split('T')[0],
-          label: 'All time'
+          label: 'All-time'
         };
       }
     }
@@ -121,7 +134,7 @@ const ReportBuilderTab = () => {
   const [dateRange, setDateRange] = useState({
     startDate: '',
     endDate: '',
-    label: 'Last 7 days'
+    label: 'Last 14 days'
   });
   const [dateRangeDropdownOpen, setDateRangeDropdownOpen] = useState(false);
   const [selectedVenues, setSelectedVenues] = useState([]);
@@ -161,9 +174,9 @@ const ReportBuilderTab = () => {
     { id: 'staff_resolution_count', label: 'Staff Resolution Count', description: 'Number of issues resolved per staff member' }
   ];
 
-  // Initialize date range to last 7 days
+  // Initialize date range to last 14 days
   useEffect(() => {
-    const defaultRange = dateRangeOptions[2].getValue(); // Last 7 days
+    const defaultRange = dateRangeOptions[3].getValue(); // Last 14 days
     setDateRange(defaultRange);
   }, [dateRangeOptions]);
 

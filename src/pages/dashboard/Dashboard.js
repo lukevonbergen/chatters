@@ -6,15 +6,10 @@ import PageContainer from '../../components/dashboard/layout/PageContainer';
 import SessionsActionedTile from '../../components/dashboard/reports/today_TotalSessionsTile';
 import UnresolvedAlertsTile from '../../components/dashboard/reports/UnresolvedAlertsTile';
 import AvgSatisfactionTile from '../../components/dashboard/reports/AvgSatisfactionTile';
-import SatisfactionTrendTile from '../../components/dashboard/reports/SatisfactionTrendTile';
-import PeakHoursAnalysisTile from '../../components/dashboard/reports/PeakHoursAnalysisTile';
-import TablePerformanceRankingTile from '../../components/dashboard/reports/TablePerformanceRankingTile';
 import ActionCompletionRateTile from '../../components/dashboard/reports/ActionCompletionRateTile';
-import AverageResolutionTimeTile from '../../components/dashboard/reports/AverageResolutionTimeTile';
+import GoogleRatingKPITile from '../../components/dashboard/reports/GoogleRatingKPITile';
+import TripAdvisorRatingKPITile from '../../components/dashboard/reports/TripAdvisorRatingKPITile';
 import RecentSessionsTile from '../../components/dashboard/reports/RecentSessionsTile';
-import RatingDistributionTile from '../../components/dashboard/reports/RatingDistributionTile';
-import ResponseTimeAnalyticsTile from '../../components/dashboard/reports/ResponseTimeAnalyticsTile';
-import SentimentTrendsTile from '../../components/dashboard/reports/SentimentTrendsTile';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
 import { Monitor, AlertTriangle, Clock, TrendingUp, Users, Star, BarChart3, Zap, HandHeart } from 'lucide-react';
@@ -197,71 +192,35 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Today's Key Metrics */}
+      {/* Today's Key Metrics & Review Platform Ratings */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-blue-600" />
           <h2 className="text-lg font-semibold text-gray-800">Today's Key Metrics</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <SessionsActionedTile venueId={venueId} />
           <UnresolvedAlertsTile venueId={venueId} />
           <AvgSatisfactionTile venueId={venueId} />
           <ActionCompletionRateTile venueId={venueId} />
+          <GoogleRatingKPITile venueId={venueId} />
+          <TripAdvisorRatingKPITile venueId={venueId} />
         </div>
       </div>
 
-      {/* Performance Analytics */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="w-5 h-5 text-green-600" />
-          <h2 className="text-lg font-semibold text-gray-800">Performance Analytics</h2>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Charts */}
-          <div className="lg:col-span-2 space-y-6">
-            <SatisfactionTrendTile venueId={venueId} />
-            <PeakHoursAnalysisTile venueId={venueId} />
-            <SentimentTrendsTile venueId={venueId} />
-          </div>
 
-          {/* Rankings & Metrics */}
-          <div className="space-y-6">
-            <TablePerformanceRankingTile venueId={venueId} />
-            <AverageResolutionTimeTile venueId={venueId} />
-            <ResponseTimeAnalyticsTile venueId={venueId} />
-          </div>
-        </div>
-      </div>
-
-      {/* Customer Insights */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <Star className="w-5 h-5 text-amber-600" />
-          <h2 className="text-lg font-semibold text-gray-800">Customer Insights</h2>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RatingDistributionTile venueId={venueId} />
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-100">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
-              <h3 className="text-lg font-semibold text-gray-800">Guest Satisfaction Trends</h3>
-            </div>
-            <p className="text-gray-600 text-sm">Weekly satisfaction analysis and improvement recommendations coming soon...</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Activity & Operations */}
+      {/* Recent Activity */}
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Clock className="w-5 h-5 text-purple-600" />
-          <h2 className="text-lg font-semibold text-gray-800">Recent Activity & Operations</h2>
+          <h2 className="text-lg font-semibold text-gray-800">Recent Activity</h2>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Full width recent activity section */}
+        <div className="space-y-6">
           <RecentSessionsTile venueId={venueId} />
           
-          {/* Recent Assistance Requests */}
+          {/* Recent Assistance Requests - Full Width */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -274,8 +233,8 @@ const DashboardPage = () => {
                 <p className="text-sm">No assistance requests in the last 24 hours</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {assistanceRequests.slice(0, 5).map((request) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {assistanceRequests.slice(0, 8).map((request) => (
                   <div
                     key={request.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -294,12 +253,12 @@ const DashboardPage = () => {
                         </p>
                         {request.resolved_by && (
                           <p className="text-xs text-gray-400">
-                            Resolved by staff member
+                            Resolved by staff
                           </p>
                         )}
                         {!request.resolved_by && request.acknowledged_by && (
                           <p className="text-xs text-gray-400">
-                            Acknowledged by staff member
+                            In progress
                           </p>
                         )}
                       </div>
@@ -316,15 +275,17 @@ const DashboardPage = () => {
                     </div>
                   </div>
                 ))}
-                
-                {assistanceRequests.length > 5 && (
-                  <button
-                    onClick={goToKioskMode}
-                    className="w-full text-center text-sm text-blue-600 hover:text-blue-800 py-2"
-                  >
-                    View all requests in Kiosk Mode →
-                  </button>
-                )}
+              </div>
+            )}
+            
+            {assistanceRequests.length > 8 && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={goToKioskMode}
+                  className="text-sm text-blue-600 hover:text-blue-800 py-2"
+                >
+                  View all requests in Kiosk Mode →
+                </button>
               </div>
             )}
           </div>

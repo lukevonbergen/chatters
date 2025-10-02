@@ -3,30 +3,22 @@
 import React from 'react';
 import RatingDistributionTile from './RatingDistributionTile';
 import TablePerformanceRankingTile from './TablePerformanceRankingTile';
-import SentimentTrendsTile from './SentimentTrendsTile';
-import QuestionEffectivenessTile from './QuestionEffectivenessTile';
 
-const CustomerInsightsTab = ({ venueId }) => {
+const CustomerInsightsTab = ({ venueId, timeframe }) => {
   return (
     <div className="max-w-none">
       <div className="space-y-6 lg:space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           <RatingDistributionTile 
-            venueId={venueId} 
+            venueId={venueId}
+            timeframe={timeframe}
           />
           
           <TablePerformanceRankingTile 
-            venueId={venueId} 
+            venueId={venueId}
+            timeframe={timeframe}
           />
         </div>
-
-        <SentimentTrendsTile 
-          venueId={venueId} 
-        />
-
-        <QuestionEffectivenessTile 
-          venueId={venueId} 
-        />
       </div>
     </div>
   );

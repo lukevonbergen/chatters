@@ -411,7 +411,7 @@ const ManagersTab = ({
   };
 
   return (
-    <div className="max-w-none lg:max-w-6xl">
+    <div className="w-full">
       {/* Header Section */}
       <div className="mb-6 lg:mb-8">
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
@@ -463,9 +463,6 @@ const ManagersTab = ({
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Status
-                    </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Venues
                     </th>
@@ -487,7 +484,7 @@ const ManagersTab = ({
                     return editingManagerDetails?.user_id === manager.user_id ? (
                       // Edit mode row
                       <tr key={`edit-${manager.user_id}`} className="bg-blue-50">
-                        <td colSpan="5" className="px-6 py-4">
+                        <td colSpan="4" className="px-6 py-4">
                           <div className="space-y-4">
                             <div className="flex items-center space-x-4">
                               <div className="text-sm font-medium text-gray-900">
@@ -563,16 +560,6 @@ const ManagersTab = ({
                           </div>
                         </td>
 
-                        {/* Status */}
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            isActive 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {isActive ? 'ACTIVE' : 'AWAITING RESPONSE'}
-                          </span>
-                        </td>
 
                         {/* Venues */}
                         <td className="px-6 py-4 whitespace-nowrap">

@@ -113,6 +113,7 @@ const StaffEmployeesPage = () => {
         email,
         phone,
         role,
+        location,
         created_at,
         venues (id, name)
       `)
@@ -150,6 +151,7 @@ const StaffEmployeesPage = () => {
         email,
         phone,
         role,
+        location,
         created_at,
         venues (id, name)
       `)

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Clock } from 'lucide-react';
 import { supabase } from '../../../utils/supabase';
 
 const TARGET_MINUTES = 120;
@@ -18,13 +19,25 @@ function rangeISO(preset, fromStr, toStr) {
       const y = new Date(now); y.setDate(now.getDate() - 1);
       return { start: toISO(startOfDay(y)), end: toISO(endOfDay(y)) };
     }
+    case 'thisWeek': {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      return { start: toISO(startOfDay(startOfWeek)), end: toISO(endOfDay(now)) };
+    }
     case 'last7': {
       const s = new Date(now); s.setDate(now.getDate() - 6);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'last14': {
+      const s = new Date(now); s.setDate(now.getDate() - 13);
       return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
     }
     case 'last30': {
       const s = new Date(now); s.setDate(now.getDate() - 29);
       return { start: toISO(startOfDay(s)), end: toISO(endOfDay(now)) };
+    }
+    case 'all': {
+      return { start: toISO(startOfDay(new Date(0))), end: toISO(endOfDay(now)) };
     }
     case 'custom': {
       const s = fromStr ? startOfDay(new Date(fromStr)) : startOfDay(new Date(0));
@@ -100,8 +113,8 @@ function formatTime(minutes) {
   return h ? `${d}d ${h}h` : `${d}d`;
 }
 
-export default function AverageResolutionTimeTile({ venueId }) {
-  const preset = 'today'; // Fixed to today
+export default function AverageResolutionTimeTile({ venueId, timeframe = 'last7' }) {
+  const preset = timeframe;
 
   const [avg, setAvg] = useState(0);
   const [count, setCount] = useState(0);
@@ -120,9 +133,19 @@ export default function AverageResolutionTimeTile({ venueId }) {
       return { start: toISO(startOfDay(d2)), end: toISO(endOfDay(d2)) };
     }
     // for ranges, compare to immediately preceding same length
+    if (preset === 'thisWeek') {
+      const prevWeekStart = new Date(now); prevWeekStart.setDate(now.getDate() - now.getDay() - 7);
+      const prevWeekEnd = new Date(now); prevWeekEnd.setDate(now.getDate() - now.getDay() - 1);
+      return { start: toISO(startOfDay(prevWeekStart)), end: toISO(endOfDay(prevWeekEnd)) };
+    }
     if (preset === 'last7') {
       const s = new Date(now); s.setDate(now.getDate() - 13);
       const e = new Date(now); e.setDate(now.getDate() - 7);
+      return { start: toISO(startOfDay(s)), end: toISO(endOfDay(e)) };
+    }
+    if (preset === 'last14') {
+      const s = new Date(now); s.setDate(now.getDate() - 27);
+      const e = new Date(now); e.setDate(now.getDate() - 14);
       return { start: toISO(startOfDay(s)), end: toISO(endOfDay(e)) };
     }
     if (preset === 'last30') {
@@ -154,7 +177,7 @@ export default function AverageResolutionTimeTile({ venueId }) {
     };
 
     run();
-  }, [venueId]);
+  }, [venueId, timeframe]);
 
   const progress = useMemo(() => {
     if (avg === 0) return 100;
@@ -163,8 +186,8 @@ export default function AverageResolutionTimeTile({ venueId }) {
   }, [avg]);
 
   const delta = useMemo(() => {
-    if (!baselineAvg) return null;
-    const d = ((avg - baselineAvg) / baselineAvg) * 100; // + = slower
+    if (!baselineAvg || baselineAvg === 0) return null;
+    const d = ((avg - baselineAvg) / baselineAvg) * 100; // + = slower (worse)
     return Math.round(d);
   }, [avg, baselineAvg]);
 
@@ -173,23 +196,24 @@ export default function AverageResolutionTimeTile({ venueId }) {
     : 'text-gray-900';
 
   return (
-    <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      {/* Header */}
-      <div className="mb-4">
-        <h3 className="text-base font-semibold text-gray-900">Avg. Resolution Time</h3>
-        <p className="text-gray-600 text-xs mt-1">Today's average time to resolve feedback & assistance</p>
-      </div>
-
-      {/* Metric */}
-      <div className="mt-4 flex items-end justify-between">
-        <div className="text-2xl font-bold text-gray-900">
-          {loading ? '—' : formatTime(avg)}
+    <div className="bg-gray-50 rounded-lg p-6">
+      <div className="flex items-start justify-between mb-4">
+        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+          <Clock className="w-5 h-5 text-blue-600" />
         </div>
-        <div className="text-right">
-          <div className="text-xs text-gray-600">
-            {loading ? 'Loading…' : `${count} ${count === 1 ? 'item' : 'items'} resolved (feedback + assistance)`}
+        {delta !== null && (
+          <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+            delta <= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          }`}>
+            {delta <= 0 ? delta : `+${delta}`}%
           </div>
-        </div>
+        )}
+      </div>
+      <div className="text-2xl font-bold text-gray-900 mb-1">
+        {loading ? '—' : formatTime(avg)}
+      </div>
+      <div className="text-sm text-gray-600">
+        Avg. Resolution Time
       </div>
     </div>
   );

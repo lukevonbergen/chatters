@@ -349,22 +349,31 @@ const AddEmployeeModal = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Location
                 </label>
-                <select
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={!formData.venue_id}
-                >
-                  <option value="">Select a location</option>
-                  {availableLocations.map(location => (
-                    <option key={location.id} value={location.name}>{location.name}</option>
-                  ))}
-                </select>
+                {availableLocations.length > 0 ? (
+                  <select
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a location</option>
+                    {availableLocations.map(location => (
+                      <option key={location.id} value={location.name}>{location.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter location (e.g., Kitchen, Bar, Front of House)"
+                  />
+                )}
                 {!formData.venue_id && (
                   <p className="mt-1 text-xs text-gray-500">Select a venue first</p>
                 )}
                 {formData.venue_id && availableLocations.length === 0 && (
-                  <p className="mt-1 text-xs text-gray-500">No locations configured for this venue</p>
+                  <p className="mt-1 text-xs text-gray-500">Enter location manually - no predefined locations found</p>
                 )}
               </div>
             </div>

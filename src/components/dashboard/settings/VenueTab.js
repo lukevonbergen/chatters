@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
-import FeedbackTimeSelection from './venuetabcomponents/FeedbackTimeSelection';
 
 const VenueTab = ({ 
   name, setName,
   address, setAddress,
   phone, setPhone,
   website, setWebsite,
-  tripadvisorLink, setTripadvisorLink,
-  googleReviewLink, setGoogleReviewLink,
   saveSettings,
-  saveReviewLinks,
   loading,
-  reviewLinksLoading,
   message,
-  reviewLinksMessage,
   userRole,
   currentVenueId  // Add this prop
 }) => {
@@ -30,16 +24,11 @@ const VenueTab = ({
       postalCode: '',
       country: '',
     },
-    tripadvisorLink: '',
-    googleReviewLink: '',
   });
   const [venueLoading, setVenueLoading] = useState(false);
   const [venueMessage, setVenueMessage] = useState('');
   const [accountId, setAccountId] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [sessionTimeoutHours, setSessionTimeoutHours] = useState(2);
-  const [sessionTimeoutLoading, setSessionTimeoutLoading] = useState(false);
-  const [sessionTimeoutMessage, setSessionTimeoutMessage] = useState('');
 
   // Fetch venues for masters
   useEffect(() => {
@@ -48,58 +37,6 @@ const VenueTab = ({
     }
   }, [userRole]);
 
-  // Fetch session timeout for current venue
-  useEffect(() => {
-    if (currentVenueId) {
-      fetchSessionTimeout();
-    }
-  }, [currentVenueId]);
-
-  const fetchSessionTimeout = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('venues')
-        .select('session_timeout_hours')
-        .eq('id', currentVenueId)
-        .single();
-      
-      if (!error && data) {
-        setSessionTimeoutHours(data.session_timeout_hours || 2);
-      }
-    } catch (error) {
-      console.error('Error fetching session timeout:', error);
-    }
-  };
-
-  const saveSessionTimeout = async () => {
-    if (!currentVenueId) return;
-    
-    setSessionTimeoutLoading(true);
-    setSessionTimeoutMessage('');
-    
-    try {
-      const { data, error, count } = await supabase
-        .from('venues')
-        .update({ session_timeout_hours: sessionTimeoutHours })
-        .eq('id', currentVenueId)
-        .select();
-      
-      if (error) throw error;
-      
-      if (count === 0 || !data || data.length === 0) {
-        throw new Error('No rows updated. You may not have permission to update this venue.');
-      }
-      
-      setSessionTimeoutMessage('Session timeout updated successfully!');
-    } catch (error) {
-      console.error('Error saving session timeout:', error);
-      // Show detailed error info to user for support purposes
-      const errorDetails = error.code ? `Error ${error.code}: ${error.message}` : error.message;
-      setSessionTimeoutMessage(`Failed to save session timeout: ${errorDetails}. Please contact support with this error code.`);
-    } finally {
-      setSessionTimeoutLoading(false);
-    }
-  };
 
   const fetchVenues = async () => {
     const { data: auth } = await supabase.auth.getUser();
@@ -148,8 +85,6 @@ const VenueTab = ({
             address: newVenue.address,
             primary_color: '#000000',
             secondary_color: '#ffffff',
-            tripadvisor_link: newVenue.tripadvisorLink,
-            google_review_link: newVenue.googleReviewLink,
           },
         ])
         .select()
@@ -186,8 +121,6 @@ const VenueTab = ({
           postalCode: '',
           country: '',
         },
-        tripadvisorLink: '',
-        googleReviewLink: '',
       });
       await fetchVenues();
 
@@ -202,7 +135,7 @@ const VenueTab = ({
   };
 
   return (
-    <div className="max-w-none lg:max-w-4xl">
+    <div className="w-full">
 
       <div className="space-y-6">
         
@@ -340,166 +273,6 @@ const VenueTab = ({
           </div>
         </div>
 
-        {/* Section 2: Review Links Card */}
-        <div className="bg-white border border-gray-200 rounded-lg">
-          {/* Section Header */}
-          <div className="border-b border-gray-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Review Platform Links</h3>
-                <p className="text-sm text-gray-500 mt-1">Direct satisfied customers to leave positive reviews</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Section Content */}
-          <div className="p-6 space-y-6">
-            {/* TripAdvisor */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-              <div className="lg:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  TripAdvisor
-                </label>
-                <p className="text-xs text-gray-500">Your TripAdvisor review page</p>
-              </div>
-              <div className="lg:col-span-2">
-                <input
-                  type="url"
-                  placeholder="https://www.tripadvisor.com/your-venue"
-                  value={tripadvisorLink}
-                  onChange={(e) => setTripadvisorLink(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Google Reviews */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-              <div className="lg:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Google Reviews
-                </label>
-                <p className="text-xs text-gray-500">Your Google Business review link</p>
-              </div>
-              <div className="lg:col-span-2">
-                <input
-                  type="url"
-                  placeholder="https://search.google.com/local/writereview?placeid=..."
-                  value={googleReviewLink}
-                  onChange={(e) => setGoogleReviewLink(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-                {googleReviewLink && googleReviewLink.includes('writereview?placeid=') && (
-                  <p className="text-xs text-green-600 mt-1 flex items-center">
-                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Generated from Google Places integration
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Card Save Action */}
-          <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 rounded-b-lg">
-            <div className="flex items-center justify-between">
-              <div className="text-xs text-gray-500">
-                Update review links to guide satisfied customers
-              </div>
-              <button
-                onClick={saveReviewLinks}
-                disabled={reviewLinksLoading}
-                className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {reviewLinksLoading ? 'Saving...' : 'Save Review Links'}
-              </button>
-            </div>
-            {reviewLinksMessage && (
-              <div className={`text-xs p-2 rounded-lg mt-3 ${
-                reviewLinksMessage.includes('success') 
-                  ? 'text-green-700 bg-green-50 border border-green-200' 
-                  : 'text-red-700 bg-red-50 border border-red-200'
-              }`}>
-                {reviewLinksMessage}
-              </div>
-            )}
-          </div>
-        </div>
-
-
-        {/* Section 3: Session Timeout Settings */}
-        <div className="bg-white border border-gray-200 rounded-lg">
-          {/* Section Header */}
-          <div className="border-b border-gray-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Session Timeout</h3>
-                <p className="text-sm text-gray-500 mt-1">Configure how long feedback sessions remain visible in the kiosk view</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Section Content */}
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-              <div className="lg:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Timeout Duration (Hours)
-                </label>
-                <p className="text-xs text-gray-500">
-                  Feedback older than this will be filtered from kiosk view
-                </p>
-              </div>
-              <div className="lg:col-span-2">
-                <select
-                  value={sessionTimeoutHours}
-                  onChange={(e) => setSessionTimeoutHours(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                >
-                  <option value={1}>1 hour</option>
-                  <option value={2}>2 hours (default)</option>
-                  <option value={4}>4 hours</option>
-                  <option value={6}>6 hours</option>
-                  <option value={8}>8 hours</option>
-                  <option value={12}>12 hours</option>
-                  <option value={24}>24 hours</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Current setting: Feedback older than {sessionTimeoutHours} hour{sessionTimeoutHours !== 1 ? 's' : ''} will be hidden from staff kiosk
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Card Save Action */}
-          <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 rounded-b-lg">
-            <div className="flex items-center justify-between">
-              <div className="text-xs text-gray-500">
-                Changes apply immediately to all staff devices
-              </div>
-              <button
-                onClick={saveSessionTimeout}
-                disabled={sessionTimeoutLoading}
-                className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {sessionTimeoutLoading ? 'Saving...' : 'Save Timeout Setting'}
-              </button>
-            </div>
-            {sessionTimeoutMessage && (
-              <div className={`text-xs p-2 rounded-lg mt-3 ${
-                sessionTimeoutMessage.includes('success') 
-                  ? 'text-green-700 bg-green-50 border border-green-200' 
-                  : 'text-red-700 bg-red-50 border border-red-200'
-              }`}>
-                {sessionTimeoutMessage}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Section 4: Feedback Collection Hours */}
-        <FeedbackTimeSelection currentVenueId={currentVenueId} />
 
         {/* Master-Only Section: Create New Venue */}
         {userRole === 'master' && (
