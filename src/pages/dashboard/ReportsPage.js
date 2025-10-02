@@ -20,6 +20,7 @@ const ReportsPage = () => {
   // Data state
   const [feedbackSessions, setFeedbackSessions] = useState([]);
   const [assistanceRequests, setAssistanceRequests] = useState([]);
+  const [dateFilter, setDateFilter] = useState('last14');
 
   useEffect(() => {
     if (!venueId) return;
@@ -132,6 +133,8 @@ const ReportsPage = () => {
     averageRating,
     satisfactionTrend,
     allRatings,
+    dateFilter,
+    setDateFilter,
   };
 
   // Removed renderActiveTab - using dedicated routes now
@@ -141,8 +144,28 @@ const ReportsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <ChartCard>
+    <div className="w-full">
+      <ChartCard
+        title="Feedback Overview"
+        subtitle="Daily breakdown of feedback received, ratings, and action completion rates"
+        actions={
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Period:</label>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="last7">Last 7 Days</option>
+              <option value="last14">Last 14 Days</option>
+              <option value="last30">Last 30 Days</option>
+              <option value="all">All-time</option>
+            </select>
+          </div>
+        }
+      >
         <FeedbackTab {...tabProps} />
       </ChartCard>
     </div>

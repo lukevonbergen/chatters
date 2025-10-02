@@ -42,7 +42,7 @@ const QRCodeSection = ({ feedbackUrl }) => {
   };
 
   return (
-    <div className="max-w-none lg:max-w-6xl mb-6 lg:mb-8">
+    <div className="w-full mb-6 lg:mb-8">
       <div className="mb-4 lg:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
           <div>

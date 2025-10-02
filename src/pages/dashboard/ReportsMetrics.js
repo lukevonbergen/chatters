@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
-import { Activity, TrendingUp } from 'lucide-react';
+import { Activity, TrendingUp, Users, Clock } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 
 function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
@@ -52,14 +52,23 @@ function rangeISO(preset, fromStr, toStr) {
 const ReportsMetricsPage = () => {
   usePageTitle('Metrics Dashboard');
   const { venueId } = useVenue();
-  const [timeframe, setTimeframe] = useState('last30');
+  const [timeframe, setTimeframe] = useState('last14');
   const [metrics, setMetrics] = useState({
     totalResponses: 0,
     responseRate: 0,
     avgResponseTime: 0,
     overallScore: 0,
     happyCustomers: 0,
-    resolutionRate: 0
+    resolutionRate: 0,
+    // Staff Performance
+    topStaffMember: null,
+    avgStaffResponseTime: 0,
+    staffResolutionCount: 0,
+    // Time Patterns
+    peakHour: null,
+    busiestDay: null,
+    hourlyPattern: [],
+    dailyPattern: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -76,7 +85,7 @@ const ReportsMetricsPage = () => {
       // Fetch feedback data
       const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedback')
-        .select('id, created_at, rating, resolution_type, resolved_at')
+        .select('id, created_at, rating, resolution_type, resolved_at, resolved_by')
         .eq('venue_id', venueId)
         .gte('created_at', start)
         .lte('created_at', end);
@@ -86,12 +95,26 @@ const ReportsMetricsPage = () => {
       // Fetch assistance request data
       const { data: assistanceData, error: assistanceError } = await supabase
         .from('assistance_requests')
-        .select('id, created_at, status, resolved_at')
+        .select('id, created_at, status, resolved_at, acknowledged_at, resolved_by, acknowledged_by')
         .eq('venue_id', venueId)
         .gte('created_at', start)
         .lte('created_at', end);
 
       if (assistanceError) throw assistanceError;
+
+      // Fetch employee data separately to avoid join issues
+      const { data: employeeData, error: employeeError } = await supabase
+        .from('employees')
+        .select('id, first_name, last_name, venue_id')
+        .eq('venue_id', venueId);
+
+      if (employeeError) throw employeeError;
+
+      // Create employee lookup map
+      const employeeMap = {};
+      (employeeData || []).forEach(emp => {
+        employeeMap[emp.id] = `${emp.first_name} ${emp.last_name}`;
+      });
 
       // Debug logging
       console.log('Metrics Debug:', {
@@ -100,8 +123,14 @@ const ReportsMetricsPage = () => {
         dateRange: { start, end },
         feedbackCount: feedbackData?.length || 0,
         assistanceCount: assistanceData?.length || 0,
+        employeeCount: employeeData?.length || 0,
         feedbackSample: feedbackData?.slice(0, 2),
-        assistanceSample: assistanceData?.slice(0, 2)
+        assistanceSample: assistanceData?.slice(0, 2),
+        employeeSample: employeeData?.slice(0, 2),
+        rawQueries: {
+          feedback: `venue_id=${venueId}, created_at between ${start} and ${end}`,
+          assistance: `venue_id=${venueId}, created_at between ${start} and ${end}`
+        }
       });
 
       // Calculate metrics
@@ -139,13 +168,114 @@ const ReportsMetricsPage = () => {
         ? Math.round((resolvedItems.length / totalResponses) * 100)
         : 0;
 
+      // === STAFF PERFORMANCE METRICS ===
+      const staffPerformance = {};
+      
+      // Process feedback resolutions
+      (feedbackData || []).forEach(item => {
+        if (item.resolved_by && item.resolved_at && employeeMap[item.resolved_by]) {
+          const staffName = employeeMap[item.resolved_by];
+          if (!staffPerformance[staffName]) {
+            staffPerformance[staffName] = { resolutions: 0, totalTime: 0, feedbackResolutions: 0 };
+          }
+          staffPerformance[staffName].resolutions++;
+          staffPerformance[staffName].feedbackResolutions++;
+          const responseTime = new Date(item.resolved_at) - new Date(item.created_at);
+          staffPerformance[staffName].totalTime += responseTime / (1000 * 60); // minutes
+        }
+      });
+
+      // Process assistance request resolutions
+      (assistanceData || []).forEach(item => {
+        if (item.resolved_by && item.resolved_at && employeeMap[item.resolved_by]) {
+          const staffName = employeeMap[item.resolved_by];
+          if (!staffPerformance[staffName]) {
+            staffPerformance[staffName] = { resolutions: 0, totalTime: 0, feedbackResolutions: 0 };
+          }
+          staffPerformance[staffName].resolutions++;
+          const responseTime = new Date(item.resolved_at) - new Date(item.created_at);
+          staffPerformance[staffName].totalTime += responseTime / (1000 * 60); // minutes
+        }
+      });
+
+      // Debug staff performance data
+      console.log('Staff Performance Debug:', {
+        staffPerformance,
+        employeeMapKeys: Object.keys(employeeMap),
+        feedbackWithResolved: (feedbackData || []).filter(f => f.resolved_by && f.resolved_at).length,
+        assistanceWithResolved: (assistanceData || []).filter(a => a.resolved_by && a.resolved_at).length
+      });
+
+      // Find top performing staff member (most resolutions)
+      const topStaffMember = Object.keys(staffPerformance).length > 0 
+        ? Object.entries(staffPerformance).reduce((top, [name, data]) => 
+            data.resolutions > (top.resolutions || 0) ? { name, ...data } : top, {})
+        : null;
+
+      const avgStaffResponseTime = Object.values(staffPerformance).length > 0
+        ? Object.values(staffPerformance).reduce((sum, staff) => 
+            sum + (staff.resolutions > 0 ? staff.totalTime / staff.resolutions : 0), 0) / Object.values(staffPerformance).length
+        : 0;
+
+      const staffResolutionCount = Object.values(staffPerformance).reduce((sum, staff) => sum + staff.resolutions, 0);
+
+      // === TIME PATTERN METRICS ===
+      const allItems = [...(feedbackData || []), ...(assistanceData || [])];
+      
+      // Hourly patterns
+      const hourlyData = {};
+      allItems.forEach(item => {
+        const hour = new Date(item.created_at).getHours();
+        hourlyData[hour] = (hourlyData[hour] || 0) + 1;
+      });
+
+      const peakHour = Object.keys(hourlyData).length > 0 
+        ? Object.entries(hourlyData).reduce((peak, [hour, count]) => 
+            count > (peak.count || 0) ? { hour: parseInt(hour), count } : peak, {})
+        : null;
+
+      // Daily patterns (day of week)
+      const dailyData = {};
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      allItems.forEach(item => {
+        const dayIndex = new Date(item.created_at).getDay();
+        const dayName = dayNames[dayIndex];
+        dailyData[dayName] = (dailyData[dayName] || 0) + 1;
+      });
+
+      const busiestDay = Object.keys(dailyData).length > 0 
+        ? Object.entries(dailyData).reduce((busiest, [day, count]) => 
+            count > (busiest.count || 0) ? { day, count } : busiest, {})
+        : null;
+
+      // Format patterns for charts
+      const hourlyPattern = Array.from({length: 24}, (_, hour) => ({
+        hour: hour,
+        count: hourlyData[hour] || 0,
+        label: `${hour}:00`
+      }));
+
+      const dailyPattern = dayNames.map(day => ({
+        day,
+        count: dailyData[day] || 0
+      }));
+
       setMetrics({
         totalResponses,
         responseRate,
         avgResponseTime: Math.round(avgResponseTime * 10) / 10, // Round to 1 decimal
         overallScore: Math.round(overallScore * 10) / 10,
         happyCustomers,
-        resolutionRate
+        resolutionRate,
+        // Staff Performance
+        topStaffMember,
+        avgStaffResponseTime: Math.round(avgStaffResponseTime * 10) / 10,
+        staffResolutionCount,
+        // Time Patterns
+        peakHour,
+        busiestDay,
+        hourlyPattern,
+        dailyPattern
       });
 
     } catch (error) {
@@ -214,6 +344,50 @@ const ReportsMetricsPage = () => {
           period: 'Issues resolved' 
         }
       ]
+    },
+    {
+      title: 'Staff Performance',
+      icon: Users,
+      color: 'purple',
+      metrics: [
+        { 
+          label: 'Top Performer', 
+          value: loading ? '—' : (metrics.topStaffMember ? metrics.topStaffMember.name : 'No data'), 
+          period: `${metrics.topStaffMember ? metrics.topStaffMember.resolutions : 0} resolutions` 
+        },
+        { 
+          label: 'Avg Staff Response', 
+          value: loading ? '—' : formatTime(metrics.avgStaffResponseTime), 
+          period: 'Time to resolve' 
+        },
+        { 
+          label: 'Total Staff Resolutions', 
+          value: loading ? '—' : formatNumber(metrics.staffResolutionCount), 
+          period: 'Issues handled by staff' 
+        }
+      ]
+    },
+    {
+      title: 'Time Patterns',
+      icon: Clock,
+      color: 'orange',
+      metrics: [
+        { 
+          label: 'Peak Hour', 
+          value: loading ? '—' : (metrics.peakHour ? `${metrics.peakHour.hour}:00` : 'No data'), 
+          period: `${metrics.peakHour ? metrics.peakHour.count : 0} activities` 
+        },
+        { 
+          label: 'Busiest Day', 
+          value: loading ? '—' : (metrics.busiestDay ? metrics.busiestDay.day : 'No data'), 
+          period: `${metrics.busiestDay ? metrics.busiestDay.count : 0} activities` 
+        },
+        { 
+          label: 'Daily Average', 
+          value: loading ? '—' : Math.round((metrics.totalResponses || 0) / 7), 
+          period: 'Activities per day' 
+        }
+      ]
     }
   ];
 
@@ -235,16 +409,16 @@ const ReportsMetricsPage = () => {
               className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="today">Today</option>
-              <option value="thisWeek">This Week</option>
+              <option value="yesterday">Yesterday</option>
               <option value="last7">Last 7 Days</option>
               <option value="last14">Last 14 Days</option>
               <option value="last30">Last 30 Days</option>
-              <option value="all">All Time</option>
+              <option value="all">All-time</option>
             </select>
           </div>
         }
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
           {metricCategories.map((category, index) => {
             const Icon = category.icon;
             

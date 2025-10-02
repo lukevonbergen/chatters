@@ -1,21 +1,26 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
-const FeedbackTab = ({ feedbackSessions, assistanceRequests }) => {
-  const [dateFilter, setDateFilter] = useState('all');
+const FeedbackTab = ({ feedbackSessions, assistanceRequests, dateFilter }) => {
   const getFilteredSessions = (sessions, filter) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     switch (filter) {
-      case 'thisWeek': {
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
-        return sessions.filter(session => new Date(session.createdAt) >= startOfWeek);
+      case 'today':
+        return sessions.filter(session => new Date(session.createdAt) >= today);
+      case 'yesterday': {
+        const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+        return sessions.filter(session => {
+          const sessionDate = new Date(session.createdAt);
+          return sessionDate >= yesterday && sessionDate < today;
+        });
       }
       case 'last7':
         return sessions.filter(session => new Date(session.createdAt) >= new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000));
       case 'last14':
         return sessions.filter(session => new Date(session.createdAt) >= new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000));
+      case 'last30':
+        return sessions.filter(session => new Date(session.createdAt) >= new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000));
       default:
         return sessions;
     }
@@ -105,35 +110,6 @@ const FeedbackTab = ({ feedbackSessions, assistanceRequests }) => {
 
   return (
     <div className="max-w-none">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-          <div>
-            <h2 className="text-base lg:text-lg font-medium text-gray-900 mb-1">
-              Feedback Overview
-            </h2>
-            <p className="text-sm text-gray-600">
-              Daily breakdown of feedback received, ratings, and action completion rates
-            </p>
-          </div>
-          
-          {/* Date Filter */}
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Period:</label>
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Time</option>
-              <option value="thisWeek">This Week</option>
-              <option value="last7">Last 7 Days</option>
-              <option value="last14">Last 14 Days</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
       {/* Feedback Table */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">

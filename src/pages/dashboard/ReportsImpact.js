@@ -10,7 +10,7 @@ import RatingsTrendChart from '../../components/dashboard/reports/RatingsTrendCh
 const ReportsImpactPage = () => {
   usePageTitle('Impact Reports');
   const { venueId } = useVenue();
-  const [timeframe, setTimeframe] = useState('last30');
+  const [timeframe, setTimeframe] = useState('last14');
 
   // Removed static metrics to focus on real ratings data
 
@@ -32,11 +32,11 @@ const ReportsImpactPage = () => {
               className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="today">Today</option>
-              <option value="thisWeek">This Week</option>
+              <option value="yesterday">Yesterday</option>
               <option value="last7">Last 7 Days</option>
               <option value="last14">Last 14 Days</option>
               <option value="last30">Last 30 Days</option>
-              <option value="all">All Time</option>
+              <option value="all">All-time</option>
             </select>
           </div>
         }

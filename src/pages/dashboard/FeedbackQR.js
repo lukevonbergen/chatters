@@ -22,12 +22,13 @@ const FeedbackQRPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full">
       <ChartCard
         title="QR Code & Sharing"
         subtitle="Generate QR codes and share feedback links with your customers"
+        className="w-full"
       >
-        <div className="max-w-none">
+        <div className="w-full">
           <QRCodeSection feedbackUrl={feedbackUrl} venueId={venueId} />
         </div>
       </ChartCard>

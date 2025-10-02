@@ -60,7 +60,7 @@ const FeedbackFeedPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full">
       <ChartCard
         title="Customer Feedback Feed"
         subtitle="Recent feedback from your customers"

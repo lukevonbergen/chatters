@@ -12,7 +12,11 @@ const ReportsFeedbackPage = () => {
     return null;
   }
 
-  return <ReportsPage />;
+  return (
+    <div className="w-full">
+      <ReportsPage />
+    </div>
+  );
 };
 
 export default ReportsFeedbackPage;
