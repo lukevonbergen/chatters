@@ -85,6 +85,28 @@ const useMultiVenueStats = (venueIds = [], isMultiSite = false) => {
       throw todayAssistanceError;
     }
 
+    // Fetch Google ratings for all venues
+    const { data: googleRatings, error: googleRatingsError } = await supabase
+      .from('external_ratings')
+      .select('venue_id, rating, ratings_count')
+      .in('venue_id', validVenueIds)
+      .eq('source', 'google');
+
+    if (googleRatingsError) {
+      throw googleRatingsError;
+    }
+
+    // Fetch TripAdvisor ratings for all venues
+    const { data: tripAdvisorRatings, error: tripAdvisorRatingsError } = await supabase
+      .from('external_ratings')
+      .select('venue_id, rating, ratings_count')
+      .in('venue_id', validVenueIds)
+      .eq('source', 'tripadvisor');
+
+    if (tripAdvisorRatingsError) {
+      throw tripAdvisorRatingsError;
+    }
+
     // Fetch yesterday's assistance for comparison
     const { data: yesterdayAssistance, error: yesterdayAssistanceError } = await supabase
       .from('assistance_requests')
@@ -153,7 +175,7 @@ const useMultiVenueStats = (venueIds = [], isMultiSite = false) => {
       ? calculateTrend(completionRate, yesterdayCompletionRate, true)
       : null;
 
-    // Create venue breakdowns for satisfaction ratings
+    // Create venue breakdowns for all metrics
     const breakdowns = {};
     for (const venueId of validVenueIds) {
       const venueFeedback = todayFeedback?.filter(f => f.venue_id === venueId) || [];
@@ -162,10 +184,41 @@ const useMultiVenueStats = (venueIds = [], isMultiSite = false) => {
         ? (venueRatings.reduce((a, b) => a + b, 0) / venueRatings.length).toFixed(1)
         : null;
       
+      // Venue assistance requests
+      const venueAssistance = todayAssistance?.filter(a => a.venue_id === venueId) || [];
+      const venueResolved = venueAssistance.filter(a => a.resolved_at);
+      
+      // Venue response time
+      const venueAvgResponseTime = venueResolved.length > 0 
+        ? calculateAverageResponseTime(venueResolved)
+        : null;
+      
+      // Venue completion rate
+      const venueTotal = venueAssistance.length;
+      const venueCompleted = venueResolved.length;
+      const venueCompletionRate = venueTotal > 0 ? Math.round((venueCompleted / venueTotal) * 100) : null;
+      
+      // Venue activity level
+      const venueCurrentActivity = calculateActivityLevel(venueFeedback.length);
+      
+      // Venue peak hour
+      const venuePeakHour = calculatePeakHour(venueFeedback);
+      
+      // Venue ratings
+      const venueGoogleRating = googleRatings?.find(r => r.venue_id === venueId);
+      const venueTripAdvisorRating = tripAdvisorRatings?.find(r => r.venue_id === venueId);
+      
       breakdowns[venueId] = {
         sessions: venueFeedback.length,
         avgSatisfaction: venueAvgSatisfaction,
-        activeAlerts: todayAssistance?.filter(a => a.venue_id === venueId && !a.resolved_at).length || 0
+        activeAlerts: venueAssistance.filter(a => !a.resolved_at).length,
+        avgResponseTime: venueAvgResponseTime,
+        completionRate: venueCompletionRate,
+        resolvedToday: venueCompleted,
+        currentActivity: venueCurrentActivity,
+        peakHour: venuePeakHour,
+        googleRating: venueGoogleRating ? parseFloat(venueGoogleRating.rating) : null,
+        tripAdvisorRating: venueTripAdvisorRating ? parseFloat(venueTripAdvisorRating.rating) : null
       };
     }
 

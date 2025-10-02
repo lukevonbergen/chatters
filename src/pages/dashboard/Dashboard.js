@@ -10,23 +10,49 @@ import ActionCompletionRateTile from '../../components/dashboard/reports/ActionC
 import GoogleRatingKPITile from '../../components/dashboard/reports/GoogleRatingKPITile';
 import TripAdvisorRatingKPITile from '../../components/dashboard/reports/TripAdvisorRatingKPITile';
 import RecentSessionsTile from '../../components/dashboard/reports/RecentSessionsTile';
+import MultiSiteSelector from '../../components/dashboard/overview/MultiSiteSelector';
 import usePageTitle from '../../hooks/usePageTitle';
+import useMultiVenueStats from '../../hooks/useMultiVenueStats';
 import { useVenue } from '../../context/VenueContext';
 import { Monitor, AlertTriangle, Clock, TrendingUp, Users, Star, BarChart3, Zap, HandHeart } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DashboardPage = () => {
   usePageTitle('Overview');
-  const { venueId, venueName } = useVenue();
+  const { venueId, venueName, allVenues } = useVenue();
   const [assistanceRequests, setAssistanceRequests] = useState([]);
   const [realtimeStatus, setRealtimeStatus] = useState('online');
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
+  
+  // Multi-venue state
+  const [selectedVenues, setSelectedVenues] = useState([]);
+  const [isMultiSite, setIsMultiSite] = useState(false);
+  
+  // Use multi-venue stats hook
+  const { stats: multiVenueStats, loading: statsLoading, venueBreakdowns } = useMultiVenueStats(selectedVenues, isMultiSite);
+
+  // Handle venue selection change
+  const handleSelectionChange = (venues, isMulti) => {
+    setSelectedVenues(venues);
+    setIsMultiSite(isMulti);
+  };
+
+  // Initialize with current venue if no selection
+  useEffect(() => {
+    if (venueId && selectedVenues.length === 0) {
+      setSelectedVenues([venueId]);
+    }
+  }, [venueId, selectedVenues.length]);
 
   useEffect(() => {
     loadUserName();
     if (!venueId) return;
-    loadAssistanceRequests();
+    
+    // Load assistance requests for current venue only (multi-venue assistance requests handled differently)
+    if (!isMultiSite) {
+      loadAssistanceRequests();
+    }
     
     // Real-time subscription for assistance requests
     const subscription = supabase
@@ -155,13 +181,29 @@ const DashboardPage = () => {
     <PageContainer>
       {/* Header with Quick Actions */}
       <div className="mb-6 lg:mb-8">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
-              Welcome{userName ? `, ${userName}` : ''} 👋
-            </h1>
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
+                Welcome{userName ? `, ${userName}` : ''} 👋
+              </h1>
+              
+              {/* Multi-Site Selector */}
+              <MultiSiteSelector
+                onSelectionChange={handleSelectionChange}
+                selectedVenues={selectedVenues}
+                componentId="dashboard-overview"
+              />
+            </div>
+            
             <p className="text-gray-600 text-sm lg:text-base">
-              Here's what's happening at <span className="font-semibold text-gray-800">{venueName ? `${venueName}` : 'your venue'}</span> today...
+              {isMultiSite ? (
+                selectedVenues.length === allVenues?.length ? 
+                  `Here's what's happening across all ${selectedVenues.length} venues today...` :
+                  `Here's what's happening across ${selectedVenues.length} selected venues today...`
+              ) : (
+                <>Here's what's happening at <span className="font-semibold text-gray-800">{venueName ? `${venueName}` : 'your venue'}</span> today...</>
+              )}
             </p>
           </div>
           
@@ -199,12 +241,44 @@ const DashboardPage = () => {
           <h2 className="text-lg font-semibold text-gray-800">Today's Key Metrics</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          <SessionsActionedTile venueId={venueId} />
-          <UnresolvedAlertsTile venueId={venueId} />
-          <AvgSatisfactionTile venueId={venueId} />
-          <ActionCompletionRateTile venueId={venueId} />
-          <GoogleRatingKPITile venueId={venueId} />
-          <TripAdvisorRatingKPITile venueId={venueId} />
+          <SessionsActionedTile 
+            venueId={venueId} 
+            multiVenueStats={isMultiSite ? multiVenueStats : null}
+            venueBreakdowns={venueBreakdowns}
+            allVenues={allVenues}
+            isMultiSite={isMultiSite}
+          />
+          <UnresolvedAlertsTile 
+            venueId={venueId}
+            multiVenueStats={isMultiSite ? multiVenueStats : null}
+            venueBreakdowns={venueBreakdowns}
+            allVenues={allVenues}
+            isMultiSite={isMultiSite}
+          />
+          <AvgSatisfactionTile 
+            venueId={venueId}
+            multiVenueStats={isMultiSite ? multiVenueStats : null}
+            venueBreakdowns={venueBreakdowns}
+            allVenues={allVenues}
+            isMultiSite={isMultiSite}
+          />
+          <ActionCompletionRateTile 
+            venueId={venueId}
+            multiVenueStats={isMultiSite ? multiVenueStats : null}
+            venueBreakdowns={venueBreakdowns}
+            allVenues={allVenues}
+            isMultiSite={isMultiSite}
+          />
+          <GoogleRatingKPITile 
+            venueId={venueId}
+            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
+            isMultiSite={isMultiSite}
+          />
+          <TripAdvisorRatingKPITile 
+            venueId={venueId}
+            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
+            isMultiSite={isMultiSite}
+          />
         </div>
       </div>
 
@@ -218,7 +292,11 @@ const DashboardPage = () => {
         
         {/* Full width recent activity section */}
         <div className="space-y-6">
-          <RecentSessionsTile venueId={venueId} />
+          <RecentSessionsTile 
+            venueId={venueId}
+            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
+            isMultiSite={isMultiSite}
+          />
           
           {/* Recent Assistance Requests - Full Width */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">

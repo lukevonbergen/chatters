@@ -6,7 +6,6 @@ const MultiSiteSelector = ({ onSelectionChange, selectedVenues = [], componentId
   const { allVenues, venueId } = useVenue();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isMultiSiteEnabled, setIsMultiSiteEnabled] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -27,25 +26,25 @@ const MultiSiteSelector = ({ onSelectionChange, selectedVenues = [], componentId
     
     const savedPrefs = localStorage.getItem(`overview_reporting_${componentId}`);
     if (savedPrefs) {
-      const { isMultiSite, venues } = JSON.parse(savedPrefs);
-      setIsMultiSiteEnabled(isMultiSite);
-      if (isMultiSite && venues && venues.length > 0) {
+      const { venues } = JSON.parse(savedPrefs);
+      if (venues && venues.length > 0) {
         // Only call if venues are different from current selection
         const venuesChanged = venues.length !== selectedVenues.length || 
                              venues.some(id => !selectedVenues.includes(id));
         if (venuesChanged) {
-          onSelectionChange(venues, true);
+          const isMultiSite = venues.length > 1;
+          onSelectionChange(venues, isMultiSite);
         }
       }
     } else {
-      // Default: multi-site enabled with all venues for multi-venue users
-      setIsMultiSiteEnabled(true);
+      // Default: all venues selected for multi-venue users
       const allVenueIds = allVenues.map(v => v.id);
       // Only call if different from current selection
       const venuesChanged = allVenueIds.length !== selectedVenues.length || 
                            allVenueIds.some(id => !selectedVenues.includes(id));
       if (venuesChanged) {
-        onSelectionChange(allVenueIds, true);
+        const isMultiSite = allVenueIds.length > 1;
+        onSelectionChange(allVenueIds, isMultiSite);
       }
     }
   }, [allVenues, componentId, selectedVenues]);
@@ -56,26 +55,10 @@ const MultiSiteSelector = ({ onSelectionChange, selectedVenues = [], componentId
   }
 
   // Save preferences
-  const savePreferences = (isMultiSite, venues) => {
+  const savePreferences = (venues) => {
     localStorage.setItem(`overview_reporting_${componentId}`, JSON.stringify({
-      isMultiSite,
       venues
     }));
-  };
-
-  const handleMultiSiteToggle = (checked) => {
-    setIsMultiSiteEnabled(checked);
-    if (checked) {
-      // Enable multi-site with all venues selected
-      const allVenueIds = allVenues.map(v => v.id);
-      onSelectionChange(allVenueIds, true);
-      savePreferences(true, allVenueIds);
-    } else {
-      // Disable multi-site, use current venue
-      onSelectionChange([venueId], false);
-      savePreferences(false, [venueId]);
-    }
-    setIsOpen(false);
   };
 
   const handleVenueToggle = (venueIdToToggle) => {
@@ -91,20 +74,22 @@ const MultiSiteSelector = ({ onSelectionChange, selectedVenues = [], componentId
       newSelection = [venueId];
     }
     
-    onSelectionChange(newSelection, isMultiSiteEnabled);
-    savePreferences(isMultiSiteEnabled, newSelection);
+    const isMultiSite = newSelection.length > 1;
+    onSelectionChange(newSelection, isMultiSite);
+    savePreferences(newSelection);
   };
 
   const handleSelectAll = () => {
     const allVenueIds = allVenues.map(v => v.id);
-    onSelectionChange(allVenueIds, isMultiSiteEnabled);
-    savePreferences(isMultiSiteEnabled, allVenueIds);
+    const isMultiSite = allVenueIds.length > 1;
+    onSelectionChange(allVenueIds, isMultiSite);
+    savePreferences(allVenueIds);
   };
 
   const handleClearAll = () => {
     const currentVenueOnly = [venueId];
-    onSelectionChange(currentVenueOnly, isMultiSiteEnabled);
-    savePreferences(isMultiSiteEnabled, currentVenueOnly);
+    onSelectionChange(currentVenueOnly, false);
+    savePreferences(currentVenueOnly);
   };
 
   const filteredVenues = allVenues.filter(venue =>
@@ -116,36 +101,23 @@ const MultiSiteSelector = ({ onSelectionChange, selectedVenues = [], componentId
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Multi-Site Toggle */}
-      <div className="flex items-center gap-2">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isMultiSiteEnabled}
-            onChange={(e) => handleMultiSiteToggle(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-          <span className="text-sm font-medium text-gray-700">Multi-Site View</span>
-        </label>
-
-        {/* Venue Selector Button */}
-        {isMultiSiteEnabled && (
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Building2 className="w-4 h-4 text-gray-500" />
-            <span className="text-gray-700">
-              {selectedCount === totalCount ? 'All venues' : `${selectedCount} of ${totalCount}`}
-            </span>
-            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-          </button>
-        )}
-      </div>
+      {/* Venue Selector Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors min-w-0 bg-white"
+      >
+        <Building2 className="w-4 h-4 text-gray-500 flex-shrink-0" />
+        <span className="truncate max-w-48">
+          {selectedCount === totalCount ? 'All venues' : selectedCount === 1 ? 
+            allVenues.find(v => v.id === selectedVenues[0])?.name || 'Select venues' :
+            `${selectedCount} of ${totalCount} venues`}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
 
       {/* Dropdown */}
-      {isOpen && isMultiSiteEnabled && (
-        <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+      {isOpen && (
+        <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
           {/* Search */}
           <div className="p-3 border-b border-gray-100">
             <div className="relative">
