@@ -6,6 +6,7 @@ import RatingsTrendBar from '../../components/dashboard/reports/RatingsTrendBar'
 import RatingsTrendChart from '../../components/dashboard/reports/RatingsTrendChart';
 import { ChartCard, ActivityCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
+import useMultiVenueStats from '../../hooks/useMultiVenueStats';
 import { useVenue } from '../../context/VenueContext';
 import { Activity, TrendingUp, Calendar, Users, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -16,10 +17,32 @@ const DashboardNew = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [userName, setUserName] = useState('');
+  
+  // Multi-venue state
+  const [selectedVenues, setSelectedVenues] = useState([]);
+  const [isMultiSite, setIsMultiSite] = useState(false);
+  
+  // Use multi-venue stats hook
+  const { stats: multiVenueStats, loading: statsLoading, venueBreakdowns } = useMultiVenueStats(selectedVenues, isMultiSite);
+
+  // Handle venue selection change
+  const handleSelectionChange = (venues, isMulti) => {
+    setSelectedVenues(venues);
+    setIsMultiSite(isMulti);
+  };
+
+  // Initialize with current venue if no selection
+  useEffect(() => {
+    if (venueId && selectedVenues.length === 0) {
+      setSelectedVenues([venueId]);
+    }
+  }, [venueId, selectedVenues.length]);
 
   useEffect(() => {
     loadUserName();
     if (!venueId) return;
+    
+    // Load recent activity - update for multi-venue when needed
     loadRecentActivity();
     
     // Real-time subscription for assistance requests
@@ -173,13 +196,21 @@ const DashboardNew = () => {
     <div className="space-y-8">
       {/* Welcome Header */}
       <div className="mb-8">
-        <div className="mb-3">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {getGreeting()}{userName ? `, ${userName}` : ''}
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Welcome back to <span className="font-semibold text-gray-800">{venueName}</span>
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-3">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-gray-900">
+              {getGreeting()}{userName ? `, ${userName}` : ''}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {isMultiSite ? (
+                selectedVenues.length === allVenues?.length ? 
+                  `Overview across all ${selectedVenues.length} venues` :
+                  `Overview across ${selectedVenues.length} selected venues`
+              ) : (
+                <>Welcome back to <span className="font-semibold text-gray-800">{venueName}</span></>
+              )}
+            </p>
+          </div>
         </div>
         
         {getMultiVenueGreeting() && (
@@ -193,21 +224,48 @@ const DashboardNew = () => {
       </div>
 
       {/* Overview Stats */}
-      <OverviewStats />
+      <OverviewStats 
+        multiVenueStats={isMultiSite ? multiVenueStats : null}
+        venueBreakdowns={venueBreakdowns}
+        allVenues={allVenues}
+        isMultiSite={isMultiSite}
+        selectedVenues={selectedVenues}
+        onSelectionChange={handleSelectionChange}
+      />
 
       {/* Charts and Activity - Full Width */}
       <div className="space-y-8">
         {/* Ratings Impact Chart from Impact Tab */}
         <ChartCard
           title="Ratings Impact Analysis"
-          subtitle="Track your Google and TripAdvisor ratings progress over time"
+          subtitle={isMultiSite ? 
+            "Track ratings progress across selected venues over time" : 
+            "Track your Google and TripAdvisor ratings progress over time"
+          }
         >
-          <RatingsTrendChart venueId={venueId} timeframe="last30" />
+          <RatingsTrendChart 
+            venueId={venueId} 
+            timeframe="last30"
+            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
+            isMultiSite={isMultiSite}
+          />
         </ChartCard>
         
         {/* Recent Activity - Full Width */}
-        <ChartCard title="Recent Activity" subtitle="Customer interactions from the last 24 hours">
-          <RecentActivity activities={recentActivity} loading={activityLoading} />
+        <ChartCard 
+          title="Recent Activity" 
+          subtitle={isMultiSite ?
+            "Customer interactions across selected venues from the last 24 hours" :
+            "Customer interactions from the last 24 hours"
+          }
+        >
+          <RecentActivity 
+            activities={recentActivity} 
+            loading={activityLoading}
+            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
+            isMultiSite={isMultiSite}
+            allVenues={allVenues}
+          />
         </ChartCard>
       </div>
 

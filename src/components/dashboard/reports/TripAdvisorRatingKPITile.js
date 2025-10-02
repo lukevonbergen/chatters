@@ -12,13 +12,16 @@ const TripAdvisorIcon = ({ className }) => (
   </svg>
 );
 
-export default function TripAdvisorRatingKPITile({ venueId }) {
+export default function TripAdvisorRatingKPITile({ venueId, selectedVenues = [], isMultiSite = false, venueBreakdowns = {}, allVenues = [] }) {
   const [currentRating, setCurrentRating] = useState(null);
   const [initialRating, setInitialRating] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!venueId) return;
+    if (isMultiSite || !venueId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchRatings = async () => {
       setLoading(true);
@@ -48,7 +51,7 @@ export default function TripAdvisorRatingKPITile({ venueId }) {
     };
 
     fetchRatings();
-  }, [venueId]);
+  }, [venueId, isMultiSite]);
 
   const improvement = useMemo(() => {
     if (!currentRating || !initialRating) return null;
@@ -82,6 +85,43 @@ export default function TripAdvisorRatingKPITile({ venueId }) {
     };
   };
 
+  // Multi-venue mode: calculate average and show venue breakdowns
+  if (isMultiSite && selectedVenues.length > 0) {
+    const venueRatings = selectedVenues
+      .map(venueId => venueBreakdowns[venueId]?.tripAdvisorRating)
+      .filter(rating => rating !== null && rating !== undefined);
+    
+    const avgRating = venueRatings.length > 0 
+      ? venueRatings.reduce((sum, rating) => sum + rating, 0) / venueRatings.length
+      : 0;
+
+    const venueBreakdownsForDisplay = selectedVenues.map(venueId => {
+      const venue = allVenues.find(v => v.id === venueId);
+      const rating = venueBreakdowns[venueId]?.tripAdvisorRating;
+      return {
+        id: venueId,
+        name: venue?.name || 'Unknown Venue',
+        value: rating ? rating.toFixed(1) : 'N/A'
+      };
+    }).filter(breakdown => breakdown.value !== 'N/A');
+
+    return (
+      <MetricCard
+        title="TripAdvisor Rating"
+        value={avgRating > 0 ? avgRating.toFixed(1) : "N/A"}
+        metric={avgRating > 0 ? "/5" : ""}
+        description="Average across selected venues"
+        icon={TripAdvisorIcon}
+        variant={getVariant(avgRating)}
+        loading={loading}
+        venueBreakdowns={venueBreakdownsForDisplay.length > 0 ? venueBreakdownsForDisplay : null}
+        allVenues={allVenues}
+        field="tripAdvisorRating"
+      />
+    );
+  }
+
+  // Single venue mode
   return (
     <MetricCard
       title="TripAdvisor Rating"
