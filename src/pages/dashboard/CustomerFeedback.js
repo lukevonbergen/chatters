@@ -22,6 +22,7 @@ const CustomerFeedbackPage = () => {
   const [assistanceLoading, setAssistanceLoading] = useState(false);
   const [assistanceRequested, setAssistanceRequested] = useState(false);
   const [alertModal, setAlertModal] = useState(null);
+  const [customerEmail, setCustomerEmail] = useState('');
 
   // Utility function to check if current time is within feedback hours
   const isFeedbackTimeAllowed = (feedbackHours) => {
@@ -205,6 +206,58 @@ const CustomerFeedbackPage = () => {
         });
       }
 
+      // Create feedback session if email provided (for NPS)
+      if (customerEmail.trim()) {
+        const { error: sessionError } = await supabase
+          .from('feedback_sessions')
+          .insert({
+            id: sessionId,
+            venue_id: venueId,
+            table_number: tableNumber || null,
+            started_at: new Date().toISOString()
+          });
+
+        if (sessionError) {
+          console.error('Error creating feedback session:', sessionError);
+        }
+
+        // Check if venue has NPS enabled and if customer is within cooldown
+        const { data: venueData } = await supabase
+          .from('venues')
+          .select('nps_enabled, nps_delay_hours, nps_cooldown_hours')
+          .eq('id', venueId)
+          .single();
+
+        if (venueData?.nps_enabled) {
+          // Check cooldown using the database function
+          const { data: canSend } = await supabase
+            .rpc('check_nps_cooldown', {
+              p_venue_id: venueId,
+              p_customer_email: customerEmail.trim().toLowerCase(),
+              p_cooldown_hours: venueData.nps_cooldown_hours
+            });
+
+          if (canSend) {
+            // Schedule NPS email
+            const scheduledSendAt = new Date();
+            scheduledSendAt.setHours(scheduledSendAt.getHours() + venueData.nps_delay_hours);
+
+            const { error: npsError } = await supabase
+              .from('nps_submissions')
+              .insert({
+                venue_id: venueId,
+                session_id: sessionId,
+                customer_email: customerEmail.trim().toLowerCase(),
+                scheduled_send_at: scheduledSendAt.toISOString()
+              });
+
+            if (npsError) {
+              console.error('Error scheduling NPS email:', npsError);
+            }
+          }
+        }
+      }
+
       const { error } = await supabase.from('feedback').insert(entries);
       if (error) {
         console.error('Error submitting feedback:', error);
@@ -215,7 +268,7 @@ const CustomerFeedbackPage = () => {
         });
         return;
       }
-      
+
       setIsFinished(true);
     } catch (err) {
       console.error('Error submitting feedback:', err);
@@ -500,25 +553,51 @@ const CustomerFeedbackPage = () => {
 
         {!tableNumber ? (
           <div>
-            <h2 className="text-xl font-semibold mb-4">Select Your Table</h2>
-            
-            {activeTables.length > 0 && (
-              <select
-                value={tableNumber}
-                onChange={(e) => setTableNumber(e.target.value)}
+            <h2 className="text-xl font-semibold mb-4">Welcome!</h2>
+
+            {/* Email input - optional but prominent */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder="your@email.com"
                 className="w-full border px-4 py-3 rounded-lg text-base"
                 style={{
                   borderColor: primary,
                   backgroundColor: secondary,
                 }}
-              >
-                <option value="">Choose your table</option>
-                {activeTables.map((tableNum) => (
-                  <option key={tableNum} value={tableNum}>
-                    {tableNum}
-                  </option>
-                ))}
-              </select>
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Share your email to help us follow up and improve your experience
+              </p>
+            </div>
+
+            {activeTables.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Table Number
+                </label>
+                <select
+                  value={tableNumber}
+                  onChange={(e) => setTableNumber(e.target.value)}
+                  className="w-full border px-4 py-3 rounded-lg text-base"
+                  style={{
+                    borderColor: primary,
+                    backgroundColor: secondary,
+                  }}
+                >
+                  <option value="">Choose your table</option>
+                  {activeTables.map((tableNum) => (
+                    <option key={tableNum} value={tableNum}>
+                      {tableNum}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
         ) : current >= 0 ? (
