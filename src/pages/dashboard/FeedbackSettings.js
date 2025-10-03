@@ -21,6 +21,13 @@ const FeedbackSettings = () => {
   const [sessionTimeoutLoading, setSessionTimeoutLoading] = useState(false);
   const [sessionTimeoutMessage, setSessionTimeoutMessage] = useState('');
 
+  // NPS state
+  const [npsEnabled, setNpsEnabled] = useState(false);
+  const [npsDelayHours, setNpsDelayHours] = useState(24);
+  const [npsQuestion, setNpsQuestion] = useState('How likely are you to recommend us to a friend or colleague?');
+  const [npsLoading, setNpsLoading] = useState(false);
+  const [npsMessage, setNpsMessage] = useState('');
+
   // Fetch data on component mount
   useEffect(() => {
     if (!venueId) return;
@@ -31,7 +38,7 @@ const FeedbackSettings = () => {
     try {
       const { data: venueData, error } = await supabase
         .from('venues')
-        .select('tripadvisor_link, google_review_link, session_timeout_hours')
+        .select('tripadvisor_link, google_review_link, session_timeout_hours, nps_enabled, nps_delay_hours, nps_question')
         .eq('id', venueId)
         .single();
 
@@ -44,6 +51,9 @@ const FeedbackSettings = () => {
       setGoogleReviewLink(venueData.google_review_link || '');
       setSessionTimeoutHours(venueData.session_timeout_hours || 2);
       setSelectedTimeoutHours(venueData.session_timeout_hours || 2);
+      setNpsEnabled(venueData.nps_enabled || false);
+      setNpsDelayHours(venueData.nps_delay_hours || 24);
+      setNpsQuestion(venueData.nps_question || 'How likely are you to recommend us to a friend or colleague?');
     } catch (error) {
       console.error('Error fetching feedback settings:', error);
     }
@@ -81,23 +91,23 @@ const FeedbackSettings = () => {
   // Save session timeout
   const saveSessionTimeout = async () => {
     if (!venueId) return;
-    
+
     setSessionTimeoutLoading(true);
     setSessionTimeoutMessage('');
-    
+
     try {
       const { data, error, count } = await supabase
         .from('venues')
         .update({ session_timeout_hours: selectedTimeoutHours })
         .eq('id', venueId)
         .select();
-      
+
       if (error) throw error;
-      
+
       if (count === 0 || !data || data.length === 0) {
         throw new Error('No rows updated. You may not have permission to update this venue.');
       }
-      
+
       // Update the stored value to match the selected value
       setSessionTimeoutHours(selectedTimeoutHours);
       setSessionTimeoutMessage('Session timeout updated successfully!');
@@ -107,6 +117,34 @@ const FeedbackSettings = () => {
       setSessionTimeoutMessage(`Failed to save session timeout: ${errorDetails}. Please contact support with this error code.`);
     } finally {
       setSessionTimeoutLoading(false);
+    }
+  };
+
+  // Save NPS settings
+  const saveNPSSettings = async () => {
+    if (!venueId) return;
+
+    setNpsLoading(true);
+    setNpsMessage('');
+
+    try {
+      const { error } = await supabase
+        .from('venues')
+        .update({
+          nps_enabled: npsEnabled,
+          nps_delay_hours: npsDelayHours,
+          nps_question: npsQuestion
+        })
+        .eq('id', venueId);
+
+      if (error) throw error;
+
+      setNpsMessage('NPS settings updated successfully!');
+    } catch (error) {
+      console.error('Error saving NPS settings:', error);
+      setNpsMessage(`Failed to save NPS settings: ${error.message}`);
+    } finally {
+      setNpsLoading(false);
     }
   };
 
@@ -289,6 +327,115 @@ const FeedbackSettings = () => {
                 <p className="text-sm text-gray-500">Set when customers can leave feedback during operating hours</p>
               </div>
               <FeedbackTimeSelection currentVenueId={venueId} />
+          </div>
+        </div>
+
+        {/* NPS Settings Section */}
+        <div className="border-t border-gray-200 mt-8 pt-8">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Net Promoter Score (NPS)</h3>
+            <p className="text-sm text-gray-500 mt-1">Send automated follow-up emails to gather customer loyalty insights</p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Enable/Disable Toggle */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Enable NPS Emails
+                </label>
+                <p className="text-xs text-gray-500">Automatically send NPS surveys after visits</p>
+              </div>
+              <div className="lg:col-span-2">
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={npsEnabled}
+                    onChange={(e) => setNpsEnabled(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <span className="ms-3 text-sm font-medium text-gray-700">
+                    {npsEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Delay Hours */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Send Delay
+                </label>
+                <p className="text-xs text-gray-500">Hours after visit to send NPS email</p>
+              </div>
+              <div className="lg:col-span-2">
+                <div className="space-y-2">
+                  {[12, 24, 36].map((hours) => (
+                    <label key={hours} className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="npsDelay"
+                        value={hours}
+                        checked={npsDelayHours === hours}
+                        onChange={() => setNpsDelayHours(hours)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="ml-3 text-sm text-gray-700">
+                        {hours} hours {hours === 24 ? '(recommended)' : ''}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* NPS Question */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  NPS Question
+                </label>
+                <p className="text-xs text-gray-500">Customize the question shown to customers</p>
+              </div>
+              <div className="lg:col-span-2">
+                <textarea
+                  value={npsQuestion}
+                  onChange={(e) => setNpsQuestion(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="How likely are you to recommend us to a friend or colleague?"
+                />
+              </div>
+            </div>
+
+            {/* Save Action */}
+            <div className="border-t border-gray-100 pt-4">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-gray-500">
+                  {npsEnabled
+                    ? 'Customers who provide email will receive NPS surveys'
+                    : 'Enable to start collecting NPS data'}
+                </div>
+                <button
+                  onClick={saveNPSSettings}
+                  disabled={npsLoading}
+                  className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {npsLoading ? 'Saving...' : 'Save NPS Settings'}
+                </button>
+              </div>
+              {npsMessage && (
+                <div className={`text-xs p-2 rounded-lg mt-3 ${
+                  npsMessage.includes('success')
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-red-700 bg-red-50 border border-red-200'
+                }`}>
+                  {npsMessage}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

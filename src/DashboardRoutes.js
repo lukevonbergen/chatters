@@ -37,6 +37,7 @@ import FeedbackQuestionsPage from './pages/dashboard/FeedbackQuestions';
 import ReportsFeedbackPage from './pages/dashboard/ReportsFeedback';
 import ReportsImpactPage from './pages/dashboard/ReportsImpact';
 import ReportsMetricsPage from './pages/dashboard/ReportsMetrics';
+import ReportsNPSPage from './pages/dashboard/ReportsNPS';
 import StaffManagersPage from './pages/dashboard/StaffManagers';
 import StaffEmployeesPage from './pages/dashboard/StaffEmployees';
 import SettingsBrandingPage from './pages/dashboard/SettingsBranding';
@@ -49,6 +50,7 @@ import KioskPage from './pages/dashboard/KioskPage';
 
 // Public / guest routes (no venue context)
 import CustomerFeedbackPage from './pages/dashboard/CustomerFeedback';
+import NPSResponsePage from './pages/dashboard/NPSResponse';
 
 // Testing (outside venue context unless you need it)
 import TestDashboardPage from './pages/admin/TestDashboardPage';
@@ -86,6 +88,7 @@ const DashboardRoutes = () => {
       {/* Public guest feedback (no venue context) */}
       <Route path="/feedback" element={<CustomerFeedbackPage />} />
       <Route path="/feedback/:venueId" element={<CustomerFeedbackPage />} />
+      <Route path="/nps" element={<NPSResponsePage />} />
 
       {/* Kiosk: venue context, no dashboard frame */}
       <Route element={<KioskShell />}>
@@ -111,6 +114,7 @@ const DashboardRoutes = () => {
         <Route path="/reports/impact" element={<ReportsImpactPage />} />
         <Route path="/reports/insights" element={<CustomerInsightsPage />} />
         <Route path="/reports/metrics" element={<ReportsMetricsPage />} />
+        <Route path="/reports/nps" element={<ReportsNPSPage />} />
         <Route path="/reports/builder" element={<ReportBuilderPage />} />
         
         {/* Legacy reports routes */}

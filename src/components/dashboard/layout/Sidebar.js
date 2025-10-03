@@ -29,7 +29,8 @@ import {
   PieChart,
   Activity,
   Palette,
-  UserCheck
+  UserCheck,
+  Star
 } from 'lucide-react';
 
 const navItems = [
@@ -63,6 +64,7 @@ const navItems = [
       { label: 'Impact', path: '/reports/impact', icon: Target },
       { label: 'Insights', path: '/reports/insights', icon: Zap },
       { label: 'Metrics', path: '/reports/metrics', icon: PieChart },
+      { label: 'NPS', path: '/reports/nps', icon: Star },
       { label: 'Builder', path: '/reports/builder', icon: FileText }
     ]
   },
