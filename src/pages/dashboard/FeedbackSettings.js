@@ -77,7 +77,9 @@ const FeedbackSettings = () => {
   // Regenerate TripAdvisor URL
   const regenerateTripAdvisorUrl = () => {
     if (tripadvisorLocationId) {
-      const generatedUrl = `https://www.tripadvisor.com/UserReviewEdit-g${tripadvisorLocationId}`;
+      // TripAdvisor location ID format is just the numeric ID (e.g., "26229914")
+      // The write review URL uses format: UserReviewEdit-d{location_id}
+      const generatedUrl = `https://www.tripadvisor.com/UserReviewEdit-d${tripadvisorLocationId}`;
       setTripadvisorLink(generatedUrl);
       setReviewLinksMessage('TripAdvisor review URL regenerated! Click "Save Review Links" to save.');
     } else {
