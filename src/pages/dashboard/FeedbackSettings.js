@@ -14,6 +14,8 @@ const FeedbackSettings = () => {
   const [googleReviewLink, setGoogleReviewLink] = useState('');
   const [reviewLinksLoading, setReviewLinksLoading] = useState(false);
   const [reviewLinksMessage, setReviewLinksMessage] = useState('');
+  const [placeId, setPlaceId] = useState('');
+  const [tripadvisorLocationId, setTripadvisorLocationId] = useState('');
 
   // Session Timeout state
   const [sessionTimeoutHours, setSessionTimeoutHours] = useState(2);
@@ -38,7 +40,7 @@ const FeedbackSettings = () => {
     try {
       const { data: venueData, error } = await supabase
         .from('venues')
-        .select('tripadvisor_link, google_review_link, session_timeout_hours, nps_enabled, nps_delay_hours, nps_question')
+        .select('tripadvisor_link, google_review_link, session_timeout_hours, nps_enabled, nps_delay_hours, nps_question, place_id, tripadvisor_location_id')
         .eq('id', venueId)
         .single();
 
@@ -54,8 +56,32 @@ const FeedbackSettings = () => {
       setNpsEnabled(venueData.nps_enabled || false);
       setNpsDelayHours(venueData.nps_delay_hours || 24);
       setNpsQuestion(venueData.nps_question || 'How likely are you to recommend us to a friend or colleague?');
+      setPlaceId(venueData.place_id || '');
+      setTripadvisorLocationId(venueData.tripadvisor_location_id || '');
     } catch (error) {
       console.error('Error fetching feedback settings:', error);
+    }
+  };
+
+  // Regenerate Google Review URL
+  const regenerateGoogleUrl = () => {
+    if (placeId) {
+      const generatedUrl = `https://search.google.com/local/writereview?placeid=${placeId}`;
+      setGoogleReviewLink(generatedUrl);
+      setReviewLinksMessage('Google review URL regenerated! Click "Save Review Links" to save.');
+    } else {
+      setReviewLinksMessage('No Google Place ID found. Please link your venue in Settings > Integrations first.');
+    }
+  };
+
+  // Regenerate TripAdvisor URL
+  const regenerateTripAdvisorUrl = () => {
+    if (tripadvisorLocationId) {
+      const generatedUrl = `https://www.tripadvisor.com/UserReviewEdit-g${tripadvisorLocationId}`;
+      setTripadvisorLink(generatedUrl);
+      setReviewLinksMessage('TripAdvisor review URL regenerated! Click "Save Review Links" to save.');
+    } else {
+      setReviewLinksMessage('No TripAdvisor Location ID found. Please link your venue in Settings > Integrations first.');
     }
   };
 
@@ -174,14 +200,29 @@ const FeedbackSettings = () => {
               </label>
               <p className="text-xs text-gray-500">Your TripAdvisor review page</p>
             </div>
-            <div className="lg:col-span-2">
-              <input
-                type="url"
-                placeholder="https://www.tripadvisor.com/your-venue"
-                value={tripadvisorLink}
-                onChange={(e) => setTripadvisorLink(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
+            <div className="lg:col-span-2 space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  placeholder="https://www.tripadvisor.com/your-venue"
+                  value={tripadvisorLink}
+                  onChange={(e) => setTripadvisorLink(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+                <button
+                  onClick={regenerateTripAdvisorUrl}
+                  disabled={!tripadvisorLocationId}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 text-sm font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={tripadvisorLocationId ? "Generate TripAdvisor review URL" : "Link venue in Integrations first"}
+                >
+                  Regenerate Feedback URL
+                </button>
+              </div>
+              {!tripadvisorLocationId && (
+                <p className="text-xs text-amber-600">
+                  Link your TripAdvisor venue in Settings → Integrations to enable URL generation
+                </p>
+              )}
             </div>
           </div>
 
@@ -193,20 +234,35 @@ const FeedbackSettings = () => {
               </label>
               <p className="text-xs text-gray-500">Your Google Business review link</p>
             </div>
-            <div className="lg:col-span-2">
-              <input
-                type="url"
-                placeholder="https://search.google.com/local/writereview?placeid=..."
-                value={googleReviewLink}
-                onChange={(e) => setGoogleReviewLink(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
+            <div className="lg:col-span-2 space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  placeholder="https://search.google.com/local/writereview?placeid=..."
+                  value={googleReviewLink}
+                  onChange={(e) => setGoogleReviewLink(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+                <button
+                  onClick={regenerateGoogleUrl}
+                  disabled={!placeId}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 text-sm font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={placeId ? "Generate Google review URL" : "Link venue in Integrations first"}
+                >
+                  Regenerate Feedback URL
+                </button>
+              </div>
               {googleReviewLink && googleReviewLink.includes('writereview?placeid=') && (
                 <p className="text-xs text-green-600 mt-1 flex items-center">
                   <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   Generated from Google Places integration
+                </p>
+              )}
+              {!placeId && (
+                <p className="text-xs text-amber-600">
+                  Link your Google Business venue in Settings → Integrations to enable URL generation
                 </p>
               )}
             </div>
