@@ -11,7 +11,7 @@ module.exports = {
       colors: {
         'custom': {
           'black': '#000000',
-          'blue': '#2563EB', 
+          'blue': '#2563EB',
           'green': '#22C55D',
           'red': '#EB3232',
           'yellow': '#FBBF24',
@@ -21,6 +21,25 @@ module.exports = {
           'red-hover': '#d01414',
           'yellow-hover': '#e1a404'
         }
+      },
+      animation: {
+        'slide-up': 'slideUp 0.3s ease-out',
+        'fade-in': 'fadeIn 0.2s ease-out',
+        'scale-in': 'scaleIn 0.2s ease-out',
+      },
+      keyframes: {
+        slideUp: {
+          '0%': { transform: 'translateY(100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
       }
     },
   },

@@ -202,7 +202,7 @@ const LocationManagement = ({ venueId, onLocationUpdate }) => {
       </div>
 
       <p className="text-sm text-gray-600 mb-4">
-        Customize staff location categories for your venue. Drag to reorder.
+        Customise staff location categories for your venue. Drag to reorder.
       </p>
 
       {/* Add Location Form */}

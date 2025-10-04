@@ -251,7 +251,7 @@ const RoleManagement = ({ venueId, onRoleUpdate }) => {
       </div>
 
       <p className="text-sm text-gray-600 mb-4">
-        Customize staff role categories for your venue. Drag to reorder.
+        Customise staff role categories for your venue. Drag to reorder.
       </p>
 
       {/* Add Role Form */}

@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
 import { supabase, setAuthStorage } from '../../../utils/supabase';
-import { 
-  BarChart3, 
-  MessageSquare, 
-  Users, 
-  Map, 
-  Trophy, 
-  Settings, 
-  Menu, 
+import {
+  BarChart3,
+  MessageSquare,
+  Users,
+  Map,
+  Trophy,
+  Settings,
+  Menu,
   X,
   ChevronRight,
   Home,
@@ -30,7 +30,8 @@ import {
   Activity,
   Palette,
   UserCheck,
-  Star
+  Star,
+  Award
 } from 'lucide-react';
 
 const navItems = [
@@ -68,14 +69,15 @@ const navItems = [
       { label: 'Builder', path: '/reports/builder', icon: FileText }
     ]
   },
-  { 
-    id: 'staff', 
-    label: 'Staff', 
-    icon: Users, 
-    path: '/staff/leaderboard', 
+  {
+    id: 'staff',
+    label: 'Staff',
+    icon: Users,
+    path: '/staff/leaderboard',
     color: 'text-orange-600',
     subItems: [
       { label: 'Leaderboard', path: '/staff/leaderboard', icon: Trophy },
+      { label: 'Recognition History', path: '/staff/recognition', icon: Award },
       { label: 'Managers', path: '/staff/managers', icon: UserCheck },
       { label: 'Employees', path: '/staff/employees', icon: Users },
       { label: 'Roles', path: '/staff/roles', icon: UserPlus },

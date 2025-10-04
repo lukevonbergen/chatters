@@ -279,13 +279,53 @@
     }
     </script>
 
-    <!-- Google Analytics (gtag.js) - Can be managed through GTM instead -->
+    <!-- Google Analytics (gtag.js) with Consent Mode -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-QQHE0F4NQR"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-QQHE0F4NQR');
+
+      // Set default consent to denied (GDPR compliant)
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'wait_for_update': 500
+      });
+
+      // Configure GA4
+      gtag('config', 'G-QQHE0F4NQR', {
+        'send_page_view': false // We'll manually send after checking consent
+      });
+
+      // Check for existing cookie consent and update accordingly
+      try {
+        const savedPreferences = localStorage.getItem('chatters_cookie_preferences');
+        if (savedPreferences) {
+          const preferences = JSON.parse(savedPreferences);
+
+          // Update consent based on saved preferences
+          if (preferences.analytics) {
+            gtag('consent', 'update', {
+              'analytics_storage': 'granted'
+            });
+            // Send initial page view if analytics is consented
+            gtag('event', 'page_view');
+          }
+
+          if (preferences.marketing) {
+            gtag('consent', 'update', {
+              'ad_storage': 'granted',
+              'ad_user_data': 'granted',
+              'ad_personalization': 'granted'
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error checking cookie preferences:', e);
+      }
     </script>
 
     <!-- Performance Monitoring -->

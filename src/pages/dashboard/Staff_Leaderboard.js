@@ -4,6 +4,7 @@ import { supabase } from '../../utils/supabase';
 import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
+import { Mail, Trophy } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
@@ -14,6 +15,10 @@ const StaffLeaderboard = () => {
   usePageTitle('Staff Leaderboard');
   const [staffStats, setStaffStats] = useState([]);
   const [timeFilter, setTimeFilter] = useState('last7');
+  const [recognitionModal, setRecognitionModal] = useState(null);
+  const [personalMessage, setPersonalMessage] = useState('');
+  const [sendingRecognition, setSendingRecognition] = useState(false);
+  const [recognitionMessage, setRecognitionMessage] = useState('');
 
   const getDateRange = (filter) => {
     const now = new Date();
@@ -125,9 +130,19 @@ const StaffLeaderboard = () => {
     setStaffStats(combined);
   };
 
+  const getPeriodText = (filter) => {
+    switch (filter) {
+      case 'today': return 'Today';
+      case 'thisWeek': return 'This Week';
+      case 'last7': return 'Last 7 Days';
+      case 'last30': return 'Last 30 Days';
+      default: return 'All Time';
+    }
+  };
+
   const exportLeaderboard = () => {
     if (staffStats.length === 0) return;
-    
+
     const csvContent = [
       ['Rank', 'Staff Name', 'Role', 'Negative Feedback Resolved', 'Assistance Requests Resolved', 'Total Resolved', 'Period'].join(','),
       ...staffStats.map(staff => [
@@ -137,13 +152,10 @@ const StaffLeaderboard = () => {
         staff.feedbackResolved,
         staff.assistanceResolved,
         staff.totalResolved,
-        timeFilter === 'today' ? 'Today' : 
-        timeFilter === 'thisWeek' ? 'This Week' :
-        timeFilter === 'last7' ? 'Last 7 Days' :
-        timeFilter === 'last30' ? 'Last 30 Days' : 'All Time'
+        getPeriodText(timeFilter)
       ].join(','))
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -153,6 +165,107 @@ const StaffLeaderboard = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const sendRecognitionEmail = async (staff) => {
+    setSendingRecognition(true);
+    setRecognitionMessage('');
+
+    try {
+      // Get employee email
+      const { data: employeeData, error: employeeError } = await supabase
+        .from('employees')
+        .select('email')
+        .eq('id', staff.id)
+        .single();
+
+      if (employeeError || !employeeData?.email) {
+        throw new Error('Could not find employee email address');
+      }
+
+      // Get venue name
+      const { data: venueData } = await supabase
+        .from('venues')
+        .select('name')
+        .eq('id', venueId)
+        .single();
+
+      // Get manager name
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: userData } = await supabase
+        .from('users')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single();
+
+      const managerName = userData?.first_name && userData?.last_name
+        ? `${userData.first_name} ${userData.last_name}`
+        : 'Your Manager';
+
+      const response = await supabase.functions.invoke('send-recognition-email', {
+        body: {
+          employeeId: staff.id,
+          employeeEmail: employeeData.email,
+          employeeName: staff.name,
+          managerName,
+          venueName: venueData?.name || 'the team',
+          stats: {
+            rank: staff.rank,
+            feedbackResolved: staff.feedbackResolved,
+            assistanceResolved: staff.assistanceResolved,
+            totalResolved: staff.totalResolved,
+            period: getPeriodText(timeFilter)
+          },
+          personalMessage: personalMessage.trim() || undefined
+        }
+      });
+
+      console.log('Edge Function response:', response);
+
+      if (response.error) {
+        console.error('Recognition email error:', response.error);
+        console.error('Response data:', response.data);
+
+        // Try to get the actual response body for better error details
+        if (response.response) {
+          try {
+            const errorBody = await response.response.json();
+            console.error('Error response body:', errorBody);
+            if (errorBody.message) {
+              throw new Error(errorBody.message);
+            }
+          } catch (jsonError) {
+            console.error('Could not parse error response:', jsonError);
+          }
+        }
+
+        // Check if it's a deployment issue
+        if (response.error.message?.includes('FunctionsRelayError') || response.error.message?.includes('not found')) {
+          throw new Error('Recognition email feature not yet deployed. Please deploy the send-recognition-email Edge Function first.');
+        }
+
+        // Try to extract more details from the error
+        const errorMessage = response.data?.message || response.error.message || 'Failed to send recognition email';
+        throw new Error(errorMessage);
+      }
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to send recognition email');
+      }
+
+      setRecognitionMessage('Recognition email sent successfully!');
+      setTimeout(() => {
+        setRecognitionModal(null);
+        setPersonalMessage('');
+        setRecognitionMessage('');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error sending recognition:', error);
+      setRecognitionMessage(`Error: ${error.message}`);
+    } finally {
+      setSendingRecognition(false);
+    }
   };
 
   useEffect(() => {
@@ -221,6 +334,9 @@ const StaffLeaderboard = () => {
                   <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Total Resolved
                   </th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -281,6 +397,16 @@ const StaffLeaderboard = () => {
                         {staff.totalResolved}
                       </div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => setRecognitionModal(staff)}
+                        className="inline-flex items-center px-3 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                        title="Send recognition email"
+                      >
+                        <Trophy className="w-4 h-4 mr-1" />
+                        Recognize
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -299,6 +425,121 @@ const StaffLeaderboard = () => {
         )}
         </div>
       </ChartCard>
+
+      {/* Recognition Modal */}
+      {recognitionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Trophy className="w-6 h-6 text-white mr-3" />
+                  <h3 className="text-xl font-bold text-white">Send Recognition Email</h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setRecognitionModal(null);
+                    setPersonalMessage('');
+                    setRecognitionMessage('');
+                  }}
+                  className="text-white hover:text-gray-200 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-gray-700 mb-2">
+                  Send a recognition email to <strong>{recognitionModal.name}</strong> for their outstanding performance!
+                </p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-green-700">{recognitionModal.rank}</div>
+                      <div className="text-xs text-green-600">Rank</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-700">{recognitionModal.feedbackResolved}</div>
+                      <div className="text-xs text-green-600">Feedback</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-700">{recognitionModal.totalResolved}</div>
+                      <div className="text-xs text-green-600">Total</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Personal Message (Optional)
+                </label>
+                <textarea
+                  value={personalMessage}
+                  onChange={(e) => setPersonalMessage(e.target.value)}
+                  placeholder="Add a personal note to make this recognition extra special..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none resize-none"
+                  rows={4}
+                  disabled={sendingRecognition}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  This will be included in the email as a personal message from you
+                </p>
+              </div>
+
+              {recognitionMessage && (
+                <div className={`mb-4 p-3 rounded-lg text-sm ${
+                  recognitionMessage.includes('success')
+                    ? 'bg-green-50 border border-green-200 text-green-700'
+                    : 'bg-red-50 border border-red-200 text-red-700'
+                }`}>
+                  {recognitionMessage}
+                </div>
+              )}
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setRecognitionModal(null);
+                    setPersonalMessage('');
+                    setRecognitionMessage('');
+                  }}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  disabled={sendingRecognition}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => sendRecognitionEmail(recognitionModal)}
+                  disabled={sendingRecognition}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {sendingRecognition ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      Send Recognition Email
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

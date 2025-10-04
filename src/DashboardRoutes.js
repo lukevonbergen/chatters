@@ -19,6 +19,7 @@ import ReportsPage from './pages/dashboard/ReportsPage';
 import Settings_Staff from './pages/dashboard/settings_staff';
 import StaffLeaderboard from './pages/dashboard/Staff_Leaderboard';
 import StaffMemberDetails from './pages/dashboard/StaffMemberDetails';
+import RecognitionHistory from './pages/dashboard/RecognitionHistory';
 import BillingPage from './pages/dashboard/Billing';
 import FeedbackFeed from './pages/dashboard/FeedbackFeed';
 
@@ -123,6 +124,7 @@ const DashboardRoutes = () => {
         
         {/* Staff Section */}
         <Route path="/staff/leaderboard" element={<StaffLeaderboard />} />
+        <Route path="/staff/recognition" element={<RecognitionHistory />} />
         <Route path="/staff/managers" element={<StaffManagersPage />} />
         <Route path="/staff/employees" element={<StaffEmployeesPage />} />
         <Route path="/staff/roles" element={<StaffRolesPage />} />

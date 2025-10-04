@@ -184,6 +184,18 @@ const Footer = () => {
                   Terms of Service
                 </a>
               </li>
+              <li>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('chatters_cookie_consent');
+                    localStorage.removeItem('chatters_cookie_preferences');
+                    window.location.reload();
+                  }}
+                  className="hover:text-white transition-colors text-left"
+                >
+                  Cookie Settings
+                </button>
+              </li>
             </ul>
           </div>
         </div>

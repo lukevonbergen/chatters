@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabase';
+import { getDashboardUrl } from '../../../utils/domainUtils';
 
-const ProfileTab = ({ 
+const ProfileTab = ({
   firstName, setFirstName,
   lastName, setLastName,
   email, setEmail,
@@ -9,18 +10,20 @@ const ProfileTab = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
+  const [passwordResetMessage, setPasswordResetMessage] = useState('');
 
   const saveSettings = async () => {
     if (!venueId) return;
-    
+
     setLoading(true);
     setMessage('');
-    
+
     try {
       // Get current user ID
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth?.user?.id;
-      
+
       if (!userId) {
         throw new Error('User not authenticated');
       }
@@ -46,6 +49,29 @@ const ProfileTab = ({
       setMessage(`Error updating profile: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sendPasswordResetEmail = async () => {
+    setPasswordResetLoading(true);
+    setPasswordResetMessage('');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email }
+      });
+
+      if (error) {
+        console.error('Password reset error:', error);
+        throw error;
+      }
+
+      setPasswordResetMessage('Password reset email sent! Please check your inbox (and spam folder).');
+    } catch (error) {
+      console.error('Error sending password reset:', error);
+      setPasswordResetMessage(`Error: ${error.message}`);
+    } finally {
+      setPasswordResetLoading(false);
     }
   };
 
@@ -104,13 +130,44 @@ const ProfileTab = ({
 
         {message && (
           <div className={`text-sm mt-2 p-3 rounded-md ${
-            message.includes('success') 
-              ? 'text-green-700 bg-green-50 border border-green-200' 
+            message.includes('success')
+              ? 'text-green-700 bg-green-50 border border-green-200'
               : 'text-red-700 bg-red-50 border border-red-200'
           }`}>
             {message}
           </div>
         )}
+      </div>
+
+      {/* Password Section */}
+      <div className="mt-8 pt-8 border-t border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Password & Security</h3>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <p className="text-sm text-gray-600 mb-3">
+              For security reasons, we'll send you an email with a link to reset your password.
+            </p>
+            <button
+              onClick={sendPasswordResetEmail}
+              disabled={passwordResetLoading}
+              className="w-full sm:w-auto bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {passwordResetLoading ? 'Sending...' : 'Send password reset email'}
+            </button>
+          </div>
+
+          {passwordResetMessage && (
+            <div className={`text-sm p-3 rounded-md ${
+              passwordResetMessage.includes('sent')
+                ? 'text-green-700 bg-green-50 border border-green-200'
+                : 'text-red-700 bg-red-50 border border-red-200'
+            }`}>
+              {passwordResetMessage}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -50,16 +50,34 @@ export default async function handler(req, res) {
         }
         
         authUserId = userData.user.id;
-        
-        // Send invitation email with redirect to set-password page
-        console.log('📧 Sending invitation email');
-        const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-          redirectTo: 'https://my.getchatters.com/set-password'
+
+        // Get venue name for invitation email
+        let venueName = 'the team';
+        if (venueIds && venueIds.length > 0) {
+          const { data: venueData } = await supabase
+            .from('venues')
+            .select('name')
+            .eq('id', venueIds[0])
+            .single();
+          if (venueData) venueName = venueData.name;
+        }
+
+        // Send invitation email via Resend Edge Function
+        console.log('📧 Sending invitation email via Resend');
+        const { data: inviteData, error: inviteError } = await supabase.functions.invoke('send-staff-invitation', {
+          body: {
+            email,
+            venueId: venueIds[0],
+            role: 'manager',
+            invitedBy: req.headers?.['x-user-id'], // Pass from frontend if available
+            venueName
+          }
         });
         if (inviteError) {
           console.error('❌ Error sending invite:', inviteError);
           throw inviteError;
         }
+        console.log('✅ Invitation email sent:', inviteData);
         
         // Create user record
         console.log('👤 Creating user record');
@@ -193,11 +211,31 @@ export default async function handler(req, res) {
 
     const authUserId = userData.user.id;
 
-    // Send invitation email with redirect to set-password page
-    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-      redirectTo: 'https://my.getchatters.com/set-password'
+    // Get venue name for invitation email
+    let venueName = 'the team';
+    const { data: venueData } = await supabase
+      .from('venues')
+      .select('name')
+      .eq('id', venueId)
+      .single();
+    if (venueData) venueName = venueData.name;
+
+    // Send invitation email via Resend Edge Function
+    console.log('📧 Sending invitation email via Resend');
+    const { data: inviteData, error: inviteError } = await supabase.functions.invoke('send-staff-invitation', {
+      body: {
+        email,
+        venueId,
+        role: 'manager',
+        invitedBy: req.headers?.['x-user-id'],
+        venueName
+      }
     });
-    if (inviteError) throw inviteError;
+    if (inviteError) {
+      console.error('❌ Error sending invite:', inviteError);
+      throw inviteError;
+    }
+    console.log('✅ Invitation email sent:', inviteData);
 
     const { error: userInsertError } = await supabase.from('users').insert([
       {
