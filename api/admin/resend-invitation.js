@@ -33,9 +33,29 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'User has already accepted the invitation' });
     }
 
-    // Resend invitation with redirect to set-password page
-    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-      redirectTo: 'https://my.getchatters.com/set-password'
+    // Get user's venue for invitation email
+    const { data: staffData } = await supabase
+      .from('staff')
+      .select('venue_id, venues(name)')
+      .eq('user_id', user.id)
+      .limit(1)
+      .single();
+
+    let venueName = 'the team';
+    let venueId = null;
+    if (staffData) {
+      venueName = staffData.venues?.name || 'the team';
+      venueId = staffData.venue_id;
+    }
+
+    // Resend invitation via Resend Edge Function
+    const { data: inviteData, error: inviteError } = await supabase.functions.invoke('send-staff-invitation', {
+      body: {
+        email,
+        venueId,
+        role: 'manager',
+        venueName
+      }
     });
     if (inviteError) throw inviteError;
 

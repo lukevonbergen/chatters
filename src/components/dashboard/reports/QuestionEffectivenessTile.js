@@ -56,7 +56,7 @@ const QuestionEffectivenessTile = ({ venueId }) => {
     const uniqueSessions = [...new Set(sessions.map(s => s.session_id))];
     const totalSessions = uniqueSessions.length;
 
-    // Analyze each question
+    // Analyse each question
     const questionAnalysis = questions.map(question => {
       const questionFeedback = feedback.filter(f => f.question_id === question.id);
       const questionSessions = [...new Set(questionFeedback.map(f => f.session_id))];

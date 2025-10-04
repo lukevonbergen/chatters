@@ -405,7 +405,7 @@ const FeedbackQuestionsPage = () => {
     <div className="space-y-6">
       <ChartCard
         title="Question Management"
-        subtitle="Create and organize customer feedback questions for your venue"
+        subtitle="Create and organise customer feedback questions for your venue"
         actions={
           <div className="bg-blue-50 px-4 py-2 rounded-xl border border-blue-200">
             <span className="text-blue-700 font-semibold">Active: {questions.length}/5</span>

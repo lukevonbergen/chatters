@@ -1,7 +1,8 @@
 // EmployeesList.js - Handles displaying the list of employees
 
 import React from 'react';
-import { Download, Upload, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Download, Upload, Plus, Eye } from 'lucide-react';
 import EmptyEmployeeState from './EmptyEmployeeState';
 
 const EmployeesList = ({
@@ -17,6 +18,8 @@ const EmployeesList = ({
   roleColors,
   locationColors
 }) => {
+
+  const navigate = useNavigate();
 
   // Both masters and managers now see only current venue employees, so treat them the same way
   const currentEmployees = userRole === 'master' && masterData ? masterData.paginated : visibleEmployees;
@@ -132,21 +135,15 @@ const EmployeesList = ({
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Employee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Email
+                  Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Role
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Phone
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Location
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -161,7 +158,7 @@ const EmployeesList = ({
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600 mr-4">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-sm font-medium text-blue-600 mr-4">
                         {`${employee.first_name?.[0] || ''}${employee.last_name?.[0] || ''}`.toUpperCase()}
                       </div>
                       <div>
@@ -172,11 +169,8 @@ const EmployeesList = ({
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{employee.email || '-'}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     {employee.role ? (
-                      <span 
+                      <span
                         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                         style={getRoleStyle(employee.role)}
                       >
@@ -187,11 +181,8 @@ const EmployeesList = ({
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{employee.phone || '-'}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     {employee.location ? (
-                      <span 
+                      <span
                         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                         style={getLocationStyle(employee.location)}
                       >
@@ -201,22 +192,14 @@ const EmployeesList = ({
                       <span className="text-sm text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center space-x-2">
-                      <button
-                        onClick={() => onEditEmployee && onEditEmployee(employee)}
-                        className="text-blue-600 hover:text-blue-800 text-xs font-medium hover:underline"
-                      >
-                        Edit
-                      </button>
-                      <span className="text-gray-300">|</span>
-                      <button
-                        onClick={() => onDeleteEmployee && onDeleteEmployee(employee)}
-                        className="text-red-600 hover:text-red-800 text-xs font-medium hover:underline"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <button
+                      onClick={() => navigate(`/staff/employees/${employee.id}`)}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View
+                    </button>
                   </td>
                 </tr>
               ))}

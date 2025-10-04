@@ -13,63 +13,148 @@ const SetPasswordPage = () => {
   const [message, setMessage] = useState('');
   const [formReady, setFormReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [invitationToken, setInvitationToken] = useState(null);
+  const [invitationEmail, setInvitationEmail] = useState('');
+  const [isTokenBased, setIsTokenBased] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const hash = window.location.hash.substring(1); // Remove '#'
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-    const type = params.get('type');
+    const validateInvitation = async () => {
+      // First, check for new token-based invitation
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
 
-    // Check if this is an invite link
-    if (type !== 'invite') {
-      setError('Invalid invitation link. This page is for invited users only.');
-      setIsLoading(false);
-      return;
-    }
+      if (token) {
+        // New token-based invitation flow
+        setIsTokenBased(true);
+        setInvitationToken(token);
 
-    if (!accessToken || !refreshToken) {
-      setError('Invalid or missing token.');
-      setIsLoading(false);
-      return;
-    }
+        try {
+          // Validate token via Edge Function
+          const { data, error } = await supabase.functions.invoke('validate-invitation-token', {
+            body: { token }
+          });
 
-    supabase.auth
-      .setSession({ access_token: accessToken, refresh_token: refreshToken })
-      .then(({ error }) => {
-        if (error) {
-          setError('Token session failed.');
-        } else {
+          if (error) {
+            console.error('Token validation error:', error);
+            setError('Invalid or expired invitation link.');
+            setIsLoading(false);
+            return;
+          }
+
+          if (!data.valid) {
+            setError(data.message || 'Invalid or expired invitation link.');
+            setIsLoading(false);
+            return;
+          }
+
+          // Token is valid, store email and show form
+          setInvitationEmail(data.email);
           setFormReady(true);
+          setIsLoading(false);
+        } catch (err) {
+          console.error('Error validating token:', err);
+          setError('Failed to validate invitation. Please try again.');
+          setIsLoading(false);
         }
+        return;
+      }
+
+      // Fallback to old Supabase Auth hash-based invitation flow
+      const hash = window.location.hash.substring(1); // Remove '#'
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const type = params.get('type');
+
+      // Check if this is an invite link
+      if (type !== 'invite') {
+        setError('Invalid invitation link. This page is for invited users only.');
         setIsLoading(false);
-      });
+        return;
+      }
+
+      if (!accessToken || !refreshToken) {
+        setError('Invalid or missing token.');
+        setIsLoading(false);
+        return;
+      }
+
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error }) => {
+          if (error) {
+            setError('Token session failed.');
+          } else {
+            setFormReady(true);
+          }
+          setIsLoading(false);
+        });
+    };
+
+    validateInvitation();
   }, []);
 
   const handleSetPassword = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
+    setIsLoading(true);
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      setIsLoading(false);
       return;
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      if (isTokenBased) {
+        // New token-based invitation flow
+        const { data, error } = await supabase.functions.invoke('create-account-from-invitation', {
+          body: {
+            token: invitationToken,
+            password
+          }
+        });
 
-      if (error) {
-        console.error('[SetPassword] Password update error:', error.message);
-        setError('Failed to set password. Please try again.');
-      } else {
-        setMessage('Password successfully set! Redirecting...');
+        if (error) {
+          console.error('[SetPassword] Token-based account creation error:', error);
+          setError('Failed to create account. Please try again or request a new invitation.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!data.success) {
+          setError(data.message || 'Failed to create account.');
+          setIsLoading(false);
+          return;
+        }
+
+        setMessage('Account created successfully! Redirecting to sign in...');
         setTimeout(() => navigate('/signin'), 2000);
+      } else {
+        // Old Supabase Auth flow
+        const { error } = await supabase.auth.updateUser({ password });
+
+        if (error) {
+          console.error('[SetPassword] Password update error:', error.message);
+          setError('Failed to set password. Please try again.');
+          setIsLoading(false);
+        } else {
+          setMessage('Password successfully set! Redirecting...');
+          setTimeout(() => navigate('/signin'), 2000);
+        }
       }
     } catch (err) {
       console.error('[SetPassword] Unexpected error:', err);
       setError('Something went wrong. Please try again.');
+      setIsLoading(false);
     }
   };
 

@@ -132,7 +132,7 @@ const KioskFeedbackList = ({
   };
 
   const handleLocationClick = (session) => {
-    // This is the original navigation behavior
+    // This is the original navigation behaviour
     onFeedbackClick?.(session);
   };
 

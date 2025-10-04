@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import CookieBanner from './components/marketing/CookieBanner';
 
 import LandingPage from './pages/marketing/LandingPage';
 import PricingPage from './pages/marketing/Pricing';
@@ -18,6 +19,8 @@ import BlogPost from './pages/marketing/BlogPost';
 import QuestionManagementProduct from './pages/marketing/product/QuestionManagement';
 import BusinessIntelligenceProduct from './pages/marketing/product/BusinessIntelligence';
 import StaffLeaderboardPage from './pages/marketing/product/StaffLeaderboardPage';
+import StaffRecognitionPage from './pages/marketing/product/StaffRecognition';
+import NPSScoringPage from './pages/marketing/product/NPSScoring';
 import MultiLocationControlProduct from './pages/marketing/product/Multi-Location-Control';
 import KioskModeProduct from './pages/marketing/product/Kiosk-Mode';
 import RealTimeAlertsProduct from './pages/marketing/product/Real-Time-Alerts';
@@ -29,9 +32,10 @@ import EventSolution from './pages/marketing/solutions/EventSolution';
 
 const MarketingRoutes = () => {
   return (
-    <Routes>
-      {/* 🌍 Public Marketing Site */}
-      <Route path="/" element={<LandingPage />} />
+    <>
+      <Routes>
+        {/* 🌍 Public Marketing Site */}
+        <Route path="/" element={<LandingPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/features" element={<FeaturesPage />} />
       <Route path="/contact" element={<ContactPage />} />
@@ -53,6 +57,8 @@ const MarketingRoutes = () => {
       <Route path="/product/kiosk-mode" element={<KioskModeProduct />} />
       <Route path="/product/real-time-alerts" element={<RealTimeAlertsProduct />} />
       <Route path="/product/staff-leaderboard" element={<StaffLeaderboardPage />} />
+      <Route path="/product/staff-recognition" element={<StaffRecognitionPage />} />
+      <Route path="/product/nps-scoring" element={<NPSScoringPage />} />
 
       {/* 🏢 Solutions Pages */}
       <Route path="/solutions/restaurants" element={<RestaurantSolution />} />
@@ -60,7 +66,11 @@ const MarketingRoutes = () => {
       <Route path="/solutions/retail" element={<RetailSolution />} />
       <Route path="/solutions/events" element={<EventSolution />} />
 
-    </Routes>
+      </Routes>
+
+      {/* Cookie Consent Banner */}
+      <CookieBanner />
+    </>
   );
 };
 

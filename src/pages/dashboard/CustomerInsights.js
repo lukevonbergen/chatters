@@ -17,7 +17,7 @@ const CustomerInsightsPage = () => {
     <div className="space-y-6">
       <ChartCard
         title="Customer Insights"
-        subtitle="Understand your customers' behavior and preferences"
+        subtitle="Understand your customers' behaviour and preferences"
         actions={
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium text-gray-700">Period:</label>

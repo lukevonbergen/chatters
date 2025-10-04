@@ -17,7 +17,28 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const runRecovery = async () => {
+    const validateToken = async () => {
+      // Check for token in URL params (Resend flow)
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+
+      if (token) {
+        // Validate token with backend
+        const { data, error } = await supabase.functions.invoke('validate-reset-token', {
+          body: { token }
+        });
+
+        if (error || !data?.valid) {
+          setError('Invalid or expired reset link.');
+          setTimeout(() => navigate('/forgot-password'), 3000);
+        } else {
+          setFormReady(true);
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Fallback: Check for Supabase Auth recovery link (old flow)
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const access_token = hashParams.get('access_token');
       const refresh_token = hashParams.get('refresh_token');
@@ -45,7 +66,7 @@ const ResetPassword = () => {
       setIsLoading(false);
     };
 
-    runRecovery();
+    validateToken();
   }, [navigate]);
 
   const handleSubmit = async (e) => {
@@ -59,14 +80,33 @@ const ResetPassword = () => {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
 
-      if (error) {
-        console.error('[ResetPassword] Password update error:', error.message);
-        setError('Failed to reset password. Please try again.');
+      if (token) {
+        // Use Resend flow with token
+        const { data, error } = await supabase.functions.invoke('reset-password-with-token', {
+          body: { token, password }
+        });
+
+        if (error || !data?.success) {
+          console.error('[ResetPassword] Token-based reset error:', error);
+          setError('Failed to reset password. Please try again.');
+        } else {
+          setMessage('Password successfully reset! Redirecting...');
+          setTimeout(() => navigate('/signin'), 2000);
+        }
       } else {
-        setMessage('Password successfully reset! Redirecting...');
-        setTimeout(() => navigate('/signin'), 2000);
+        // Fallback to Supabase Auth flow
+        const { error } = await supabase.auth.updateUser({ password });
+
+        if (error) {
+          console.error('[ResetPassword] Password update error:', error.message);
+          setError('Failed to reset password. Please try again.');
+        } else {
+          setMessage('Password successfully reset! Redirecting...');
+          setTimeout(() => navigate('/signin'), 2000);
+        }
       }
     } catch (err) {
       console.error('[ResetPassword] Unexpected error:', err);
