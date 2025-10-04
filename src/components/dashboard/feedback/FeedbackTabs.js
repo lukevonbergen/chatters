@@ -62,8 +62,9 @@ const FeedbackTabs = ({ venueId, questionsMap, sortOrder = 'desc', tableFilter =
 
       const { data: employeesData } = await supabase
         .from('employees')
-        .select('id, first_name, last_name, role')
-        .eq('venue_id', venueId);
+        .select('id, first_name, last_name, role, is_active')
+        .eq('venue_id', venueId)
+        .eq('is_active', true); // Only fetch active employees
 
       const combinedStaffList = [
         ...(staffData || []).map(person => ({

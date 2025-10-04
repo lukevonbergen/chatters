@@ -168,8 +168,9 @@ const FeedbackDetailModal = ({
         if (venueId) {
           const { data: employeesData, error: employeesError } = await supabase
             .from('employees')
-            .select('id, first_name, last_name, email, role')
-            .eq('venue_id', venueId);
+            .select('id, first_name, last_name, email, role, is_active')
+            .eq('venue_id', venueId)
+            .eq('is_active', true); // Only fetch active employees
 
           if (employeesError) {
             // Error loading employees data

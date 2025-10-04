@@ -41,6 +41,7 @@ import ReportsMetricsPage from './pages/dashboard/ReportsMetrics';
 import ReportsNPSPage from './pages/dashboard/ReportsNPS';
 import StaffManagersPage from './pages/dashboard/StaffManagers';
 import StaffEmployeesPage from './pages/dashboard/StaffEmployees';
+import EmployeeDetail from './pages/dashboard/EmployeeDetail';
 import SettingsBrandingPage from './pages/dashboard/SettingsBranding';
 import AccountProfilePage from './pages/dashboard/AccountProfile';
 import AccountBillingPage from './pages/dashboard/AccountBilling';
@@ -127,6 +128,7 @@ const DashboardRoutes = () => {
         <Route path="/staff/recognition" element={<RecognitionHistory />} />
         <Route path="/staff/managers" element={<StaffManagersPage />} />
         <Route path="/staff/employees" element={<StaffEmployeesPage />} />
+        <Route path="/staff/employees/:employeeId" element={<EmployeeDetail />} />
         <Route path="/staff/roles" element={<StaffRolesPage />} />
         <Route path="/staff/locations" element={<StaffLocationsPage />} />
         <Route path="/staff-member/:staffId" element={<StaffMemberDetails />} />

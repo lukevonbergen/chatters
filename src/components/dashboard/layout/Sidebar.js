@@ -175,15 +175,15 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         // Fetch account trial/subscription info
         const { data: accountData } = await supabase
           .from('accounts')
-          .select('trial_ends_at, stripe_subscription_id')
+          .select('trial_ends_at, is_paid')
           .eq('id', accountIdToCheck)
           .single();
 
         if (accountData) {
           const trialEndsAt = accountData.trial_ends_at ? new Date(accountData.trial_ends_at) : null;
           const now = new Date();
-          const isExpired = trialEndsAt && now > trialEndsAt && !accountData.stripe_subscription_id;
-          const isActive = trialEndsAt && now <= trialEndsAt && !accountData.stripe_subscription_id;
+          const isExpired = trialEndsAt && now > trialEndsAt && !accountData.is_paid;
+          const isActive = trialEndsAt && now <= trialEndsAt && !accountData.is_paid;
           
           setTrialInfo({
             isExpired,
