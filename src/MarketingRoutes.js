@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import CookieBanner from './components/marketing/CookieBanner';
+import ScrollToTop from './components/ScrollToTop';
 
 import LandingPage from './pages/marketing/LandingPage';
 import PricingPage from './pages/marketing/Pricing';
@@ -33,6 +34,7 @@ import EventSolution from './pages/marketing/solutions/EventSolution';
 const MarketingRoutes = () => {
   return (
     <>
+      <ScrollToTop />
       <Routes>
         {/* 🌍 Public Marketing Site */}
         <Route path="/" element={<LandingPage />} />
