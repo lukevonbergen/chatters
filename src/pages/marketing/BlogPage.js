@@ -11,92 +11,103 @@ const BlogPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const categories = [
-    { id: 'all', name: 'All Posts', count: 12 },
-    { id: 'customer-experience', name: 'Customer Experience', count: 4 },
-    { id: 'business-insights', name: 'Business Insights', count: 3 },
-    { id: 'product-updates', name: 'Product Updates', count: 2 },
-    { id: 'industry-trends', name: 'Industry Trends', count: 2 },
-    { id: 'case-studies', name: 'Case Studies', count: 1 }
+    { id: 'all', name: 'All Posts', count: 7 },
+    { id: 'nps-metrics', name: 'NPS & Metrics', count: 3 },
+    { id: 'business-insights', name: 'Business Insights', count: 2 },
+    { id: 'customer-experience', name: 'Customer Experience', count: 2 }
   ];
 
   const blogPosts = [
     {
-      id: 'transforming-customer-feedback-into-revenue',
-      title: 'How to Transform Customer Feedback into Revenue Growth',
-      excerpt: 'Discover proven strategies to turn customer insights into actionable business improvements that directly impact your bottom line.',
-      author: 'Sarah Johnson',
-      publishedDate: '2024-08-15',
+      id: 'real-time-table-feedback-restaurants',
+      title: 'Why Real-Time Feedback at the Table is Transforming UK Restaurants',
+      excerpt: 'Discover how capturing guest feedback whilst they\'re still dining allows restaurants to fix issues instantly, prevent negative reviews, and boost satisfaction scores.',
+      author: 'Matthew Jackson',
+      publishedDate: '2025-10-04',
       readTime: '8 min read',
+      category: 'customer-experience',
+      categoryName: 'Customer Experience',
+      featured: true,
+      image: '/img/blog/realtime-table-feedback.jpg',
+      tags: ['Real-Time Feedback', 'Table Service', 'Customer Experience', 'QR Codes']
+    },
+    {
+      id: 'complete-guide-to-nps-scores-hospitality',
+      title: 'The Complete Guide to NPS Scores for Hospitality Businesses',
+      excerpt: 'Everything you need to know about Net Promoter Score: what it is, why it matters, and how to use it to transform your hospitality business.',
+      author: 'Matthew Jackson',
+      publishedDate: '2025-10-01',
+      readTime: '12 min read',
+      category: 'nps-metrics',
+      categoryName: 'NPS & Metrics',
+      featured: false,
+      image: '/img/blog/nps-guide.jpg',
+      tags: ['NPS', 'Net Promoter Score', 'Customer Loyalty', 'Hospitality Metrics']
+    },
+    {
+      id: 'nps-benchmarks-restaurants-hotels-2024',
+      title: 'NPS Benchmarks for Restaurants & Hotels: 2024 Industry Standards',
+      excerpt: 'Compare your NPS score against industry benchmarks. Discover what good NPS scores look like for restaurants, pubs, hotels, and other hospitality venues.',
+      author: 'Matthew Jackson',
+      publishedDate: '2025-08-15',
+      readTime: '9 min read',
+      category: 'nps-metrics',
+      categoryName: 'NPS & Metrics',
+      featured: false,
+      image: '/img/blog/nps-benchmarks.jpg',
+      tags: ['NPS', 'Benchmarks', 'Industry Standards', 'Hospitality']
+    },
+    {
+      id: 'improving-nps-score-practical-strategies',
+      title: 'How to Improve Your NPS Score: 10 Practical Strategies That Work',
+      excerpt: 'Proven tactics to boost your Net Promoter Score and turn more customers into promoters. Real-world strategies from successful hospitality businesses.',
+      author: 'Matthew Jackson',
+      publishedDate: '2025-07-01',
+      readTime: '10 min read',
+      category: 'nps-metrics',
+      categoryName: 'NPS & Metrics',
+      featured: false,
+      image: '/img/blog/improve-nps.jpg',
+      tags: ['NPS', 'Customer Satisfaction', 'Strategy', 'Best Practices']
+    },
+    {
+      id: 'nps-vs-csat-customer-satisfaction-metrics',
+      title: 'NPS vs CSAT vs CES: Which Customer Satisfaction Metric Should You Track?',
+      excerpt: 'Understand the differences between NPS, CSAT, and Customer Effort Score. Learn which metrics matter most for your hospitality business.',
+      author: 'Matthew Jackson',
+      publishedDate: '2025-06-01',
+      readTime: '7 min read',
       category: 'business-insights',
       categoryName: 'Business Insights',
-      featured: true,
-      image: '/img/blog/feedback-revenue.jpg',
-      tags: ['Revenue Growth', 'Customer Feedback', 'Business Strategy', 'ROI']
+      featured: false,
+      image: '/img/blog/metrics-comparison.jpg',
+      tags: ['NPS', 'CSAT', 'CES', 'Metrics', 'Customer Satisfaction']
     },
     {
-      id: 'restaurant-customer-satisfaction-2024',
-      title: 'The State of Restaurant Customer Satisfaction in 2024',
-      excerpt: 'Comprehensive analysis of customer satisfaction trends in the restaurant industry, including key metrics and actionable insights.',
-      author: 'Mark Thompson',
-      publishedDate: '2024-08-12',
+      id: 'calculating-nps-score-step-by-step',
+      title: 'How to Calculate NPS Score: Step-by-Step Guide with Examples',
+      excerpt: 'Master the NPS calculation formula with real examples. Learn how to segment your score, track trends, and interpret results correctly.',
+      author: 'Matthew Jackson',
+      publishedDate: '2025-05-15',
       readTime: '6 min read',
-      category: 'industry-trends',
-      categoryName: 'Industry Trends',
+      category: 'business-insights',
+      categoryName: 'Business Insights',
       featured: false,
-      image: '/img/blog/restaurant-trends.jpg',
-      tags: ['Restaurants', 'Customer Satisfaction', '2024 Trends']
+      image: '/img/blog/calculate-nps.jpg',
+      tags: ['NPS', 'Calculation', 'Analytics', 'Tutorial']
     },
     {
-      id: 'real-time-alerts-feature-launch',
-      title: 'Introducing Real-Time Alerts: Never Miss Critical Feedback Again',
-      excerpt: 'Learn about our new real-time alert system that helps businesses respond to customer concerns instantly.',
-      author: 'Tech Team',
-      publishedDate: '2024-08-10',
-      readTime: '4 min read',
-      category: 'product-updates',
-      categoryName: 'Product Updates',
-      featured: false,
-      image: '/img/blog/real-time-alerts.jpg',
-      tags: ['Product Update', 'Real-Time Alerts', 'Customer Service']
-    },
-    {
-      id: 'hotel-guest-experience-optimization',
-      title: '5 Ways Hotels Can Optimize Guest Experience Through Feedback',
-      excerpt: 'Practical strategies for hotels to leverage guest feedback for improved satisfaction and increased bookings.',
-      author: 'Lisa Chen',
-      publishedDate: '2024-08-08',
-      readTime: '7 min read',
+      id: 'qr-code-feedback-systems-restaurants',
+      title: 'QR Code Feedback Systems: The Complete Guide for UK Restaurants',
+      excerpt: 'Learn how QR code feedback collection works, why it\'s more effective than traditional surveys, and how to implement it in your restaurant or pub.',
+      author: 'Matthew Jackson',
+      publishedDate: '2025-09-20',
+      readTime: '9 min read',
       category: 'customer-experience',
       categoryName: 'Customer Experience',
       featured: false,
-      image: '/img/blog/hotel-optimization.jpg',
-      tags: ['Hotels', 'Guest Experience', 'Optimization', 'Feedback']
-    },
-    {
-      id: 'retail-feedback-collection-best-practices',
-      title: 'Best Practices for Retail Feedback Collection',
-      excerpt: 'Essential guidelines for retail businesses to collect meaningful customer feedback that drives improvements.',
-      author: 'David Park',
-      publishedDate: '2024-08-05',
-      readTime: '5 min read',
-      category: 'customer-experience',
-      categoryName: 'Customer Experience',
-      featured: false,
-      image: '/img/blog/retail-feedback.jpg',
-      tags: ['Retail', 'Best Practices', 'Feedback Collection']
-    },
-    {
-      id: 'chatters-dashboard-v3-launch',
-      title: 'Dashboard v3.0: Enhanced Analytics and Reporting',
-      excerpt: 'Explore the new features in our redesigned dashboard that make data analysis more intuitive and powerful.',
-      author: 'Product Team',
-      publishedDate: '2024-08-03',
-      readTime: '6 min read',
-      category: 'product-updates',
-      categoryName: 'Product Updates',
-      featured: false,
-      image: '/img/blog/dashboard-v3.jpg',
-      tags: ['Dashboard', 'Analytics', 'Product Update', 'UX']
+      image: '/img/blog/qr-feedback.jpg',
+      tags: ['QR Codes', 'Feedback Collection', 'Restaurant Technology', 'Guest Experience']
     }
   ];
 
@@ -112,7 +123,7 @@ const BlogPage = () => {
   const regularPosts = filteredPosts.filter(post => !post.featured);
 
   return (
-    <div className="min-h-screen bg-[#082524]">
+    <div className="min-h-screen bg-slate-50">
       <Helmet>
         <title>Blog | Chatters - Customer Feedback Insights & Industry Trends</title>
         <meta 
@@ -217,10 +228,13 @@ const BlogPage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gradient-to-br from-[#4ECDC4]/10 to-[#4ECDC4]/20 p-16 flex items-center justify-center">
-                    <div className="w-32 h-32 bg-[#4ECDC4]/30 rounded-3xl flex items-center justify-center">
-                      <Tag className="w-16 h-16 text-[#4ECDC4]" />
-                    </div>
+                  <div className="relative h-full min-h-[400px] overflow-hidden bg-gradient-to-br from-[#1A535C] to-[#4ECDC4]">
+                    <img
+                      src={`https://images.unsplash.com/photo-${featuredPost.id === 'real-time-table-feedback-restaurants' ? '1414235077428-338989a2e8c0' : featuredPost.id === 'qr-code-feedback-systems-restaurants' ? '1556742049-0cfed4f6a45d' : '1517248135467-4c7edcad34c4'}?auto=format&fit=crop&w=1200&q=80`}
+                      alt={featuredPost.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A535C]/50 to-transparent"></div>
                   </div>
                 </div>
               </Link>
@@ -247,10 +261,13 @@ const BlogPage = () => {
                   to={`/blog/${post.id}`}
                   className="group block bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100"
                 >
-                  <div className="bg-gradient-to-br from-[#F7FFF7] to-[#4ECDC4]/5 p-8 h-48 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-[#4ECDC4]/20 rounded-2xl flex items-center justify-center">
-                      <Tag className="w-8 h-8 text-[#4ECDC4]" />
-                    </div>
+                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#1A535C] to-[#4ECDC4]">
+                    <img
+                      src={`https://images.unsplash.com/photo-${post.id === 'real-time-table-feedback-restaurants' ? '1414235077428-338989a2e8c0' : post.id === 'qr-code-feedback-systems-restaurants' ? '1556742049-0cfed4f6a45d' : post.id === 'complete-guide-to-nps-scores-hospitality' ? '1517248135467-4c7edcad34c4' : post.id === 'nps-benchmarks-restaurants-hotels-2024' ? '1551218808-94e220e084d2' : post.id === 'improving-nps-score-practical-strategies' ? '1466978913421-dad2ebd01d17' : post.id === 'nps-vs-csat-customer-satisfaction-metrics' ? '1460925895917-afdab827c52f' : '1551218808-94e220e084d2'}?auto=format&fit=crop&w=800&q=80`}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                   </div>
                   
                   <div className="p-6">
