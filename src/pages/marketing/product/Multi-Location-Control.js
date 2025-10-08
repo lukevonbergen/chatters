@@ -156,7 +156,7 @@ const MultiLocationControlProduct = () => {
         defaultOpenIndex={0}
         faqs={[
           { q: "How many locations can I manage?", a: "There's no limit - our platform scales from 2 locations to thousands. Pricing is per location with volume discounts available." },
-          { q: "Can different locations have different settings?", a: "Yes - set global defaults then customize questions, workflows, and alerts for individual locations or regions as needed." },
+          { q: "Can different locations have different settings?", a: "Yes - set global defaults then customise questions, workflows, and alerts for individual locations or regions as needed." },
           { q: "How do permissions work across locations?", a: "Set role-based permissions so regional managers see their areas, location managers see their sites, and corporate sees everything." },
           { q: "Can I compare performance between locations?", a: "Absolutely - compare satisfaction scores, response times, and trends across locations with detailed benchmarking reports." },
         ]}

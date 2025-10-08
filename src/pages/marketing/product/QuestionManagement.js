@@ -17,7 +17,7 @@ const QuestionManagementProduct = () => {
         <title>Question Management | Chatters - Design Perfect Feedback Forms</title>
         <meta
           name="description"
-          content="Create and customize feedback questions that get the insights you need. Chatters' question management system helps you design forms that customers actually complete."
+          content="Create and customise feedback questions that get the insights you need. Chatters' question management system helps you design forms that customers actually complete."
         />
         <meta
           name="keywords"
@@ -137,7 +137,7 @@ const QuestionManagementProduct = () => {
             icon: <Search className="w-6 h-6 text-teal-600" />,
             title: "Response analytics",
             description:
-              "See which questions generate the most useful feedback and optimize your forms over time.",
+              "See which questions generate the most useful feedback and optimise your forms over time.",
           },
         ]}
         wavyBottom={true}
@@ -156,9 +156,9 @@ const QuestionManagementProduct = () => {
         defaultOpenIndex={0}
         faqs={[
           { q: "How many questions can I add to a form?", a: "We recommend 3-5 questions for best completion rates, but you can add as many as needed. Our analytics show which length works best for your audience." },
-          { q: "Can I use my own branding on the forms?", a: "Yes - customize colors, logos, fonts, and styling to match your brand perfectly." },
-          { q: "Do you have pre-built question templates?", a: "We include proven question sets for restaurants, hotels, retail, and events. Each template is optimized for high completion rates." },
-          { q: "Can questions change based on previous answers?", a: "Yes - use conditional logic to show relevant follow-up questions, creating personalized feedback experiences." },
+          { q: "Can I use my own branding on the forms?", a: "Yes - customise colours, logos, fonts, and styling to match your brand perfectly." },
+          { q: "Do you have pre-built question templates?", a: "We include proven question sets for restaurants, hotels, retail, and events. Each template is optimised for high completion rates." },
+          { q: "Can questions change based on previous answers?", a: "Yes - use conditional logic to show relevant follow-up questions, creating personalised feedback experiences." },
         ]}
       />
 
