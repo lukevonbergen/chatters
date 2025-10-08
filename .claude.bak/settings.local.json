@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv:*)",
+      "Bash(rmdir:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(for:*)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(true)",
+      "Bash(done)",
+      "Bash(do echo \"Processing: $file\")",
+      "Bash(sed:*)",
+      "Bash(node:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm start)",
+      "mcp__supabase__execute_sql"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
+}

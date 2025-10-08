@@ -23,6 +23,7 @@ const CustomerFeedbackPage = () => {
   const [assistanceRequested, setAssistanceRequested] = useState(false);
   const [alertModal, setAlertModal] = useState(null);
   const [customerEmail, setCustomerEmail] = useState('');
+  const [hasStarted, setHasStarted] = useState(false);
 
   // Utility function to check if current time is within feedback hours
   const isFeedbackTimeAllowed = (feedbackHours) => {
@@ -551,7 +552,7 @@ const CustomerFeedbackPage = () => {
           </div>
         )}
 
-        {!tableNumber ? (
+        {!hasStarted ? (
           <div>
             <h2 className="text-xl font-semibold mb-4">Welcome!</h2>
 
@@ -577,7 +578,7 @@ const CustomerFeedbackPage = () => {
             </div>
 
             {activeTables.length > 0 && (
-              <div>
+              <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Table Number
                 </label>
@@ -599,6 +600,15 @@ const CustomerFeedbackPage = () => {
                 </select>
               </div>
             )}
+
+            <button
+              onClick={() => setHasStarted(true)}
+              disabled={activeTables.length > 0 && !tableNumber}
+              className="w-full py-3 rounded-lg font-semibold text-white text-lg transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: primary }}
+            >
+              Continue
+            </button>
           </div>
         ) : current >= 0 ? (
           <div>
