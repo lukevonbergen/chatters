@@ -153,10 +153,10 @@ const StaffRecognitionPage = () => {
         gradientDirection="bg-gradient-to-b"
         defaultOpenIndex={0}
         faqs={[
-          { q: "What triggers a staff recognition?", a: "You choose when to recognize staff based on leaderboard rankings. See top performers for any time period and send recognition with one click." },
-          { q: "Can I customize the recognition email?", a: "Yes! Add your own personal message that appears alongside their performance stats in a beautifully branded email template." },
+          { q: "What triggers a staff recognition?", a: "You choose when to recognise staff based on leaderboard rankings. See top performers for any time period and send recognition with one click." },
+          { q: "Can I customise the recognition email?", a: "Yes! Add your own personal message that appears alongside their performance stats in a beautifully branded email template." },
           { q: "What performance metrics are included?", a: "Recognition emails show feedback resolved, assistance requests handled, total resolutions, rank, and the time period they excelled in." },
-          { q: "Is recognition history tracked?", a: "Yes, all recognition emails are logged so you can see who was recognized, when, and for what performance period." },
+          { q: "Is recognition history tracked?", a: "Yes, all recognition emails are logged so you can see who was recognised, when, and for what performance period." },
         ]}
       />
 

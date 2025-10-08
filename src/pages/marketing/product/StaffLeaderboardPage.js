@@ -155,7 +155,7 @@ const StaffLeaderboardPage = () => {
         defaultOpenIndex={0}
         faqs={[
           { q: "What metrics can be tracked on the leaderboard?", a: "Track any performance metric that matters to your business - customer satisfaction scores, response times, resolution rates, upsells, positive reviews, and custom KPIs you define." },
-          { q: "Can I customize the recognition system?", a: "Yes - create custom badges, set your own achievement milestones, and design rewards that align with your company culture and values." },
+          { q: "Can I customise the recognition system?", a: "Yes - create custom badges, set your own achievement milestones, and design rewards that align with your company culture and values." },
           { q: "How do team competitions work?", a: "Set up competitions between departments, shifts, or custom groups. Define the competition period, metrics, and rewards to create engaging team challenges." },
           { q: "Is the leaderboard visible to all staff?", a: "You control visibility - make leaderboards public for motivation, private for management review, or create different views for different roles and teams." },
         ]}

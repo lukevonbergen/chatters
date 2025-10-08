@@ -156,7 +156,7 @@ const NPSScoringPage = () => {
           { q: "How is NPS calculated?", a: "NPS is calculated by subtracting the percentage of detractors (0-6 ratings) from the percentage of promoters (9-10 ratings). Chatters does this automatically from your feedback data." },
           { q: "What's a good NPS score for hospitality?", a: "Hospitality NPS varies, but scores above 50 are excellent, 30-50 is good, and 0-30 indicates room for improvement. Chatters helps you track and improve your score over time." },
           { q: "Can I see NPS by location?", a: "Yes! Multi-location businesses can compare NPS across venues to identify top performers and locations that need support." },
-          { q: "How do I act on promoters and detractors?", a: "Chatters identifies promoters and detractors with their contact info. Send personalized follow-ups, request reviews from promoters, or resolve issues with detractors." },
+          { q: "How do I act on promoters and detractors?", a: "Chatters identifies promoters and detractors with their contact info. Send personalised follow-ups, request reviews from promoters, or resolve issues with detractors." },
         ]}
       />
 

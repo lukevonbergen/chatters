@@ -157,7 +157,7 @@ const KioskModeProduct = () => {
           { q: "What devices work with kiosk mode?", a: "Any iPad (iOS 12+) or Android tablet (Android 8+) works perfectly. We also support Windows tablets and touch screen computers." },
           { q: "How secure is kiosk mode?", a: "Very secure - customers can only access the feedback form. The device is locked from other apps, settings, or web browsing." },
           { q: "What if the internet goes down?", a: "Kiosks continue working offline, storing feedback locally. Data syncs automatically when internet returns - you'll never lose responses." },
-          { q: "Can I customize how the kiosk looks?", a: "Completely - customize colors, logos, fonts, button styles, and layout to match your brand perfectly." },
+          { q: "Can I customise how the kiosk looks?", a: "Completely - customise colours, logos, fonts, button styles, and layout to match your brand perfectly." },
         ]}
       />
 
