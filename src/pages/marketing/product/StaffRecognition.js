@@ -52,7 +52,7 @@ const StaffRecognitionPage = () => {
         ]}
         primaryCta={{ label: "Start recognizing", to: "/signup" }}
         secondaryCta={{ label: "See demo", to: "/demo" }}
-        image={{ src: "/img/mock-leaderboard.png", alt: "Staff recognition interface" }}
+        image={{ src: "/img/product_pages/staffrecognition/hero.png", alt: "Staff recognition interface" }}
       />
 
       <ProductFeaturesShowcase

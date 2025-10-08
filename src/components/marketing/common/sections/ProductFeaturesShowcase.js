@@ -156,16 +156,6 @@ const ProductFeaturesStatic = ({
                     ))}
                   </ul>
                 )}
-                {f.image?.src && (
-                  <div className="mt-auto">
-                    <img
-                      src={f.image.src}
-                      alt={f.image.alt || ""}
-                      className="block w-full h-auto rounded-lg border border-gray-100"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
               </div>
             </div>
           ))}

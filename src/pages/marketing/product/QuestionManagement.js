@@ -47,13 +47,13 @@ const QuestionManagementProduct = () => {
         description="Our question builder helps you design surveys that are quick, relevant, and engaging. Get the insights you need without overwhelming your customers."
         bullets={[
           "Drag-and-drop question builder",
-          "Pre-built question templates", 
+          "Pre-built question templates",
           "Conditional question logic",
           "Multi-language support"
         ]}
         primaryCta={{ label: "Try question builder", to: "/signup" }}
         secondaryCta={{ label: "See examples", to: "/demo" }}
-        image={{ src: "/img/mock-questions.png", alt: "Question management interface" }}
+        image={{ src: "/img/product_pages/questionmanagement/hero_img.svg", alt: "Question management interface" }}
       />
 
       <ProductFeaturesShowcase

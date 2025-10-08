@@ -47,13 +47,13 @@ const BusinessIntelligenceProduct = () => {
         description="Our powerful analytics engine turns customer feedback into actionable insights, helping you identify trends, measure performance, and make strategic decisions backed by real data."
         bullets={[
           "Real-time satisfaction metrics",
-          "Trend analysis & forecasting", 
+          "Trend analysis & forecasting",
           "Custom reporting dashboards",
           "Competitive benchmarking"
         ]}
         primaryCta={{ label: "Explore analytics", to: "/signup" }}
         secondaryCta={{ label: "See dashboard", to: "/demo" }}
-        image={{ src: "/img/mock-analytics.png", alt: "Business intelligence dashboard" }}
+        image={{ src: "/img/product_pages/businessintelligence/hero_img.png", alt: "Business intelligence dashboard" }}
       />
 
       <ProductFeaturesShowcase
