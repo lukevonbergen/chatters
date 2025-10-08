@@ -53,7 +53,7 @@ const StaffLeaderboardPage = () => {
         ]}
         primaryCta={{ label: "Start motivating", to: "/signup" }}
         secondaryCta={{ label: "See demo", to: "/demo" }}
-        image={{ src: "/img/mock-leaderboard.png", alt: "Staff leaderboard interface" }}
+        image={{ src: "/img/product_pages/staffleaderboard/hero.png", alt: "Staff leaderboard interface" }}
       />
 
       <ProductFeaturesShowcase

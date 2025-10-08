@@ -53,7 +53,7 @@ const MultiLocationControlProduct = () => {
         ]}
         primaryCta={{ label: "Try multi-location", to: "/signup" }}
         secondaryCta={{ label: "See demo", to: "/demo" }}
-        image={{ src: "/img/mock-multisite.png", alt: "Multi-location dashboard" }}
+        image={{ src: "/img/product_pages/multilocationcontrol/hero.png", alt: "Multi-location dashboard" }}
       />
 
       <ProductFeaturesShowcase

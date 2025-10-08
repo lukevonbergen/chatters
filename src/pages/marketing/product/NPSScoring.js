@@ -52,7 +52,7 @@ const NPSScoringPage = () => {
         ]}
         primaryCta={{ label: "Start tracking NPS", to: "/signup" }}
         secondaryCta={{ label: "See demo", to: "/demo" }}
-        image={{ src: "/img/mock-dashboard.png", alt: "NPS dashboard interface" }}
+        image={{ src: "/img/product_pages/npsscoring/hero.png", alt: "NPS dashboard interface" }}
       />
 
       <ProductFeaturesShowcase
