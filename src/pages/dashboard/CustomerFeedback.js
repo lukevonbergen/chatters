@@ -127,6 +127,7 @@ const CustomerFeedbackPage = () => {
         console.log('Questions loaded:', questionsData?.length || 0);
         console.log('Venue loaded:', venue ? 'success' : 'failed');
         console.log('Tables loaded:', tablesData?.length || 0);
+        console.log('Raw tables data:', tablesData);
 
         if (!questionsData || questionsData.length === 0) {
           throw new Error('No active questions found for this venue');
@@ -144,18 +145,20 @@ const CustomerFeedbackPage = () => {
               // Handle mixed alphanumeric sorting
               const aNum = parseInt(a);
               const bNum = parseInt(b);
-              
+
               // If both are numbers, sort numerically
               if (!isNaN(aNum) && !isNaN(bNum)) {
                 return aNum - bNum;
               }
-              
+
               // Otherwise, sort alphabetically
               return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
             });
-          
+
+          console.log('Sorted tables after filter:', sortedTables);
           setActiveTables(sortedTables);
         } else {
+          console.log('No tables data or empty array, setting activeTables to []');
           setActiveTables([]);
         }
         
@@ -577,11 +580,11 @@ const CustomerFeedbackPage = () => {
               </p>
             </div>
 
-            {activeTables.length > 0 && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Table Number
-                </label>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Table Number {activeTables.length === 0 && <span className="text-gray-400 font-normal">(optional)</span>}
+              </label>
+              {activeTables.length > 0 ? (
                 <select
                   value={tableNumber}
                   onChange={(e) => setTableNumber(e.target.value)}
@@ -598,8 +601,20 @@ const CustomerFeedbackPage = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-            )}
+              ) : (
+                <input
+                  type="text"
+                  value={tableNumber}
+                  onChange={(e) => setTableNumber(e.target.value)}
+                  placeholder="Enter your table number"
+                  className="w-full border px-4 py-3 rounded-lg text-base"
+                  style={{
+                    borderColor: primary,
+                    backgroundColor: secondary,
+                  }}
+                />
+              )}
+            </div>
 
             <button
               onClick={() => setHasStarted(true)}
