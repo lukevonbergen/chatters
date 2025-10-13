@@ -75,7 +75,8 @@ const navItems = [
     label: 'Reviews',
     icon: MessageCircle,
     path: '/reviews',
-    color: 'text-yellow-600'
+    color: 'text-yellow-600',
+    badge: 'BETA'
   },
   {
     id: 'staff',
@@ -296,16 +297,23 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                 ) : (
                   <Link
                     to={item.path}
-                    className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 group ${
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
                       itemActive
                         ? 'bg-gray-100 text-gray-900 shadow-sm'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                     title={collapsed ? item.label : ''}
                   >
-                    <Icon className={`w-5 h-5 ${itemActive ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} />
-                    {!collapsed && (
-                      <span className="ml-3 font-medium text-sm">{item.label}</span>
+                    <div className="flex items-center">
+                      <Icon className={`w-5 h-5 ${itemActive ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} />
+                      {!collapsed && (
+                        <span className="ml-3 font-medium text-sm">{item.label}</span>
+                      )}
+                    </div>
+                    {!collapsed && item.badge && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 bg-blue-100 rounded uppercase tracking-wide">
+                        {item.badge}
+                      </span>
                     )}
                   </Link>
                 )}
