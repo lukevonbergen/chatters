@@ -125,7 +125,8 @@ async function handleList(req, res) {
   const userData = await authenticateVenueAccess(req, venueId);
 
   if (userData.role === 'manager') {
-    const { data: permissions } = await supabaseClient
+    // Use supabaseAdmin since we've already authenticated the user
+    const { data: permissions } = await supabaseAdmin
       .from('venue_permissions')
       .select('can_view_google_reviews')
       .eq('venue_id', venueId)
@@ -136,7 +137,8 @@ async function handleList(req, res) {
     }
   }
 
-  const { data: connection } = await supabaseClient
+  // Use supabaseAdmin since we've already authenticated the user
+  const { data: connection } = await supabaseAdmin
     .from('google_connections')
     .select('id')
     .eq('venue_id', venueId)
@@ -261,7 +263,8 @@ async function handleReply(req, res) {
   const userData = await authenticateVenueAccess(req, venueId);
 
   if (userData.role === 'manager') {
-    const { data: permissions } = await supabaseClient
+    // Use supabaseAdmin since we've already authenticated the user
+    const { data: permissions } = await supabaseAdmin
       .from('venue_permissions')
       .select('can_reply_to_google_reviews')
       .eq('venue_id', venueId)

@@ -219,7 +219,9 @@ async function handleStatus(req, res) {
 
   await authenticateVenueAccess(req, venueId);
 
-  const { data: connection, error } = await supabaseClient
+  // Use supabaseAdmin since we've already authenticated the user
+  // RLS policies would require the user's JWT which we don't have in API context
+  const { data: connection, error } = await supabaseAdmin
     .from('google_connections')
     .select('id, google_account_email, created_at')
     .eq('venue_id', venueId)
@@ -229,7 +231,7 @@ async function handleStatus(req, res) {
 
   let locationCount = 0;
   if (connection) {
-    const { count } = await supabaseClient
+    const { count } = await supabaseAdmin
       .from('google_locations')
       .select('*', { count: 'exact', head: true })
       .eq('google_connection_id', connection.id)
@@ -261,7 +263,8 @@ async function handleLocations(req, res) {
 
   await authenticateVenueAccess(req, venueId);
 
-  const { data: connection } = await supabaseClient
+  // Use supabaseAdmin since we've already authenticated the user
+  const { data: connection } = await supabaseAdmin
     .from('google_connections')
     .select('id')
     .eq('venue_id', venueId)
@@ -271,7 +274,7 @@ async function handleLocations(req, res) {
     return res.status(404).json({ error: 'No Google connection found', connected: false });
   }
 
-  const { data: locations } = await supabaseClient
+  const { data: locations } = await supabaseAdmin
     .from('google_locations')
     .select('*')
     .eq('google_connection_id', connection.id)
