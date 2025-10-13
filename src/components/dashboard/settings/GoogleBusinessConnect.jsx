@@ -21,11 +21,17 @@ const GoogleBusinessConnect = () => {
     const success = params.get('success');
     const error = params.get('error');
     const locations = params.get('locations');
+    const warning = params.get('warning');
 
     if (success === 'google_connected') {
-      const message = locations
+      let message = locations
         ? `Google Business Profile connected successfully! Found ${locations} location(s).`
         : 'Google Business Profile connected successfully!';
+
+      // Check for rate limit warning
+      if (warning === 'rate_limited') {
+        message += '\n\nNote: Location sync was rate-limited by Google. Go to the Reviews page and click "Sync Reviews" to fetch your locations.';
+      }
 
       // Show success message (you could use a toast notification here)
       alert(message);
@@ -36,7 +42,13 @@ const GoogleBusinessConnect = () => {
       // Refresh connection status
       checkConnection();
     } else if (success === 'google_reconnected') {
-      alert('Google Business Profile reconnected successfully!');
+      let message = 'Google Business Profile reconnected successfully!';
+
+      if (warning === 'rate_limited') {
+        message += '\n\nNote: Location sync was rate-limited by Google. Go to the Reviews page and click "Sync Reviews" to fetch your locations.';
+      }
+
+      alert(message);
       window.history.replaceState({}, '', window.location.pathname);
       checkConnection();
     } else if (error) {

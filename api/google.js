@@ -161,8 +161,15 @@ async function handleAuthCallback(req, res) {
         updated_at: new Date().toISOString()
       }).eq('id', existingConnection.id);
 
-      await fetchAndStoreLocations(existingConnection.id, oauth2Client);
-      return res.redirect('/settings?tab=Integrations&success=google_reconnected');
+      // Try to fetch locations, but don't fail if rate limited
+      try {
+        await fetchAndStoreLocations(existingConnection.id, oauth2Client);
+        return res.redirect('/settings?tab=Integrations&success=google_reconnected');
+      } catch (locError) {
+        console.error('Location fetch failed (rate limit?):', locError.message);
+        // Still redirect with success - locations can be fetched later via manual sync
+        return res.redirect('/settings?tab=Integrations&success=google_reconnected&warning=rate_limited');
+      }
     } else {
       const { data: newConnection } = await supabaseAdmin.from('google_connections').insert({
         venue_id: venueId,
@@ -173,8 +180,15 @@ async function handleAuthCallback(req, res) {
         token_expires_at: new Date(tokens.expiry_date).toISOString()
       }).select().single();
 
-      const locationCount = await fetchAndStoreLocations(newConnection.id, oauth2Client);
-      return res.redirect(`/settings?tab=Integrations&success=google_connected&locations=${locationCount}`);
+      // Try to fetch locations, but don't fail if rate limited
+      try {
+        const locationCount = await fetchAndStoreLocations(newConnection.id, oauth2Client);
+        return res.redirect(`/settings?tab=Integrations&success=google_connected&locations=${locationCount}`);
+      } catch (locError) {
+        console.error('Location fetch failed (rate limit?):', locError.message);
+        // Still redirect with success - locations can be fetched later via manual sync
+        return res.redirect('/settings?tab=Integrations&success=google_connected&warning=rate_limited');
+      }
     }
   } catch (error) {
     console.error('Callback error:', error);
