@@ -35,7 +35,7 @@ const GoogleReviewsPage = () => {
       if (!session) return;
 
       // Check if venue has Google connected
-      const response = await fetch(`/api/google/status?venueId=${venueId}`, {
+      const response = await fetch(`/api/google?action=status&venueId=${venueId}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -86,7 +86,7 @@ const GoogleReviewsPage = () => {
         filter
       });
 
-      const response = await fetch(`/api/google-reviews/list?${params}`, {
+      const response = await fetch(`/api/google-reviews?action=list&${params}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -119,7 +119,7 @@ const GoogleReviewsPage = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch('/api/google-reviews/sync', {
+      const response = await fetch('/api/google-reviews?action=sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

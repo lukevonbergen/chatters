@@ -58,7 +58,7 @@ const GoogleBusinessConnect = () => {
         return;
       }
 
-      const response = await fetch(`/api/google/status?venueId=${venueId}`, {
+      const response = await fetch(`/api/google?action=status&venueId=${venueId}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -90,7 +90,7 @@ const GoogleBusinessConnect = () => {
       }
 
       // Call the auth-init endpoint
-      const response = await fetch('/api/google/auth-init', {
+      const response = await fetch('/api/google?action=auth-init', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ const GoogleBusinessConnect = () => {
         return;
       }
 
-      const response = await fetch('/api/google/disconnect', {
+      const response = await fetch('/api/google?action=disconnect', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

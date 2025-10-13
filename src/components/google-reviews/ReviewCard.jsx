@@ -46,7 +46,7 @@ const ReviewCard = ({ review, venueId, onReplySuccess }) => {
         return;
       }
 
-      const response = await fetch('/api/google-reviews/reply', {
+      const response = await fetch('/api/google-reviews?action=reply', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
