@@ -46,7 +46,11 @@ import SettingsBrandingPage from './pages/dashboard/SettingsBranding';
 import AccountProfilePage from './pages/dashboard/AccountProfile';
 import AccountBillingPage from './pages/dashboard/AccountBilling';
 import FeedbackSettings from './pages/dashboard/FeedbackSettings';
-import GoogleReviewsPage from './pages/dashboard/GoogleReviews';
+// Full version (requires Google Business Profile API approval)
+// import GoogleReviewsPage from './pages/dashboard/GoogleReviews';
+
+// Simplified version (works without API quota)
+import GoogleReviewsPage from './pages/dashboard/GoogleReviewsSimple';
 
 // Kiosk (venue‑aware, no dashboard frame)
 import KioskPage from './pages/dashboard/KioskPage';
