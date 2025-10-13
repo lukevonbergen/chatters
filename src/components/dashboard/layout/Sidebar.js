@@ -89,8 +89,8 @@ const navItems = [
       { label: 'Recognition History', path: '/staff/recognition', icon: Award },
       { label: 'Managers', path: '/staff/managers', icon: UserCheck },
       { label: 'Employees', path: '/staff/employees', icon: Users },
-      { label: 'Roles', path: '/staff/roles', icon: UserPlus },
-      { label: 'Locations', path: '/staff/locations', icon: Building2 }
+      { label: 'Roles', path: '/staff/roles', icon: UserPlus, badge: 'BETA' },
+      { label: 'Locations', path: '/staff/locations', icon: Building2, badge: 'BETA' }
     ]
   },
   { 
@@ -327,14 +327,21 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         <Link
                           key={subItem.path}
                           to={subItem.path}
-                          className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors group ${
+                          className={`flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors group ${
                             isActive(subItem.path)
                               ? 'bg-blue-50 text-blue-700 font-medium'
                               : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                           }`}
                         >
-                          <SubIcon className="w-4 h-4 mr-2" />
-                          {subItem.label}
+                          <div className="flex items-center">
+                            <SubIcon className="w-4 h-4 mr-2" />
+                            {subItem.label}
+                          </div>
+                          {subItem.badge && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 bg-blue-100 rounded uppercase tracking-wide">
+                              {subItem.badge}
+                            </span>
+                          )}
                         </Link>
                       );
                     })}
