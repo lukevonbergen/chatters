@@ -46,6 +46,7 @@ import SettingsBrandingPage from './pages/dashboard/SettingsBranding';
 import AccountProfilePage from './pages/dashboard/AccountProfile';
 import AccountBillingPage from './pages/dashboard/AccountBilling';
 import FeedbackSettings from './pages/dashboard/FeedbackSettings';
+import GoogleReviewsPage from './pages/dashboard/GoogleReviews';
 
 // Kiosk (venue‑aware, no dashboard frame)
 import KioskPage from './pages/dashboard/KioskPage';
@@ -118,6 +119,9 @@ const DashboardRoutes = () => {
         <Route path="/reports/metrics" element={<ReportsMetricsPage />} />
         <Route path="/reports/nps" element={<ReportsNPSPage />} />
         <Route path="/reports/builder" element={<ReportBuilderPage />} />
+
+        {/* Reviews Section */}
+        <Route path="/reviews" element={<GoogleReviewsPage />} />
         
         {/* Legacy reports routes */}
         <Route path="/reports" element={<Navigate to="/reports/feedback" replace />} />

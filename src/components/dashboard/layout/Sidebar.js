@@ -31,7 +31,8 @@ import {
   Palette,
   UserCheck,
   Star,
-  Award
+  Award,
+  MessageCircle
 } from 'lucide-react';
 
 const navItems = [
@@ -53,11 +54,11 @@ const navItems = [
       { label: 'Question Management', path: '/feedback/questions', icon: HelpCircle }
     ]
   },
-  { 
-    id: 'reports', 
-    label: 'Reports', 
-    icon: BarChart3, 
-    path: '/reports/feedback', 
+  {
+    id: 'reports',
+    label: 'Reports',
+    icon: BarChart3,
+    path: '/reports/feedback',
     color: 'text-purple-600',
     subItems: [
       { label: 'Feedback', path: '/reports/feedback', icon: MessageSquare },
@@ -68,6 +69,13 @@ const navItems = [
       { label: 'NPS', path: '/reports/nps', icon: Star },
       { label: 'Builder', path: '/reports/builder', icon: FileText }
     ]
+  },
+  {
+    id: 'reviews',
+    label: 'Reviews',
+    icon: MessageCircle,
+    path: '/reviews',
+    color: 'text-yellow-600'
   },
   {
     id: 'staff',
