@@ -123,6 +123,7 @@ const GoogleBusinessConnect = () => {
       return;
     }
 
+    // eslint-disable-next-line no-restricted-globals
     if (!confirm('Are you sure you want to disconnect your Google Business Profile? This will remove all synced reviews.')) {
       return;
     }
