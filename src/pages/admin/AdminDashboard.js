@@ -663,7 +663,12 @@ export default function AdminDashboard() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
-      const response = await fetch('/api/admin/seed-demo', {
+      // Use production API URL for localhost, relative path for production
+      const apiUrl = window.location.hostname === 'localhost'
+        ? 'https://my.getchatters.com/api/admin/seed-demo'
+        : '/api/admin/seed-demo';
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
