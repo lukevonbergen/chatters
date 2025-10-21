@@ -247,7 +247,7 @@ export default async function handler(req, res) {
             venue_id: venue.id,
             table_number: tableNumber.toString(),
             customer_email: shouldIncludeEmail ? `customer_${dateStr}_${i}@example.com` : null,
-            created_at: sessionTime.toISOString(),
+            started_at: sessionTime.toISOString(),
             _tableNumber: tableNumber,
             _sessionTime: sessionTime,
             _shouldIncludeEmail: shouldIncludeEmail,
@@ -262,7 +262,7 @@ export default async function handler(req, res) {
             venue_id: s.venue_id,
             table_number: s.table_number,
             customer_email: s.customer_email,
-            created_at: s.created_at
+            started_at: s.started_at
           })))
           .select();
 
