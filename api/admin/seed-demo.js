@@ -246,11 +246,11 @@ export default async function handler(req, res) {
           sessionsToInsert.push({
             venue_id: venue.id,
             table_number: tableNumber.toString(),
-            customer_email: shouldIncludeEmail ? `customer_${dateStr}_${i}@example.com` : null,
             started_at: sessionTime.toISOString(),
             _tableNumber: tableNumber,
             _sessionTime: sessionTime,
             _shouldIncludeEmail: shouldIncludeEmail,
+            _customerEmail: shouldIncludeEmail ? `customer_${dateStr}_${i}@example.com` : null,
             _index: i
           });
         }
@@ -261,7 +261,6 @@ export default async function handler(req, res) {
           .insert(sessionsToInsert.map(s => ({
             venue_id: s.venue_id,
             table_number: s.table_number,
-            customer_email: s.customer_email,
             started_at: s.started_at
           })))
           .select();
@@ -288,6 +287,7 @@ export default async function handler(req, res) {
           const sessionTime = sessionData._sessionTime;
           const tableNumber = sessionData._tableNumber;
           const shouldIncludeEmail = sessionData._shouldIncludeEmail;
+          const customerEmail = sessionData._customerEmail;
           const i = sessionData._index;
 
           // Generate feedback (90% complete)
@@ -349,12 +349,11 @@ export default async function handler(req, res) {
             npsToInsert.push({
               venue_id: venue.id,
               session_id: session.id,
-              customer_email: `customer_${dateStr}_${i}@example.com`,
+              customer_email: customerEmail,
               scheduled_send_at: scheduledDate.toISOString(),
               sent_at: sentDate.toISOString(),
               score: npsScore,
-              responded_at: respondedDate.toISOString(),
-              created_at: sessionTime.toISOString()
+              responded_at: respondedDate.toISOString()
             });
           }
         });
