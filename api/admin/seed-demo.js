@@ -1,5 +1,6 @@
 // /api/admin/seed-demo.js
 // Seeds demo data for a venue (feedback, reviews, scores) with date range support
+// OPTIMIZED with batch inserts to prevent timeouts
 const { createClient } = require('@supabase/supabase-js');
 
 const supabaseAdmin = createClient(
@@ -112,7 +113,6 @@ async function checkDateHasData(venueId, dateStr) {
   const endOfDay = new Date(dateStr);
   endOfDay.setHours(23, 59, 59, 999);
 
-  // Check for existing feedback sessions on this date
   const { data, error } = await supabaseAdmin
     .from('feedback_sessions')
     .select('id')
@@ -206,7 +206,6 @@ export default async function handler(req, res) {
         .order('id', { ascending: true });
 
       if (!questions || questions.length === 0) {
-        // Create default questions
         const { data: newQuestions, error: qError } = await supabaseAdmin
           .from('questions')
           .insert([
@@ -222,8 +221,6 @@ export default async function handler(req, res) {
 
       const questionIds = questions.map(q => q.id);
       const tableCount = venue.table_count || 10;
-
-      // Track reviews for rating calculation
       const allReviews = [];
 
       // Process each date
@@ -239,35 +236,57 @@ export default async function handler(req, res) {
 
         stats.datesProcessed++;
 
-        // 30 feedback sessions per day
+        // BATCH INSERT: Prepare all sessions for this day
+        const sessionsToInsert = [];
         for (let i = 0; i < 30; i++) {
-          const sessionTime = setTimeOfDay(new Date(dateStr), 11, 21); // 11am - 9pm
+          const sessionTime = setTimeOfDay(new Date(dateStr), 11, 21);
           const tableNumber = randomInt(1, tableCount);
-          const shouldIncludeEmail = Math.random() > 0.7; // 30% include email
+          const shouldIncludeEmail = Math.random() > 0.7;
 
-          // Create session
-          const { data: session, error: sessionError } = await supabaseAdmin
-            .from('feedback_sessions')
-            .insert({
-              venue_id: venue.id,
-              table_number: tableNumber.toString(),
-              customer_email: shouldIncludeEmail ? `customer_${dateStr}_${i}@example.com` : null,
-              created_at: sessionTime.toISOString()
-            })
-            .select()
-            .single();
+          sessionsToInsert.push({
+            venue_id: venue.id,
+            table_number: tableNumber.toString(),
+            customer_email: shouldIncludeEmail ? `customer_${dateStr}_${i}@example.com` : null,
+            created_at: sessionTime.toISOString(),
+            _tableNumber: tableNumber,
+            _sessionTime: sessionTime,
+            _shouldIncludeEmail: shouldIncludeEmail,
+            _index: i
+          });
+        }
 
-          if (sessionError) {
-            console.error('Error creating session:', sessionError);
-            continue;
-          }
+        // Insert all sessions at once
+        const { data: insertedSessions, error: sessionError } = await supabaseAdmin
+          .from('feedback_sessions')
+          .insert(sessionsToInsert.map(s => ({
+            venue_id: s.venue_id,
+            table_number: s.table_number,
+            customer_email: s.customer_email,
+            created_at: s.created_at
+          })))
+          .select();
 
-          stats.sessionsCreated++;
+        if (sessionError) {
+          console.error('Error creating sessions:', sessionError);
+          continue;
+        }
 
-          // Generate feedback for each question (90% of sessions complete)
+        stats.sessionsCreated += insertedSessions.length;
+
+        // BATCH INSERT: Prepare all feedback and NPS
+        const feedbackToInsert = [];
+        const npsToInsert = [];
+
+        insertedSessions.forEach((session, idx) => {
+          const sessionData = sessionsToInsert[idx];
+          const sessionTime = sessionData._sessionTime;
+          const tableNumber = sessionData._tableNumber;
+          const shouldIncludeEmail = sessionData._shouldIncludeEmail;
+          const i = sessionData._index;
+
+          // Generate feedback (90% complete)
           if (Math.random() > 0.1) {
             for (const questionId of questionIds) {
-              // Rating distribution: 70% positive (4-5), 20% neutral (3), 10% negative (1-2)
               let rating;
               const rand = Math.random();
               if (rand < 0.70) {
@@ -278,7 +297,6 @@ export default async function handler(req, res) {
                 rating = randomInt(1, 2);
               }
 
-              // 40% include additional comments
               let comment = null;
               if (Math.random() > 0.6) {
                 if (rating >= 4) {
@@ -290,39 +308,28 @@ export default async function handler(req, res) {
                 }
               }
 
-              const { error: feedbackError } = await supabaseAdmin
-                .from('feedback')
-                .insert({
-                  venue_id: venue.id,
-                  session_id: session.id,
-                  question_id: questionId,
-                  table_number: tableNumber.toString(),
-                  rating: rating,
-                  additional_feedback: comment,
-                  created_at: sessionTime.toISOString(),
-                  timestamp: sessionTime.toISOString()
-                });
-
-              if (feedbackError) {
-                console.error('Error creating feedback:', feedbackError);
-              } else {
-                stats.feedbackCreated++;
-              }
+              feedbackToInsert.push({
+                venue_id: venue.id,
+                session_id: session.id,
+                question_id: questionId,
+                table_number: tableNumber.toString(),
+                rating: rating,
+                additional_feedback: comment,
+                created_at: sessionTime.toISOString(),
+                timestamp: sessionTime.toISOString()
+              });
             }
           }
 
-          // Create NPS submission for sessions with email (20 per day total, so ~67% response rate for the 30% with emails)
-          if (shouldIncludeEmail && stats.npsCreated < (stats.datesProcessed * 20)) {
+          // NPS submission (20 per day target)
+          if (shouldIncludeEmail && npsToInsert.length < 20) {
             const scheduledDate = new Date(sessionTime);
             scheduledDate.setHours(scheduledDate.getHours() + 24);
-
             const sentDate = new Date(scheduledDate);
             sentDate.setMinutes(sentDate.getMinutes() + randomInt(0, 30));
-
             const respondedDate = new Date(sentDate);
             respondedDate.setHours(respondedDate.getHours() + randomInt(1, 48));
 
-            // NPS score distribution: 60% promoters (9-10), 25% passives (7-8), 15% detractors (0-6)
             let npsScore;
             const npsRand = Math.random();
             if (npsRand < 0.60) {
@@ -333,31 +340,51 @@ export default async function handler(req, res) {
               npsScore = randomInt(0, 6);
             }
 
-            const { error: npsError } = await supabaseAdmin
-              .from('nps_submissions')
-              .insert({
-                venue_id: venue.id,
-                session_id: session.id,
-                customer_email: `customer_${dateStr}_${i}@example.com`,
-                scheduled_send_at: scheduledDate.toISOString(),
-                sent_at: sentDate.toISOString(),
-                score: npsScore,
-                responded_at: respondedDate.toISOString(),
-                created_at: sessionTime.toISOString()
-              });
+            npsToInsert.push({
+              venue_id: venue.id,
+              session_id: session.id,
+              customer_email: `customer_${dateStr}_${i}@example.com`,
+              scheduled_send_at: scheduledDate.toISOString(),
+              sent_at: sentDate.toISOString(),
+              score: npsScore,
+              responded_at: respondedDate.toISOString(),
+              created_at: sessionTime.toISOString()
+            });
+          }
+        });
 
-            if (npsError) {
-              console.error('Error creating NPS:', npsError);
+        // Batch insert feedback (chunks of 500 to avoid payload limits)
+        if (feedbackToInsert.length > 0) {
+          const chunkSize = 500;
+          for (let i = 0; i < feedbackToInsert.length; i += chunkSize) {
+            const chunk = feedbackToInsert.slice(i, i + chunkSize);
+            const { error: feedbackError } = await supabaseAdmin
+              .from('feedback')
+              .insert(chunk);
+
+            if (feedbackError) {
+              console.error('Error creating feedback batch:', feedbackError);
             } else {
-              stats.npsCreated++;
+              stats.feedbackCreated += chunk.length;
             }
+          }
+        }
+
+        // Batch insert NPS
+        if (npsToInsert.length > 0) {
+          const { error: npsError } = await supabaseAdmin
+            .from('nps_submissions')
+            .insert(npsToInsert);
+
+          if (npsError) {
+            console.error('Error creating NPS batch:', npsError);
+          } else {
+            stats.npsCreated += npsToInsert.length;
           }
         }
 
         // 1 Google review per day
         const reviewTime = setTimeOfDay(new Date(dateStr), 10, 22);
-
-        // Review distribution: 50% 5-star, 25% 4-star, 15% 3-star, 7% 2-star, 3% 1-star
         let starRating;
         const rand = Math.random();
         if (rand < 0.50) {
@@ -374,8 +401,6 @@ export default async function handler(req, res) {
 
         const reviewerName = randomElement(CUSTOMER_NAMES);
         const reviewText = randomElement(GOOGLE_REVIEW_TEXTS[starRating]);
-
-        // 40% of positive reviews get a reply, 80% of negative reviews get a reply
         const shouldReply = (starRating >= 4 && Math.random() > 0.6) || (starRating <= 2 && Math.random() > 0.2);
         let replyText = null;
         let replyDate = null;
@@ -414,9 +439,7 @@ export default async function handler(req, res) {
           allReviews.push(starRating);
         }
 
-        // 1 historical rating snapshot per day (fetched daily like real system)
-        // This represents the venue's overall rating at the end of this day
-        // Calculate based on cumulative reviews
+        // 1 historical rating snapshot per day
         if (allReviews.length > 0) {
           const avgRating = (allReviews.reduce((a, b) => a + b, 0) / allReviews.length).toFixed(1);
           const snapshotTime = setTimeOfDay(new Date(dateStr), 23, 23);
