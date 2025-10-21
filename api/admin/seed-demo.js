@@ -2,6 +2,7 @@
 // Seeds demo data for a venue (feedback, reviews, scores) with date range support
 // OPTIMIZED with batch inserts to prevent timeouts
 const { createClient } = require('@supabase/supabase-js');
+const { v4: uuidv4 } = require('uuid');
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL,
@@ -242,8 +243,10 @@ export default async function handler(req, res) {
           const sessionTime = setTimeOfDay(new Date(dateStr), 11, 21);
           const tableNumber = randomInt(1, tableCount);
           const shouldIncludeEmail = Math.random() > 0.7;
+          const sessionId = uuidv4();
 
           sessionsToInsert.push({
+            id: sessionId,
             venue_id: venue.id,
             table_number: tableNumber.toString(),
             started_at: sessionTime.toISOString(),
@@ -259,6 +262,7 @@ export default async function handler(req, res) {
         const { data: insertedSessions, error: sessionError } = await supabaseAdmin
           .from('feedback_sessions')
           .insert(sessionsToInsert.map(s => ({
+            id: s.id,
             venue_id: s.venue_id,
             table_number: s.table_number,
             started_at: s.started_at
