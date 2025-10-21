@@ -169,7 +169,18 @@ const BillingManagement = ({ venue, onUpdate }) => {
         })
       });
 
-      const result = await response.json();
+      // Log response for debugging
+      const responseText = await response.text();
+      console.log('Response status:', response.status);
+      console.log('Response text:', responseText);
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse JSON:', e);
+        throw new Error(`API returned invalid JSON. Status: ${response.status}. Response: ${responseText.substring(0, 200)}`);
+      }
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to populate demo data');
