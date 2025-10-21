@@ -785,22 +785,29 @@ const EnhancedAdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <Settings className="w-8 h-8 text-blue-600" />
-              <h1 className="ml-3 text-2xl font-bold text-gray-900">
-                Chatters Admin Center
-              </h1>
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between py-6">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-blue-50 rounded-xl">
+                <Settings className="w-7 h-7 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold text-gray-900">
+                  Admin Center
+                </h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Manage venues, accounts, and settings
+                </p>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={loadAdminData}
                 disabled={loading}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
             </div>
@@ -808,119 +815,103 @@ const EnhancedAdminDashboard = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Building2 className="h-6 w-6 text-gray-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Venues
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.totalVenues}
-                    </dd>
-                  </dl>
-                </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Venues
+                </p>
+                <p className="text-3xl font-semibold text-gray-900">
+                  {stats.totalVenues}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <Building2 className="h-7 w-7 text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CheckCircle className="h-6 w-6 text-green-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Active Venues
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.activeVenues}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Active Venues
+                </p>
+                <p className="text-3xl font-semibold text-gray-900">
+                  {stats.activeVenues}
+                </p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg">
+                <CheckCircle className="h-7 w-7 text-green-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Lock className="h-6 w-6 text-yellow-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Locked Venues
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.lockedVenues}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Locked Venues
+                </p>
+                <p className="text-3xl font-semibold text-gray-900">
+                  {stats.lockedVenues}
+                </p>
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-lg">
+                <Lock className="h-7 w-7 text-yellow-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <BarChart3 className="h-6 w-6 text-purple-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Tables
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.totalTables}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Tables
+                </p>
+                <p className="text-3xl font-semibold text-gray-900">
+                  {stats.totalTables}
+                </p>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg">
+                <BarChart3 className="h-7 w-7 text-purple-600" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white shadow rounded-lg mb-6">
+        <div className="bg-white border border-gray-200 rounded-xl mb-6">
           <div className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search venues, accounts, or users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-11 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-gray-500" />
+
+              <div className="flex items-center gap-2.5">
+                <Filter className="w-5 h-5 text-gray-400" />
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-gray-700 transition-all min-w-[140px]"
                 >
                   <option value="all">All Venues</option>
                   <option value="active">Active</option>
@@ -930,52 +921,64 @@ const EnhancedAdminDashboard = () => {
                 </select>
               </div>
             </div>
-            
-            <div className="mt-4 text-sm text-gray-600">
-              Showing {filteredVenues.length} of {venues.length} venues
+
+            <div className="mt-4 flex items-center gap-2">
+              <div className="h-1 w-1 bg-gray-400 rounded-full"></div>
+              <p className="text-sm text-gray-600">
+                Showing <span className="font-medium text-gray-900">{filteredVenues.length}</span> of <span className="font-medium text-gray-900">{venues.length}</span> venues
+              </p>
             </div>
           </div>
         </div>
 
         {/* Venues Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {filteredVenues.map((venue) => {
             const status = getVenueStatus(venue);
             const googleRating = venue.external_ratings?.[0];
             const isEditing = editingVenue?.id === venue.id;
-            
+
             return (
               <div
                 key={venue.id}
-                className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow"
+                className="bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-all"
               >
                 {/* Card Header */}
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-medium text-gray-900 truncate">
-                        {venue.name || 'Unnamed Venue'}
-                      </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        status.color === 'green' ? 'bg-green-100 text-green-800' :
-                        status.color === 'blue' ? 'bg-blue-100 text-blue-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {status.label}
-                      </span>
-                      {venue.venue_locked && (
-                        <Lock className="w-4 h-4 text-yellow-500" title="Venue Locked" />
-                      )}
+                <div className="px-6 py-5 border-b border-gray-100">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">
+                          {venue.name || 'Unnamed Venue'}
+                        </h3>
+                        {venue.venue_locked && (
+                          <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0" title="Venue Locked" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
+                          status.color === 'green' ? 'bg-green-50 text-green-700 border border-green-200' :
+                          status.color === 'blue' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          'bg-red-50 text-red-700 border border-red-200'
+                        }`}>
+                          {status.label}
+                        </span>
+                        {venue.accounts?.name && (
+                          <span className="text-sm text-gray-500">
+                            • {venue.accounts.name}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {!isEditing ? (
                         <>
                           <button
                             onClick={() => toggleVenueLock(venue)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              venue.venue_locked 
-                                ? 'text-yellow-600 hover:bg-yellow-50' 
-                                : 'text-gray-400 hover:bg-gray-50'
+                            className={`p-2 rounded-lg transition-all ${
+                              venue.venue_locked
+                                ? 'text-yellow-600 hover:bg-yellow-50'
+                                : 'text-gray-400 hover:bg-gray-100'
                             }`}
                             title={venue.venue_locked ? 'Unlock venue' : 'Lock venue'}
                           >
@@ -983,7 +986,7 @@ const EnhancedAdminDashboard = () => {
                           </button>
                           <button
                             onClick={() => startEditing(venue)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                             title="Edit venue"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -993,7 +996,7 @@ const EnhancedAdminDashboard = () => {
                         <>
                           <button
                             onClick={cancelEditing}
-                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
                             title="Cancel editing"
                           >
                             <Undo className="w-4 h-4" />
@@ -1001,7 +1004,7 @@ const EnhancedAdminDashboard = () => {
                           <button
                             onClick={saveVenue}
                             disabled={savingVenue}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50"
                             title="Save changes"
                           >
                             <Save className="w-4 h-4" />
@@ -1013,76 +1016,90 @@ const EnhancedAdminDashboard = () => {
                 </div>
 
                 {/* Card Content */}
-                <div className="px-6 py-4 space-y-4">
-                  {/* Basic Info */}
-                  <div className="space-y-3">
-                    {isEditing ? (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Venue Name
-                          </label>
-                          <input
-                            type="text"
-                            value={editingVenue.name || ''}
-                            onChange={(e) => setEditingVenue({...editingVenue, name: e.target.value})}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                <div className="px-6 py-5">
+                  {isEditing ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Venue Name
+                        </label>
+                        <input
+                          type="text"
+                          value={editingVenue.name || ''}
+                          onChange={(e) => setEditingVenue({...editingVenue, name: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Table Count
+                        </label>
+                        <input
+                          type="number"
+                          value={editingVenue.table_count || ''}
+                          onChange={(e) => setEditingVenue({...editingVenue, table_count: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-gray-50 rounded-lg">
+                          <Building2 className="w-4 h-4 text-gray-600" />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Table Count
-                          </label>
-                          <input
-                            type="number"
-                            value={editingVenue.table_count || ''}
-                            onChange={(e) => setEditingVenue({...editingVenue, table_count: parseInt(e.target.value) || 0})}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                          <p className="text-xs text-gray-500">Tables</p>
+                          <p className="text-sm font-medium text-gray-900">{venue.table_count || 0}</p>
                         </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Building2 className="w-4 h-4 mr-2" />
-                          <span>{venue.table_count || 0} tables</span>
+                      </div>
+                      {venue.staff?.length > 0 && (
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-gray-50 rounded-lg">
+                            <Users className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Staff</p>
+                            <p className="text-sm font-medium text-gray-900">{venue.staff.length}</p>
+                          </div>
                         </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          <span className="truncate">{formatAddress(venue.address)}</span>
+                      )}
+                      {googleRating && (
+                        <div className="flex items-center gap-2.5 col-span-2">
+                          <div className="p-2 bg-yellow-50 rounded-lg">
+                            <Star className="w-4 h-4 text-yellow-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Google Rating</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {googleRating.rating?.toFixed(1)} ({googleRating.ratings_count} reviews)
+                            </p>
+                          </div>
                         </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Account Info */}
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Users className="w-4 h-4 mr-2" />
-                    <span className="truncate">
-                      {venue.accounts?.name || 'No account'} 
-                      {venue.staff?.length > 0 && ` • ${venue.staff.length} staff`}
-                    </span>
-                  </div>
-
-                  {/* Google Rating */}
-                  {googleRating && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Star className="w-4 h-4 mr-2 text-yellow-500" />
-                      <span>
-                        {googleRating.rating?.toFixed(1)} ⭐ ({googleRating.ratings_count} reviews)
-                      </span>
+                      )}
+                      {venue.address && (
+                        <div className="flex items-start gap-2.5 col-span-2">
+                          <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
+                            <MapPin className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs text-gray-500 mb-0.5">Address</p>
+                            <p className="text-sm text-gray-700 line-clamp-2">{formatAddress(venue.address)}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
 
                 {/* Card Footer */}
-                <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                   <button
                     onClick={() => setSelectedVenue(venue)}
-                    className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    className="w-full inline-flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
                   >
                     View Full Details
-                    <ChevronRight className="w-4 h-4 inline ml-1" />
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -1091,11 +1108,13 @@ const EnhancedAdminDashboard = () => {
         </div>
 
         {filteredVenues.length === 0 && (
-          <div className="text-center py-12">
-            <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No venues found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Try adjusting your search terms or filters
+          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+            <div className="p-4 bg-gray-50 rounded-2xl w-fit mx-auto mb-4">
+              <Building2 className="h-10 w-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">No venues found</h3>
+            <p className="text-sm text-gray-500">
+              Try adjusting your search terms or filters to find venues
             </p>
           </div>
         )}
@@ -1654,58 +1673,68 @@ const VenueDetailsModal = ({ venue, onClose, onUpdate }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              {venue.name || 'Unnamed Venue'}
-            </h2>
-            <p className="text-sm text-gray-500">
-              {venue.accounts?.name} • {venue.table_count || 0} tables
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            {!editingData ? (
+        <div className="px-8 py-6 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-1">
+                {venue.name || 'Unnamed Venue'}
+              </h2>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span>{venue.accounts?.name}</span>
+                <span>•</span>
+                <span>{venue.table_count || 0} tables</span>
+                {venue.staff?.length > 0 && (
+                  <>
+                    <span>•</span>
+                    <span>{venue.staff.length} staff</span>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {!editingData ? (
+                <button
+                  onClick={startEditing}
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setEditingData(null)}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveChanges}
+                    disabled={saving}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
+                  >
+                    <Save className="w-4 h-4" />
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                </>
+              )}
               <button
-                onClick={startEditing}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
               >
-                <Edit3 className="w-4 h-4 mr-2" />
-                Edit
+                <X className="w-5 h-5" />
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => setEditingData(null)}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </button>
-                <button
-                  onClick={saveChanges}
-                  disabled={saving}
-                  className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-              </>
-            )}
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            </div>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+        <div className="border-b border-gray-200 bg-white">
+          <nav className="flex px-8 overflow-x-auto" aria-label="Tabs">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -1714,9 +1743,9 @@ const VenueDetailsModal = ({ venue, onClose, onUpdate }) => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+                      ? 'border-blue-600 text-blue-600 bg-blue-50'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  } whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm inline-flex items-center gap-2 transition-all`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{tab.label}</span>
@@ -1727,8 +1756,10 @@ const VenueDetailsModal = ({ venue, onClose, onUpdate }) => {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-6 overflow-y-auto max-h-[60vh]">
-          {renderTabContent()}
+        <div className="px-8 py-6 overflow-y-auto max-h-[60vh] bg-gray-50">
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            {renderTabContent()}
+          </div>
         </div>
       </div>
     </div>
