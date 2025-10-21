@@ -106,14 +106,13 @@ const BillingManagement = ({ venue, onUpdate }) => {
   const showDemoDataPicker = () => {
     setShowDateRangePicker(true);
 
-    // Set default date range (last 7 days)
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 7);
+    // Set default date range (yesterday only - single day to avoid timeouts)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
 
     setSelectedDateRange({
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0]
+      startDate: yesterday.toISOString().split('T')[0],
+      endDate: yesterday.toISOString().split('T')[0]
     });
   };
 
@@ -517,6 +516,12 @@ const BillingManagement = ({ venue, onUpdate }) => {
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                 <p className="text-sm text-yellow-800">
                   <strong>Note:</strong> Dates with existing data will be automatically skipped to avoid duplicates.
+                </p>
+              </div>
+
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm text-orange-800">
+                  <strong>Recommendation:</strong> Populate 1-3 days at a time to avoid timeouts. You can run this multiple times for different date ranges.
                 </p>
               </div>
             </div>
