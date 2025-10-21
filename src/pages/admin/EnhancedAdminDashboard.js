@@ -162,7 +162,7 @@ const BillingManagement = ({ venue, onUpdate }) => {
           'Authorization': `Bearer ${session?.access_token}`
         },
         body: JSON.stringify({
-          accountId: account.id,
+          venueId: venue.id,
           startDate: selectedDateRange.startDate,
           endDate: selectedDateRange.endDate
         })

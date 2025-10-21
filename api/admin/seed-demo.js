@@ -1,5 +1,5 @@
 // /api/admin/seed-demo.js
-// Seeds demo data for a venue (feedback, reviews, scores) with date range support
+// Seeds demo data for a specific venue (feedback, reviews, scores) with date range support
 // OPTIMIZED with batch inserts to prevent timeouts
 const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
@@ -160,23 +160,27 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    const { accountId, startDate, endDate } = req.body;
+    const { venueId, startDate, endDate } = req.body;
 
-    if (!accountId || !startDate || !endDate) {
-      return res.status(400).json({ error: 'Account ID, start date, and end date are required' });
+    if (!venueId || !startDate || !endDate) {
+      return res.status(400).json({ error: 'Venue ID, start date, and end date are required' });
     }
 
-    // Get venues for this account
-    const { data: venues, error: venuesError } = await supabaseAdmin
+    // Get the specific venue
+    const { data: venue, error: venueError } = await supabaseAdmin
       .from('venues')
       .select('id, name, table_count')
-      .eq('account_id', accountId);
+      .eq('id', venueId)
+      .single();
 
-    if (venuesError) throw venuesError;
+    if (venueError) throw venueError;
 
-    if (!venues || venues.length === 0) {
-      return res.status(404).json({ error: 'No venues found for this account' });
+    if (!venue) {
+      return res.status(404).json({ error: 'Venue not found' });
     }
+
+    // Put venue in array for compatibility with existing loop
+    const venues = [venue];
 
     // Generate date array
     const dates = [];
