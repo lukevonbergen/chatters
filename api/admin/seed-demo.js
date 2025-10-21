@@ -204,6 +204,7 @@ export default async function handler(req, res) {
         .from('questions')
         .select('id')
         .eq('venue_id', venue.id)
+        .eq('is_active', true)
         .order('id', { ascending: true });
 
       if (!questions || questions.length === 0) {
