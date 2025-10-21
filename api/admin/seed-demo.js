@@ -268,7 +268,13 @@ export default async function handler(req, res) {
 
         if (sessionError) {
           console.error('Error creating sessions:', sessionError);
-          continue;
+          console.error('Session error details:', JSON.stringify(sessionError, null, 2));
+          throw new Error(`Failed to create sessions: ${sessionError.message || sessionError.code || JSON.stringify(sessionError)}`);
+        }
+
+        if (!insertedSessions || insertedSessions.length === 0) {
+          console.error('No sessions were inserted');
+          throw new Error('Session insert succeeded but returned no data');
         }
 
         stats.sessionsCreated += insertedSessions.length;
