@@ -31,7 +31,8 @@ import {
   Palette,
   UserCheck,
   Star,
-  Award
+  Award,
+  MessageCircle
 } from 'lucide-react';
 
 const navItems = [
@@ -53,11 +54,11 @@ const navItems = [
       { label: 'Question Management', path: '/feedback/questions', icon: HelpCircle }
     ]
   },
-  { 
-    id: 'reports', 
-    label: 'Reports', 
-    icon: BarChart3, 
-    path: '/reports/feedback', 
+  {
+    id: 'reports',
+    label: 'Reports',
+    icon: BarChart3,
+    path: '/reports/feedback',
     color: 'text-purple-600',
     subItems: [
       { label: 'Feedback', path: '/reports/feedback', icon: MessageSquare },
@@ -70,6 +71,14 @@ const navItems = [
     ]
   },
   {
+    id: 'reviews',
+    label: 'Reviews',
+    icon: MessageCircle,
+    path: '/reviews',
+    color: 'text-yellow-600',
+    badge: 'BETA'
+  },
+  {
     id: 'staff',
     label: 'Staff',
     icon: Users,
@@ -80,8 +89,8 @@ const navItems = [
       { label: 'Recognition History', path: '/staff/recognition', icon: Award },
       { label: 'Managers', path: '/staff/managers', icon: UserCheck },
       { label: 'Employees', path: '/staff/employees', icon: Users },
-      { label: 'Roles', path: '/staff/roles', icon: UserPlus },
-      { label: 'Locations', path: '/staff/locations', icon: Building2 }
+      { label: 'Roles', path: '/staff/roles', icon: UserPlus, badge: 'BETA' },
+      { label: 'Locations', path: '/staff/locations', icon: Building2, badge: 'BETA' }
     ]
   },
   { 
@@ -288,16 +297,23 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                 ) : (
                   <Link
                     to={item.path}
-                    className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 group ${
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
                       itemActive
                         ? 'bg-gray-100 text-gray-900 shadow-sm'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                     title={collapsed ? item.label : ''}
                   >
-                    <Icon className={`w-5 h-5 ${itemActive ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} />
-                    {!collapsed && (
-                      <span className="ml-3 font-medium text-sm">{item.label}</span>
+                    <div className="flex items-center">
+                      <Icon className={`w-5 h-5 ${itemActive ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} />
+                      {!collapsed && (
+                        <span className="ml-3 font-medium text-sm">{item.label}</span>
+                      )}
+                    </div>
+                    {!collapsed && item.badge && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 bg-blue-100 rounded uppercase tracking-wide">
+                        {item.badge}
+                      </span>
                     )}
                   </Link>
                 )}
@@ -311,14 +327,21 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         <Link
                           key={subItem.path}
                           to={subItem.path}
-                          className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors group ${
+                          className={`flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors group ${
                             isActive(subItem.path)
                               ? 'bg-blue-50 text-blue-700 font-medium'
                               : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                           }`}
                         >
-                          <SubIcon className="w-4 h-4 mr-2" />
-                          {subItem.label}
+                          <div className="flex items-center">
+                            <SubIcon className="w-4 h-4 mr-2" />
+                            {subItem.label}
+                          </div>
+                          {subItem.badge && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 bg-blue-100 rounded uppercase tracking-wide">
+                              {subItem.badge}
+                            </span>
+                          )}
                         </Link>
                       );
                     })}

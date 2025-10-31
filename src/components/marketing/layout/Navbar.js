@@ -84,23 +84,23 @@ const Navbar = ({ overlay = false }) => {
         onMouseEnter={handleDropdownContentEnter}
         onMouseLeave={handleDropdownContentLeave}
       >
-        <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 py-8 px-6">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 py-4 px-4">
+          <div className="grid grid-cols-2 gap-2">
             {links.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
-                className="group flex items-start space-x-3 p-4 rounded-xl hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+                className="group flex items-start space-x-2.5 p-2.5 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
                 onClick={() => setActiveDropdown(null)}
               >
-                <div className={`flex-shrink-0 w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center ${colors.text} ${colors.hover} group-hover:text-white transition-all duration-200`}>
+                <div className={`flex-shrink-0 w-8 h-8 ${colors.bg} rounded-lg flex items-center justify-center ${colors.text} ${colors.hover} group-hover:text-white transition-all duration-200`}>
                   {link.icon}
                 </div>
-                <div className="flex-1">
-                  <div className="font-satoshi font-semibold text-black transition-colors duration-200 text-lg">
+                <div className="flex-1 min-w-0">
+                  <div className="font-satoshi font-semibold text-black transition-colors duration-200 text-sm">
                     {link.name}
                   </div>
-                  <div className="mt-2 text-sm text-gray-600 font-satoshi leading-relaxed">
+                  <div className="mt-0.5 text-xs text-gray-600 font-satoshi leading-snug">
                     {link.description}
                   </div>
                 </div>

@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../utils/supabase';
-import { 
-  Search, 
-  Filter, 
-  Settings, 
-  Building2, 
-  Users, 
-  TrendingUp, 
-  X, 
+import {
+  Search,
+  Filter,
+  Settings,
+  Building2,
+  Users,
+  TrendingUp,
+  X,
   Edit3,
   Save,
   Undo,
@@ -39,13 +39,21 @@ import {
   Calendar as CalendarIcon,
   MessageSquare,
   MousePointerClick,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 
 // Billing Management Component
 const BillingManagement = ({ venue, onUpdate }) => {
   const [editingAccount, setEditingAccount] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [seedingDemoData, setSeedingDemoData] = useState(false);
+  const [showDateRangePicker, setShowDateRangePicker] = useState(false);
+  const [selectedDateRange, setSelectedDateRange] = useState({
+    startDate: '',
+    endDate: ''
+  });
 
   const account = venue.accounts;
 
@@ -91,6 +99,110 @@ const BillingManagement = ({ venue, onUpdate }) => {
       toast.error('Failed to update account: ' + error.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Show date range picker for demo data
+  const showDemoDataPicker = () => {
+    setShowDateRangePicker(true);
+
+    // Set default date range (yesterday only - single day to avoid timeouts)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    setSelectedDateRange({
+      startDate: yesterday.toISOString().split('T')[0],
+      endDate: yesterday.toISOString().split('T')[0]
+    });
+  };
+
+  // Close date range picker
+  const closeDateRangePicker = () => {
+    setShowDateRangePicker(false);
+    setSelectedDateRange({ startDate: '', endDate: '' });
+  };
+
+  // Populate demo data for the account
+  const populateDemoData = async () => {
+    if (!account || !selectedDateRange.startDate || !selectedDateRange.endDate) {
+      toast.error('Please select a valid date range');
+      return;
+    }
+
+    const dayCount = Math.ceil((new Date(selectedDateRange.endDate) - new Date(selectedDateRange.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+
+    if (!window.confirm(
+      `Populate demo data for "${account.name}"?\n\n` +
+      `Date Range: ${selectedDateRange.startDate} to ${selectedDateRange.endDate} (${dayCount} days)\n\n` +
+      `This will create PER VENUE PER DAY:\n` +
+      `- 30 feedback sessions (~81 feedback items)\n` +
+      `- 20 NPS submissions\n` +
+      `- 1 Google review\n` +
+      `- 1 historical rating snapshot\n\n` +
+      `Dates with existing data will be SKIPPED.`
+    )) {
+      return;
+    }
+
+    setSeedingDemoData(true);
+    setShowDateRangePicker(false);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Use production API URL for localhost, relative path for production
+      const apiUrl = window.location.hostname === 'localhost'
+        ? 'https://my.getchatters.com/api/admin/seed-demo'
+        : '/api/admin/seed-demo';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({
+          venueId: venue.id,
+          startDate: selectedDateRange.startDate,
+          endDate: selectedDateRange.endDate
+        })
+      });
+
+      // Log response for debugging
+      const responseText = await response.text();
+      console.log('Response status:', response.status);
+      console.log('Response text:', responseText);
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse JSON:', e);
+        throw new Error(`API returned invalid JSON. Status: ${response.status}. Response: ${responseText.substring(0, 200)}`);
+      }
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to populate demo data');
+      }
+
+      toast.success(
+        `Demo data created successfully!\n` +
+        `${result.stats.sessionsCreated} sessions, ` +
+        `${result.stats.feedbackCreated} feedback items, ` +
+        `${result.stats.googleReviewsCreated} reviews, ` +
+        `${result.stats.npsCreated} NPS submissions, ` +
+        `${result.stats.externalRatingsCreated} rating snapshots\n` +
+        `${result.stats.datesSkipped || 0} dates skipped (existing data)`,
+        { duration: 6000 }
+      );
+
+      closeDateRangePicker();
+
+    } catch (error) {
+      console.error('Error populating demo data:', error);
+      toast.error('Failed to populate demo data: ' + error.message);
+    } finally {
+      setSeedingDemoData(false);
     }
   };
 
@@ -273,44 +385,166 @@ const BillingManagement = ({ venue, onUpdate }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end space-x-3">
-        {editingAccount ? (
-          <>
+      <div className="flex justify-between items-center">
+        <button
+          onClick={showDemoDataPicker}
+          disabled={seedingDemoData}
+          className="px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-50 flex items-center space-x-2"
+          title="Populate this account with demo feedback, reviews, and ratings"
+        >
+          {seedingDemoData ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Populating...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              <span>Populate Demo Data</span>
+            </>
+          )}
+        </button>
+
+        <div className="flex space-x-3">
+          {editingAccount ? (
+            <>
+              <button
+                onClick={() => setEditingAccount(null)}
+                disabled={saving}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveAccountChanges}
+                disabled={saving}
+                className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 flex items-center space-x-2"
+              >
+                {saving ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
             <button
-              onClick={() => setEditingAccount(null)}
-              disabled={saving}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              onClick={startEditingAccount}
+              className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors flex items-center space-x-2"
             >
-              Cancel
+              <Edit3 className="w-4 h-4" />
+              <span>Edit Account</span>
             </button>
-            <button
-              onClick={saveAccountChanges}
-              disabled={saving}
-              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 flex items-center space-x-2"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
-                </>
-              )}
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={startEditingAccount}
-            className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors flex items-center space-x-2"
-          >
-            <Edit3 className="w-4 h-4" />
-            <span>Edit Account</span>
-          </button>
-        )}
+          )}
+        </div>
       </div>
+
+      {/* Date Range Picker Modal for Demo Data */}
+      {showDateRangePicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                Populate Demo Data
+              </h2>
+              <button
+                onClick={closeDateRangePicker}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Select the date range to populate with demo data for <strong>{account?.name}</strong>.
+                </p>
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-purple-800">
+                    <strong>Per venue, per day:</strong><br/>
+                    • 30 feedback sessions (~81 items)<br/>
+                    • 20 NPS submissions<br/>
+                    • 1 Google review<br/>
+                    • 1 historical rating snapshot
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={selectedDateRange.startDate}
+                  onChange={(e) => setSelectedDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                  max={selectedDateRange.endDate || undefined}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={selectedDateRange.endDate}
+                  onChange={(e) => setSelectedDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                  min={selectedDateRange.startDate || undefined}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+
+              {selectedDateRange.startDate && selectedDateRange.endDate && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Duration:</strong> {Math.ceil((new Date(selectedDateRange.endDate) - new Date(selectedDateRange.startDate)) / (1000 * 60 * 60 * 24)) + 1} days
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> Dates with existing data will be automatically skipped to avoid duplicates.
+                </p>
+              </div>
+
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm text-orange-800">
+                  <strong>Recommendation:</strong> Populate 1-3 days at a time to avoid timeouts. You can run this multiple times for different date ranges.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={closeDateRangePicker}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={populateDemoData}
+                disabled={!selectedDateRange.startDate || !selectedDateRange.endDate}
+                className="px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Populate Data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -551,22 +785,29 @@ const EnhancedAdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <Settings className="w-8 h-8 text-blue-600" />
-              <h1 className="ml-3 text-2xl font-bold text-gray-900">
-                Chatters Admin Center
-              </h1>
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between py-6">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-blue-50 rounded-xl">
+                <Settings className="w-7 h-7 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold text-gray-900">
+                  Admin Center
+                </h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Manage venues, accounts, and settings
+                </p>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={loadAdminData}
                 disabled={loading}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
             </div>
@@ -574,119 +815,103 @@ const EnhancedAdminDashboard = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Building2 className="h-6 w-6 text-gray-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Venues
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.totalVenues}
-                    </dd>
-                  </dl>
-                </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Venues
+                </p>
+                <p className="text-3xl font-semibold text-gray-900">
+                  {stats.totalVenues}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <Building2 className="h-7 w-7 text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CheckCircle className="h-6 w-6 text-green-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Active Venues
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.activeVenues}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Active Venues
+                </p>
+                <p className="text-3xl font-semibold text-gray-900">
+                  {stats.activeVenues}
+                </p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg">
+                <CheckCircle className="h-7 w-7 text-green-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Lock className="h-6 w-6 text-yellow-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Locked Venues
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.lockedVenues}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Locked Venues
+                </p>
+                <p className="text-3xl font-semibold text-gray-900">
+                  {stats.lockedVenues}
+                </p>
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-lg">
+                <Lock className="h-7 w-7 text-yellow-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <BarChart3 className="h-6 w-6 text-purple-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Tables
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.totalTables}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Tables
+                </p>
+                <p className="text-3xl font-semibold text-gray-900">
+                  {stats.totalTables}
+                </p>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg">
+                <BarChart3 className="h-7 w-7 text-purple-600" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white shadow rounded-lg mb-6">
+        <div className="bg-white border border-gray-200 rounded-xl mb-6">
           <div className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search venues, accounts, or users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-11 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-gray-500" />
+
+              <div className="flex items-center gap-2.5">
+                <Filter className="w-5 h-5 text-gray-400" />
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-gray-700 transition-all min-w-[140px]"
                 >
                   <option value="all">All Venues</option>
                   <option value="active">Active</option>
@@ -696,52 +921,64 @@ const EnhancedAdminDashboard = () => {
                 </select>
               </div>
             </div>
-            
-            <div className="mt-4 text-sm text-gray-600">
-              Showing {filteredVenues.length} of {venues.length} venues
+
+            <div className="mt-4 flex items-center gap-2">
+              <div className="h-1 w-1 bg-gray-400 rounded-full"></div>
+              <p className="text-sm text-gray-600">
+                Showing <span className="font-medium text-gray-900">{filteredVenues.length}</span> of <span className="font-medium text-gray-900">{venues.length}</span> venues
+              </p>
             </div>
           </div>
         </div>
 
         {/* Venues Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {filteredVenues.map((venue) => {
             const status = getVenueStatus(venue);
             const googleRating = venue.external_ratings?.[0];
             const isEditing = editingVenue?.id === venue.id;
-            
+
             return (
               <div
                 key={venue.id}
-                className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow"
+                className="bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-all"
               >
                 {/* Card Header */}
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-medium text-gray-900 truncate">
-                        {venue.name || 'Unnamed Venue'}
-                      </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        status.color === 'green' ? 'bg-green-100 text-green-800' :
-                        status.color === 'blue' ? 'bg-blue-100 text-blue-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {status.label}
-                      </span>
-                      {venue.venue_locked && (
-                        <Lock className="w-4 h-4 text-yellow-500" title="Venue Locked" />
-                      )}
+                <div className="px-6 py-5 border-b border-gray-100">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">
+                          {venue.name || 'Unnamed Venue'}
+                        </h3>
+                        {venue.venue_locked && (
+                          <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0" title="Venue Locked" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
+                          status.color === 'green' ? 'bg-green-50 text-green-700 border border-green-200' :
+                          status.color === 'blue' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          'bg-red-50 text-red-700 border border-red-200'
+                        }`}>
+                          {status.label}
+                        </span>
+                        {venue.accounts?.name && (
+                          <span className="text-sm text-gray-500">
+                            • {venue.accounts.name}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {!isEditing ? (
                         <>
                           <button
                             onClick={() => toggleVenueLock(venue)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              venue.venue_locked 
-                                ? 'text-yellow-600 hover:bg-yellow-50' 
-                                : 'text-gray-400 hover:bg-gray-50'
+                            className={`p-2 rounded-lg transition-all ${
+                              venue.venue_locked
+                                ? 'text-yellow-600 hover:bg-yellow-50'
+                                : 'text-gray-400 hover:bg-gray-100'
                             }`}
                             title={venue.venue_locked ? 'Unlock venue' : 'Lock venue'}
                           >
@@ -749,7 +986,7 @@ const EnhancedAdminDashboard = () => {
                           </button>
                           <button
                             onClick={() => startEditing(venue)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                             title="Edit venue"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -759,7 +996,7 @@ const EnhancedAdminDashboard = () => {
                         <>
                           <button
                             onClick={cancelEditing}
-                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
                             title="Cancel editing"
                           >
                             <Undo className="w-4 h-4" />
@@ -767,7 +1004,7 @@ const EnhancedAdminDashboard = () => {
                           <button
                             onClick={saveVenue}
                             disabled={savingVenue}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50"
                             title="Save changes"
                           >
                             <Save className="w-4 h-4" />
@@ -779,76 +1016,90 @@ const EnhancedAdminDashboard = () => {
                 </div>
 
                 {/* Card Content */}
-                <div className="px-6 py-4 space-y-4">
-                  {/* Basic Info */}
-                  <div className="space-y-3">
-                    {isEditing ? (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Venue Name
-                          </label>
-                          <input
-                            type="text"
-                            value={editingVenue.name || ''}
-                            onChange={(e) => setEditingVenue({...editingVenue, name: e.target.value})}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                <div className="px-6 py-5">
+                  {isEditing ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Venue Name
+                        </label>
+                        <input
+                          type="text"
+                          value={editingVenue.name || ''}
+                          onChange={(e) => setEditingVenue({...editingVenue, name: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Table Count
+                        </label>
+                        <input
+                          type="number"
+                          value={editingVenue.table_count || ''}
+                          onChange={(e) => setEditingVenue({...editingVenue, table_count: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-gray-50 rounded-lg">
+                          <Building2 className="w-4 h-4 text-gray-600" />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Table Count
-                          </label>
-                          <input
-                            type="number"
-                            value={editingVenue.table_count || ''}
-                            onChange={(e) => setEditingVenue({...editingVenue, table_count: parseInt(e.target.value) || 0})}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                          <p className="text-xs text-gray-500">Tables</p>
+                          <p className="text-sm font-medium text-gray-900">{venue.table_count || 0}</p>
                         </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Building2 className="w-4 h-4 mr-2" />
-                          <span>{venue.table_count || 0} tables</span>
+                      </div>
+                      {venue.staff?.length > 0 && (
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-gray-50 rounded-lg">
+                            <Users className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Staff</p>
+                            <p className="text-sm font-medium text-gray-900">{venue.staff.length}</p>
+                          </div>
                         </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          <span className="truncate">{formatAddress(venue.address)}</span>
+                      )}
+                      {googleRating && (
+                        <div className="flex items-center gap-2.5 col-span-2">
+                          <div className="p-2 bg-yellow-50 rounded-lg">
+                            <Star className="w-4 h-4 text-yellow-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Google Rating</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {googleRating.rating?.toFixed(1)} ({googleRating.ratings_count} reviews)
+                            </p>
+                          </div>
                         </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Account Info */}
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Users className="w-4 h-4 mr-2" />
-                    <span className="truncate">
-                      {venue.accounts?.name || 'No account'} 
-                      {venue.staff?.length > 0 && ` • ${venue.staff.length} staff`}
-                    </span>
-                  </div>
-
-                  {/* Google Rating */}
-                  {googleRating && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Star className="w-4 h-4 mr-2 text-yellow-500" />
-                      <span>
-                        {googleRating.rating?.toFixed(1)} ⭐ ({googleRating.ratings_count} reviews)
-                      </span>
+                      )}
+                      {venue.address && (
+                        <div className="flex items-start gap-2.5 col-span-2">
+                          <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
+                            <MapPin className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs text-gray-500 mb-0.5">Address</p>
+                            <p className="text-sm text-gray-700 line-clamp-2">{formatAddress(venue.address)}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
 
                 {/* Card Footer */}
-                <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                   <button
                     onClick={() => setSelectedVenue(venue)}
-                    className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    className="w-full inline-flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
                   >
                     View Full Details
-                    <ChevronRight className="w-4 h-4 inline ml-1" />
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -857,11 +1108,13 @@ const EnhancedAdminDashboard = () => {
         </div>
 
         {filteredVenues.length === 0 && (
-          <div className="text-center py-12">
-            <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No venues found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Try adjusting your search terms or filters
+          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+            <div className="p-4 bg-gray-50 rounded-2xl w-fit mx-auto mb-4">
+              <Building2 className="h-10 w-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">No venues found</h3>
+            <p className="text-sm text-gray-500">
+              Try adjusting your search terms or filters to find venues
             </p>
           </div>
         )}
@@ -1420,58 +1673,68 @@ const VenueDetailsModal = ({ venue, onClose, onUpdate }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              {venue.name || 'Unnamed Venue'}
-            </h2>
-            <p className="text-sm text-gray-500">
-              {venue.accounts?.name} • {venue.table_count || 0} tables
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            {!editingData ? (
+        <div className="px-8 py-6 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-1">
+                {venue.name || 'Unnamed Venue'}
+              </h2>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span>{venue.accounts?.name}</span>
+                <span>•</span>
+                <span>{venue.table_count || 0} tables</span>
+                {venue.staff?.length > 0 && (
+                  <>
+                    <span>•</span>
+                    <span>{venue.staff.length} staff</span>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {!editingData ? (
+                <button
+                  onClick={startEditing}
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setEditingData(null)}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveChanges}
+                    disabled={saving}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
+                  >
+                    <Save className="w-4 h-4" />
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                </>
+              )}
               <button
-                onClick={startEditing}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
               >
-                <Edit3 className="w-4 h-4 mr-2" />
-                Edit
+                <X className="w-5 h-5" />
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => setEditingData(null)}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </button>
-                <button
-                  onClick={saveChanges}
-                  disabled={saving}
-                  className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-              </>
-            )}
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            </div>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+        <div className="border-b border-gray-200 bg-white">
+          <nav className="flex px-8 overflow-x-auto" aria-label="Tabs">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -1480,9 +1743,9 @@ const VenueDetailsModal = ({ venue, onClose, onUpdate }) => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+                      ? 'border-blue-600 text-blue-600 bg-blue-50'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  } whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm inline-flex items-center gap-2 transition-all`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{tab.label}</span>
@@ -1493,8 +1756,10 @@ const VenueDetailsModal = ({ venue, onClose, onUpdate }) => {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-6 overflow-y-auto max-h-[60vh]">
-          {renderTabContent()}
+        <div className="px-8 py-6 overflow-y-auto max-h-[60vh] bg-gray-50">
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            {renderTabContent()}
+          </div>
         </div>
       </div>
     </div>

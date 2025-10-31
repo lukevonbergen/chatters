@@ -3,11 +3,11 @@ import toast from 'react-hot-toast';
 import { supabase } from '../../utils/supabase';
 import { downloadEmployeesCSV, parseEmployeesCSV } from '../../utils/csvUtils';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
-import { 
-  Plus, 
-  Trash2, 
-  ChevronDown, 
-  Loader2, 
+import {
+  Plus,
+  Trash2,
+  ChevronDown,
+  Loader2,
   Image as ImageIcon,
   Building2,
   Users,
@@ -23,7 +23,8 @@ import {
   Filter,
   X,
   UserPlus,
-  UserX
+  UserX,
+  Sparkles
 } from 'lucide-react';
 
 const emptyVenue = () => ({
@@ -116,6 +117,13 @@ export default function AdminDashboard() {
   const [csvReplaceConfirmation, setCsvReplaceConfirmation] = useState(null);
   const [newEmployeeData, setNewEmployeeData] = useState({});
   const [uploadingCSV, setUploadingCSV] = useState({});
+  const [seedingDemoData, setSeedingDemoData] = useState(false);
+  const [showDateRangePicker, setShowDateRangePicker] = useState(false);
+  const [dateRangeForAccount, setDateRangeForAccount] = useState(null);
+  const [selectedDateRange, setSelectedDateRange] = useState({
+    startDate: '',
+    endDate: ''
+  });
 
   const totalTables = useMemo(
     () =>
@@ -600,6 +608,104 @@ export default function AdminDashboard() {
   const downloadVenueCSV = (venueId, venueName) => {
     const employees = venueEmployees[venueId] || [];
     downloadEmployeesCSV(employees, venueName);
+  };
+
+  // Show date range picker for demo data
+  const showDemoDataPicker = (accountId, accountName) => {
+    setDateRangeForAccount({ accountId, accountName });
+    setShowDateRangePicker(true);
+
+    // Set default date range (last 7 days)
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 7);
+
+    setSelectedDateRange({
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    });
+  };
+
+  // Close date range picker
+  const closeDateRangePicker = () => {
+    setShowDateRangePicker(false);
+    setDateRangeForAccount(null);
+    setSelectedDateRange({ startDate: '', endDate: '' });
+  };
+
+  // Populate demo data for an account with date range
+  const populateDemoData = async () => {
+    if (!dateRangeForAccount || !selectedDateRange.startDate || !selectedDateRange.endDate) {
+      toast.error('Please select a valid date range');
+      return;
+    }
+
+    const { accountId, accountName } = dateRangeForAccount;
+    const dayCount = Math.ceil((new Date(selectedDateRange.endDate) - new Date(selectedDateRange.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+
+    if (!window.confirm(
+      `Populate demo data for "${accountName}"?\n\n` +
+      `Date Range: ${selectedDateRange.startDate} to ${selectedDateRange.endDate} (${dayCount} days)\n\n` +
+      `This will create PER VENUE PER DAY:\n` +
+      `- 30 feedback sessions (~81 feedback items)\n` +
+      `- 20 NPS submissions\n` +
+      `- 1 Google review\n` +
+      `- 1 historical rating snapshot\n\n` +
+      `Total per venue: ~${dayCount * 30} sessions, ~${dayCount * 81} feedback, ~${dayCount * 20} NPS, ${dayCount} reviews, ${dayCount} ratings\n\n` +
+      `Dates with existing data will be SKIPPED.`
+    )) {
+      return;
+    }
+
+    setSeedingDemoData(true);
+    setShowDateRangePicker(false);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Use production API URL for localhost, relative path for production
+      const apiUrl = window.location.hostname === 'localhost'
+        ? 'https://my.getchatters.com/api/admin/seed-demo'
+        : '/api/admin/seed-demo';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({
+          accountId,
+          startDate: selectedDateRange.startDate,
+          endDate: selectedDateRange.endDate
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to populate demo data');
+      }
+
+      toast.success(
+        `Demo data created successfully!\n` +
+        `${result.stats.sessionsCreated} sessions, ` +
+        `${result.stats.feedbackCreated} feedback items, ` +
+        `${result.stats.googleReviewsCreated} reviews, ` +
+        `${result.stats.npsCreated} NPS submissions, ` +
+        `${result.stats.externalRatingsCreated} rating snapshots\n` +
+        `${result.stats.datesSkipped || 0} dates skipped (existing data)`,
+        { duration: 6000 }
+      );
+
+      closeDateRangePicker();
+
+    } catch (error) {
+      console.error('Error populating demo data:', error);
+      toast.error('Failed to populate demo data: ' + error.message);
+    } finally {
+      setSeedingDemoData(false);
+    }
   };
 
   // Upload and replace venue employees from CSV
@@ -1619,50 +1725,71 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="mt-8 flex justify-end gap-3">
-              {isEditingAccount ? (
-                <>
-                  <button
-                    onClick={cancelEditingAccount}
-                    disabled={isSavingAccount}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={saveAccountChanges}
-                    disabled={isSavingAccount}
-                    className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {isSavingAccount ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Changes'
-                    )}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={closeAccountModal}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                  >
-                    Close
-                  </button>
-                  <button
-                    onClick={startEditingAccount}
-                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
-                  >
-                    Edit Account
-                  </button>
-                </>
-              )}
+            <div className="mt-8 flex justify-between items-center">
+              <button
+                onClick={() => showDemoDataPicker(selectedAccount.id, selectedAccount.name)}
+                disabled={seedingDemoData}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-50"
+                title="Populate this account with demo feedback, reviews, and ratings"
+              >
+                {seedingDemoData ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Populating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Populate Demo Data
+                  </>
+                )}
+              </button>
+
+              <div className="flex gap-3">
+                {isEditingAccount ? (
+                  <>
+                    <button
+                      onClick={cancelEditingAccount}
+                      disabled={isSavingAccount}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveAccountChanges}
+                      disabled={isSavingAccount}
+                      className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {isSavingAccount ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Changes'
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={closeAccountModal}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={startEditingAccount}
+                      className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+                    >
+                      Edit Account
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1710,6 +1837,101 @@ export default function AdminDashboard() {
         confirmButtonStyle="warning"
         icon="warning"
       />
+
+      {/* Date Range Picker Modal for Demo Data */}
+      {showDateRangePicker && dateRangeForAccount && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                Populate Demo Data
+              </h2>
+              <button
+                onClick={closeDateRangePicker}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Select the date range to populate with demo data for <strong>{dateRangeForAccount.accountName}</strong>.
+                </p>
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-purple-800">
+                    <strong>Per venue, per day:</strong><br/>
+                    • 30 feedback sessions (~81 items)<br/>
+                    • 20 NPS submissions<br/>
+                    • 1 Google review<br/>
+                    • 1 historical rating snapshot
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={selectedDateRange.startDate}
+                  onChange={(e) => setSelectedDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                  max={selectedDateRange.endDate || undefined}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={selectedDateRange.endDate}
+                  onChange={(e) => setSelectedDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                  min={selectedDateRange.startDate || undefined}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+
+              {selectedDateRange.startDate && selectedDateRange.endDate && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Duration:</strong> {Math.ceil((new Date(selectedDateRange.endDate) - new Date(selectedDateRange.startDate)) / (1000 * 60 * 60 * 24)) + 1} days
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> Dates with existing data will be automatically skipped to avoid duplicates.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={closeDateRangePicker}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={populateDemoData}
+                disabled={!selectedDateRange.startDate || !selectedDateRange.endDate}
+                className="px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Populate Data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

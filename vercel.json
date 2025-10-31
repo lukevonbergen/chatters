@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/refresh-google-ratings",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-google-reviews",
+      "schedule": "0 3 * * *"
     }
   ]
 }
