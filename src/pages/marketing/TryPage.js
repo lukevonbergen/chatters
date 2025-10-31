@@ -9,7 +9,7 @@ import PageHeader from "../../components/marketing/common/sections/PageHeader";
 const TryPage = () => {
   // Load HubSpot form script & init
   useEffect(() => {
-    const existing = document.querySelector('script[src="https://js.hsforms.net/forms/embed/48822376.js"]');
+    const existing = document.querySelector('script[src="//js.hsforms.net/forms/embed/v2.js"]');
 
     const initForm = () => {
       if (window.hbspt?.forms) {
@@ -32,8 +32,8 @@ const TryPage = () => {
     }
 
     const script = document.createElement("script");
-    script.src = "https://js.hsforms.net/forms/embed/48822376.js";
-    script.defer = true;
+    script.src = "//js.hsforms.net/forms/embed/v2.js";
+    script.async = true;
     script.onload = initForm;
     document.body.appendChild(script);
 
