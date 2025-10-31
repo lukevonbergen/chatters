@@ -43,7 +43,7 @@ const TryPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white font-satoshi">
       <Helmet>
         <title>Start Free Trial | Chatters - No Credit Card Required</title>
         <meta
