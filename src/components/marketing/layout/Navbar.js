@@ -35,7 +35,6 @@ const Navbar = ({ overlay = false }) => {
     { name: 'Documentation', path: 'https://chatters.canny.io/changelog', description: 'Learn how to use Chatters', icon: <BookOpen className="w-5 h-5" /> },
     { name: 'Help Center', path: '/help', description: 'Get support when you need it', icon: <HelpCircle className="w-5 h-5" /> },
     { name: 'Blog', path: '/blog', description: 'Industry insights and tips', icon: <FileText className="w-5 h-5" /> },
-    { name: 'Case Studies', path: '/case-studies', description: 'See how others succeed', icon: <GraduationCap className="w-5 h-5" /> },
   ];
 
   const handleDropdownEnter = (dropdown) => {
