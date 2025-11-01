@@ -207,6 +207,32 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
     );
   }
 
+  // Demo account - show special message and disable billing
+  if (accountData?.demo_account) {
+    return (
+      <div className="w-full">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white border border-gray-300 rounded-lg p-8">
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Demo Account</h3>
+            <p className="text-gray-600 mb-6">
+              This is a demonstration account with full access to all features. Billing is disabled for demo accounts.
+            </p>
+            <div className="border-t border-gray-200 pt-4">
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li>• Unlimited venue access</li>
+                <li>• All premium features enabled</li>
+                <li>• No billing or payment required</li>
+              </ul>
+            </div>
+            <p className="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-200">
+              For questions about your demo account, please contact support.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       {/* Account Overview - removed duplicate title */}
