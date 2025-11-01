@@ -15,7 +15,8 @@ import {
   Map,
   Trophy,
   Home,
-  Plus
+  Plus,
+  Clock
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -51,7 +52,7 @@ const subMenuItems = {
   ]
 };
 
-const ModernHeader = ({ sidebarCollapsed, hasTrialBanner }) => {
+const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
   const [switchingVenue, setSwitchingVenue] = useState(false);
   const [venuePopoverOpen, setVenuePopoverOpen] = useState(false);
   const navigate = useNavigate();
@@ -146,7 +147,7 @@ const ModernHeader = ({ sidebarCollapsed, hasTrialBanner }) => {
 
   return (
     <header
-      className={`fixed ${hasTrialBanner ? 'top-12' : 'top-0'} right-0 z-30 h-16 bg-white border-b border-gray-200 transition-all duration-300 ${
+      className={`fixed top-0 right-0 z-30 h-16 bg-white border-b border-gray-200 transition-all duration-300 ${
         sidebarCollapsed ? 'left-16' : 'left-64'
       }`}
     >
@@ -170,6 +171,22 @@ const ModernHeader = ({ sidebarCollapsed, hasTrialBanner }) => {
 
         {/* Right Side - Venue Selector + Settings */}
         <div className="flex items-center gap-3">
+          {/* Trial Info */}
+          {trialInfo && trialInfo.isActive && userRole === 'master' && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <Clock className="w-4 h-4 text-gray-700" />
+              <span className="text-sm text-gray-700">
+                Trial: <span className="font-semibold">{trialInfo.daysLeft}</span> day{trialInfo.daysLeft !== 1 ? 's' : ''} left
+              </span>
+              <button
+                onClick={() => navigate('/settings/billing')}
+                className="ml-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                Upgrade
+              </button>
+            </div>
+          )}
+
           {/* Kiosk Mode Button */}
           <Button
             variant="outline"

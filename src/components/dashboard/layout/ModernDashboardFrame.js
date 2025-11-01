@@ -102,45 +102,20 @@ const ModernDashboardFrame = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Trial Banner */}
-      {trialInfo && trialInfo.isActive && userRole === 'master' && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-50 border-b border-yellow-200 px-6 py-3">
-          <div className="flex items-center justify-between max-w-full">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-gray-700 text-sm">
-                <FiClock className="w-4 h-4" />
-                <span>
-                  Trial: <span className="font-semibold">{trialInfo.daysLeft}</span> day{trialInfo.daysLeft !== 1 ? 's' : ''} remaining
-                </span>
-              </div>
-            </div>
-            <Button
-              onClick={() => navigate('/settings/billing')}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              Upgrade Now
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* Sidebar */}
       <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
 
       {/* Header */}
       <ModernHeader
         sidebarCollapsed={sidebarCollapsed}
-        hasTrialBanner={trialInfo && trialInfo.isActive && userRole === 'master'}
+        trialInfo={trialInfo}
       />
 
       {/* Main Content */}
-      <main 
+      <main
         className={`transition-all duration-300 ${
           sidebarCollapsed ? 'ml-16' : 'ml-64'
-        } ${
-          trialInfo && trialInfo.isActive && userRole === 'master' ? 'mt-28' : 'mt-16'
-        }`}
+        } mt-16`}
       >
         <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
           {children}
