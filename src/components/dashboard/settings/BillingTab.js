@@ -141,6 +141,18 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
   const yearlyMonthlyEquivalent = yearlyTotal / 12;
   const yearlyDiscount = ((monthlyTotal * 12 - yearlyTotal) / (monthlyTotal * 12) * 100).toFixed(0);
 
+  // Show loading state while data is being fetched
+  if (!accountData && userRole !== 'admin') {
+    return (
+      <div className="max-w-5xl">
+        <div className="text-center py-12">
+          <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading billing information...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Only masters can access
   if (userRole !== 'master' && !accountData?.isExpired) {
     return (
@@ -236,10 +248,10 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
                 {accountData?.is_paid ? 'Active' : accountData?.demo_account ? 'Demo Account' : 'Trial'}
               </span>
             </div>
-            {!accountData?.is_paid && accountData?.daysLeft !== null && (
+            {!accountData?.is_paid && accountData?.daysLeft !== null && accountData?.daysLeft !== undefined && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Trial ends:</span>
-                <span className="font-medium text-gray-900">{accountData.daysLeft} days</span>
+                <span className="font-medium text-gray-900">{accountData?.daysLeft} days</span>
               </div>
             )}
           </div>
