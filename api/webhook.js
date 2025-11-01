@@ -33,57 +33,111 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Webhook error' });
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const { customer_email: email, metadata } = session;
-    const { firstName, lastName, venueName } = metadata;
+  // Handle different webhook events
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        const customerEmail = session.customer_email;
+        const customerId = session.customer;
+        const subscriptionId = session.subscription;
 
-    try {
-      const { data: existingVenue } = await supabase
-        .from('venues')
-        .select('id')
-        .eq('email', email)
-        .single();
+        // Find the user's account via email
+        const { data: user } = await supabase
+          .from('users')
+          .select('account_id')
+          .eq('email', customerEmail)
+          .single();
 
-      if (!existingVenue) {
-        const tempPassword = Math.random().toString(36).slice(-8);
+        if (user && user.account_id) {
+          // Update existing account with payment info
+          const { error: updateError } = await supabase
+            .from('accounts')
+            .update({
+              is_paid: true,
+              trial_ends_at: null,
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscriptionId
+            })
+            .eq('id', user.account_id);
 
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email,
-          password: tempPassword,
-        });
-
-        if (authError) throw new Error(authError.message);
-
-        const { error: venueError } = await supabase
-          .from('venues')
-          .insert([{
-            name: venueName,
-            email,
-            first_name: firstName,
-            last_name: lastName,
-            is_paid: true,
-            trial_ends_at: null,
-          }]);
-
-        if (venueError) throw new Error(venueError.message);
-
-        console.log('New venue created and marked as paid');
-      } else {
-        const { error } = await supabase
-          .from('venues')
-          .update({ is_paid: true })
-          .eq('email', email);
-
-        if (error) throw new Error(error.message);
-
-        console.log('Existing venue marked as paid');
+          if (updateError) throw updateError;
+          console.log('Account marked as paid:', user.account_id);
+        } else {
+          console.warn('No user found for email:', customerEmail);
+        }
+        break;
       }
-    } catch (err) {
-      console.error('Webhook processing error:', err);
-      return res.status(500).json({ message: err.message });
-    }
-  }
 
-  res.status(200).json({ received: true });
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+        const isActive = subscription.status === 'active';
+
+        // Update account by stripe customer ID
+        const { error: updateError } = await supabase
+          .from('accounts')
+          .update({
+            is_paid: isActive,
+            stripe_subscription_id: subscription.id
+          })
+          .eq('stripe_customer_id', customerId);
+
+        if (updateError) throw updateError;
+        console.log('Subscription updated:', subscription.id, 'Active:', isActive);
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+
+        // Mark account as unpaid when subscription cancelled
+        const { error: updateError } = await supabase
+          .from('accounts')
+          .update({
+            is_paid: false,
+            stripe_subscription_id: null
+          })
+          .eq('stripe_customer_id', customerId);
+
+        if (updateError) throw updateError;
+        console.log('Subscription cancelled:', subscription.id);
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        const customerId = invoice.customer;
+
+        // Optionally: Set grace period or notify user
+        // For now, we'll let subscription.updated handle the status change
+        console.log('Payment failed for customer:', customerId);
+        break;
+      }
+
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object;
+        const customerId = invoice.customer;
+
+        // Ensure account is marked as paid (redundant with subscription.updated but safe)
+        const { error: updateError } = await supabase
+          .from('accounts')
+          .update({ is_paid: true })
+          .eq('stripe_customer_id', customerId);
+
+        if (updateError) throw updateError;
+        console.log('Payment succeeded for customer:', customerId);
+        break;
+      }
+
+      default:
+        console.log('Unhandled event type:', event.type);
+    }
+
+    res.status(200).json({ received: true });
+  } catch (err) {
+    console.error('Webhook processing error:', err);
+    return res.status(500).json({ message: err.message });
+  }
 }

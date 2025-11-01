@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { email, priceId, firstName, lastName, venueName, password } = req.body;
+  const { email, priceId } = req.body;
 
   try {
     // Validate the email and price ID
@@ -16,6 +16,8 @@ export default async function handler(req, res) {
     }
 
     // Create a Stripe checkout session
+    // Note: User should already have a trial account created via /api/create-trial-account
+    // This checkout session just upgrades them to paid
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -26,14 +28,9 @@ export default async function handler(req, res) {
       ],
       mode: 'subscription',
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/signup`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing`,
       customer_email: email,
-      metadata: {
-        firstName,
-        lastName,
-        venueName,
-        password,
-      },
+      // No metadata needed - webhook will find user by email
     });
 
     // Return the session ID
