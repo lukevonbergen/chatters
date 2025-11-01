@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../../../utils/supabase';
 import { useVenue } from '../../../context/VenueContext';
 import { CreditCard, Building2, Calendar, Receipt, ExternalLink, AlertCircle } from 'lucide-react';
-
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+import StripeCheckoutModal from './StripeCheckoutModal';
 
 // Pricing configuration
 const PRICE_PER_VENUE_MONTHLY = 149; // £149 per venue per month
@@ -18,6 +16,8 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
   const [portalLoading, setPortalLoading] = useState(false);
   const [accountData, setAccountData] = useState(null);
   const [venueCount, setVenueCount] = useState(0);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [clientSecret, setClientSecret] = useState(null);
 
   useEffect(() => {
     const fetchBillingInfo = async () => {
@@ -93,19 +93,49 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         : process.env.REACT_APP_STRIPE_PRICE_YEARLY;
 
     try {
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch('/api/create-subscription-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: userEmail, priceId, venueCount }),
       });
 
-      const { id } = await response.json();
-      const stripe = await stripePromise;
-      await stripe.redirectToCheckout({ sessionId: id });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create subscription');
+      }
+
+      if (!data.clientSecret) {
+        throw new Error('No client secret returned');
+      }
+
+      // Open modal with client secret
+      setClientSecret(data.clientSecret);
+      setCheckoutModalOpen(true);
+      setLoading(false);
     } catch (error) {
       console.error('Checkout error:', error);
+      alert(`Checkout failed: ${error.message}`);
       setLoading(false);
     }
+  };
+
+  const handlePaymentSuccess = async () => {
+    // Close modal
+    setCheckoutModalOpen(false);
+    setClientSecret(null);
+
+    // Show success message
+    alert('Payment successful! Your subscription is now active.');
+
+    // Refresh billing info
+    window.location.reload();
+  };
+
+  const handleCloseModal = () => {
+    setCheckoutModalOpen(false);
+    setClientSecret(null);
+    setLoading(false);
   };
 
   const handleManageSubscription = async () => {
@@ -404,6 +434,17 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
           Each venue costs £{PRICE_PER_VENUE_MONTHLY}/month or £{PRICE_PER_VENUE_YEARLY}/year.
         </p>
       </div>
+
+      {/* Stripe Checkout Modal */}
+      <StripeCheckoutModal
+        isOpen={checkoutModalOpen}
+        onClose={handleCloseModal}
+        onSuccess={handlePaymentSuccess}
+        clientSecret={clientSecret}
+        total={subscriptionType === 'monthly' ? monthlyTotal : yearlyTotal}
+        billingPeriod={subscriptionType}
+        venueCount={venueCount}
+      />
     </div>
   );
 };

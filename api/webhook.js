@@ -79,12 +79,33 @@ export default async function handler(req, res) {
           .from('accounts')
           .update({
             is_paid: isActive,
-            stripe_subscription_id: subscription.id
+            stripe_subscription_id: subscription.id,
+            trial_ends_at: isActive ? null : undefined
           })
           .eq('stripe_customer_id', customerId);
 
         if (updateError) throw updateError;
         console.log('Subscription updated:', subscription.id, 'Active:', isActive);
+        break;
+      }
+
+      case 'customer.subscription.created': {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+        const isActive = subscription.status === 'active';
+
+        // Update account when subscription is first created
+        const { error: updateError } = await supabase
+          .from('accounts')
+          .update({
+            is_paid: isActive,
+            stripe_subscription_id: subscription.id,
+            trial_ends_at: isActive ? null : undefined
+          })
+          .eq('stripe_customer_id', customerId);
+
+        if (updateError) throw updateError;
+        console.log('Subscription created:', subscription.id, 'Active:', isActive);
         break;
       }
 
