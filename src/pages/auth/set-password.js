@@ -30,19 +30,16 @@ const SetPasswordPage = () => {
         setInvitationToken(token);
 
         try {
-          // Validate token via Edge Function
-          const { data, error } = await supabase.functions.invoke('validate-invitation-token', {
-            body: { token }
+          // Validate token via API endpoint
+          const response = await fetch('/api/validate-invitation-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
           });
 
-          if (error) {
-            console.error('Token validation error:', error);
-            setError('Invalid or expired invitation link.');
-            setIsLoading(false);
-            return;
-          }
+          const data = await response.json();
 
-          if (!data.valid) {
+          if (!response.ok || !data.valid) {
             setError(data.message || 'Invalid or expired invitation link.');
             setIsLoading(false);
             return;
@@ -116,22 +113,20 @@ const SetPasswordPage = () => {
     try {
       if (isTokenBased) {
         // New token-based invitation flow
-        const { data, error } = await supabase.functions.invoke('create-account-from-invitation', {
-          body: {
+        const response = await fetch('/api/create-account-from-invitation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             token: invitationToken,
             password
-          }
+          })
         });
 
-        if (error) {
-          console.error('[SetPassword] Token-based account creation error:', error);
-          setError('Failed to create account. Please try again or request a new invitation.');
-          setIsLoading(false);
-          return;
-        }
+        const data = await response.json();
 
-        if (!data.success) {
-          setError(data.message || 'Failed to create account.');
+        if (!response.ok || !data.success) {
+          console.error('[SetPassword] Token-based account creation error:', data);
+          setError(data.message || 'Failed to create account. Please try again or request a new invitation.');
           setIsLoading(false);
           return;
         }
