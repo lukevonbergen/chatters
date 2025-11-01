@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       ],
       payment_behavior: 'default_incomplete',
       payment_settings: {
-        payment_method_types: ['card'],
+        payment_method_types: ['card', 'bacs_debit'],
         save_default_payment_method: 'on_subscription',
       },
       expand: ['latest_invoice.payment_intent'],

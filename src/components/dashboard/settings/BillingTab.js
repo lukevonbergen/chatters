@@ -120,13 +120,17 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
     }
   };
 
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = async (status = 'succeeded') => {
     // Close modal
     setCheckoutModalOpen(false);
     setClientSecret(null);
 
-    // Show success message
-    alert('Payment successful! Your subscription is now active.');
+    // Show appropriate success message based on payment method
+    if (status === 'processing') {
+      alert('Direct Debit setup successful! Your payment will be processed within 3-5 business days. You\'ll receive access once the payment clears.');
+    } else {
+      alert('Payment successful! Your subscription is now active.');
+    }
 
     // Refresh billing info
     window.location.reload();

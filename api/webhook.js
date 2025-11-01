@@ -152,6 +152,18 @@ export default async function handler(req, res) {
         break;
       }
 
+      case 'payment_intent.processing': {
+        const paymentIntent = event.data.object;
+        const customerId = paymentIntent.customer;
+
+        // BACS Direct Debit payments will be in processing state for 3-5 days
+        console.log('Payment processing for customer:', customerId);
+        console.log('Payment method type:', paymentIntent.payment_method_types);
+
+        // Optionally: Send email notification that payment is being processed
+        break;
+      }
+
       default:
         console.log('Unhandled event type:', event.type);
     }

@@ -26,7 +26,7 @@ const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount })
     setIsProcessing(true);
     setErrorMessage(null);
 
-    const { error } = await stripe.confirmPayment({
+    const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/dashboard`,
@@ -38,8 +38,14 @@ const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount })
       setErrorMessage(error.message);
       setIsProcessing(false);
     } else {
-      // Payment succeeded
-      onSuccess();
+      // Payment succeeded or is processing
+      // For BACS Direct Debit, the payment will be in 'processing' state
+      // For cards, it will be 'succeeded'
+      if (paymentIntent?.status === 'processing') {
+        onSuccess('processing');
+      } else {
+        onSuccess('succeeded');
+      }
     }
   };
 
@@ -74,9 +80,23 @@ const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount })
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-gray-700">
           <CreditCard className="w-4 h-4" />
-          <h3 className="text-sm font-medium">Payment Details</h3>
+          <h3 className="text-sm font-medium">Payment Method</h3>
         </div>
-        <PaymentElement />
+        <PaymentElement
+          options={{
+            layout: 'tabs',
+            defaultValues: {
+              billingDetails: {
+                address: {
+                  country: 'GB',
+                }
+              }
+            }
+          }}
+        />
+        <p className="text-xs text-gray-500 mt-2">
+          💳 Pay by card or 🏦 Direct Debit (BACS)
+        </p>
       </div>
 
       {/* Error Message */}
@@ -150,6 +170,7 @@ const StripeCheckoutModal = ({ isOpen, onClose, onSuccess, clientSecret, total, 
         borderRadius: '8px',
       },
     },
+    paymentMethodOrder: ['card', 'bacs_debit'],
   };
 
   return (
