@@ -51,7 +51,7 @@ const subMenuItems = {
   ]
 };
 
-const ModernHeader = ({ sidebarCollapsed }) => {
+const ModernHeader = ({ sidebarCollapsed, hasTrialBanner }) => {
   const [switchingVenue, setSwitchingVenue] = useState(false);
   const [venuePopoverOpen, setVenuePopoverOpen] = useState(false);
   const navigate = useNavigate();
@@ -145,8 +145,8 @@ const ModernHeader = ({ sidebarCollapsed }) => {
   const CurrentIcon = currentSection.icon;
 
   return (
-    <header 
-      className={`fixed top-0 right-0 z-30 h-16 bg-white border-b border-gray-200 transition-all duration-300 ${
+    <header
+      className={`fixed ${hasTrialBanner ? 'top-12' : 'top-0'} right-0 z-30 h-16 bg-white border-b border-gray-200 transition-all duration-300 ${
         sidebarCollapsed ? 'left-16' : 'left-64'
       }`}
     >

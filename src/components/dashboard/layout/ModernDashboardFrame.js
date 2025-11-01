@@ -129,7 +129,10 @@ const ModernDashboardFrame = ({ children }) => {
       <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
 
       {/* Header */}
-      <ModernHeader sidebarCollapsed={sidebarCollapsed} />
+      <ModernHeader
+        sidebarCollapsed={sidebarCollapsed}
+        hasTrialBanner={trialInfo && trialInfo.isActive && userRole === 'master'}
+      />
 
       {/* Main Content */}
       <main 
