@@ -1,5 +1,16 @@
 // Utility functions for handling domain-specific URLs
 
+export const isDevSite = () => {
+  if (typeof window === 'undefined') return false;
+
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  const isDevDomain = hostname.includes('dev') || hostname.includes('staging') || hostname.includes('test');
+  const isVercelPreview = hostname.includes('vercel.app') && !hostname.includes('getchatters.com');
+
+  return isLocalhost || isDevDomain || isVercelPreview;
+};
+
 export const getDashboardDomain = () => {
   if (typeof window === 'undefined') return 'my.getchatters.com';
   
