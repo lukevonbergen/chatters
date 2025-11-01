@@ -44,35 +44,37 @@ const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount })
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Order Summary */}
-      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Plan:</span>
-          <span className="font-medium text-gray-900">
-            {billingPeriod === 'monthly' ? 'Monthly' : 'Annual'} Subscription
-          </span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Venues:</span>
-          <span className="font-medium text-gray-900">{venueCount}</span>
-        </div>
-        <div className="pt-2 border-t border-gray-200">
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-900">Total:</span>
-            <span className="text-xl font-bold text-gray-900">£{total.toLocaleString()}</span>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Order Summary - More Compact */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4">
+        <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+          <div>
+            <span className="text-gray-600 text-xs">Plan</span>
+            <p className="font-semibold text-gray-900">
+              {billingPeriod === 'monthly' ? 'Monthly' : 'Annual'}
+            </p>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            {billingPeriod === 'monthly' ? 'per month' : 'per year'}
-          </p>
+          <div className="text-right">
+            <span className="text-gray-600 text-xs">Venues</span>
+            <p className="font-semibold text-gray-900">{venueCount}</p>
+          </div>
+        </div>
+        <div className="pt-3 border-t border-blue-200 flex justify-between items-baseline">
+          <span className="text-sm font-medium text-gray-700">Total</span>
+          <div className="text-right">
+            <span className="text-2xl font-bold text-gray-900">£{total.toLocaleString()}</span>
+            <span className="text-xs text-gray-500 ml-1">
+              /{billingPeriod === 'monthly' ? 'mo' : 'yr'}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Payment Element */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         <div className="flex items-center gap-2 text-gray-700">
-          <CreditCard className="w-5 h-5" />
-          <h3 className="font-medium">Payment Details</h3>
+          <CreditCard className="w-4 h-4" />
+          <h3 className="text-sm font-medium">Payment Details</h3>
         </div>
         <PaymentElement />
       </div>
@@ -84,36 +86,36 @@ const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount })
         </div>
       )}
 
-      {/* Security Badge */}
-      <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-        <Lock className="w-3 h-3" />
-        <span>Secured by Stripe • PCI DSS compliant</span>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isProcessing}
-          className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={!stripe || isProcessing}
-          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-        >
-          {isProcessing ? (
-            <span className="flex items-center justify-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Processing...
-            </span>
-          ) : (
-            `Pay £${total.toLocaleString()}`
-          )}
-        </button>
+      {/* Security Badge & Action Buttons Combined */}
+      <div className="space-y-3">
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isProcessing}
+            className="flex-1 px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={!stripe || isProcessing}
+            className="flex-1 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+          >
+            {isProcessing ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Processing...
+              </span>
+            ) : (
+              `Pay £${total.toLocaleString()}`
+            )}
+          </button>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+          <Lock className="w-3 h-3" />
+          <span>Secured by Stripe • PCI DSS compliant</span>
+        </div>
       </div>
     </form>
   );
@@ -161,20 +163,20 @@ const StripeCheckoutModal = ({ isOpen, onClose, onSuccess, clientSecret, total, 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6 transform transition-all"
+          className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-5 transform transition-all max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          {/* Header - More Compact */}
+          <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Complete Your Subscription</h2>
-              <p className="text-sm text-gray-500 mt-1">Secure payment powered by Stripe</p>
+              <h2 className="text-xl font-bold text-gray-900">Complete Subscription</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Secure payment via Stripe</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors -mt-1"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 

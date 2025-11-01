@@ -204,12 +204,8 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
   }
 
   return (
-    <div className="max-w-5xl">
-      {/* Account Overview */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Billing & Subscription</h2>
-        <p className="text-gray-600">Manage your subscription and billing information</p>
-      </div>
+    <div className="w-full">
+      {/* Account Overview - removed duplicate title */}
 
       {/* Status Banners */}
       {accountData?.isExpired && (
@@ -262,7 +258,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
+      <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-6 mb-8">
         {/* Current Plan Card */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex items-center gap-3 mb-4">
