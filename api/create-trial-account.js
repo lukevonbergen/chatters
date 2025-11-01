@@ -12,20 +12,53 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 1. Create auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
     if (authError) throw new Error(authError.message);
 
+    // 2. Create account with trial billing info
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + 14);
 
+    const { data: account, error: accountError } = await supabase
+      .from('accounts')
+      .insert([{
+        trial_ends_at: trialEndsAt.toISOString(),
+        is_paid: false,
+        stripe_customer_id: null,
+        stripe_subscription_id: null
+      }])
+      .select()
+      .single();
+
+    if (accountError) throw new Error(accountError.message);
+
+    // 3. Create venue linked to account
     const { error: venueError } = await supabase
       .from('venues')
-      .insert([{ email, first_name: firstName, last_name: lastName, name: venueName, is_paid: false, trial_ends_at: trialEndsAt.toISOString() }]);
+      .insert([{
+        name: venueName,
+        account_id: account.id,
+        email: email,
+      }]);
 
     if (venueError) throw new Error(venueError.message);
 
+    // 4. Create user record linking auth user to account
+    const { error: userError } = await supabase
+      .from('users')
+      .insert([{
+        id: authData.user.id,
+        email: email,
+        role: 'master',
+        account_id: account.id
+      }]);
+
+    if (userError) throw new Error(userError.message);
+
     return res.status(200).json({ message: 'Account created with trial' });
   } catch (err) {
+    console.error('Trial account creation error:', err);
     return res.status(500).json({ error: err.message });
   }
 }

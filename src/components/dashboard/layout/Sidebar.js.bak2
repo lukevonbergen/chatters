@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
-import { supabase, setAuthStorage } from '../../../utils/supabase';
-import { isDevSite } from '../../../utils/domainUtils';
+import { supabase, setAuthStorage };
+import { isDevSite } from "../../../utils/domainUtils" from '../../../utils/supabase';
 import {
   BarChart3,
   MessageSquare,
@@ -249,7 +249,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           {!collapsed && (
             <img
-              src={isDevSite() ? "/img/CTS_DEV_LOGO.svg" : "https://www.getchatters.com/img/Logo.svg"}
+              src="https://www.getchatters.com/img/Logo.svg"
               alt="Chatters"
               className="h-6 w-auto"
             />

@@ -1,22 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../../../utils/supabase';
 import { useVenue } from '../../../context/VenueContext';
-import { useLocation } from 'react-router-dom';
+import { CreditCard, Building2, Calendar, Receipt, ExternalLink, AlertCircle } from 'lucide-react';
+import StripeCheckoutModal from './StripeCheckoutModal';
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+// Pricing configuration
+const PRICE_PER_VENUE_MONTHLY = 149; // £149 per venue per month
+const PRICE_PER_VENUE_YEARLY = 1430; // £1,430 per venue per year (20% discount)
 
 const BillingTab = ({ allowExpiredAccess = false }) => {
   const { userRole } = useVenue();
-  const location = useLocation();
   const [subscriptionType, setSubscriptionType] = useState('monthly');
   const [userEmail, setUserEmail] = useState('');
-  const [trialEndsAt, setTrialEndsAt] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [trialInfo, setTrialInfo] = useState(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [accountData, setAccountData] = useState(null);
+  const [venueCount, setVenueCount] = useState(0);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [clientSecret, setClientSecret] = useState(null);
 
   useEffect(() => {
-    const fetchTrialInfo = async () => {
+    const fetchBillingInfo = async () => {
       const { data: authData } = await supabase.auth.getUser();
       const email = authData?.user?.email;
       const userId = authData?.user?.id;
@@ -43,33 +47,41 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
           .eq('user_id', userId)
           .limit(1)
           .single();
-          
+
         accountIdToCheck = staffRow?.venues?.account_id;
       }
 
       if (accountIdToCheck) {
+        // Get account data
         const { data: account } = await supabase
           .from('accounts')
-          .select('trial_ends_at, is_paid, demo_account')
+          .select('trial_ends_at, is_paid, demo_account, stripe_customer_id, stripe_subscription_id, name')
           .eq('id', accountIdToCheck)
           .single();
 
-        if (account?.trial_ends_at) {
-          setTrialEndsAt(account.trial_ends_at);
-          
+        // Get venue count for this account
+        const { data: venues, count } = await supabase
+          .from('venues')
+          .select('id, name', { count: 'exact' })
+          .eq('account_id', accountIdToCheck);
+
+        setVenueCount(count || 0);
+
+        if (account) {
           const trialEndDate = new Date(account.trial_ends_at);
           const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-          
-          setTrialInfo({
-            isExpired: daysLeft <= 0 && !account.is_paid && !account.demo_account,
+
+          setAccountData({
+            ...account,
             daysLeft,
-            isDemoAccount: account.demo_account || false
+            isExpired: daysLeft <= 0 && !account.is_paid && !account.demo_account,
+            venues: venues || []
           });
         }
       }
     };
 
-    fetchTrialInfo();
+    fetchBillingInfo();
   }, []);
 
   const handleCheckout = async () => {
@@ -80,33 +92,108 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         ? process.env.REACT_APP_STRIPE_PRICE_MONTHLY
         : process.env.REACT_APP_STRIPE_PRICE_YEARLY;
 
-    const response = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: userEmail, priceId }),
-    });
+    try {
+      const response = await fetch('/api/create-subscription-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail, priceId, venueCount }),
+      });
 
-    const { id } = await response.json();
-    const stripe = await stripePromise;
-    await stripe.redirectToCheckout({ sessionId: id });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create subscription');
+      }
+
+      if (!data.clientSecret) {
+        throw new Error('No client secret returned');
+      }
+
+      // Open modal with client secret
+      setClientSecret(data.clientSecret);
+      setCheckoutModalOpen(true);
+      setLoading(false);
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert(`Checkout failed: ${error.message}`);
+      setLoading(false);
+    }
   };
 
-  const daysLeft = trialEndsAt
-    ? Math.max(
-        0,
-        Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-      )
-    : null;
+  const handlePaymentSuccess = async (status = 'succeeded') => {
+    // Close modal
+    setCheckoutModalOpen(false);
+    setClientSecret(null);
 
-  // Allow access if user is master OR if trial is expired (special billing access)
-  if (userRole !== 'master' && !trialInfo?.isExpired) {
+    // Show appropriate success message based on payment method
+    if (status === 'processing') {
+      alert('Direct Debit setup successful! Your payment will be processed within 3-5 business days. You\'ll receive access once the payment clears.');
+    } else {
+      alert('Payment successful! Your subscription is now active.');
+    }
+
+    // Refresh billing info
+    window.location.reload();
+  };
+
+  const handleCloseModal = () => {
+    setCheckoutModalOpen(false);
+    setClientSecret(null);
+    setLoading(false);
+  };
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+
+    try {
+      const response = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      const { url, error } = await response.json();
+
+      if (error) {
+        alert(error);
+        setPortalLoading(false);
+        return;
+      }
+
+      // Redirect to Stripe customer portal
+      window.location.href = url;
+    } catch (error) {
+      console.error('Portal session error:', error);
+      alert('Failed to open billing portal. Please try again.');
+      setPortalLoading(false);
+    }
+  };
+
+  // Calculate total pricing based on venue count
+  const monthlyTotal = venueCount * PRICE_PER_VENUE_MONTHLY;
+  const yearlyTotal = venueCount * PRICE_PER_VENUE_YEARLY;
+  const yearlyMonthlyEquivalent = yearlyTotal / 12;
+  const yearlyDiscount = ((monthlyTotal * 12 - yearlyTotal) / (monthlyTotal * 12) * 100).toFixed(0);
+
+  // Show loading state while data is being fetched
+  if (!accountData && userRole !== 'admin') {
+    return (
+      <div className="max-w-5xl">
+        <div className="text-center py-12">
+          <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading billing information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only masters can access
+  if (userRole !== 'master' && !accountData?.isExpired) {
     return (
       <div className="max-w-none lg:max-w-2xl">
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.95-.833-2.72 0L4.094 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
+            <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Access Restricted</h3>
           <p className="text-gray-600 mb-4">
@@ -120,92 +207,270 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
     );
   }
 
+  // Demo account - show special message and disable billing
+  if (accountData?.demo_account) {
+    return (
+      <div className="w-full">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white border border-gray-300 rounded-lg p-8">
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Demo Account</h3>
+            <p className="text-gray-600 mb-6">
+              This is a demonstration account with full access to all features. Billing is disabled for demo accounts.
+            </p>
+            <div className="border-t border-gray-200 pt-4">
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li>• Unlimited venue access</li>
+                <li>• All premium features enabled</li>
+                <li>• No billing or payment required</li>
+              </ul>
+            </div>
+            <p className="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-200">
+              For questions about your demo account, please contact support.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-none lg:max-w-2xl">
-      <div className="mb-6 lg:mb-8">
-        
-        {/* Expired trial banner */}
-        {trialInfo?.isExpired && (
-          <div className="mt-3 p-3 lg:p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-800 text-sm font-medium">
-              ⚠️ Your trial has expired. Please upgrade to continue using Chatters.
-            </p>
-          </div>
-        )}
-        
-        {/* Active trial banner */}
-        {daysLeft !== null && !trialInfo?.isExpired && (
-          <div className="mt-3 p-3 lg:p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <p className="text-yellow-800 text-sm">
-              Your free trial ends in <strong>{daysLeft}</strong> day{daysLeft !== 1 && 's'}.
-            </p>
-          </div>
-        )}
-      </div>
+    <div className="w-full">
+      {/* Account Overview - removed duplicate title */}
 
-      <div className="space-y-3 lg:space-y-4 mb-6 lg:mb-8">
-        {/* Monthly Plan */}
-        <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border rounded-lg p-4 lg:p-5 cursor-pointer transition 
-          ${subscriptionType === 'monthly' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-400'}`}>
-          <div className="flex-1 mb-3 sm:mb-0">
-            <h3 className="font-semibold text-gray-800 text-base lg:text-lg">Monthly Plan</h3>
-            <p className="text-sm text-gray-600">Pay as you go. Cancel anytime.</p>
+      {/* Status Banners */}
+      {accountData?.isExpired && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-red-800 font-medium">Your trial has expired</p>
+            <p className="text-red-700 text-sm mt-1">
+              Please upgrade to continue using Chatters for your {venueCount} venue{venueCount !== 1 ? 's' : ''}.
+            </p>
           </div>
-          <div className="flex items-center justify-between sm:justify-end sm:ml-4">
-            <div className="text-right">
-              <span className="text-lg lg:text-xl font-bold text-gray-800">£149/mo</span>
+        </div>
+      )}
+
+      {accountData && !accountData.isExpired && accountData.daysLeft !== null && !accountData.is_paid && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+          <Calendar className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-yellow-800 font-medium">
+              Your free trial ends in <strong>{accountData.daysLeft}</strong> day{accountData.daysLeft !== 1 ? 's' : ''}
+            </p>
+            <p className="text-yellow-700 text-sm mt-1">
+              Upgrade now to continue using Chatters without interruption.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {accountData?.is_paid && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+          <CreditCard className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-green-800 font-medium">Active Subscription</p>
+            <p className="text-green-700 text-sm mt-1">
+              Your subscription is active and covers {venueCount} venue{venueCount !== 1 ? 's' : ''}.
+            </p>
+          </div>
+          <button
+            onClick={handleManageSubscription}
+            disabled={portalLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium disabled:opacity-50"
+          >
+            {portalLoading ? 'Loading...' : (
+              <>
+                Manage Subscription
+                <ExternalLink className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-6 mb-8">
+        {/* Current Plan Card */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Receipt className="w-5 h-5 text-blue-600" />
             </div>
-            <input
-              type="radio"
-              value="monthly"
-              checked={subscriptionType === 'monthly'}
-              onChange={() => setSubscriptionType('monthly')}
-              className="ml-4 h-4 w-4 text-blue-600 focus:ring-blue-500"
-            />
+            <h3 className="font-semibold text-gray-900">Current Plan</h3>
           </div>
-        </label>
-
-        {/* Yearly Plan */}
-        <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border rounded-lg p-4 lg:p-5 cursor-pointer transition relative
-          ${subscriptionType === 'yearly' ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-400'}`}>
-          <div className="flex-1 mb-3 sm:mb-0">
-            <h3 className="font-semibold text-gray-800 flex flex-col sm:flex-row sm:items-center text-base lg:text-lg">
-              <span>Yearly Plan</span>
-              <span className="mt-1 sm:mt-0 sm:ml-2 bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full w-fit">
-                Best value
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Status:</span>
+              <span className={`font-medium ${accountData?.is_paid ? 'text-green-600' : 'text-yellow-600'}`}>
+                {accountData?.is_paid ? 'Active' : accountData?.demo_account ? 'Demo Account' : 'Trial'}
               </span>
-            </h3>
-            <p className="text-sm text-gray-600">Save over 20% vs monthly. One payment for the year.</p>
-          </div>
-          <div className="flex items-center justify-between sm:justify-end sm:ml-4">
-            <div className="text-right">
-              <span className="text-lg lg:text-xl font-bold text-gray-800">£1,430/yr</span>
-              <p className="text-xs text-gray-500">£119.16/mo equivalent</p>
             </div>
-            <input
-              type="radio"
-              value="yearly"
-              checked={subscriptionType === 'yearly'}
-              onChange={() => setSubscriptionType('yearly')}
-              className="ml-4 h-4 w-4 text-green-600 focus:ring-green-500"
-            />
+            {!accountData?.is_paid && accountData?.daysLeft !== null && accountData?.daysLeft !== undefined && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Trial ends:</span>
+                <span className="font-medium text-gray-900">{accountData?.daysLeft} days</span>
+              </div>
+            )}
           </div>
-        </label>
+        </div>
+
+        {/* Venues Card */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Building2 className="w-5 h-5 text-purple-600" />
+            </div>
+            <h3 className="font-semibold text-gray-900">Your Venues</h3>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Total venues:</span>
+              <span className="font-medium text-gray-900">{venueCount}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Price per venue:</span>
+              <span className="font-medium text-gray-900">
+                £{PRICE_PER_VENUE_MONTHLY}/mo
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <button
-          onClick={handleCheckout}
-          disabled={loading}
-          className="w-full sm:w-auto bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 disabled:opacity-50 text-sm font-medium"
-        >
-          {loading ? 'Redirecting…' : 'Upgrade and Continue'}
-        </button>
+      {/* Venue List */}
+      {accountData?.venues && accountData.venues.length > 0 && (
+        <div className="mb-8 bg-gray-50 border border-gray-200 rounded-xl p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Venues in your account</h3>
+          <div className="space-y-2">
+            {accountData.venues.map((venue) => (
+              <div key={venue.id} className="flex items-center gap-2 text-sm text-gray-700">
+                <Building2 className="w-4 h-4 text-gray-400" />
+                <span>{venue.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-        <p className="text-xs text-gray-500">
-          Secured checkout powered by Stripe. You can cancel anytime.
+      {/* Pricing Plans */}
+      {!accountData?.is_paid && (
+        <>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Plan</h3>
+          <div className="space-y-4 mb-8">
+            {/* Monthly Plan */}
+            <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border-2 rounded-xl p-5 cursor-pointer transition
+              ${subscriptionType === 'monthly' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-400'}`}>
+              <div className="flex-1 mb-3 sm:mb-0">
+                <h3 className="font-semibold text-gray-800 text-lg">Monthly Plan</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  £{PRICE_PER_VENUE_MONTHLY} per venue per month · Pay as you go · Cancel anytime
+                </p>
+              </div>
+              <div className="flex items-center justify-between sm:justify-end sm:ml-4">
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">Total for {venueCount} venue{venueCount !== 1 ? 's' : ''}</div>
+                  <span className="text-2xl font-bold text-gray-800">£{monthlyTotal.toLocaleString()}</span>
+                  <span className="text-gray-600">/mo</span>
+                </div>
+                <input
+                  type="radio"
+                  value="monthly"
+                  checked={subscriptionType === 'monthly'}
+                  onChange={() => setSubscriptionType('monthly')}
+                  className="ml-4 h-5 w-5 text-blue-600 focus:ring-blue-500"
+                />
+              </div>
+            </label>
+
+            {/* Yearly Plan */}
+            <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border-2 rounded-xl p-5 cursor-pointer transition relative
+              ${subscriptionType === 'yearly' ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-400'}`}>
+              <div className="absolute -top-3 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                SAVE {yearlyDiscount}%
+              </div>
+              <div className="flex-1 mb-3 sm:mb-0">
+                <h3 className="font-semibold text-gray-800 text-lg">Yearly Plan</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  £{PRICE_PER_VENUE_YEARLY} per venue per year · Best value · One payment
+                </p>
+              </div>
+              <div className="flex items-center justify-between sm:justify-end sm:ml-4">
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">Total for {venueCount} venue{venueCount !== 1 ? 's' : ''}</div>
+                  <span className="text-2xl font-bold text-gray-800">£{yearlyTotal.toLocaleString()}</span>
+                  <span className="text-gray-600">/yr</span>
+                  <p className="text-xs text-green-600 font-medium mt-1">
+                    £{yearlyMonthlyEquivalent.toFixed(2)}/mo equivalent
+                  </p>
+                </div>
+                <input
+                  type="radio"
+                  value="yearly"
+                  checked={subscriptionType === 'yearly'}
+                  onChange={() => setSubscriptionType('yearly')}
+                  className="ml-4 h-5 w-5 text-green-600 focus:ring-green-500"
+                />
+              </div>
+            </label>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <button
+              onClick={handleCheckout}
+              disabled={loading}
+              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 font-semibold disabled:cursor-not-allowed"
+            >
+              {loading ? 'Processing...' : `Subscribe Now - £${subscriptionType === 'monthly' ? monthlyTotal.toLocaleString() : yearlyTotal.toLocaleString()}${subscriptionType === 'monthly' ? '/mo' : '/yr'}`}
+            </button>
+
+            <p className="text-sm text-gray-500">
+              Secured checkout powered by Stripe
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* Active Subscription Management */}
+      {accountData?.is_paid && accountData.stripe_customer_id && (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+          <h3 className="font-semibold text-gray-900 mb-3">Subscription Management</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Manage your subscription, update payment methods, view invoices, and more in the Stripe customer portal.
+          </p>
+          <button
+            onClick={handleManageSubscription}
+            disabled={portalLoading}
+            className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {portalLoading ? 'Opening Portal...' : (
+              <>
+                <CreditCard className="w-5 h-5" />
+                Open Billing Portal
+                <ExternalLink className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Pricing Note */}
+      <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <strong>Note:</strong> Pricing is based on the number of venues in your account.
+          {venueCount > 1 ? ` You currently have ${venueCount} venues.` : ' Add more venues as you grow.'}
+          Each venue costs £{PRICE_PER_VENUE_MONTHLY}/month or £{PRICE_PER_VENUE_YEARLY}/year.
         </p>
       </div>
+
+      {/* Stripe Checkout Modal */}
+      <StripeCheckoutModal
+        isOpen={checkoutModalOpen}
+        onClose={handleCloseModal}
+        onSuccess={handlePaymentSuccess}
+        clientSecret={clientSecret}
+        total={subscriptionType === 'monthly' ? monthlyTotal : yearlyTotal}
+        billingPeriod={subscriptionType}
+        venueCount={venueCount}
+      />
     </div>
   );
 };

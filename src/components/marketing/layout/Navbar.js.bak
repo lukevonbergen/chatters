@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, BarChart3, Utensils, Building, ShoppingBag, Calendar, BookOpen, HelpCircle, FileText, GraduationCap, Trophy, Globe, Monitor, Bell, TrendingUp } from 'lucide-react';
 import PrimaryButton from '../common/buttons/PrimaryButton';
-import { getDashboardUrl, isDevSite } from '../../../utils/domainUtils';
+import { getDashboardUrl } from '../../../utils/domainUtils';
 
 const Navbar = ({ overlay = false }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -119,7 +119,7 @@ const Navbar = ({ overlay = false }) => {
             {/* Left: Logo + Desktop Nav */}
             <div className="flex items-center space-x-8">
               <Link to="/" className="flex-shrink-0">
-                <img src={isDevSite() ? "/img/CTS_DEV_LOGO.svg" : "/img/Logo.svg"} alt="Chatters Logo" className="h-8" />
+                <img src="/img/Logo.svg" alt="Chatters Logo" className="h-8" />
               </Link>
 
               <div className="hidden lg:flex lg:items-center lg:space-x-8 relative">

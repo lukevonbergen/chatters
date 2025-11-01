@@ -88,9 +88,15 @@ const ManagersTab = ({
         accountId: userData.account_id
       };
 
+      // Get auth token for API call
+      const { data: { session } } = await supabase.auth.getSession();
+
       const res = await fetch('/api/admin/invite-manager', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify(payload),
       });
 
