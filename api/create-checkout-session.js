@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { email, priceId } = req.body;
+  const { email, priceId, venueCount } = req.body;
 
   try {
     // Validate the email and price ID
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       line_items: [
         {
           price: priceId, // Use the selected price ID
-          quantity: 1,
+          quantity: venueCount || 1, // Use actual venue count, default to 1 if not provided
         },
       ],
       mode: 'subscription',

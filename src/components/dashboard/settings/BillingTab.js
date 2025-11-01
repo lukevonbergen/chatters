@@ -96,7 +96,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail, priceId }),
+        body: JSON.stringify({ email: userEmail, priceId, venueCount }),
       });
 
       const { id } = await response.json();
