@@ -93,7 +93,7 @@ module.exports = async function handler(req, res) {
     console.log('Invitation created successfully:', invitation.id);
 
     // Send invitation email
-    const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://my.getchatters.com'}/accept-invitation?token=${token}`;
+    const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://my.getchatters.com'}/set-password?token=${token}`;
 
     try {
       if (process.env.RESEND_API_KEY) {
