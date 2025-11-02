@@ -4,37 +4,13 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-const makeClient = (storage) =>
-  createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      storage,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
-    }
-  });
-
-// Look at previous choice in localStorage so sessions survive reloads
-const pref =
-  (typeof window !== 'undefined' &&
-    localStorage.getItem('chatters_auth_storage')) || 'local';
-
-const initialStorage = pref === 'session' ? sessionStorage : localStorage;
-
-// Hold the current client instance
-let currentClient = makeClient(initialStorage);
-
-// Export the client
-export const supabase = currentClient;
-
-/**
- * Call this before sign-in to swap auth persistence and return new client.
- * type = 'local'   → stays signed in (localStorage)
- * type = 'session' → logs out when browser closes (sessionStorage)
- */
-export function setAuthStorage(type) {
-  const storage = type === 'session' ? sessionStorage : localStorage;
-  localStorage.setItem('chatters_auth_storage', type);
-  currentClient = makeClient(storage);
-  return currentClient;
-}
+// Always use localStorage for the main client
+// We'll handle session persistence differently
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    storage: localStorage,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});

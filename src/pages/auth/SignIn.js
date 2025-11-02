@@ -61,7 +61,7 @@ const SignInPage = () => {
     setError('');
 
     try {
-      // 🔑 1) Store remember me preference + email first
+      // 🔑 1) Store remember me preference + email
       if (rememberMe) {
         localStorage.setItem('chatters_remember_email', email);
         localStorage.setItem('chatters_remember_me', 'true');
@@ -70,30 +70,31 @@ const SignInPage = () => {
         localStorage.removeItem('chatters_remember_me');
       }
 
-      // 2) Choose auth storage before sign-in and get the new client
-      // - localStorage → stays signed in after browser restart
-      // - sessionStorage → dies when browser closes
-      const authClient = setAuthStorage(rememberMe ? 'local' : 'session');
-
-      // 3) Attempt sign in with the correctly configured client
-      const { error: signInErr } = await authClient.auth.signInWithPassword({
+      // 2) Attempt sign in
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       if (signInErr) throw new Error(signInErr.message);
 
-      // 4) Get user
-      const { data: auth } = await authClient.auth.getUser();
+      // 3) Get user
+      const { data: auth } = await supabase.auth.getUser();
       const user = auth?.user;
       if (!user) throw new Error('No authenticated user returned');
 
-      // 5) Ensure users row exists, then read role
+      // 4) Ensure users row exists, then read role
       const ensured = await ensureUsersRow(user);
       const role = ensured?.role ?? null;
 
-      // 6) Admin fallback by email domain
+      // 5) Admin fallback by email domain
       const isAdminByEmail = (user.email || '').toLowerCase().endsWith('@getchatters.com');
       const isAdmin = role === 'admin' || isAdminByEmail;
+
+      // 6) If remember me is NOT checked, set up a session that expires when browser closes
+      // We do this by storing a flag that App.js will check on load
+      if (!rememberMe) {
+        sessionStorage.setItem('chatters_temp_session', 'true');
+      }
 
       // 7) Route to dashboard/admin
       navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });

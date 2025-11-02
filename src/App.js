@@ -10,6 +10,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import * as Sentry from "@sentry/react";
 import MarketingRoutes from './MarketingRoutes';
 import AppRoutes from './AppRoutes'; // ✅ now controls dashboard vs admin
+import { supabase } from './utils/supabase';
 
 Sentry.init({
   dsn: "https://e4e4170e47a3d8d9bbdacb71d59fb96e@o4509429646622720.ingest.de.sentry.io/4510018410381392",
@@ -33,6 +34,21 @@ function App() {
         window.location.hostname.startsWith('my.') ||
         window.location.hostname.includes('.my.')
       );
+
+      // Handle "Remember Me" - if temp session flag is missing, sign out
+      // This happens when browser is closed/reopened and user didn't check "Remember Me"
+      const hadTempSession = sessionStorage.getItem('chatters_temp_session');
+      const rememberMeEnabled = localStorage.getItem('chatters_remember_me') === 'true';
+
+      // If user is logged in but didn't want to be remembered and browser was closed
+      if (!rememberMeEnabled && !hadTempSession) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            // Sign out silently
+            supabase.auth.signOut();
+          }
+        });
+      }
 
       const hash = window.location.hash;
 
