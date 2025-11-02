@@ -41,7 +41,8 @@ export default async function handler(req, res) {
   console.log('✅ [TripAdvisor] API key found');
 
   try {
-    const url = `https://api.content.tripadvisor.com/api/v1/location/search?key=${TRIPADVISOR_API_KEY}&searchQuery=${encodeURIComponent(query)}&language=en`;
+    // Build URL with category filter for restaurants and UK focus
+    const url = `https://api.content.tripadvisor.com/api/v1/location/search?key=${TRIPADVISOR_API_KEY}&searchQuery=${encodeURIComponent(query)}&category=restaurants&language=en`;
     console.log('📡 [TripAdvisor] Making API request to:', url.replace(TRIPADVISOR_API_KEY, '[REDACTED]'));
 
     const response = await fetch(url, {
@@ -56,7 +57,29 @@ export default async function handler(req, res) {
 
     if (response.ok && data.data) {
       console.log('✅ [TripAdvisor] Search successful, found', data.data.length, 'locations');
-      const suggestions = data.data.map((location, index) => {
+
+      // Filter for UK locations if the search looks like a postcode or UK city
+      let filteredData = data.data;
+      const isPostcode = /^[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}$/i.test(query.trim());
+      const ukKeywords = ['UK', 'United Kingdom', 'England', 'Scotland', 'Wales', 'Northern Ireland'];
+
+      if (isPostcode || ukKeywords.some(keyword => query.includes(keyword))) {
+        console.log('🇬🇧 [TripAdvisor] UK-focused search detected, prioritizing UK results');
+        filteredData = data.data.filter(loc =>
+          loc.address_obj?.country === 'United Kingdom' ||
+          loc.address_obj?.country === 'England' ||
+          loc.address_obj?.country === 'Scotland' ||
+          loc.address_obj?.country === 'Wales'
+        );
+
+        // If no UK results found, fall back to all results
+        if (filteredData.length === 0) {
+          console.log('⚠️ [TripAdvisor] No UK results found, showing all results');
+          filteredData = data.data;
+        }
+      }
+
+      const suggestions = filteredData.map((location, index) => {
         console.log(`🟠 [TripAdvisor] Processing location ${index + 1}:`, {
           location_id: location.location_id,
           name: location.name,

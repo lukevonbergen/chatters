@@ -286,7 +286,7 @@ const IntegrationsTab = () => {
                       type="text"
                       value={tripadvisorSearchQuery}
                       onChange={(e) => handleTripadvisorSearchInput(e.target.value)}
-                      placeholder="Search for your business on TripAdvisor..."
+                      placeholder="e.g., 'The Fox Inn, SW1A 1AA' or 'Restaurant London'"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                     />
 
@@ -309,9 +309,14 @@ const IntegrationsTab = () => {
                                 {result.name}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {result.address?.city && result.address?.country &&
-                                  `${result.address.city}, ${result.address.country}`
-                                }
+                                {result.address && (
+                                  <>
+                                    {result.address.street1 && <span>{result.address.street1}, </span>}
+                                    {result.address.city && <span>{result.address.city}</span>}
+                                    {result.address.postalcode && <span>, {result.address.postalcode}</span>}
+                                    {result.address.country && <span> • {result.address.country}</span>}
+                                  </>
+                                )}
                               </div>
                               {result.rating && (
                                 <div className="text-xs text-gray-600 mt-1">
@@ -326,7 +331,9 @@ const IntegrationsTab = () => {
                       </div>
                     )}
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Start typing to search for your TripAdvisor listing</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    💡 Tip: Include your business name and postcode for best results (UK-focused search)
+                  </p>
                 </div>
               </>
             )}
