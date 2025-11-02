@@ -96,13 +96,16 @@ const StaffManagersPage = () => {
     const staffWithJoins = staffData.map(staff => {
       const foundUser = usersData?.find(u => u.id === staff.user_id);
       const foundVenue = venuesData?.find(v => v.id === staff.venue_id);
-      
+
       return {
         ...staff,
         users: foundUser || null,
         venues: foundVenue || null
       };
     });
+
+    // Filter out staff records where user is null (deleted users)
+    const activeStaffWithJoins = staffWithJoins.filter(staff => staff.users !== null);
 
     const { data: employeesData } = await supabase
       .from('employees')
@@ -119,7 +122,7 @@ const StaffManagersPage = () => {
       `)
       .in('venue_id', venueIds);
 
-    const managersData = staffWithJoins?.filter(staff => staff.role === 'manager') || [];
+    const managersData = activeStaffWithJoins?.filter(staff => staff.role === 'manager') || [];
     const employeesFromTable = employeesData || [];
 
     setManagers(managersData);
@@ -136,10 +139,11 @@ const StaffManagersPage = () => {
         role,
         created_at,
         venues!inner (id, name),
-        users!inner (id, email, role, first_name, last_name)
+        users!inner (id, email, role, first_name, last_name, deleted_at)
       `)
       .eq('venue_id', venueId)
-      .neq('user_id', userId);
+      .neq('user_id', userId)
+      .is('users.deleted_at', null); // Filter out soft-deleted users
 
     const { data: employeesData } = await supabase
       .from('employees')
