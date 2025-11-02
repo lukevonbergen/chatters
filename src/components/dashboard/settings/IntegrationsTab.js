@@ -8,6 +8,8 @@ const IntegrationsTab = () => {
   const { venueId } = useVenue();
   const [venueData, setVenueData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [unlinking, setUnlinking] = useState(false);
+  const [message, setMessage] = useState('');
 
   // Load venue data on mount
   useEffect(() => {
@@ -20,7 +22,7 @@ const IntegrationsTab = () => {
     try {
       const { data: venue, error } = await supabase
         .from('venues')
-        .select('id, name, place_id, tripadvisor_location_id, google_review_link, tripadvisor_link')
+        .select('id, name, place_id, tripadvisor_location_id, google_review_link, tripadvisor_link, tripadvisor_integration_locked')
         .eq('id', venueId)
         .single();
 
@@ -34,6 +36,41 @@ const IntegrationsTab = () => {
     }
   };
 
+  const handleUnlinkTripAdvisor = async () => {
+    if (!confirm('Are you sure you want to unlink TripAdvisor? This will remove the connection and stop tracking ratings.')) {
+      return;
+    }
+
+    setUnlinking(true);
+    setMessage('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const res = await fetch('/api/reviews/tripadvisor/unlink-venue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ venueId }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to unlink TripAdvisor');
+      }
+
+      setMessage('TripAdvisor unlinked successfully');
+      await loadVenueData();
+    } catch (error) {
+      setMessage(`Error: ${error.message}`);
+    } finally {
+      setUnlinking(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="w-full">
@@ -44,11 +81,22 @@ const IntegrationsTab = () => {
     );
   }
 
-  const googleConnected = venueData?.place_id ? true : false;
-  const tripadvisorConnected = venueData?.tripadvisor_location_id ? true : false;
+  const googleConnected = venueData?.place_id && venueData.place_id.trim() !== '';
+  const tripadvisorConnected = venueData?.tripadvisor_location_id && venueData.tripadvisor_location_id.trim() !== '';
 
   return (
     <div className="w-full">
+      {/* Message Display */}
+      {message && (
+        <div className={`mb-6 p-4 rounded-lg ${
+          message.includes('Error') || message.includes('Failed')
+            ? 'bg-red-50 border border-red-200 text-red-700'
+            : 'bg-green-50 border border-green-200 text-green-700'
+        }`}>
+          {message}
+        </div>
+      )}
+
       {/* Two Column Integration Status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
@@ -88,7 +136,25 @@ const IntegrationsTab = () => {
             {tripadvisorConnected ? (
               <>
                 <p className="mb-2">✅ TripAdvisor listing is connected</p>
-                <p>Your TripAdvisor reviews are being tracked automatically.</p>
+                <p className="mb-4">Your TripAdvisor reviews are being tracked automatically.</p>
+
+                {venueData?.tripadvisor_integration_locked ? (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-500">
+                      This integration is locked and cannot be unlinked. Contact support if you need to change this.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={handleUnlinkTripAdvisor}
+                      disabled={unlinking}
+                      className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {unlinking ? 'Unlinking...' : 'Unlink TripAdvisor'}
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               <>
