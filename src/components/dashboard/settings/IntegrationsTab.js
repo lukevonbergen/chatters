@@ -332,7 +332,7 @@ const IntegrationsTab = () => {
                     )}
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    💡 Tip: Include your business name and postcode for best results (UK-focused search)
+                    💡 Tip: Include your business name and postcode for best results (UK businesses only)
                   </p>
                 </div>
               </>

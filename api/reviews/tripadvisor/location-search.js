@@ -41,8 +41,8 @@ export default async function handler(req, res) {
   console.log('✅ [TripAdvisor] API key found');
 
   try {
-    // Build URL with category filter for restaurants and UK focus
-    const url = `https://api.content.tripadvisor.com/api/v1/location/search?key=${TRIPADVISOR_API_KEY}&searchQuery=${encodeURIComponent(query)}&category=restaurants&language=en`;
+    // Build URL without category filter to show all UK businesses
+    const url = `https://api.content.tripadvisor.com/api/v1/location/search?key=${TRIPADVISOR_API_KEY}&searchQuery=${encodeURIComponent(query)}&language=en`;
     console.log('📡 [TripAdvisor] Making API request to:', url.replace(TRIPADVISOR_API_KEY, '[REDACTED]'));
 
     const response = await fetch(url, {
@@ -58,25 +58,21 @@ export default async function handler(req, res) {
     if (response.ok && data.data) {
       console.log('✅ [TripAdvisor] Search successful, found', data.data.length, 'locations');
 
-      // Filter for UK locations if the search looks like a postcode or UK city
-      let filteredData = data.data;
-      const isPostcode = /^[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}$/i.test(query.trim());
-      const ukKeywords = ['UK', 'United Kingdom', 'England', 'Scotland', 'Wales', 'Northern Ireland'];
+      // Filter to show ONLY UK locations
+      console.log('🇬🇧 [TripAdvisor] Filtering for UK businesses only');
+      const filteredData = data.data.filter(loc =>
+        loc.address_obj?.country === 'United Kingdom' ||
+        loc.address_obj?.country === 'England' ||
+        loc.address_obj?.country === 'Scotland' ||
+        loc.address_obj?.country === 'Wales' ||
+        loc.address_obj?.country === 'Northern Ireland'
+      );
 
-      if (isPostcode || ukKeywords.some(keyword => query.includes(keyword))) {
-        console.log('🇬🇧 [TripAdvisor] UK-focused search detected, prioritizing UK results');
-        filteredData = data.data.filter(loc =>
-          loc.address_obj?.country === 'United Kingdom' ||
-          loc.address_obj?.country === 'England' ||
-          loc.address_obj?.country === 'Scotland' ||
-          loc.address_obj?.country === 'Wales'
-        );
+      console.log(`✅ [TripAdvisor] Found ${filteredData.length} UK businesses out of ${data.data.length} total results`);
 
-        // If no UK results found, fall back to all results
-        if (filteredData.length === 0) {
-          console.log('⚠️ [TripAdvisor] No UK results found, showing all results');
-          filteredData = data.data;
-        }
+      if (filteredData.length === 0) {
+        console.log('⚠️ [TripAdvisor] No UK results found');
+        return res.status(200).json({ suggestions: [] });
       }
 
       const suggestions = filteredData.map((location, index) => {
