@@ -72,20 +72,19 @@ const StaffEmployeesPage = () => {
       return;
     }
 
-    const userIds = [...new Set(staffData.map(s => s.user_id))];
-    
-    const userPromises = userIds.map(async (userId) => {
-      const { data } = await supabase
-        .from('users')
-        .select('id, email, role, first_name, last_name, password_hash, created_at')
-        .eq('id', userId)
-        .single();
-      
-      return data;
-    });
-    
-    const userResults = await Promise.all(userPromises);
-    const usersData = userResults.filter(user => user !== null);
+    const userIds = [...new Set(staffData.map(s => s.user_id))].filter(id => id !== null && id !== undefined);
+
+    if (userIds.length === 0) {
+      setManagers([]);
+      setEmployees([]);
+      return;
+    }
+
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, email, role, first_name, last_name, password_hash, created_at')
+      .in('id', userIds)
+      .is('deleted_at', null); // Only fetch non-deleted users
 
     const { data: venuesData } = await supabase
       .from('venues')
@@ -95,13 +94,16 @@ const StaffEmployeesPage = () => {
     const staffWithJoins = staffData.map(staff => {
       const foundUser = usersData?.find(u => u.id === staff.user_id);
       const foundVenue = venuesData?.find(v => v.id === staff.venue_id);
-      
+
       return {
         ...staff,
         users: foundUser || null,
         venues: foundVenue || null
       };
     });
+
+    // Filter out staff records where user is null (deleted users)
+    const activeStaffWithJoins = staffWithJoins.filter(staff => staff.users !== null);
 
     const { data: employeesData } = await supabase
       .from('employees')
@@ -119,7 +121,7 @@ const StaffEmployeesPage = () => {
       `)
       .in('venue_id', venueIds);
 
-    const managersData = staffWithJoins?.filter(staff => staff.role === 'manager') || [];
+    const managersData = activeStaffWithJoins?.filter(staff => staff.role === 'manager') || [];
     const employeesFromTable = employeesData || [];
 
     setManagers(managersData);
@@ -136,10 +138,11 @@ const StaffEmployeesPage = () => {
         role,
         created_at,
         venues!inner (id, name),
-        users!inner (id, email, role, first_name, last_name)
+        users!inner (id, email, role, first_name, last_name, deleted_at)
       `)
       .eq('venue_id', venueId)
-      .neq('user_id', userId);
+      .neq('user_id', userId)
+      .is('users.deleted_at', null); // Filter out soft-deleted users
 
     const { data: employeesData } = await supabase
       .from('employees')
