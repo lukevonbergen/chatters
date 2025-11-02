@@ -6,7 +6,12 @@ const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 const makeClient = (storage) =>
   createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: true, storage }
+    auth: {
+      persistSession: true,
+      storage,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
   });
 
 // Look at previous choice in localStorage so sessions survive reloads
@@ -16,16 +21,20 @@ const pref =
 
 const initialStorage = pref === 'session' ? sessionStorage : localStorage;
 
-// Export a *mutable* client — SignIn can swap this out
-export let supabase = makeClient(initialStorage);
+// Hold the current client instance
+let currentClient = makeClient(initialStorage);
+
+// Export the client
+export const supabase = currentClient;
 
 /**
- * Call this before sign-in to swap auth persistence.
+ * Call this before sign-in to swap auth persistence and return new client.
  * type = 'local'   → stays signed in (localStorage)
  * type = 'session' → logs out when browser closes (sessionStorage)
  */
 export function setAuthStorage(type) {
   const storage = type === 'session' ? sessionStorage : localStorage;
   localStorage.setItem('chatters_auth_storage', type);
-  supabase = makeClient(storage);
+  currentClient = makeClient(storage);
+  return currentClient;
 }

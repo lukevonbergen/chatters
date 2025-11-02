@@ -61,19 +61,7 @@ const SignInPage = () => {
     setError('');
 
     try {
-      // 🔑 1) Choose auth storage before sign-in
-      // - localStorage → stays signed in after browser restart
-      // - sessionStorage → dies when browser closes
-      setAuthStorage(rememberMe ? 'local' : 'session');
-
-      // 2) Attempt sign in
-      const { error: signInErr } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (signInErr) throw new Error(signInErr.message);
-
-      // 3) Store remember me preference + email (UI nicety only)
+      // 🔑 1) Store remember me preference + email first
       if (rememberMe) {
         localStorage.setItem('chatters_remember_email', email);
         localStorage.setItem('chatters_remember_me', 'true');
@@ -82,8 +70,20 @@ const SignInPage = () => {
         localStorage.removeItem('chatters_remember_me');
       }
 
+      // 2) Choose auth storage before sign-in and get the new client
+      // - localStorage → stays signed in after browser restart
+      // - sessionStorage → dies when browser closes
+      const authClient = setAuthStorage(rememberMe ? 'local' : 'session');
+
+      // 3) Attempt sign in with the correctly configured client
+      const { error: signInErr } = await authClient.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (signInErr) throw new Error(signInErr.message);
+
       // 4) Get user
-      const { data: auth } = await supabase.auth.getUser();
+      const { data: auth } = await authClient.auth.getUser();
       const user = auth?.user;
       if (!user) throw new Error('No authenticated user returned');
 
