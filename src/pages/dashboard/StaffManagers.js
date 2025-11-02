@@ -72,21 +72,19 @@ const StaffManagersPage = () => {
       return;
     }
 
-    const userIds = [...new Set(staffData.map(s => s.user_id))];
-    
-    const userPromises = userIds.map(async (userId) => {
-      const { data } = await supabase
-        .from('users')
-        .select('id, email, role, first_name, last_name, password_hash, created_at')
-        .eq('id', userId)
-        .is('deleted_at', null)  // Only fetch non-deleted users
-        .single();
+    const userIds = [...new Set(staffData.map(s => s.user_id))].filter(id => id !== null && id !== undefined);
 
-      return data;
-    });
-    
-    const userResults = await Promise.all(userPromises);
-    const usersData = userResults.filter(user => user !== null);
+    if (userIds.length === 0) {
+      setManagers([]);
+      setEmployees([]);
+      return;
+    }
+
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, email, role, first_name, last_name, password_hash, created_at')
+      .in('id', userIds)
+      .is('deleted_at', null); // Only fetch non-deleted users
 
     const { data: venuesData } = await supabase
       .from('venues')
