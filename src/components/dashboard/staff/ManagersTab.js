@@ -111,6 +111,7 @@ const ManagersTab = ({
       setNewManager({ firstName: '', lastName: '', email: '', venueIds: [] });
       setShowAddForm(false);
       await fetchStaffData();
+      await fetchPendingInvitations();
 
     } catch (error) {
       setMessage('Failed to invite manager: ' + error.message);
@@ -373,32 +374,71 @@ const ManagersTab = ({
 
   // Check if manager has confirmed their email/set password
   const hasManagerConfirmedEmail = (manager) => {
-    // Check if user has a password hash in the users table - this means they've set their password
-    const hasPasswordHash = manager.users?.password_hash;
-    
-    // User is active if they have a password hash (meaning they've set their password)
-    return !!hasPasswordHash;
+    // If manager has staff records, they've been fully set up
+    // If they don't, they're still in pending invitation status
+    return !!manager.user_id;
+  };
+
+  // Check if there's a pending invitation for an email
+  const [pendingInvitations, setPendingInvitations] = useState([]);
+
+  // Fetch pending invitations
+  React.useEffect(() => {
+    fetchPendingInvitations();
+  }, []);
+
+  const fetchPendingInvitations = async () => {
+    try {
+      const { data: authUser } = await supabase.auth.getUser();
+      const { data: userData } = await supabase
+        .from('users')
+        .select('account_id')
+        .eq('id', authUser.user.id)
+        .single();
+
+      const { data: invitations } = await supabase
+        .from('manager_invitations')
+        .select('*')
+        .eq('account_id', userData.account_id)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString());
+
+      setPendingInvitations(invitations || []);
+    } catch (error) {
+      console.error('Error fetching pending invitations:', error);
+    }
+  };
+
+  // Check if manager has a pending invitation
+  const hasPendingInvitation = (email) => {
+    return pendingInvitations.some(inv => inv.email === email);
   };
 
   // Resend invitation email
-  const handleResendInvitation = async (manager) => {
-    setResendingEmail(manager.user_id);
-    
+  const handleResendInvitation = async (email) => {
+    setResendingEmail(email);
+
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+
       const res = await fetch('/api/admin/resend-invitation', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: manager.users?.email }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ email }),
       });
 
       const result = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(result.error || 'Failed to resend invitation');
       }
 
-      setMessage(`Invitation resent to ${manager.users?.email} successfully!`);
-      
+      setMessage(`Invitation resent to ${email} successfully!`);
+      await fetchPendingInvitations();
+
     } catch (error) {
       setMessage('Failed to resend invitation: ' + error.message);
     } finally {
@@ -580,24 +620,24 @@ const ManagersTab = ({
                         {/* Actions */}
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="flex items-center justify-center space-x-2">
-                            <button 
+                            <button
                               onClick={() => handleEditManagerDetails(manager)}
                               className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                             >
                               Edit
                             </button>
-                            
-                            {!isActive && (
-                              <button 
-                                onClick={() => handleResendInvitation(manager)}
-                                disabled={resendingEmail === manager.user_id}
+
+                            {hasPendingInvitation(manager.users?.email) && (
+                              <button
+                                onClick={() => handleResendInvitation(manager.users?.email)}
+                                disabled={resendingEmail === manager.users?.email}
                                 className="text-green-600 hover:text-green-800 text-sm font-medium disabled:opacity-50"
                               >
-                                {resendingEmail === manager.user_id ? 'Sending...' : 'Resend'}
+                                {resendingEmail === manager.users?.email ? 'Sending...' : 'Resend'}
                               </button>
                             )}
-                            
-                            <button 
+
+                            <button
                               onClick={() => setManagerToDelete(manager)}
                               className="text-red-600 hover:text-red-800 text-sm font-medium"
                             >
