@@ -123,26 +123,26 @@ const ChartCard = ({
     <ModernCard className={className} padding="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {title}
+          </h3>
+          {subtitle && (
+            <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+          )}
+        </div>
         <div className="flex items-center gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              {title}
-            </h3>
-            {subtitle && (
-              <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-            )}
-          </div>
           {titleRight && (
             <div className="flex items-center">
               {titleRight}
             </div>
           )}
+          {actions && (
+            <div className="flex items-center gap-2">
+              {actions}
+            </div>
+          )}
         </div>
-        {actions && (
-          <div className="flex items-center gap-2">
-            {actions}
-          </div>
-        )}
       </div>
 
       {/* Content */}
