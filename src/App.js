@@ -35,20 +35,25 @@ function App() {
         window.location.hostname.includes('.my.')
       );
 
-      // Handle "Remember Me" - if temp session flag is missing, sign out
-      // This happens when browser is closed/reopened and user didn't check "Remember Me"
-      const hadTempSession = sessionStorage.getItem('chatters_temp_session');
-      const rememberMeEnabled = localStorage.getItem('chatters_remember_me') === 'true';
+      // Handle "Remember Me" - check if we need to sign out on browser reopen
+      // This only applies when user has an active session but browser was closed
+      const checkRememberMe = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
 
-      // If user is logged in but didn't want to be remembered and browser was closed
-      if (!rememberMeEnabled && !hadTempSession) {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session) {
-            // Sign out silently
-            supabase.auth.signOut();
-          }
-        });
-      }
+        // Only proceed if there's an active session
+        if (!session) return;
+
+        const hadTempSession = sessionStorage.getItem('chatters_temp_session');
+        const rememberMeEnabled = localStorage.getItem('chatters_remember_me') === 'true';
+
+        // If user didn't want to be remembered and temp session flag is missing
+        // (meaning browser was closed/reopened), sign them out
+        if (!rememberMeEnabled && !hadTempSession) {
+          await supabase.auth.signOut();
+        }
+      };
+
+      checkRememberMe();
 
       const hash = window.location.hash;
 
