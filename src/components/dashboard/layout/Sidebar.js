@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
-import { supabase, setAuthStorage } from '../../../utils/supabase';
+import { supabase } from '../../../utils/supabase';
 import { isDevSite } from '../../../utils/domainUtils';
 import {
   BarChart3,
@@ -232,8 +232,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     await supabase.auth.signOut();
     localStorage.removeItem('chatters_remember_email');
     localStorage.removeItem('chatters_remember_me');
-    localStorage.removeItem('chatters_auth_storage');
-    setAuthStorage('local');
+    sessionStorage.removeItem('chatters_temp_session');
     navigate('/signin');
   };
 

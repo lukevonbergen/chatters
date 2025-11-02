@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../context/VenueContext';
 import { useLoading } from '../../context/LoadingContext';
 import { useEffect, useState } from 'react';
-import { supabase, setAuthStorage } from '../../utils/supabase';
+import { supabase } from '../../utils/supabase';
 import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown, FiExternalLink } from 'react-icons/fi';
 import { Building2, Check } from 'lucide-react';
 
@@ -350,10 +350,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                     // Clear custom remember-me flags
                   localStorage.removeItem('chatters_remember_email');
                   localStorage.removeItem('chatters_remember_me');
-                  localStorage.removeItem('chatters_auth_storage');
-
-                  // Reset client to persistent mode as default
-                  setAuthStorage('local');
+                  sessionStorage.removeItem('chatters_temp_session');
                   navigate('/signin');
                 }}
               >
@@ -523,10 +520,7 @@ const UpdatedDashboardFrame = ({ children }) => {
                       // Clear custom remember-me flags
                     localStorage.removeItem('chatters_remember_email');
                     localStorage.removeItem('chatters_remember_me');
-                    localStorage.removeItem('chatters_auth_storage');
-
-                    // Reset client to persistent mode as default
-                    setAuthStorage('local');
+                    sessionStorage.removeItem('chatters_temp_session');
                     navigate('/signin');
                     setMobileMenuOpen(false);
                   }}

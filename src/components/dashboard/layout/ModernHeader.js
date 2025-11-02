@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
-import { supabase, setAuthStorage } from '../../../utils/supabase';
+import { supabase } from '../../../utils/supabase';
 import {
   ChevronDown,
   Settings,
