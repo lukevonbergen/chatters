@@ -260,44 +260,34 @@ const ManagersTab = ({
     }
   };
 
-  // Delete manager entirely
+  // Delete manager (soft delete - can be recovered within 14 days)
   const handleDeleteManager = async () => {
     if (!managerToDelete) return;
-    
+
     setDeleteFormLoading(true);
-    
+
     try {
-      // First, delete all staff records for this manager
-      const { error: staffDeleteError } = await supabase
-        .from('staff')
-        .delete()
-        .eq('user_id', managerToDelete.user_id);
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (staffDeleteError) {
-        throw new Error('Failed to remove manager assignments: ' + staffDeleteError.message);
+      const res = await fetch('/api/admin/delete-manager', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ managerId: managerToDelete.user_id }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to delete manager');
       }
 
-      // Then delete the user record
-      const { error: userDeleteError } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', managerToDelete.user_id);
-
-      if (userDeleteError) {
-        throw new Error('Failed to delete manager user: ' + userDeleteError.message);
-      }
-
-      // Try to delete from auth (this might fail if user was created differently, but that's okay)
-      try {
-        const { error: authDeleteError } = await supabase.auth.admin.deleteUser(managerToDelete.user_id);
-        // We don't throw on auth delete errors as the user record is already gone
-      } catch (authError) {
-        // Silently handle auth deletion errors
-      }
-
-      setMessage('Manager deleted successfully!');
+      setMessage('Manager deleted successfully. They can be recovered within 14 days.');
       setManagerToDelete(null);
       await fetchStaffData();
+      await fetchPendingInvitations();
 
     } catch (error) {
       setMessage('Failed to delete manager: ' + error.message);

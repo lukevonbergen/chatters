@@ -79,8 +79,9 @@ const StaffManagersPage = () => {
         .from('users')
         .select('id, email, role, first_name, last_name, password_hash, created_at')
         .eq('id', userId)
+        .is('deleted_at', null)  // Only fetch non-deleted users
         .single();
-      
+
       return data;
     });
     
