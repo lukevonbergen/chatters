@@ -37,7 +37,7 @@ const IntegrationsTab = () => {
   };
 
   const handleUnlinkTripAdvisor = async () => {
-    if (!confirm('Are you sure you want to unlink TripAdvisor? This will remove the connection and stop tracking ratings.')) {
+    if (!window.confirm('Are you sure you want to unlink TripAdvisor? This will remove the connection and stop tracking ratings.')) {
       return;
     }
 
