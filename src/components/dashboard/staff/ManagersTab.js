@@ -714,21 +714,6 @@ const ManagersTab = ({
         )}
       </div>
 
-      {/* Summary card */}
-      <div className="mt-6 lg:mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 lg:p-6">
-        <h3 className="text-base lg:text-lg font-medium text-blue-900 mb-3">Manager Summary</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div className="flex justify-between sm:flex-col sm:justify-start">
-            <span className="text-blue-700">Total Managers:</span>
-            <span className="font-medium text-blue-900 sm:mt-1">{uniqueManagers.length}</span>
-          </div>
-          <div className="flex justify-between sm:flex-col sm:justify-start">
-            <span className="text-blue-700">Total Venues:</span>
-            <span className="font-medium text-blue-900 sm:mt-1">{allVenues.length}</span>
-          </div>
-        </div>
-      </div>
-
       {/* Deleted Managers Section */}
       {deletedManagers.length > 0 && (
         <div className="mt-6 lg:mt-8">

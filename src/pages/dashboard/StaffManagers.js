@@ -218,26 +218,27 @@ const StaffManagersPage = () => {
   return (
     <div className="space-y-6">
       <ChartCard
-        title="Manager Management"
+        title="Managers"
         subtitle="Manage manager accounts and venue access permissions"
+        titleRight={
+          message && (
+            <span className={`text-sm font-medium ${
+              message.includes('success') || message.includes('recovered')
+                ? 'text-green-600'
+                : 'text-red-600'
+            }`}>
+              {message}
+            </span>
+          )
+        }
       >
         {loading && (
           <div className="flex items-center justify-center py-12">
             <span className="text-gray-500 text-sm lg:text-base">Loading staff data...</span>
           </div>
         )}
-        
-        {!loading && <ManagersTab {...tabProps} />}
 
-        {message && (
-          <div className={`mt-4 p-3 rounded-md text-sm ${
-            message.includes('success')
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}>
-            {message}
-          </div>
-        )}
+        {!loading && <ManagersTab {...tabProps} />}
       </ChartCard>
     </div>
   );
