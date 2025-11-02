@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useVenue } from '../../../context/VenueContext';
 import { supabase } from '../../../utils/supabase';
 import UnifiedReviewsCard from './UnifiedReviewsCard';
@@ -10,6 +10,12 @@ const IntegrationsTab = () => {
   const [loading, setLoading] = useState(true);
   const [unlinking, setUnlinking] = useState(false);
   const [message, setMessage] = useState('');
+  const [tripadvisorSearchQuery, setTripadvisorSearchQuery] = useState('');
+  const [tripadvisorResults, setTripadvisorResults] = useState([]);
+  const [isSearchingTripadvisor, setIsSearchingTripadvisor] = useState(false);
+  const [showTripadvisorDropdown, setShowTripadvisorDropdown] = useState(false);
+  const tripadvisorSearchTimeoutRef = useRef(null);
+  const tripadvisorDropdownRef = useRef(null);
 
   // Load venue data on mount
   useEffect(() => {
@@ -17,6 +23,18 @@ const IntegrationsTab = () => {
       loadVenueData();
     }
   }, [venueId]);
+
+  // Handle clicks outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (tripadvisorDropdownRef.current && !tripadvisorDropdownRef.current.contains(event.target)) {
+        setShowTripadvisorDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const loadVenueData = async () => {
     try {
@@ -68,6 +86,101 @@ const IntegrationsTab = () => {
       setMessage(`Error: ${error.message}`);
     } finally {
       setUnlinking(false);
+    }
+  };
+
+  const handleTripadvisorSearchInput = (value) => {
+    setTripadvisorSearchQuery(value);
+    setShowTripadvisorDropdown(value.length > 2);
+
+    if (tripadvisorSearchTimeoutRef.current) {
+      clearTimeout(tripadvisorSearchTimeoutRef.current);
+    }
+
+    if (value.length > 2) {
+      setIsSearchingTripadvisor(true);
+      tripadvisorSearchTimeoutRef.current = setTimeout(() => {
+        performTripadvisorSearch(value);
+      }, 300);
+    } else {
+      setTripadvisorResults([]);
+      setIsSearchingTripadvisor(false);
+    }
+  };
+
+  const performTripadvisorSearch = async (query) => {
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) {
+        console.error('No authentication token');
+        return;
+      }
+
+      const url = `/api/reviews?platform=tripadvisor&action=location-search&query=${encodeURIComponent(query)}`;
+
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTripadvisorResults(data.suggestions || []);
+      } else {
+        console.error('TripAdvisor search failed:', response.status);
+        setTripadvisorResults([]);
+      }
+    } catch (error) {
+      console.error('TripAdvisor search error:', error);
+      setTripadvisorResults([]);
+    } finally {
+      setIsSearchingTripadvisor(false);
+    }
+  };
+
+  const selectTripadvisorVenue = async (venue) => {
+    if (venueData?.tripadvisor_integration_locked) {
+      setMessage('Error: TripAdvisor listing is locked and cannot be changed');
+      return;
+    }
+
+    if (venueData?.tripadvisor_location_id) {
+      setMessage('Error: TripAdvisor listing is already connected');
+      return;
+    }
+
+    setShowTripadvisorDropdown(false);
+    setTripadvisorSearchQuery(venue.name);
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`/api/reviews?platform=tripadvisor&action=update-venue&venueId=${venueId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          location_id: venue.location_id,
+          venue_data: venue,
+          auto_populate: false
+        })
+      });
+
+      if (response.ok) {
+        setMessage('TripAdvisor listing connected successfully!');
+        await loadVenueData();
+      } else {
+        const errorData = await response.json();
+        setMessage(`Error: ${errorData.error || 'Failed to connect TripAdvisor listing'}`);
+      }
+    } catch (error) {
+      setMessage(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -168,11 +281,51 @@ const IntegrationsTab = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Search for your business on TripAdvisor
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Search for your business on TripAdvisor..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
-                  />
+                  <div className="relative" ref={tripadvisorDropdownRef}>
+                    <input
+                      type="text"
+                      value={tripadvisorSearchQuery}
+                      onChange={(e) => handleTripadvisorSearchInput(e.target.value)}
+                      placeholder="Search for your business on TripAdvisor..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+                    />
+
+                    {/* TripAdvisor Search Dropdown */}
+                    {showTripadvisorDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {isSearchingTripadvisor ? (
+                          <div className="px-3 py-2 text-sm text-gray-500">Searching TripAdvisor...</div>
+                        ) : tripadvisorResults.length > 0 ? (
+                          tripadvisorResults.map((result, index) => (
+                            <button
+                              key={`tripadvisor-${index}`}
+                              onClick={() => selectTripadvisorVenue(result)}
+                              className="w-full px-3 py-2 text-left hover:bg-green-50 border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="font-medium text-sm text-gray-900 flex items-center">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mr-2">
+                                  TripAdvisor
+                                </span>
+                                {result.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {result.address?.city && result.address?.country &&
+                                  `${result.address.city}, ${result.address.country}`
+                                }
+                              </div>
+                              {result.rating && (
+                                <div className="text-xs text-gray-600 mt-1">
+                                  ⭐ {result.rating} ({result.num_reviews} reviews)
+                                </div>
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500">No results found</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <p className="mt-1 text-xs text-gray-500">Start typing to search for your TripAdvisor listing</p>
                 </div>
               </>
