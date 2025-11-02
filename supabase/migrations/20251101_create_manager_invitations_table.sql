@@ -25,6 +25,13 @@ CREATE INDEX IF NOT EXISTS idx_manager_invitations_expires_at ON manager_invitat
 -- Add RLS policies
 ALTER TABLE manager_invitations ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Master users can view their account invitations" ON manager_invitations;
+DROP POLICY IF EXISTS "Master users can create invitations" ON manager_invitations;
+DROP POLICY IF EXISTS "Master users can update their account invitations" ON manager_invitations;
+DROP POLICY IF EXISTS "Master users can delete their account invitations" ON manager_invitations;
+DROP POLICY IF EXISTS "Admin users have full access to invitations" ON manager_invitations;
+
 -- Master users can view invitations for their account
 CREATE POLICY "Master users can view their account invitations"
     ON manager_invitations FOR SELECT

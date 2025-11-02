@@ -106,43 +106,22 @@ export default async function handler(req, res) {
     });
 
     if (tripAdvisorData.rating) {
-      console.log('💾 [TripAdvisor] Storing initial rating in historical_ratings table');
-      // Historical ratings
-      const histResult = await supabaseAdmin
-        .from('historical_ratings')
+      console.log('💾 [TripAdvisor] Storing initial rating in venue_tripadvisor_ratings table');
+      // Store initial rating in venue_tripadvisor_ratings table
+      const result = await supabaseAdmin
+        .from('venue_tripadvisor_ratings')
         .insert({
           venue_id: venueId,
-          source: 'tripadvisor',
           rating: tripAdvisorData.rating,
           ratings_count: tripAdvisorData.num_reviews,
           is_initial: true,
           recorded_at: new Date().toISOString()
         });
 
-      if (histResult.error) {
-        console.error('⚠️ [TripAdvisor] Failed to store historical rating:', histResult.error);
+      if (result.error) {
+        console.error('⚠️ [TripAdvisor] Failed to store initial rating:', result.error);
       } else {
-        console.log('✅ [TripAdvisor] Historical rating stored successfully');
-      }
-
-      console.log('💾 [TripAdvisor] Caching rating in external_ratings table');
-      // Cache
-      const cacheResult = await supabaseAdmin
-        .from('external_ratings')
-        .upsert({
-          venue_id: venueId,
-          source: 'tripadvisor',
-          rating: tripAdvisorData.rating,
-          ratings_count: tripAdvisorData.num_reviews,
-          fetched_at: new Date().toISOString()
-        }, {
-          onConflict: 'venue_id,source'
-        });
-
-      if (cacheResult.error) {
-        console.error('⚠️ [TripAdvisor] Failed to cache rating:', cacheResult.error);
-      } else {
-        console.log('✅ [TripAdvisor] Rating cached successfully');
+        console.log(`✅ Stored initial TripAdvisor rating for venue ${venueId}: ${tripAdvisorData.rating} ⭐`);
       }
     } else {
       console.log('⚠️ [TripAdvisor] No rating found in initial data, skipping rating storage');
