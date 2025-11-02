@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { supabase, setAuthStorage } from '../../utils/supabase';
+import { supabase } from '../../utils/supabase';
 import { getMarketingUrl } from '../../utils/domainUtils';
 
 // Ensures there's a row in public.users so role checks don't fail on first login.
