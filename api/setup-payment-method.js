@@ -75,7 +75,7 @@ module.exports = async (req, res) => {
     console.log('Creating SetupIntent for customer:', customerId);
     const setupIntent = await stripe.setupIntents.create({
       customer: customerId,
-      payment_method_types: ['card', 'bacs_debit'],
+      payment_method_types: ['card'], // Only card for now (bacs_debit requires additional Stripe setup)
       metadata: {
         chatters_account_id: accountId
       }
