@@ -179,12 +179,14 @@ const METRIC_CONFIG = {
     title: 'Best Staff Member',
     icon: Award,
     fetchData: async (venueIds, dateRange) => {
+      // Fetch resolved feedback sessions (using resolved_by like the staff leaderboard)
       const { data, error } = await supabase
         .from('feedback')
-        .select('venue_id, session_id, actioned_by, is_actioned, dismissed')
+        .select('venue_id, session_id, resolved_by')
         .in('venue_id', venueIds)
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
+        .not('resolved_by', 'is', null)
+        .gte('resolved_at', dateRange.from.toISOString())
+        .lte('resolved_at', dateRange.to.toISOString());
 
       if (error) {
         console.error('Error fetching staff feedback:', error);
@@ -195,60 +197,42 @@ const METRIC_CONFIG = {
         }));
       }
 
-      // Group feedback by venue and session
-      const venueSessions = {};
-      venueIds.forEach(id => venueSessions[id] = {});
-
-      (data || []).forEach(item => {
-        if (!venueSessions[item.venue_id][item.session_id]) {
-          venueSessions[item.venue_id][item.session_id] = [];
-        }
-        venueSessions[item.venue_id][item.session_id].push(item);
-      });
-
-      // Find which staff member resolved each session
+      // Group by venue and count sessions per staff member
       const venueStaffSessions = {};
       venueIds.forEach(id => venueStaffSessions[id] = {});
 
-      Object.entries(venueSessions).forEach(([venueId, sessions]) => {
-        Object.entries(sessions).forEach(([sessionId, items]) => {
-          // Check if entire session is resolved
-          const isResolved = items.every(item => item.is_actioned === true || item.dismissed === true);
-          if (!isResolved) return;
-
-          // Find the staff member who actioned items in this session
-          const staffMember = items.find(item => item.actioned_by)?.actioned_by;
-          if (staffMember) {
-            if (!venueStaffSessions[venueId][staffMember]) {
-              venueStaffSessions[venueId][staffMember] = new Set();
-            }
-            venueStaffSessions[venueId][staffMember].add(sessionId);
+      (data || []).forEach(item => {
+        if (item.session_id && item.resolved_by) {
+          if (!venueStaffSessions[item.venue_id][item.resolved_by]) {
+            venueStaffSessions[item.venue_id][item.resolved_by] = new Set();
           }
-        });
+          venueStaffSessions[item.venue_id][item.resolved_by].add(item.session_id);
+        }
       });
 
-      // Get unique staff IDs to fetch names
+      // Fetch employee names (staff are in employees table)
       const staffIds = new Set();
       Object.values(venueStaffSessions).forEach(venueStaff => {
         Object.keys(venueStaff).forEach(staffId => staffIds.add(staffId));
       });
 
-      // Fetch staff names
-      const { data: usersData } = await supabase
-        .from('users')
+      const { data: employeeData } = await supabase
+        .from('employees')
         .select('id, first_name, last_name')
         .in('id', [...staffIds]);
 
-      const userMap = {};
-      (usersData || []).forEach(user => {
-        userMap[user.id] = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown';
+      const employeeMap = {};
+      (employeeData || []).forEach(employee => {
+        employeeMap[employee.id] = `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || 'Unknown';
       });
 
-      return Object.entries(venueStaffSessions).map(([venueId, staff]) => {
+      // Calculate results for each venue
+      return venueIds.map(venueId => {
+        const staff = venueStaffSessions[venueId];
         const staffArray = Object.entries(staff).map(([staffId, sessions]) => ({
           staffId,
           count: sessions.size,
-          name: userMap[staffId] || 'Unknown'
+          name: employeeMap[staffId] || 'Unknown'
         }));
 
         if (staffArray.length === 0) {
