@@ -10,11 +10,13 @@ import ActionCompletionRateTile from '../../components/dashboard/reports/ActionC
 import GoogleRatingKPITile from '../../components/dashboard/reports/GoogleRatingKPITile';
 import TripAdvisorRatingKPITile from '../../components/dashboard/reports/TripAdvisorRatingKPITile';
 import RecentSessionsTile from '../../components/dashboard/reports/RecentSessionsTile';
+import QuickInsightsTile from '../../components/dashboard/reports/QuickInsightsTile';
+import PeakHoursTile from '../../components/dashboard/reports/PeakHoursTile';
 import MultiSiteSelector from '../../components/dashboard/overview/MultiSiteSelector';
 import usePageTitle from '../../hooks/usePageTitle';
 import useMultiVenueStats from '../../hooks/useMultiVenueStats';
 import { useVenue } from '../../context/VenueContext';
-import { Monitor, AlertTriangle, Clock, TrendingUp, Users, Star, BarChart3, Zap, HandHeart } from 'lucide-react';
+import { Monitor, AlertTriangle, Clock, TrendingUp, Users, Star, BarChart3, Zap, HandHeart, Lightbulb } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DashboardPage = () => {
@@ -282,6 +284,19 @@ const DashboardPage = () => {
         </div>
       </div>
 
+      {/* Quick Insights & Peak Hours - Only show for single venue */}
+      {!isMultiSite && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Lightbulb className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-semibold text-gray-800">Insights & Analytics</h2>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <QuickInsightsTile venueId={venueId} />
+            <PeakHoursTile venueId={venueId} />
+          </div>
+        </div>
+      )}
 
       {/* Recent Activity */}
       <div>
