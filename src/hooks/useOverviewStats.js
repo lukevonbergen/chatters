@@ -29,7 +29,7 @@ const useOverviewStats = (venueId) => {
       // Fetch today's feedback sessions
       const { data: todayFeedback } = await supabase
         .from('feedback')
-        .select('id, rating, created_at')
+        .select('id, session_id, rating, created_at')
         .eq('venue_id', venueId)
         .gte('created_at', todayStart.toISOString())
         .order('created_at', { ascending: false });
@@ -37,7 +37,7 @@ const useOverviewStats = (venueId) => {
       // Fetch yesterday's feedback for comparison
       const { data: yesterdayFeedback } = await supabase
         .from('feedback')
-        .select('id, rating')
+        .select('id, session_id, rating')
         .eq('venue_id', venueId)
         .gte('created_at', yesterdayStart.toISOString())
         .lt('created_at', todayStart.toISOString());
@@ -58,9 +58,12 @@ const useOverviewStats = (venueId) => {
         .gte('created_at', yesterdayStart.toISOString())
         .lt('created_at', todayStart.toISOString());
 
-      // Calculate stats
-      const todaySessions = todayFeedback?.length || 0;
-      const yesterdaySessions = yesterdayFeedback?.length || 0;
+      // Calculate stats - count unique sessions
+      const todaySessionIds = new Set(todayFeedback?.map(f => f.session_id) || []);
+      const todaySessions = todaySessionIds.size;
+
+      const yesterdaySessionIds = new Set(yesterdayFeedback?.map(f => f.session_id) || []);
+      const yesterdaySessions = yesterdaySessionIds.size;
       
       // Average satisfaction
       const todayRatings = todayFeedback?.filter(f => f.rating).map(f => f.rating) || [];
