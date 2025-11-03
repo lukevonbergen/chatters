@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     // Create Stripe billing portal session
     const session = await stripe.billingPortal.sessions.create({
       customer: account.stripe_customer_id,
-      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/account/billing`,
+      return_url: 'https://my.getchatters.com/account/billing',
     });
 
     return res.status(200).json({ url: session.url });
