@@ -3,8 +3,6 @@ import { TrendingUp, Users, Star, Clock, AlertTriangle, CheckCircle, Activity, T
 import useOverviewStats from '../../../hooks/useOverviewStats';
 import { useVenue } from '../../../context/VenueContext';
 import { MetricCard, ChartCard } from '../layout/ModernCard';
-import GoogleRatingKPITile from '../reports/GoogleRatingKPITile';
-import TripAdvisorRatingKPITile from '../reports/TripAdvisorRatingKPITile';
 
 // StatCard component removed - using MetricCard from ModernCard instead
 
@@ -54,7 +52,7 @@ const OverviewStats = ({
         className="mb-8"
       >
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Today's Sessions */}
           <MetricCard
             icon={Users}
@@ -157,24 +155,6 @@ const OverviewStats = ({
             venueBreakdowns={venueBreakdowns}
             allVenues={allVenues}
             field="peakHour"
-          />
-
-          {/* Google Rating */}
-          <GoogleRatingKPITile 
-            venueId={isMultiSite ? null : venueId} 
-            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
-            isMultiSite={isMultiSite}
-            venueBreakdowns={venueBreakdowns}
-            allVenues={allVenues}
-          />
-
-          {/* TripAdvisor Rating */}
-          <TripAdvisorRatingKPITile 
-            venueId={isMultiSite ? null : venueId} 
-            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
-            isMultiSite={isMultiSite}
-            venueBreakdowns={venueBreakdowns}
-            allVenues={allVenues}
           />
         </div>
       </ChartCard>
