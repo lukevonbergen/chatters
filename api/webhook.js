@@ -147,15 +147,26 @@ export default async function handler(req, res) {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object;
         const customerId = invoice.customer;
+        const subscriptionId = invoice.subscription;
 
-        // Ensure account is marked as paid (redundant with subscription.updated but safe)
+        // Update account with payment success and subscription details if available
+        const updateData = { is_paid: true };
+
+        // If this invoice is for a subscription, also update subscription details
+        if (subscriptionId) {
+          updateData.stripe_subscription_id = subscriptionId;
+          updateData.stripe_subscription_status = 'active';
+          updateData.account_type = 'paid';
+          updateData.trial_ends_at = null;
+        }
+
         const { error: updateError } = await supabase
           .from('accounts')
-          .update({ is_paid: true })
+          .update(updateData)
           .eq('stripe_customer_id', customerId);
 
         if (updateError) throw updateError;
-        console.log('Payment succeeded for customer:', customerId);
+        console.log('Payment succeeded for customer:', customerId, 'Subscription:', subscriptionId);
         break;
       }
 
