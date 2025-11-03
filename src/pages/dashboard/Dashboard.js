@@ -285,15 +285,15 @@ const DashboardPage = () => {
       </div>
 
       {/* Quick Insights & Peak Hours - Only show for single venue */}
-      {!isMultiSite && (
+      {selectedVenues.length === 1 && venueId && (
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="w-5 h-5 text-blue-600" />
             <h2 className="text-lg font-semibold text-gray-800">Insights & Analytics</h2>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <QuickInsightsTile venueId={venueId} />
-            <PeakHoursTile venueId={venueId} />
+            <QuickInsightsTile venueId={selectedVenues[0]} />
+            <PeakHoursTile venueId={selectedVenues[0]} />
           </div>
         </div>
       )}
