@@ -111,12 +111,13 @@ const MetricCard = ({
   );
 };
 
-const ChartCard = ({ 
-  title, 
-  subtitle, 
-  children, 
+const ChartCard = ({
+  title,
+  subtitle,
+  children,
   className = '',
-  actions
+  actions,
+  titleRight
 }) => {
   return (
     <ModernCard className={className} padding="p-6">
@@ -130,13 +131,20 @@ const ChartCard = ({
             <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
           )}
         </div>
-        {actions && (
-          <div className="flex items-center gap-2">
-            {actions}
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          {titleRight && (
+            <div className="flex items-center">
+              {titleRight}
+            </div>
+          )}
+          {actions && (
+            <div className="flex items-center gap-2">
+              {actions}
+            </div>
+          )}
+        </div>
       </div>
-      
+
       {/* Content */}
       <div className="w-full">
         {children}

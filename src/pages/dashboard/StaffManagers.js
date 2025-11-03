@@ -72,20 +72,19 @@ const StaffManagersPage = () => {
       return;
     }
 
-    const userIds = [...new Set(staffData.map(s => s.user_id))];
-    
-    const userPromises = userIds.map(async (userId) => {
-      const { data } = await supabase
-        .from('users')
-        .select('id, email, role, first_name, last_name, password_hash, created_at')
-        .eq('id', userId)
-        .single();
-      
-      return data;
-    });
-    
-    const userResults = await Promise.all(userPromises);
-    const usersData = userResults.filter(user => user !== null);
+    const userIds = [...new Set(staffData.map(s => s.user_id))].filter(id => id !== null && id !== undefined);
+
+    if (userIds.length === 0) {
+      setManagers([]);
+      setEmployees([]);
+      return;
+    }
+
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, email, role, first_name, last_name, password_hash, created_at')
+      .in('id', userIds)
+      .is('deleted_at', null); // Only fetch non-deleted users
 
     const { data: venuesData } = await supabase
       .from('venues')
@@ -95,13 +94,16 @@ const StaffManagersPage = () => {
     const staffWithJoins = staffData.map(staff => {
       const foundUser = usersData?.find(u => u.id === staff.user_id);
       const foundVenue = venuesData?.find(v => v.id === staff.venue_id);
-      
+
       return {
         ...staff,
         users: foundUser || null,
         venues: foundVenue || null
       };
     });
+
+    // Filter out staff records where user is null (deleted users)
+    const activeStaffWithJoins = staffWithJoins.filter(staff => staff.users !== null);
 
     const { data: employeesData } = await supabase
       .from('employees')
@@ -118,7 +120,7 @@ const StaffManagersPage = () => {
       `)
       .in('venue_id', venueIds);
 
-    const managersData = staffWithJoins?.filter(staff => staff.role === 'manager') || [];
+    const managersData = activeStaffWithJoins?.filter(staff => staff.role === 'manager') || [];
     const employeesFromTable = employeesData || [];
 
     setManagers(managersData);
@@ -135,10 +137,11 @@ const StaffManagersPage = () => {
         role,
         created_at,
         venues!inner (id, name),
-        users!inner (id, email, role, first_name, last_name)
+        users!inner (id, email, role, first_name, last_name, deleted_at)
       `)
       .eq('venue_id', venueId)
-      .neq('user_id', userId);
+      .neq('user_id', userId)
+      .is('users.deleted_at', null); // Filter out soft-deleted users
 
     const { data: employeesData } = await supabase
       .from('employees')
@@ -213,26 +216,27 @@ const StaffManagersPage = () => {
   return (
     <div className="space-y-6">
       <ChartCard
-        title="Manager Management"
+        title="Managers"
         subtitle="Manage manager accounts and venue access permissions"
+        titleRight={
+          message && (
+            <span className={`text-sm font-medium ${
+              message.includes('success') || message.includes('recovered')
+                ? 'text-green-600'
+                : 'text-red-600'
+            }`}>
+              {message}
+            </span>
+          )
+        }
       >
         {loading && (
           <div className="flex items-center justify-center py-12">
             <span className="text-gray-500 text-sm lg:text-base">Loading staff data...</span>
           </div>
         )}
-        
-        {!loading && <ManagersTab {...tabProps} />}
 
-        {message && (
-          <div className={`mt-4 p-3 rounded-md text-sm ${
-            message.includes('success')
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}>
-            {message}
-          </div>
-        )}
+        {!loading && <ManagersTab {...tabProps} />}
       </ChartCard>
     </div>
   );

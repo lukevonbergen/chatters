@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { supabase, setAuthStorage } from '../../utils/supabase';
+import { supabase } from '../../utils/supabase';
 import { getMarketingUrl } from '../../utils/domainUtils';
 
 // Ensures there's a row in public.users so role checks don't fail on first login.
@@ -61,19 +61,7 @@ const SignInPage = () => {
     setError('');
 
     try {
-      // 🔑 1) Choose auth storage before sign-in
-      // - localStorage → stays signed in after browser restart
-      // - sessionStorage → dies when browser closes
-      setAuthStorage(rememberMe ? 'local' : 'session');
-
-      // 2) Attempt sign in
-      const { error: signInErr } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (signInErr) throw new Error(signInErr.message);
-
-      // 3) Store remember me preference + email (UI nicety only)
+      // 🔑 1) Store remember me preference + email
       if (rememberMe) {
         localStorage.setItem('chatters_remember_email', email);
         localStorage.setItem('chatters_remember_me', 'true');
@@ -82,18 +70,31 @@ const SignInPage = () => {
         localStorage.removeItem('chatters_remember_me');
       }
 
-      // 4) Get user
+      // 2) Attempt sign in
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (signInErr) throw new Error(signInErr.message);
+
+      // 3) Get user
       const { data: auth } = await supabase.auth.getUser();
       const user = auth?.user;
       if (!user) throw new Error('No authenticated user returned');
 
-      // 5) Ensure users row exists, then read role
+      // 4) Ensure users row exists, then read role
       const ensured = await ensureUsersRow(user);
       const role = ensured?.role ?? null;
 
-      // 6) Admin fallback by email domain
+      // 5) Admin fallback by email domain
       const isAdminByEmail = (user.email || '').toLowerCase().endsWith('@getchatters.com');
       const isAdmin = role === 'admin' || isAdminByEmail;
+
+      // 6) If remember me is NOT checked, set up a session that expires when browser closes
+      // We do this by storing a flag that App.js will check on load
+      if (!rememberMe) {
+        sessionStorage.setItem('chatters_temp_session', 'true');
+      }
 
       // 7) Route to dashboard/admin
       navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });

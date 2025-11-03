@@ -116,23 +116,6 @@ const ReportsMetricsPage = () => {
         employeeMap[emp.id] = `${emp.first_name} ${emp.last_name}`;
       });
 
-      // Debug logging
-      console.log('Metrics Debug:', {
-        venueId,
-        timeframe,
-        dateRange: { start, end },
-        feedbackCount: feedbackData?.length || 0,
-        assistanceCount: assistanceData?.length || 0,
-        employeeCount: employeeData?.length || 0,
-        feedbackSample: feedbackData?.slice(0, 2),
-        assistanceSample: assistanceData?.slice(0, 2),
-        employeeSample: employeeData?.slice(0, 2),
-        rawQueries: {
-          feedback: `venue_id=${venueId}, created_at between ${start} and ${end}`,
-          assistance: `venue_id=${venueId}, created_at between ${start} and ${end}`
-        }
-      });
-
       // Calculate metrics
       const totalResponses = (feedbackData?.length || 0) + (assistanceData?.length || 0);
       
@@ -196,14 +179,6 @@ const ReportsMetricsPage = () => {
           const responseTime = new Date(item.resolved_at) - new Date(item.created_at);
           staffPerformance[staffName].totalTime += responseTime / (1000 * 60); // minutes
         }
-      });
-
-      // Debug staff performance data
-      console.log('Staff Performance Debug:', {
-        staffPerformance,
-        employeeMapKeys: Object.keys(employeeMap),
-        feedbackWithResolved: (feedbackData || []).filter(f => f.resolved_by && f.resolved_at).length,
-        assistanceWithResolved: (assistanceData || []).filter(a => a.resolved_by && a.resolved_at).length
       });
 
       // Find top performing staff member (most resolutions)

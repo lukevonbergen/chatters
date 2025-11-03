@@ -82,31 +82,18 @@ export default async function handler(req, res) {
     const googleData = await fetchGooglePlaceDetails(place_id);
 
     if (googleData.rating) {
-      // Historical ratings
+      // Store initial rating in venue_google_ratings table
       await supabaseAdmin
-        .from('historical_ratings')
+        .from('venue_google_ratings')
         .insert({
           venue_id: venueId,
-          source: 'google',
           rating: googleData.rating,
           ratings_count: googleData.user_ratings_total,
           is_initial: true,
           recorded_at: new Date().toISOString()
         });
 
-      // Cache
-      await supabaseAdmin
-        .from('external_ratings')
-        .upsert({
-          venue_id: venueId,
-          source: 'google',
-          rating: googleData.rating,
-          ratings_count: googleData.user_ratings_total,
-          attributions: googleData.attributions || ['Data © Google'],
-          fetched_at: new Date().toISOString()
-        }, {
-          onConflict: 'venue_id,source'
-        });
+      console.log(`✅ Stored initial Google rating for venue ${venueId}: ${googleData.rating} ⭐`);
     }
   } catch (ratingError) {
     console.error('Failed to fetch initial rating:', ratingError);

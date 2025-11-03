@@ -37,77 +37,51 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
     try {
       setLoading(true);
 
-      // Get current ratings from external_ratings table for both platforms
-      const { data: googleCurrent } = await supabase
-        .from('external_ratings')
-        .select('rating, ratings_count, fetched_at')
-        .eq('venue_id', venueId)
-        .eq('source', 'google')
-        .single();
-
-      const { data: tripadvisorCurrent } = await supabase
-        .from('external_ratings')
-        .select('rating, ratings_count, fetched_at')
-        .eq('venue_id', venueId)
-        .eq('source', 'tripadvisor')
-        .single();
-
-      // Get historical ratings for both platforms
-      const { data: googleHistorical } = await supabase
-        .from('historical_ratings')
+      // Get all Google ratings (ordered by date)
+      const { data: googleRatings } = await supabase
+        .from('venue_google_ratings')
         .select('rating, ratings_count, recorded_at, is_initial')
         .eq('venue_id', venueId)
-        .eq('source', 'google')
         .order('recorded_at', { ascending: true });
 
-      const { data: tripadvisorHistorical } = await supabase
-        .from('historical_ratings')
+      // Get all TripAdvisor ratings (ordered by date)
+      const { data: tripadvisorRatings } = await supabase
+        .from('venue_tripadvisor_ratings')
         .select('rating, ratings_count, recorded_at, is_initial')
         .eq('venue_id', venueId)
-        .eq('source', 'tripadvisor')
         .order('recorded_at', { ascending: true });
+
+      // Get current (most recent) ratings
+      const googleCurrent = googleRatings && googleRatings.length > 0
+        ? googleRatings[googleRatings.length - 1]
+        : null;
+
+      const tripadvisorCurrent = tripadvisorRatings && tripadvisorRatings.length > 0
+        ? tripadvisorRatings[tripadvisorRatings.length - 1]
+        : null;
 
       setCurrentRatings({
         google: googleCurrent,
         tripadvisor: tripadvisorCurrent
       });
-      
-      // Use external_ratings as fallback if no historical data exists
-      const googleHistoricalWithFallback = (googleHistorical && googleHistorical.length > 0) 
-        ? googleHistorical 
-        : (googleCurrent ? [{
-            rating: googleCurrent.rating,
-            ratings_count: googleCurrent.ratings_count,
-            recorded_at: googleCurrent.fetched_at,
-            is_initial: true
-          }] : []);
-      
-      const tripadvisorHistoricalWithFallback = (tripadvisorHistorical && tripadvisorHistorical.length > 0)
-        ? tripadvisorHistorical
-        : (tripadvisorCurrent ? [{
-            rating: tripadvisorCurrent.rating,
-            ratings_count: tripadvisorCurrent.ratings_count,
-            recorded_at: tripadvisorCurrent.fetched_at,
-            is_initial: true
-          }] : []);
-      
+
       setHistoricalData({
-        google: googleHistoricalWithFallback,
-        tripadvisor: tripadvisorHistoricalWithFallback
+        google: googleRatings || [],
+        tripadvisor: tripadvisorRatings || []
       });
 
       // Calculate KPI data for both platforms
       const newKpiData = {};
 
       // Google KPIs
-      if (googleHistoricalWithFallback && googleHistoricalWithFallback.length > 0) {
-        const initialRating = googleHistoricalWithFallback.find(r => r.is_initial)?.rating;
-        const latestRating = googleCurrent?.rating || googleHistoricalWithFallback[googleHistoricalWithFallback.length - 1]?.rating;
+      if (googleRatings && googleRatings.length > 0) {
+        const initialRating = googleRatings.find(r => r.is_initial)?.rating;
+        const latestRating = googleCurrent?.rating;
 
         if (initialRating && latestRating) {
           const change = latestRating - initialRating;
           const percentChange = ((change / initialRating) * 100);
-          
+
           newKpiData.google = {
             initial: initialRating,
             current: latestRating,
@@ -118,14 +92,14 @@ const GoogleRatingsTrendTile = ({ venueId }) => {
       }
 
       // TripAdvisor KPIs
-      if (tripadvisorHistoricalWithFallback && tripadvisorHistoricalWithFallback.length > 0) {
-        const initialRating = tripadvisorHistoricalWithFallback.find(r => r.is_initial)?.rating;
-        const latestRating = tripadvisorCurrent?.rating || tripadvisorHistoricalWithFallback[tripadvisorHistoricalWithFallback.length - 1]?.rating;
+      if (tripadvisorRatings && tripadvisorRatings.length > 0) {
+        const initialRating = tripadvisorRatings.find(r => r.is_initial)?.rating;
+        const latestRating = tripadvisorCurrent?.rating;
 
         if (initialRating && latestRating) {
           const change = latestRating - initialRating;
           const percentChange = ((change / initialRating) * 100);
-          
+
           newKpiData.tripadvisor = {
             initial: initialRating,
             current: latestRating,

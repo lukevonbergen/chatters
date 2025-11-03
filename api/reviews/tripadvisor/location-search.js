@@ -41,6 +41,7 @@ export default async function handler(req, res) {
   console.log('✅ [TripAdvisor] API key found');
 
   try {
+    // Build URL without category filter to show all UK businesses
     const url = `https://api.content.tripadvisor.com/api/v1/location/search?key=${TRIPADVISOR_API_KEY}&searchQuery=${encodeURIComponent(query)}&language=en`;
     console.log('📡 [TripAdvisor] Making API request to:', url.replace(TRIPADVISOR_API_KEY, '[REDACTED]'));
 
@@ -56,7 +57,25 @@ export default async function handler(req, res) {
 
     if (response.ok && data.data) {
       console.log('✅ [TripAdvisor] Search successful, found', data.data.length, 'locations');
-      const suggestions = data.data.map((location, index) => {
+
+      // Filter to show ONLY UK locations
+      console.log('🇬🇧 [TripAdvisor] Filtering for UK businesses only');
+      const filteredData = data.data.filter(loc =>
+        loc.address_obj?.country === 'United Kingdom' ||
+        loc.address_obj?.country === 'England' ||
+        loc.address_obj?.country === 'Scotland' ||
+        loc.address_obj?.country === 'Wales' ||
+        loc.address_obj?.country === 'Northern Ireland'
+      );
+
+      console.log(`✅ [TripAdvisor] Found ${filteredData.length} UK businesses out of ${data.data.length} total results`);
+
+      if (filteredData.length === 0) {
+        console.log('⚠️ [TripAdvisor] No UK results found');
+        return res.status(200).json({ suggestions: [] });
+      }
+
+      const suggestions = filteredData.map((location, index) => {
         console.log(`🟠 [TripAdvisor] Processing location ${index + 1}:`, {
           location_id: location.location_id,
           name: location.name,

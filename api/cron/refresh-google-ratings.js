@@ -79,46 +79,22 @@ export default async function handler(req, res) {
               const googleData = await fetchGooglePlaceDetails(venue.place_id);
               googleProcessedCount++;
 
-              // Upsert the rating data in cache table
-              const { error: upsertError } = await supabaseAdmin
-                .from('external_ratings')
-                .upsert({
+              // Insert daily rating snapshot into venue_google_ratings
+              const { error: insertError } = await supabaseAdmin
+                .from('venue_google_ratings')
+                .insert({
                   venue_id: venue.id,
-                  source: 'google',
                   rating: googleData.rating,
                   ratings_count: googleData.user_ratings_total,
-                  attributions: googleData.attributions || ['Data © Google'],
-                  fetched_at: new Date().toISOString()
-                }, {
-                  onConflict: 'venue_id,source'
+                  is_initial: false,
+                  recorded_at: new Date().toISOString()
                 });
 
-              if (upsertError) {
-                throw new Error(`Google database upsert failed: ${upsertError.message}`);
+              if (insertError) {
+                throw new Error(`Google database insert failed: ${insertError.message}`);
               }
 
-              // Store historical rating every 2 days for progression tracking
-              const shouldStoreHistorical = await shouldStoreHistoricalRating(venue.id, 'google');
-              if (shouldStoreHistorical && googleData.rating) {
-                const { error: historyError } = await supabaseAdmin
-                  .from('historical_ratings')
-                  .insert({
-                    venue_id: venue.id,
-                    source: 'google',
-                    rating: googleData.rating,
-                    ratings_count: googleData.user_ratings_total,
-                    is_initial: false,
-                    recorded_at: new Date().toISOString()
-                  });
-
-                if (historyError) {
-                  console.warn(`⚠️ Failed to store Google historical rating for ${venue.name}: ${historyError.message}`);
-                } else {
-                  console.log(`📊 Stored Google historical rating for ${venue.name}`);
-                }
-              }
-
-              console.log(`✅ Updated Google for ${venue.name}: ${googleData.rating} ⭐ (${googleData.user_ratings_total} reviews)`);
+              console.log(`✅ Stored daily Google rating for ${venue.name}: ${googleData.rating} ⭐ (${googleData.user_ratings_total} reviews)`);
             }
 
             // Refresh TripAdvisor if venue has tripadvisor_location_id
@@ -128,45 +104,22 @@ export default async function handler(req, res) {
               const tripadvisorData = await fetchTripAdvisorLocationDetails(venue.tripadvisor_location_id);
               tripadvisorProcessedCount++;
 
-              // Upsert the rating data in cache table
-              const { error: upsertError } = await supabaseAdmin
-                .from('external_ratings')
-                .upsert({
+              // Insert daily rating snapshot into venue_tripadvisor_ratings
+              const { error: insertError } = await supabaseAdmin
+                .from('venue_tripadvisor_ratings')
+                .insert({
                   venue_id: venue.id,
-                  source: 'tripadvisor',
                   rating: tripadvisorData.rating,
                   ratings_count: tripadvisorData.num_reviews,
-                  fetched_at: new Date().toISOString()
-                }, {
-                  onConflict: 'venue_id,source'
+                  is_initial: false,
+                  recorded_at: new Date().toISOString()
                 });
 
-              if (upsertError) {
-                throw new Error(`TripAdvisor database upsert failed: ${upsertError.message}`);
+              if (insertError) {
+                throw new Error(`TripAdvisor database insert failed: ${insertError.message}`);
               }
 
-              // Store historical rating every 2 days for progression tracking
-              const shouldStoreHistorical = await shouldStoreHistoricalRating(venue.id, 'tripadvisor');
-              if (shouldStoreHistorical && tripadvisorData.rating) {
-                const { error: historyError } = await supabaseAdmin
-                  .from('historical_ratings')
-                  .insert({
-                    venue_id: venue.id,
-                    source: 'tripadvisor',
-                    rating: tripadvisorData.rating,
-                    ratings_count: tripadvisorData.num_reviews,
-                    is_initial: false,
-                    recorded_at: new Date().toISOString()
-                  });
-
-                if (historyError) {
-                  console.warn(`⚠️ Failed to store TripAdvisor historical rating for ${venue.name}: ${historyError.message}`);
-                } else {
-                  console.log(`📊 Stored TripAdvisor historical rating for ${venue.name}`);
-                }
-              }
-
-              console.log(`✅ Updated TripAdvisor for ${venue.name}: ${tripadvisorData.rating} ⭐ (${tripadvisorData.num_reviews} reviews)`);
+              console.log(`✅ Stored daily TripAdvisor rating for ${venue.name}: ${tripadvisorData.rating} ⭐ (${tripadvisorData.num_reviews} reviews)`);
             }
 
           } catch (error) {
@@ -183,8 +136,8 @@ export default async function handler(req, res) {
         })
       );
 
-      // Small delay between batches to be respectful to Google's API
-      if (i + batchSize < venues.length && processedCount < MAX_DAILY_CALLS) {
+      // Small delay between batches to be respectful to APIs
+      if (i + batchSize < venues.length && (googleProcessedCount + tripadvisorProcessedCount) < MAX_DAILY_CALLS) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
@@ -220,35 +173,6 @@ export default async function handler(req, res) {
       tripadvisor_processed: tripadvisorProcessedCount,
       errors: errorCount
     });
-  }
-}
-
-async function shouldStoreHistoricalRating(venueId, source) {
-  try {
-    // Get the most recent historical rating for this venue and source
-    const { data: lastHistorical } = await supabaseAdmin
-      .from('historical_ratings')
-      .select('recorded_at')
-      .eq('venue_id', venueId)
-      .eq('source', source)
-      .order('recorded_at', { ascending: false })
-      .limit(1);
-
-    // If no historical data exists, don't store (initial should be handled during venue setup)
-    if (!lastHistorical || lastHistorical.length === 0) {
-      return false;
-    }
-
-    // Check if it's been at least 2 days since last historical record
-    const lastRecorded = new Date(lastHistorical[0].recorded_at);
-    const now = new Date();
-    const hoursSinceLastRecord = (now - lastRecorded) / (1000 * 60 * 60);
-    
-    // Store historical data every 48 hours (2 days)
-    return hoursSinceLastRecord >= 48;
-  } catch (error) {
-    console.error('Error checking historical rating schedule:', error);
-    return false; // Fail safe - don't store if we can't determine
   }
 }
 
