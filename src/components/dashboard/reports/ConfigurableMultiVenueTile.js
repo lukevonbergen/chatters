@@ -179,17 +179,29 @@ const METRIC_CONFIG = {
     title: 'Best Staff Member',
     icon: Award,
     fetchData: async (venueIds, dateRange) => {
-      // Fetch resolved feedback sessions (using resolved_by like the staff leaderboard)
-      const { data, error } = await supabase
-        .from('feedback')
-        .select('venue_id, session_id, resolved_by')
-        .in('venue_id', venueIds)
-        .not('resolved_by', 'is', null)
-        .gte('resolved_at', dateRange.from.toISOString())
-        .lte('resolved_at', dateRange.to.toISOString());
+      // Fetch both feedback sessions and assistance requests (like staff leaderboard)
+      const [
+        { data: feedbackData, error: feedbackError },
+        { data: assistanceData, error: assistanceError }
+      ] = await Promise.all([
+        supabase
+          .from('feedback')
+          .select('venue_id, session_id, resolved_by')
+          .in('venue_id', venueIds)
+          .not('resolved_by', 'is', null)
+          .gte('resolved_at', dateRange.from.toISOString())
+          .lte('resolved_at', dateRange.to.toISOString()),
+        supabase
+          .from('assistance_requests')
+          .select('venue_id, id, resolved_by')
+          .in('venue_id', venueIds)
+          .not('resolved_by', 'is', null)
+          .gte('resolved_at', dateRange.from.toISOString())
+          .lte('resolved_at', dateRange.to.toISOString())
+      ]);
 
-      if (error) {
-        console.error('Error fetching staff feedback:', error);
+      if (feedbackError || assistanceError) {
+        console.error('Error fetching staff data:', feedbackError || assistanceError);
         return venueIds.map(venueId => ({
           venueId,
           value: 0,
@@ -197,25 +209,52 @@ const METRIC_CONFIG = {
         }));
       }
 
-      // Group by venue and count sessions per staff member
-      const venueStaffSessions = {};
-      venueIds.forEach(id => venueStaffSessions[id] = {});
+      // Initialize counts per venue per staff member
+      const venueFeedbackCounts = {};
+      const venueAssistanceCounts = {};
+      venueIds.forEach(id => {
+        venueFeedbackCounts[id] = {};
+        venueAssistanceCounts[id] = {};
+      });
 
-      (data || []).forEach(item => {
-        if (item.session_id && item.resolved_by) {
-          if (!venueStaffSessions[item.venue_id][item.resolved_by]) {
-            venueStaffSessions[item.venue_id][item.resolved_by] = new Set();
+      // Count feedback sessions per staff member per venue
+      if (feedbackData?.length) {
+        const venueSessionMap = {};
+        venueIds.forEach(id => venueSessionMap[id] = {});
+
+        feedbackData.forEach(item => {
+          if (item.session_id && item.resolved_by) {
+            venueSessionMap[item.venue_id][item.session_id] = item.resolved_by;
           }
-          venueStaffSessions[item.venue_id][item.resolved_by].add(item.session_id);
-        }
-      });
+        });
 
-      // Fetch employee names (staff are in employees table)
+        Object.entries(venueSessionMap).forEach(([venueId, sessions]) => {
+          Object.values(sessions).forEach(employeeId => {
+            venueFeedbackCounts[venueId][employeeId] = (venueFeedbackCounts[venueId][employeeId] || 0) + 1;
+          });
+        });
+      }
+
+      // Count assistance requests per staff member per venue
+      if (assistanceData?.length) {
+        assistanceData.forEach(request => {
+          if (request.resolved_by) {
+            venueAssistanceCounts[request.venue_id][request.resolved_by] =
+              (venueAssistanceCounts[request.venue_id][request.resolved_by] || 0) + 1;
+          }
+        });
+      }
+
+      // Get all unique staff IDs
       const staffIds = new Set();
-      Object.values(venueStaffSessions).forEach(venueStaff => {
-        Object.keys(venueStaff).forEach(staffId => staffIds.add(staffId));
+      Object.values(venueFeedbackCounts).forEach(counts => {
+        Object.keys(counts).forEach(id => staffIds.add(id));
+      });
+      Object.values(venueAssistanceCounts).forEach(counts => {
+        Object.keys(counts).forEach(id => staffIds.add(id));
       });
 
+      // Fetch employee names
       const { data: employeeData } = await supabase
         .from('employees')
         .select('id, first_name, last_name')
@@ -226,12 +265,16 @@ const METRIC_CONFIG = {
         employeeMap[employee.id] = `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || 'Unknown';
       });
 
-      // Calculate results for each venue
+      // Calculate best staff member for each venue
       return venueIds.map(venueId => {
-        const staff = venueStaffSessions[venueId];
-        const staffArray = Object.entries(staff).map(([staffId, sessions]) => ({
+        const feedbackCounts = venueFeedbackCounts[venueId] || {};
+        const assistanceCounts = venueAssistanceCounts[venueId] || {};
+
+        // Combine counts
+        const allStaffIds = new Set([...Object.keys(feedbackCounts), ...Object.keys(assistanceCounts)]);
+        const staffArray = Array.from(allStaffIds).map(staffId => ({
           staffId,
-          count: sessions.size,
+          count: (feedbackCounts[staffId] || 0) + (assistanceCounts[staffId] || 0),
           name: employeeMap[staffId] || 'Unknown'
         }));
 
