@@ -47,7 +47,7 @@ const GoogleRatingTrendCard = ({ venueId }) => {
 
       const { data: googleRatings } = await supabase
         .from('venue_google_ratings')
-        .select('rating, ratings_count, recorded_at, is_initial')
+        .select('rating, ratings_count, recorded_at')
         .eq('venue_id', venueId)
         .gte('recorded_at', thirtyDaysAgo.toISOString())
         .order('recorded_at', { ascending: true });
@@ -220,7 +220,7 @@ const GoogleRatingTrendCard = ({ venueId }) => {
           )}
         </div>
         <p className="text-sm text-gray-500 mt-1">
-          {currentRating.ratings_count.toLocaleString()} reviews
+          {currentRating.ratings_count?.toLocaleString() || 0} reviews
         </p>
       </div>
 
