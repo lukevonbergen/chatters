@@ -3,13 +3,14 @@ import { Calendar, ChevronDown } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 const presetRanges = [
-  { label: "Today", value: "today" },
-  { label: "Yesterday", value: "yesterday" },
   { label: "Last 7 days", value: "last7" },
+  { label: "Last 14 days", value: "last14" },
   { label: "Last 30 days", value: "last30" },
+  { label: "Last 60 days", value: "last60" },
+  { label: "All time", value: "alltime" },
 ];
 
-export function DateRangeSelector({ value = "today", onChange, className }) {
+export function DateRangeSelector({ value = "last7", onChange, className }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [activePreset, setActivePreset] = React.useState(value);
   const dropdownRef = React.useRef(null);
@@ -36,28 +37,32 @@ export function DateRangeSelector({ value = "today", onChange, className }) {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     switch (preset) {
-      case "today":
-        return {
-          from: today,
-          to: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
-        };
-      case "yesterday":
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        return {
-          from: yesterday,
-          to: new Date(yesterday.getTime() + 24 * 60 * 60 * 1000 - 1)
-        };
       case "last7":
         const last7 = new Date(today);
         last7.setDate(last7.getDate() - 6);
         return { from: last7, to: today };
+      case "last14":
+        const last14 = new Date(today);
+        last14.setDate(last14.getDate() - 13);
+        return { from: last14, to: today };
       case "last30":
         const last30 = new Date(today);
         last30.setDate(last30.getDate() - 29);
         return { from: last30, to: today };
+      case "last60":
+        const last60 = new Date(today);
+        last60.setDate(last60.getDate() - 59);
+        return { from: last60, to: today };
+      case "alltime":
+        // Set to 2 years ago as a reasonable "all time" limit
+        const allTime = new Date(today);
+        allTime.setFullYear(allTime.getFullYear() - 2);
+        return { from: allTime, to: today };
       default:
-        return { from: today, to: today };
+        // Default to last 7 days
+        const defaultLast7 = new Date(today);
+        defaultLast7.setDate(defaultLast7.getDate() - 6);
+        return { from: defaultLast7, to: today };
     }
   };
 
