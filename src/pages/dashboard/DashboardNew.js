@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
 import OverviewStats from '../../components/dashboard/overview/OverviewStats';
 import RecentActivity from '../../components/dashboard/overview/RecentActivity';
-import RatingsTrendBar from '../../components/dashboard/reports/RatingsTrendBar';
-import RatingsTrendChart from '../../components/dashboard/reports/RatingsTrendChart';
+import GoogleRatingTrendCard from '../../components/dashboard/reports/GoogleRatingTrendCard';
+import TripAdvisorRatingTrendCard from '../../components/dashboard/reports/TripAdvisorRatingTrendCard';
 import ConfigurableMultiVenueTile from '../../components/dashboard/reports/ConfigurableMultiVenueTile';
 import MetricSelectorModal from '../../components/dashboard/modals/MetricSelectorModal';
 import { ChartCard, ActivityCard } from '../../components/dashboard/layout/ModernCard';
@@ -368,35 +368,25 @@ const DashboardNew = () => {
         </ChartCard>
       )}
 
-      {/* Charts and Activity - Full Width */}
-      <div className="space-y-8">
-        {/* Ratings Impact Chart from Impact Tab */}
-        <ChartCard
-          title="Ratings Impact Analysis"
-          subtitle="Track your Google and TripAdvisor ratings progress over time"
-        >
-          <RatingsTrendChart
-            venueId={venueId}
-            timeframe="last30"
-            selectedVenues={[venueId]}
-            isMultiSite={false}
-          />
-        </ChartCard>
-        
-        {/* Recent Activity - Full Width */}
-        <ChartCard
-          title="Recent Activity"
-          subtitle="Customer interactions from the last 24 hours"
-        >
-          <RecentActivity
-            activities={recentActivity}
-            loading={activityLoading}
-            selectedVenues={[venueId]}
-            isMultiSite={false}
-            allVenues={allVenues}
-          />
-        </ChartCard>
+      {/* Platform Ratings Trends */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <GoogleRatingTrendCard venueId={venueId} />
+        <TripAdvisorRatingTrendCard venueId={venueId} />
       </div>
+
+      {/* Recent Activity - Full Width */}
+      <ChartCard
+        title="Recent Activity"
+        subtitle="Customer interactions from the last 24 hours"
+      >
+        <RecentActivity
+          activities={recentActivity}
+          loading={activityLoading}
+          selectedVenues={[venueId]}
+          isMultiSite={false}
+          allVenues={allVenues}
+        />
+      </ChartCard>
 
       {/* Metric Selector Modal */}
       <MetricSelectorModal
