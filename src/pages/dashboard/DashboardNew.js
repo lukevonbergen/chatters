@@ -7,6 +7,7 @@ import TripAdvisorRatingTrendCard from '../../components/dashboard/reports/TripA
 import ConfigurableMultiVenueTile from '../../components/dashboard/reports/ConfigurableMultiVenueTile';
 import MetricSelectorModal from '../../components/dashboard/modals/MetricSelectorModal';
 import { ChartCard, ActivityCard } from '../../components/dashboard/layout/ModernCard';
+import { DateRangeSelector } from '../../components/ui/date-range-selector';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
 import { Activity, TrendingUp, Calendar, Users, Star, BarChart3, Plus } from 'lucide-react';
@@ -21,6 +22,14 @@ const DashboardNew = () => {
   const [userTiles, setUserTiles] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTilePosition, setEditingTilePosition] = useState(null);
+  const [dateRangePreset, setDateRangePreset] = useState('today');
+  const [dateRange, setDateRange] = useState(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+    return { from: today, to: endOfDay };
+  });
 
   useEffect(() => {
     loadUserName();
@@ -288,6 +297,14 @@ const DashboardNew = () => {
     return 'Good evening';
   };
 
+  const handleDateRangeChange = ({ preset, range }) => {
+    setDateRangePreset(preset);
+    // Set end of day for 'to' date
+    const endOfDay = new Date(range.to);
+    endOfDay.setHours(23, 59, 59, 999);
+    setDateRange({ from: range.from, to: endOfDay });
+  };
+
   const getMultiVenueGreeting = () => {
     if (allVenues.length <= 1) return '';
     
@@ -334,6 +351,12 @@ const DashboardNew = () => {
         <ChartCard
           title="Multi-Venue Overview"
           subtitle="Track metrics across all your venues"
+          titleRight={
+            <DateRangeSelector
+              value={dateRangePreset}
+              onChange={handleDateRangeChange}
+            />
+          }
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userTiles.map((tile) => (
@@ -341,6 +364,7 @@ const DashboardNew = () => {
                 key={tile.id}
                 metricType={tile.metric_type}
                 position={tile.position}
+                dateRange={dateRange}
                 onRemove={() => handleRemoveTile(tile.position)}
                 onChangeMetric={() => handleChangeTileMetric(tile.position)}
               />

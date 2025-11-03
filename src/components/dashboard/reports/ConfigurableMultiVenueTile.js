@@ -7,16 +7,13 @@ const METRIC_CONFIG = {
   total_feedback: {
     title: 'Total Feedback Count',
     icon: BarChart3,
-    fetchData: async (venueIds) => {
-      const now = new Date();
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
-
+    fetchData: async (venueIds, dateRange) => {
       const { data } = await supabase
         .from('feedback')
         .select('session_id, venue_id')
         .in('venue_id', venueIds)
-        .gte('created_at', startOfDay.toISOString());
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString());
 
       // Group by venue and count unique sessions
       const venueStats = {};
@@ -39,16 +36,13 @@ const METRIC_CONFIG = {
   resolved_feedback: {
     title: 'Total Resolved Feedback',
     icon: ThumbsUp,
-    fetchData: async (venueIds) => {
-      const now = new Date();
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
-
+    fetchData: async (venueIds, dateRange) => {
       const { data } = await supabase
         .from('feedback')
         .select('session_id, venue_id, is_actioned, dismissed')
         .in('venue_id', venueIds)
-        .gte('created_at', startOfDay.toISOString());
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString());
 
       // Group by venue and session
       const venueSessions = {};
@@ -81,16 +75,13 @@ const METRIC_CONFIG = {
   avg_satisfaction: {
     title: 'Average Satisfaction',
     icon: Star,
-    fetchData: async (venueIds) => {
-      const now = new Date();
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
-
+    fetchData: async (venueIds, dateRange) => {
       const { data } = await supabase
         .from('feedback')
         .select('venue_id, rating')
         .in('venue_id', venueIds)
-        .gte('created_at', startOfDay.toISOString())
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString())
         .not('rating', 'is', null);
 
       // Group by venue and calculate average
@@ -120,23 +111,23 @@ const METRIC_CONFIG = {
   unresolved_alerts: {
     title: 'Unresolved Alerts',
     icon: AlertTriangle,
-    fetchData: async (venueIds) => {
+    fetchData: async (venueIds, dateRange) => {
       const now = new Date();
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
       const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
 
       const { data: feedbackData } = await supabase
         .from('feedback')
         .select('session_id, venue_id, created_at, rating, is_actioned, dismissed')
         .in('venue_id', venueIds)
-        .gte('created_at', startOfDay.toISOString());
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString());
 
       const { data: assistanceData } = await supabase
         .from('assistance_requests')
         .select('id, venue_id, created_at, status, resolved_at')
         .in('venue_id', venueIds)
-        .gte('created_at', startOfDay.toISOString())
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString())
         .neq('status', 'resolved')
         .is('resolved_at', null);
 
@@ -187,16 +178,13 @@ const METRIC_CONFIG = {
   best_staff: {
     title: 'Best Staff Member',
     icon: Award,
-    fetchData: async (venueIds) => {
-      const now = new Date();
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
-
+    fetchData: async (venueIds, dateRange) => {
       const { data } = await supabase
         .from('feedback')
         .select('venue_id, actioned_by, users!feedback_actioned_by_fkey(first_name, last_name)')
         .in('venue_id', venueIds)
-        .gte('created_at', startOfDay.toISOString())
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString())
         .eq('is_actioned', true)
         .not('actioned_by', 'is', null);
 
@@ -290,7 +278,7 @@ const METRIC_CONFIG = {
   }
 };
 
-const ConfigurableMultiVenueTile = ({ metricType, position, onRemove, onChangeMetric }) => {
+const ConfigurableMultiVenueTile = ({ metricType, position, onRemove, onChangeMetric, dateRange }) => {
   const { allVenues } = useVenue();
   const [venueStats, setVenueStats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -299,13 +287,13 @@ const ConfigurableMultiVenueTile = ({ metricType, position, onRemove, onChangeMe
   const Icon = config?.icon || BarChart3;
 
   useEffect(() => {
-    if (!allVenues || allVenues.length === 0) return;
+    if (!allVenues || allVenues.length === 0 || !dateRange) return;
 
     const fetchStats = async () => {
       setLoading(true);
       try {
         const venueIds = allVenues.map(v => v.id);
-        const stats = await config.fetchData(venueIds);
+        const stats = await config.fetchData(venueIds, dateRange);
 
         // Sort by value descending
         const sortedStats = stats.sort((a, b) => b.value - a.value);
@@ -328,7 +316,7 @@ const ConfigurableMultiVenueTile = ({ metricType, position, onRemove, onChangeMe
     };
 
     fetchStats();
-  }, [allVenues, metricType]);
+  }, [allVenues, metricType, dateRange]);
 
   if (loading) {
     return (
