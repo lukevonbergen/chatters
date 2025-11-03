@@ -12,49 +12,31 @@ import TripAdvisorRatingKPITile from '../../components/dashboard/reports/TripAdv
 import RecentSessionsTile from '../../components/dashboard/reports/RecentSessionsTile';
 import QuickInsightsTile from '../../components/dashboard/reports/QuickInsightsTile';
 import PeakHoursTile from '../../components/dashboard/reports/PeakHoursTile';
-import MultiSiteSelector from '../../components/dashboard/overview/MultiSiteSelector';
+import ConfigurableMultiVenueTile from '../../components/dashboard/reports/ConfigurableMultiVenueTile';
+import MetricSelectorModal from '../../components/dashboard/modals/MetricSelectorModal';
 import usePageTitle from '../../hooks/usePageTitle';
-import useMultiVenueStats from '../../hooks/useMultiVenueStats';
 import { useVenue } from '../../context/VenueContext';
-import { Monitor, AlertTriangle, Clock, TrendingUp, Users, Star, BarChart3, Zap, HandHeart, Lightbulb } from 'lucide-react';
+import { Monitor, AlertTriangle, Clock, TrendingUp, Users, Star, BarChart3, Zap, HandHeart, Lightbulb, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DashboardPage = () => {
   usePageTitle('Overview');
-  const { venueId, venueName, allVenues } = useVenue();
+  const { venueId, venueName } = useVenue();
   const [assistanceRequests, setAssistanceRequests] = useState([]);
   const [realtimeStatus, setRealtimeStatus] = useState('online');
   const [userName, setUserName] = useState('');
+  const [userTiles, setUserTiles] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTilePosition, setEditingTilePosition] = useState(null);
   const navigate = useNavigate();
-  
-  // Multi-venue state
-  const [selectedVenues, setSelectedVenues] = useState([]);
-  const [isMultiSite, setIsMultiSite] = useState(false);
-  
-  // Use multi-venue stats hook
-  const { stats: multiVenueStats, loading: statsLoading, venueBreakdowns } = useMultiVenueStats(selectedVenues, isMultiSite);
-
-  // Handle venue selection change
-  const handleSelectionChange = (venues, isMulti) => {
-    setSelectedVenues(venues);
-    setIsMultiSite(isMulti);
-  };
-
-  // Initialize with current venue if no selection
-  useEffect(() => {
-    if (venueId && selectedVenues.length === 0) {
-      setSelectedVenues([venueId]);
-    }
-  }, [venueId, selectedVenues.length]);
 
   useEffect(() => {
     loadUserName();
+    loadUserTiles();
     if (!venueId) return;
-    
-    // Load assistance requests for current venue only (multi-venue assistance requests handled differently)
-    if (!isMultiSite) {
-      loadAssistanceRequests();
-    }
+
+    // Load assistance requests for current venue
+    loadAssistanceRequests();
     
     // Real-time subscription for assistance requests
     const subscription = supabase
@@ -145,7 +127,7 @@ const DashboardPage = () => {
   const loadAssistanceRequests = async () => {
     if (!venueId) return;
 
-    // Temporary fix: Remove staff joins to get basic functionality working  
+    // Temporary fix: Remove staff joins to get basic functionality working
     const { data } = await supabase
       .from('assistance_requests')
       .select('*')
@@ -155,6 +137,130 @@ const DashboardPage = () => {
       .limit(10);
 
     setAssistanceRequests(data || []);
+  };
+
+  const loadUserTiles = async () => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId) return;
+
+      const { data, error } = await supabase
+        .from('user_dashboard_tiles')
+        .select('*')
+        .eq('user_id', userId)
+        .order('position', { ascending: true });
+
+      if (error) {
+        console.error('Error loading user tiles:', error);
+        return;
+      }
+
+      setUserTiles(data || []);
+    } catch (error) {
+      console.error('Error in loadUserTiles:', error);
+    }
+  };
+
+  const handleAddTile = () => {
+    setEditingTilePosition(null);
+    setIsModalOpen(true);
+  };
+
+  const handleChangeTileMetric = (position) => {
+    setEditingTilePosition(position);
+    setIsModalOpen(true);
+  };
+
+  const handleMetricSelect = async (metricType) => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId) return;
+
+      if (editingTilePosition !== null) {
+        // Update existing tile
+        const { error } = await supabase
+          .from('user_dashboard_tiles')
+          .update({ metric_type: metricType })
+          .eq('user_id', userId)
+          .eq('position', editingTilePosition);
+
+        if (error) {
+          console.error('Error updating tile:', error);
+          toast.error('Failed to update tile');
+          return;
+        }
+
+        toast.success('Tile updated successfully');
+      } else {
+        // Add new tile - find next available position
+        const nextPosition = userTiles.length; // 0, 1, or 2
+
+        const { error } = await supabase
+          .from('user_dashboard_tiles')
+          .insert({
+            user_id: userId,
+            metric_type: metricType,
+            position: nextPosition
+          });
+
+        if (error) {
+          console.error('Error adding tile:', error);
+          toast.error('Failed to add tile');
+          return;
+        }
+
+        toast.success('Tile added successfully');
+      }
+
+      loadUserTiles();
+    } catch (error) {
+      console.error('Error in handleMetricSelect:', error);
+      toast.error('An error occurred');
+    }
+  };
+
+  const handleRemoveTile = async (position) => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId) return;
+
+      const { error } = await supabase
+        .from('user_dashboard_tiles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('position', position);
+
+      if (error) {
+        console.error('Error removing tile:', error);
+        toast.error('Failed to remove tile');
+        return;
+      }
+
+      toast.success('Tile removed successfully');
+
+      // Reorder remaining tiles to fill gap
+      const remainingTiles = userTiles.filter(t => t.position !== position);
+      for (let i = 0; i < remainingTiles.length; i++) {
+        if (remainingTiles[i].position !== i) {
+          await supabase
+            .from('user_dashboard_tiles')
+            .update({ position: i })
+            .eq('user_id', userId)
+            .eq('id', remainingTiles[i].id);
+        }
+      }
+
+      loadUserTiles();
+    } catch (error) {
+      console.error('Error in handleRemoveTile:', error);
+      toast.error('An error occurred');
+    }
   };
 
   const goToKioskMode = () => {
@@ -185,27 +291,12 @@ const DashboardPage = () => {
       <div className="mb-6 lg:mb-8">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex-1">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                Welcome{userName ? `, ${userName}` : ''} 👋
-              </h1>
-              
-              {/* Multi-Site Selector */}
-              <MultiSiteSelector
-                onSelectionChange={handleSelectionChange}
-                selectedVenues={selectedVenues}
-                componentId="dashboard-overview"
-              />
-            </div>
-            
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
+              Welcome{userName ? `, ${userName}` : ''} 👋
+            </h1>
+
             <p className="text-gray-600 text-sm lg:text-base">
-              {isMultiSite ? (
-                selectedVenues.length === allVenues?.length ? 
-                  `Here's what's happening across all ${selectedVenues.length} venues today...` :
-                  `Here's what's happening across ${selectedVenues.length} selected venues today...`
-              ) : (
-                <>Here's what's happening at <span className="font-semibold text-gray-800">{venueName ? `${venueName}` : 'your venue'}</span> today...</>
-              )}
+              Here's what's happening at <span className="font-semibold text-gray-800">{venueName ? `${venueName}` : 'your venue'}</span> today...
             </p>
           </div>
           
@@ -243,57 +334,79 @@ const DashboardPage = () => {
           <h2 className="text-lg font-semibold text-gray-800">Today's Key Metrics</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          <SessionsActionedTile 
-            venueId={venueId} 
-            multiVenueStats={isMultiSite ? multiVenueStats : null}
-            venueBreakdowns={venueBreakdowns}
-            allVenues={allVenues}
-            isMultiSite={isMultiSite}
-          />
-          <UnresolvedAlertsTile 
-            venueId={venueId}
-            multiVenueStats={isMultiSite ? multiVenueStats : null}
-            venueBreakdowns={venueBreakdowns}
-            allVenues={allVenues}
-            isMultiSite={isMultiSite}
-          />
-          <AvgSatisfactionTile 
-            venueId={venueId}
-            multiVenueStats={isMultiSite ? multiVenueStats : null}
-            venueBreakdowns={venueBreakdowns}
-            allVenues={allVenues}
-            isMultiSite={isMultiSite}
-          />
-          <ActionCompletionRateTile 
-            venueId={venueId}
-            multiVenueStats={isMultiSite ? multiVenueStats : null}
-            venueBreakdowns={venueBreakdowns}
-            allVenues={allVenues}
-            isMultiSite={isMultiSite}
-          />
-          <GoogleRatingKPITile 
-            venueId={venueId}
-            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
-            isMultiSite={isMultiSite}
-          />
-          <TripAdvisorRatingKPITile 
-            venueId={venueId}
-            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
-            isMultiSite={isMultiSite}
-          />
+          <SessionsActionedTile venueId={venueId} />
+          <UnresolvedAlertsTile venueId={venueId} />
+          <AvgSatisfactionTile venueId={venueId} />
+          <ActionCompletionRateTile venueId={venueId} />
+          <GoogleRatingKPITile venueId={venueId} />
+          <TripAdvisorRatingKPITile venueId={venueId} />
         </div>
       </div>
 
-      {/* Quick Insights & Peak Hours - Only show for single venue */}
-      {selectedVenues.length === 1 && venueId && (
+      {/* Configurable Multi-Venue Tiles */}
+      {(userTiles.length > 0 || userTiles.length < 3) && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-5 h-5 text-purple-600" />
+            <h2 className="text-lg font-semibold text-gray-800">Multi-Venue Overview</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {userTiles.map((tile) => (
+              <ConfigurableMultiVenueTile
+                key={tile.id}
+                metricType={tile.metric_type}
+                position={tile.position}
+                onRemove={() => handleRemoveTile(tile.position)}
+                onChangeMetric={() => handleChangeTileMetric(tile.position)}
+              />
+            ))}
+
+            {userTiles.length < 3 && (
+              <button
+                onClick={handleAddTile}
+                className="bg-white rounded-xl shadow-sm p-6 border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all flex flex-col items-center justify-center gap-3 min-h-[200px] group"
+              >
+                <div className="p-3 bg-gray-100 group-hover:bg-blue-100 rounded-full transition-colors">
+                  <Plus className="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium text-gray-700 group-hover:text-blue-700 transition-colors">
+                    Add Metric Tile
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Track metrics across all venues
+                  </p>
+                </div>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Metric Selector Modal */}
+      <MetricSelectorModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSelect={handleMetricSelect}
+        currentMetric={
+          editingTilePosition !== null
+            ? userTiles.find(t => t.position === editingTilePosition)?.metric_type
+            : null
+        }
+        existingMetrics={userTiles.map(t => t.metric_type)}
+      />
+
+      {/* Quick Insights & Peak Hours */}
+      {venueId && (
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="w-5 h-5 text-blue-600" />
             <h2 className="text-lg font-semibold text-gray-800">Insights & Analytics</h2>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <QuickInsightsTile venueId={selectedVenues[0]} />
-            <PeakHoursTile venueId={selectedVenues[0]} />
+            <QuickInsightsTile venueId={venueId} />
+            <PeakHoursTile venueId={venueId} />
           </div>
         </div>
       )}
@@ -307,11 +420,7 @@ const DashboardPage = () => {
         
         {/* Full width recent activity section */}
         <div className="space-y-6">
-          <RecentSessionsTile 
-            venueId={venueId}
-            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
-            isMultiSite={isMultiSite}
-          />
+          <RecentSessionsTile venueId={venueId} />
           
           {/* Recent Assistance Requests - Full Width */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
