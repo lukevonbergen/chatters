@@ -5,7 +5,6 @@ import { useVenue } from '../../../context/VenueContext';
 import { MetricCard, ChartCard } from '../layout/ModernCard';
 import GoogleRatingKPITile from '../reports/GoogleRatingKPITile';
 import TripAdvisorRatingKPITile from '../reports/TripAdvisorRatingKPITile';
-import MultiSiteSelector from './MultiSiteSelector';
 
 // StatCard component removed - using MetricCard from ModernCard instead
 
@@ -53,15 +52,6 @@ const OverviewStats = ({
       <ChartCard
         title="Today's Overview"
         className="mb-8"
-        actions={
-          allVenues && allVenues.length > 1 && (
-            <MultiSiteSelector
-              onSelectionChange={onSelectionChange}
-              selectedVenues={selectedVenues}
-              componentId="dashboard-new-overview"
-            />
-          )
-        }
       >
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
