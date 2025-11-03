@@ -57,7 +57,7 @@ const BillingPage = () => {
       if (accountIdToCheck) {
         const { data: account } = await supabase
           .from('accounts')
-          .select('trial_ends_at, is_paid, demo_account')
+          .select('trial_ends_at, is_paid, demo_account, account_type, stripe_subscription_status')
           .eq('id', accountIdToCheck)
           .single();
 

@@ -55,7 +55,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         // Get account data
         const { data: account } = await supabase
           .from('accounts')
-          .select('trial_ends_at, is_paid, demo_account, stripe_customer_id, stripe_subscription_id, name')
+          .select('trial_ends_at, is_paid, demo_account, stripe_customer_id, stripe_subscription_id, name, account_type, stripe_subscription_status')
           .eq('id', accountIdToCheck)
           .single();
 
