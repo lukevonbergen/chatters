@@ -3,9 +3,6 @@ import { TrendingUp, Users, Star, Clock, AlertTriangle, CheckCircle, Activity, T
 import useOverviewStats from '../../../hooks/useOverviewStats';
 import { useVenue } from '../../../context/VenueContext';
 import { MetricCard, ChartCard } from '../layout/ModernCard';
-import GoogleRatingKPITile from '../reports/GoogleRatingKPITile';
-import TripAdvisorRatingKPITile from '../reports/TripAdvisorRatingKPITile';
-import MultiSiteSelector from './MultiSiteSelector';
 
 // StatCard component removed - using MetricCard from ModernCard instead
 
@@ -53,18 +50,9 @@ const OverviewStats = ({
       <ChartCard
         title="Today's Overview"
         className="mb-8"
-        actions={
-          allVenues && allVenues.length > 1 && (
-            <MultiSiteSelector
-              onSelectionChange={onSelectionChange}
-              selectedVenues={selectedVenues}
-              componentId="dashboard-new-overview"
-            />
-          )
-        }
       >
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Today's Sessions */}
           <MetricCard
             icon={Users}
@@ -72,6 +60,8 @@ const OverviewStats = ({
             value={stats?.todaySessions || '0'}
             subtitle="Customer interactions"
             color="blue"
+            trend={stats?.sessionsTrend}
+            trendDirection={stats?.sessionsTrendDirection}
             venueBreakdowns={venueBreakdowns}
             allVenues={allVenues}
             field="sessions"
@@ -84,6 +74,8 @@ const OverviewStats = ({
             value={stats?.avgSatisfaction ? `${stats.avgSatisfaction}/5` : '--'}
             subtitle="Today's average"
             color="amber"
+            trend={stats?.satisfactionTrend}
+            trendDirection={stats?.satisfactionTrendDirection}
             venueBreakdowns={venueBreakdowns}
             allVenues={allVenues}
             field="avgSatisfaction"
@@ -96,6 +88,8 @@ const OverviewStats = ({
             value={stats?.avgResponseTime || '--'}
             subtitle="To all feedback"
             color="green"
+            trend={stats?.responseTimeTrend}
+            trendDirection={stats?.responseTimeTrendDirection}
             venueBreakdowns={venueBreakdowns}
             allVenues={allVenues}
             field="avgResponseTime"
@@ -108,6 +102,8 @@ const OverviewStats = ({
             value={stats?.completionRate ? `${stats.completionRate}%` : '--'}
             subtitle="Issues resolved"
             color="purple"
+            trend={stats?.completionTrend}
+            trendDirection={stats?.completionTrendDirection}
             venueBreakdowns={venueBreakdowns}
             allVenues={allVenues}
             field="completionRate"
@@ -159,24 +155,6 @@ const OverviewStats = ({
             venueBreakdowns={venueBreakdowns}
             allVenues={allVenues}
             field="peakHour"
-          />
-
-          {/* Google Rating */}
-          <GoogleRatingKPITile 
-            venueId={isMultiSite ? null : venueId} 
-            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
-            isMultiSite={isMultiSite}
-            venueBreakdowns={venueBreakdowns}
-            allVenues={allVenues}
-          />
-
-          {/* TripAdvisor Rating */}
-          <TripAdvisorRatingKPITile 
-            venueId={isMultiSite ? null : venueId} 
-            selectedVenues={isMultiSite ? selectedVenues : [venueId]}
-            isMultiSite={isMultiSite}
-            venueBreakdowns={venueBreakdowns}
-            allVenues={allVenues}
           />
         </div>
       </ChartCard>

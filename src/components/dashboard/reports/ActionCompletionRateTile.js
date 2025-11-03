@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { supabase } from '../../../utils/supabase';
+import { MetricCard } from '../../ui/metric-card';
 
 function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
 function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return x; }
@@ -58,6 +59,8 @@ export default function ActionCompletionRateTile({
   // data
   const [actionedCount, setActionedCount] = useState(propActionedCount ?? 0);
   const [totalCount, setTotalCount] = useState(propTotalCount ?? 0);
+  const [yesterdayActionedCount, setYesterdayActionedCount] = useState(0);
+  const [yesterdayTotalCount, setYesterdayTotalCount] = useState(0);
   const [loading, setLoading] = useState(!(propActionedCount || propTotalCount));
 
   useEffect(() => {
@@ -128,7 +131,7 @@ export default function ActionCompletionRateTile({
         if (assistanceData?.length) {
           for (const request of assistanceData) {
             const ts = new Date(request.resolved_at ?? request.created_at).getTime();
-            
+
             // Make sure the request falls in range
             const { start: sISO, end: eISO } = rangeISO(preset);
             const sMs = new Date(sISO).getTime();
@@ -145,6 +148,75 @@ export default function ActionCompletionRateTile({
 
         setActionedCount(resolved);
         setTotalCount(total);
+
+        // Fetch yesterday's data only if timeframe is 'today'
+        if (preset === 'today') {
+          const { start: yStart, end: yEnd } = rangeISO('yesterday');
+
+          // Fetch YESTERDAY's feedback sessions
+          const { data: yesterdayFeedbackData } = await supabase
+            .from('feedback')
+            .select('session_id, is_actioned, dismissed, created_at, resolved_at')
+            .eq('venue_id', venueId)
+            .or(`and(resolved_at.gte.${yStart},resolved_at.lte.${yEnd}),and(resolved_at.is.null,created_at.gte.${yStart},created_at.lte.${yEnd})`);
+
+          // Fetch YESTERDAY's assistance requests
+          const { data: yesterdayAssistanceData } = await supabase
+            .from('assistance_requests')
+            .select('id, status, created_at, resolved_at')
+            .eq('venue_id', venueId)
+            .or(`and(resolved_at.gte.${yStart},resolved_at.lte.${yEnd}),and(resolved_at.is.null,created_at.gte.${yStart},created_at.lte.${yEnd})`);
+
+          let yesterdayTotal = 0;
+          let yesterdayResolved = 0;
+
+          // Process YESTERDAY's feedback sessions
+          if (yesterdayFeedbackData?.length) {
+            const yesterdaySessions = new Map();
+            for (const row of yesterdayFeedbackData) {
+              if (!yesterdaySessions.has(row.session_id)) yesterdaySessions.set(row.session_id, []);
+              yesterdaySessions.get(row.session_id).push(row);
+            }
+
+            for (const rows of yesterdaySessions.values()) {
+              let latestTs = 0;
+              for (const r of rows) {
+                const ts = new Date(r.resolved_at ?? r.created_at).getTime();
+                if (ts > latestTs) latestTs = ts;
+              }
+
+              const yStartMs = new Date(yStart).getTime();
+              const yEndMs = new Date(yEnd).getTime();
+              if (latestTs < yStartMs || latestTs > yEndMs) continue;
+
+              yesterdayTotal += 1;
+
+              const allActioned = rows.every(x => x.is_actioned === true);
+              const allDismissed = rows.every(x => x.dismissed === true);
+              if (allActioned || allDismissed) yesterdayResolved += 1;
+            }
+          }
+
+          // Process YESTERDAY's assistance requests
+          if (yesterdayAssistanceData?.length) {
+            for (const request of yesterdayAssistanceData) {
+              const ts = new Date(request.resolved_at ?? request.created_at).getTime();
+
+              const yStartMs = new Date(yStart).getTime();
+              const yEndMs = new Date(yEnd).getTime();
+              if (ts < yStartMs || ts > yEndMs) continue;
+
+              yesterdayTotal += 1;
+
+              if (request.status === 'resolved' || request.resolved_at !== null) {
+                yesterdayResolved += 1;
+              }
+            }
+          }
+
+          setYesterdayActionedCount(yesterdayResolved);
+          setYesterdayTotalCount(yesterdayTotal);
+        }
       } catch (e) {
         console.error('ActionCompletionRateTile fetch error:', e);
         setActionedCount(0);
@@ -162,37 +234,43 @@ export default function ActionCompletionRateTile({
     return (actionedCount / totalCount) * 100;
   }, [actionedCount, totalCount]);
 
-  const rateTextClass = rate >= 80 ? 'text-green-600' : 'text-gray-900';
-  const subline = loading
-    ? 'Loading…'
-    : `${actionedCount}/${totalCount} items resolved (feedback + assistance)`;
+  const yesterdayRate = useMemo(() => {
+    if (!yesterdayTotalCount) return 0;
+    return (yesterdayActionedCount / yesterdayTotalCount) * 100;
+  }, [yesterdayActionedCount, yesterdayTotalCount]);
 
-  // Calculate delta for completion rate (would need baseline period data)
-  const completionDelta = useMemo(() => {
-    // For now, show positive trend if rate > 80%, neutral if > 60%, negative if < 60%
-    if (rate >= 80) return Math.round(Math.random() * 10 + 5); // +5 to +15%
-    if (rate >= 60) return Math.round(Math.random() * 6 - 3); // -3 to +3%
-    return Math.round(Math.random() * -10 - 2); // -2 to -12%
-  }, [rate]);
+  const calculateTrend = () => {
+    // Only show trend if we're on 'today' timeframe and have yesterday data
+    if (preset !== 'today' || yesterdayTotalCount === 0) return null;
+
+    const difference = rate - yesterdayRate;
+
+    if (Math.abs(difference) < 0.5) {
+      return {
+        direction: "neutral",
+        positive: true,
+        value: "0%",
+        text: "vs yesterday"
+      };
+    }
+
+    return {
+      direction: difference > 0 ? "up" : "down",
+      positive: difference > 0, // Higher completion rate is positive
+      value: `${difference > 0 ? '+' : ''}${difference.toFixed(1)}%`,
+      text: "vs yesterday"
+    };
+  };
 
   return (
-    <div className="bg-gray-50 rounded-lg p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-          <CheckCircle className="w-5 h-5 text-green-600" />
-        </div>
-        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-          completionDelta >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-        }`}>
-          {completionDelta >= 0 ? `+${completionDelta}` : completionDelta}%
-        </div>
-      </div>
-      <div className="text-2xl font-bold text-gray-900 mb-1">
-        {loading ? '—' : `${rate.toFixed(1)}%`}
-      </div>
-      <div className="text-sm text-gray-600">
-        Completion Rate
-      </div>
-    </div>
+    <MetricCard
+      title="Completion Rate"
+      value={loading ? '—' : `${rate.toFixed(1)}%`}
+      description={`${actionedCount}/${totalCount} items resolved`}
+      icon={CheckCircle}
+      variant={rate >= 80 ? "success" : rate >= 60 ? "neutral" : "warning"}
+      loading={loading}
+      trend={calculateTrend()}
+    />
   );
 }

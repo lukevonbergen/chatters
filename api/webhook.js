@@ -57,7 +57,9 @@ export default async function handler(req, res) {
               is_paid: true,
               trial_ends_at: null,
               stripe_customer_id: customerId,
-              stripe_subscription_id: subscriptionId
+              stripe_subscription_id: subscriptionId,
+              stripe_subscription_status: 'active',
+              account_type: 'paid'
             })
             .eq('id', user.account_id);
 
@@ -80,12 +82,14 @@ export default async function handler(req, res) {
           .update({
             is_paid: isActive,
             stripe_subscription_id: subscription.id,
-            trial_ends_at: isActive ? null : undefined
+            stripe_subscription_status: subscription.status,
+            trial_ends_at: isActive ? null : undefined,
+            account_type: isActive ? 'paid' : undefined
           })
           .eq('stripe_customer_id', customerId);
 
         if (updateError) throw updateError;
-        console.log('Subscription updated:', subscription.id, 'Active:', isActive);
+        console.log('Subscription updated:', subscription.id, 'Status:', subscription.status);
         break;
       }
 
@@ -100,12 +104,14 @@ export default async function handler(req, res) {
           .update({
             is_paid: isActive,
             stripe_subscription_id: subscription.id,
-            trial_ends_at: isActive ? null : undefined
+            stripe_subscription_status: subscription.status,
+            trial_ends_at: isActive ? null : undefined,
+            account_type: isActive ? 'paid' : undefined
           })
           .eq('stripe_customer_id', customerId);
 
         if (updateError) throw updateError;
-        console.log('Subscription created:', subscription.id, 'Active:', isActive);
+        console.log('Subscription created:', subscription.id, 'Status:', subscription.status);
         break;
       }
 
@@ -118,7 +124,8 @@ export default async function handler(req, res) {
           .from('accounts')
           .update({
             is_paid: false,
-            stripe_subscription_id: null
+            stripe_subscription_id: null,
+            stripe_subscription_status: 'canceled'
           })
           .eq('stripe_customer_id', customerId);
 
@@ -161,6 +168,34 @@ export default async function handler(req, res) {
         console.log('Payment method type:', paymentIntent.payment_method_types);
 
         // Optionally: Send email notification that payment is being processed
+        break;
+      }
+
+      case 'setup_intent.succeeded': {
+        const setupIntent = event.data.object;
+        const customerId = setupIntent.customer;
+
+        // Payment method successfully added during trial
+        console.log('Payment method added for customer:', customerId);
+
+        // Optionally: Update account to mark that payment method is on file
+        const { error: updateError } = await supabase
+          .from('accounts')
+          .update({
+            // You could add a 'has_payment_method' boolean column if you want
+            updated_at: new Date().toISOString()
+          })
+          .eq('stripe_customer_id', customerId);
+
+        if (updateError) console.error('Error updating account:', updateError);
+        break;
+      }
+
+      case 'customer.updated': {
+        const customer = event.data.object;
+
+        // Customer details updated (e.g., payment method changed)
+        console.log('Customer updated:', customer.id);
         break;
       }
 

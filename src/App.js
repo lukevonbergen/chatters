@@ -30,9 +30,12 @@ function App() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Check if it's a dashboard domain (my. subdomain) or Vercel preview URL
+      const isVercelPreview = window.location.hostname.includes('vercel.app');
       setIsDashboardDomain(
         window.location.hostname.startsWith('my.') ||
-        window.location.hostname.includes('.my.')
+        window.location.hostname.includes('.my.') ||
+        isVercelPreview
       );
 
       // Handle "Remember Me" - check if we need to sign out on browser reopen

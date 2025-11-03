@@ -65,8 +65,21 @@ const MetricCard = ({
 
       {/* Main Value */}
       <div className="mb-3">
-        <div className="text-xl font-bold text-gray-900">
-          {value || '0'}
+        <div className="flex items-center gap-2">
+          <div className="text-xl font-bold text-gray-900">
+            {value || '0'}
+          </div>
+          {trend && (
+            <div className={`flex items-center gap-1 text-sm font-medium ${
+              trendDirection === 'up' ? 'text-green-600' :
+              trendDirection === 'down' ? 'text-red-600' :
+              'text-gray-500'
+            }`}>
+              {trendDirection === 'up' && <TrendingUp className="w-3 h-3" />}
+              {trendDirection === 'down' && <TrendingDown className="w-3 h-3" />}
+              <span>{trend}</span>
+            </div>
+          )}
         </div>
         {comparison && (
           <div className="text-sm text-gray-500 mt-1">

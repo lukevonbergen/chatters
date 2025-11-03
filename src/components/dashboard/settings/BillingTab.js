@@ -18,6 +18,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
   const [venueCount, setVenueCount] = useState(0);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState(null);
+  const [accountId, setAccountId] = useState(null);
 
   useEffect(() => {
     const fetchBillingInfo = async () => {
@@ -52,10 +53,13 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
       }
 
       if (accountIdToCheck) {
+        // Store account ID for later use
+        setAccountId(accountIdToCheck);
+
         // Get account data
         const { data: account } = await supabase
           .from('accounts')
-          .select('trial_ends_at, is_paid, demo_account, stripe_customer_id, stripe_subscription_id, name')
+          .select('trial_ends_at, is_paid, demo_account, stripe_customer_id, stripe_subscription_id, name, account_type, stripe_subscription_status')
           .eq('id', accountIdToCheck)
           .single();
 
@@ -93,16 +97,31 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         : process.env.REACT_APP_STRIPE_PRICE_YEARLY;
 
     try {
-      const response = await fetch('/api/create-subscription-intent', {
+      // IMPORTANT: Different flow for trial vs expired trial
+      const endpoint = !accountData?.isExpired
+        ? '/api/setup-payment-method'  // Trial: Just save card, NO CHARGE
+        : '/api/create-subscription-intent';  // Expired: Charge immediately
+
+      const body = !accountData?.isExpired
+        ? { email: userEmail, accountId: accountId }  // Setup only needs email + accountId
+        : { email: userEmail, priceId, venueCount };  // Subscription needs pricing
+
+      console.log('Calling endpoint:', endpoint, 'with body:', body);
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail, priceId, venueCount }),
+        body: JSON.stringify(body),
       });
 
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create subscription');
+        const errorMessage = data.message || data.error || 'Failed to process payment';
+        const errorDetails = data.details ? ` (${data.details})` : '';
+        throw new Error(errorMessage + errorDetails);
       }
 
       if (!data.clientSecret) {
@@ -125,10 +144,15 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
     setCheckoutModalOpen(false);
     setClientSecret(null);
 
-    // Show appropriate success message based on payment method
-    if (status === 'processing') {
+    // Show appropriate success message based on status
+    if (status === 'setup_succeeded') {
+      // Setup mode - card saved, no charge
+      alert('✓ Payment details saved successfully!\n\nYour card has been securely saved. You will not be charged until your trial period expires.\n\nYou can continue using Chatters throughout your trial.');
+    } else if (status === 'processing') {
+      // Direct Debit payment processing
       alert('Direct Debit setup successful! Your payment will be processed within 3-5 business days. You\'ll receive access once the payment clears.');
     } else {
+      // Payment succeeded
       alert('Payment successful! Your subscription is now active.');
     }
 
@@ -354,7 +378,21 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
       {/* Pricing Plans */}
       {!accountData?.is_paid && (
         <>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Plan</h3>
+          {/* Different heading based on trial status */}
+          {!accountData?.isExpired ? (
+            <>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Payment Details</h3>
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-900 font-medium">No charge today</p>
+                <p className="text-blue-800 text-sm mt-1">
+                  Add your payment details now for seamless access when your trial ends in {accountData?.daysLeft} day{accountData?.daysLeft !== 1 ? 's' : ''}.
+                  You won't be charged until your trial period expires.
+                </p>
+              </div>
+            </>
+          ) : (
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Plan</h3>
+          )}
           <div className="space-y-4 mb-8">
             {/* Monthly Plan */}
             <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border-2 rounded-xl p-5 cursor-pointer transition
@@ -364,10 +402,17 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
                 <p className="text-sm text-gray-600 mt-1">
                   £{PRICE_PER_VENUE_MONTHLY} per venue per month · Pay as you go · Cancel anytime
                 </p>
+                {!accountData?.isExpired && (
+                  <p className="text-xs text-blue-600 font-medium mt-1">
+                    Billing starts after your {accountData?.daysLeft}-day trial
+                  </p>
+                )}
               </div>
               <div className="flex items-center justify-between sm:justify-end sm:ml-4">
                 <div className="text-right">
-                  <div className="text-sm text-gray-500">Total for {venueCount} venue{venueCount !== 1 ? 's' : ''}</div>
+                  <div className="text-sm text-gray-500">
+                    {!accountData?.isExpired ? 'After trial' : 'Total'} for {venueCount} venue{venueCount !== 1 ? 's' : ''}
+                  </div>
                   <span className="text-2xl font-bold text-gray-800">£{monthlyTotal.toLocaleString()}</span>
                   <span className="text-gray-600">/mo</span>
                 </div>
@@ -392,10 +437,17 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
                 <p className="text-sm text-gray-600 mt-1">
                   £{PRICE_PER_VENUE_YEARLY} per venue per year · Best value · One payment
                 </p>
+                {!accountData?.isExpired && (
+                  <p className="text-xs text-green-600 font-medium mt-1">
+                    Billing starts after your {accountData?.daysLeft}-day trial
+                  </p>
+                )}
               </div>
               <div className="flex items-center justify-between sm:justify-end sm:ml-4">
                 <div className="text-right">
-                  <div className="text-sm text-gray-500">Total for {venueCount} venue{venueCount !== 1 ? 's' : ''}</div>
+                  <div className="text-sm text-gray-500">
+                    {!accountData?.isExpired ? 'After trial' : 'Total'} for {venueCount} venue{venueCount !== 1 ? 's' : ''}
+                  </div>
                   <span className="text-2xl font-bold text-gray-800">£{yearlyTotal.toLocaleString()}</span>
                   <span className="text-gray-600">/yr</span>
                   <p className="text-xs text-green-600 font-medium mt-1">
@@ -419,12 +471,22 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
               disabled={loading}
               className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 font-semibold disabled:cursor-not-allowed"
             >
-              {loading ? 'Processing...' : `Subscribe Now - £${subscriptionType === 'monthly' ? monthlyTotal.toLocaleString() : yearlyTotal.toLocaleString()}${subscriptionType === 'monthly' ? '/mo' : '/yr'}`}
+              {loading ? 'Processing...' : !accountData?.isExpired
+                ? 'Add Payment Details (No Charge Today)'
+                : `Subscribe Now - £${subscriptionType === 'monthly' ? monthlyTotal.toLocaleString() : yearlyTotal.toLocaleString()}${subscriptionType === 'monthly' ? '/mo' : '/yr'}`
+              }
             </button>
 
-            <p className="text-sm text-gray-500">
-              Secured checkout powered by Stripe
-            </p>
+            <div className="text-sm text-gray-500">
+              {!accountData?.isExpired ? (
+                <p>
+                  🔒 Secure · No charge until trial ends<br/>
+                  <span className="text-xs">Cancel anytime before {new Date(accountData?.trial_ends_at).toLocaleDateString()}</span>
+                </p>
+              ) : (
+                <p>Secured checkout powered by Stripe</p>
+              )}
+            </div>
           </div>
         </>
       )}
@@ -470,6 +532,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         total={subscriptionType === 'monthly' ? monthlyTotal : yearlyTotal}
         billingPeriod={subscriptionType}
         venueCount={venueCount}
+        isSetupMode={!accountData?.isExpired}
       />
     </div>
   );
