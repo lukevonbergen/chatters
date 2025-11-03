@@ -527,6 +527,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         total={subscriptionType === 'monthly' ? monthlyTotal : yearlyTotal}
         billingPeriod={subscriptionType}
         venueCount={venueCount}
+        isSetupMode={!accountData?.isExpired}
       />
     </div>
   );

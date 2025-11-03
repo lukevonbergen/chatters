@@ -10,7 +10,7 @@ import { X, CreditCard, Lock } from 'lucide-react';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
-const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount }) => {
+const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount, isSetupMode }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -26,65 +26,105 @@ const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount })
     setIsProcessing(true);
     setErrorMessage(null);
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/dashboard`,
-      },
-      redirect: 'if_required',
-    });
+    // CRITICAL: Different flow for setup (trial) vs payment (expired trial)
+    if (isSetupMode) {
+      // SETUP MODE: Just save card, NO CHARGE
+      const { error, setupIntent } = await stripe.confirmSetup({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/account/billing?setup_success=true`,
+        },
+        redirect: 'if_required',
+      });
 
-    if (error) {
-      setErrorMessage(error.message);
-      setIsProcessing(false);
-    } else {
-      // Payment succeeded or is processing
-      // For BACS Direct Debit, the payment will be in 'processing' state
-      // For cards, it will be 'succeeded'
-      if (paymentIntent?.status === 'processing') {
-        onSuccess('processing');
+      if (error) {
+        setErrorMessage(error.message);
+        setIsProcessing(false);
       } else {
-        onSuccess('succeeded');
+        // Setup succeeded - card saved, no charge
+        onSuccess('setup_succeeded');
+      }
+    } else {
+      // PAYMENT MODE: Charge immediately
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/dashboard`,
+        },
+        redirect: 'if_required',
+      });
+
+      if (error) {
+        setErrorMessage(error.message);
+        setIsProcessing(false);
+      } else {
+        // Payment succeeded or is processing
+        if (paymentIntent?.status === 'processing') {
+          onSuccess('processing');
+        } else {
+          onSuccess('succeeded');
+        }
       }
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Order Summary - More Compact */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4">
-        <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-          <div>
-            <span className="text-gray-600 text-xs">Plan</span>
-            <p className="font-semibold text-gray-900">
-              {billingPeriod === 'monthly' ? 'Monthly' : 'Annual'}
-            </p>
-          </div>
-          <div className="text-right">
-            <span className="text-gray-600 text-xs">Venues</span>
-            <p className="font-semibold text-gray-900">{venueCount}</p>
-          </div>
-        </div>
-        <div className="pt-3 border-t border-blue-200 flex justify-between items-baseline">
-          <span className="text-sm font-medium text-gray-700">Total</span>
-          <div className="text-right">
-            <span className="text-2xl font-bold text-gray-900">£{total.toLocaleString()}</span>
-            <span className="text-xs text-gray-500 ml-1">
-              /{billingPeriod === 'monthly' ? 'mo' : 'yr'}
-            </span>
+      {/* Order Summary or Setup Notice */}
+      {isSetupMode ? (
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border-2 border-blue-200">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <Lock className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-1">No Charge Today</h4>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                We're securely saving your payment method. <strong>You will not be charged</strong> until your trial period expires.
+              </p>
+              <div className="mt-2 pt-2 border-t border-blue-200">
+                <p className="text-xs text-gray-600">
+                  After trial: <strong>£{total.toLocaleString()}/{billingPeriod === 'monthly' ? 'mo' : 'yr'}</strong> for {venueCount} venue{venueCount !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4">
+          <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+            <div>
+              <span className="text-gray-600 text-xs">Plan</span>
+              <p className="font-semibold text-gray-900">
+                {billingPeriod === 'monthly' ? 'Monthly' : 'Annual'}
+              </p>
+            </div>
+            <div className="text-right">
+              <span className="text-gray-600 text-xs">Venues</span>
+              <p className="font-semibold text-gray-900">{venueCount}</p>
+            </div>
+          </div>
+          <div className="pt-3 border-t border-blue-200 flex justify-between items-baseline">
+            <span className="text-sm font-medium text-gray-700">Total</span>
+            <div className="text-right">
+              <span className="text-2xl font-bold text-gray-900">£{total.toLocaleString()}</span>
+              <span className="text-xs text-gray-500 ml-1">
+                /{billingPeriod === 'monthly' ? 'mo' : 'yr'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payment Element */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-gray-700">
           <CreditCard className="w-4 h-4" />
-          <h3 className="text-sm font-medium">Payment Method</h3>
+          <h3 className="text-sm font-medium">{isSetupMode ? 'Card Details' : 'Payment Method'}</h3>
         </div>
         <PaymentElement
           options={{
-            layout: 'tabs',
+            layout: isSetupMode ? 'accordion' : 'tabs',
             defaultValues: {
               billingDetails: {
                 address: {
@@ -94,9 +134,11 @@ const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount })
             }
           }}
         />
-        <p className="text-xs text-gray-500 mt-2">
-          💳 Pay by card or 🏦 Direct Debit (BACS)
-        </p>
+        {!isSetupMode && (
+          <p className="text-xs text-gray-500 mt-2">
+            💳 Pay by card
+          </p>
+        )}
       </div>
 
       {/* Error Message */}
@@ -125,8 +167,10 @@ const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount })
             {isProcessing ? (
               <span className="flex items-center justify-center gap-2">
                 <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Processing...
+                {isSetupMode ? 'Saving...' : 'Processing...'}
               </span>
+            ) : isSetupMode ? (
+              'Save Card (No Charge)'
             ) : (
               `Pay £${total.toLocaleString()}`
             )}
@@ -141,7 +185,7 @@ const CheckoutForm = ({ onSuccess, onCancel, total, billingPeriod, venueCount })
   );
 };
 
-const StripeCheckoutModal = ({ isOpen, onClose, onSuccess, clientSecret, total, billingPeriod, venueCount }) => {
+const StripeCheckoutModal = ({ isOpen, onClose, onSuccess, clientSecret, total, billingPeriod, venueCount, isSetupMode = false }) => {
   useEffect(() => {
     // Prevent body scroll when modal is open
     if (isOpen) {
@@ -190,8 +234,12 @@ const StripeCheckoutModal = ({ isOpen, onClose, onSuccess, clientSecret, total, 
           {/* Header - More Compact */}
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Complete Subscription</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Secure payment via Stripe</p>
+              <h2 className="text-xl font-bold text-gray-900">
+                {isSetupMode ? 'Add Payment Details' : 'Complete Subscription'}
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {isSetupMode ? 'No charge during trial' : 'Secure payment via Stripe'}
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -210,6 +258,7 @@ const StripeCheckoutModal = ({ isOpen, onClose, onSuccess, clientSecret, total, 
                 total={total}
                 billingPeriod={billingPeriod}
                 venueCount={venueCount}
+                isSetupMode={isSetupMode}
               />
             </Elements>
           )}
