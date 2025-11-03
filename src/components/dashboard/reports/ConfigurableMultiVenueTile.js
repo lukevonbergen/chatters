@@ -302,50 +302,90 @@ const METRIC_CONFIG = {
   google_rating: {
     title: 'Google Rating',
     icon: Star,
-    fetchData: async (venueIds) => {
+    fetchData: async (venueIds, dateRange) => {
+      // Get all ratings in date range for each venue
       const { data } = await supabase
-        .from('external_ratings')
-        .select('venue_id, rating')
+        .from('venue_google_ratings')
+        .select('venue_id, rating, recorded_at')
         .in('venue_id', venueIds)
-        .eq('source', 'google');
+        .gte('recorded_at', dateRange.from.toISOString())
+        .lte('recorded_at', dateRange.to.toISOString())
+        .order('recorded_at', { ascending: true });
 
       const venueRatings = {};
-      venueIds.forEach(id => venueRatings[id] = null);
+      venueIds.forEach(id => venueRatings[id] = []);
 
       (data || []).forEach(item => {
-        venueRatings[item.venue_id] = item.rating;
+        venueRatings[item.venue_id].push(item);
       });
 
-      return Object.entries(venueRatings).map(([venueId, rating]) => ({
-        venueId,
-        value: rating ? parseFloat(rating) : 0,
-        displayValue: rating ? `${parseFloat(rating).toFixed(1)}/5` : 'N/A'
-      }));
+      return venueIds.map(venueId => {
+        const ratings = venueRatings[venueId];
+
+        if (ratings.length === 0) {
+          return {
+            venueId,
+            value: 0,
+            displayValue: 'No data'
+          };
+        }
+
+        // Calculate change from first to last rating in period
+        const firstRating = ratings[0].rating;
+        const lastRating = ratings[ratings.length - 1].rating;
+        const change = lastRating - firstRating;
+
+        return {
+          venueId,
+          value: change,
+          displayValue: change >= 0 ? `+${change.toFixed(1)}` : change.toFixed(1)
+        };
+      });
     }
   },
 
   tripadvisor_rating: {
     title: 'TripAdvisor Rating',
     icon: Star,
-    fetchData: async (venueIds) => {
+    fetchData: async (venueIds, dateRange) => {
+      // Get all ratings in date range for each venue
       const { data } = await supabase
-        .from('external_ratings')
-        .select('venue_id, rating')
+        .from('venue_tripadvisor_ratings')
+        .select('venue_id, rating, recorded_at')
         .in('venue_id', venueIds)
-        .eq('source', 'tripadvisor');
+        .gte('recorded_at', dateRange.from.toISOString())
+        .lte('recorded_at', dateRange.to.toISOString())
+        .order('recorded_at', { ascending: true });
 
       const venueRatings = {};
-      venueIds.forEach(id => venueRatings[id] = null);
+      venueIds.forEach(id => venueRatings[id] = []);
 
       (data || []).forEach(item => {
-        venueRatings[item.venue_id] = item.rating;
+        venueRatings[item.venue_id].push(item);
       });
 
-      return Object.entries(venueRatings).map(([venueId, rating]) => ({
-        venueId,
-        value: rating ? parseFloat(rating) : 0,
-        displayValue: rating ? `${parseFloat(rating).toFixed(1)}/5` : 'N/A'
-      }));
+      return venueIds.map(venueId => {
+        const ratings = venueRatings[venueId];
+
+        if (ratings.length === 0) {
+          return {
+            venueId,
+            value: 0,
+            displayValue: 'No data'
+          };
+        }
+
+        // Calculate change from first to last rating in period
+        const firstRating = ratings[0].rating;
+        const lastRating = ratings[ratings.length - 1].rating;
+        const change = lastRating - firstRating;
+
+        return {
+          venueId,
+          value: change,
+          displayValue: change >= 0 ? `+${change.toFixed(1)}` : change.toFixed(1)
+        };
+      });
     }
   }
 };
