@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { Line } from 'react-chartjs-2';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Calendar } from 'lucide-react';
+import { DateRangeSelector } from '../../ui/date-range-selector';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -25,31 +26,55 @@ ChartJS.register(
   Filler
 );
 
+// Google logo SVG component
+const GoogleLogo = () => (
+  <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107"/>
+    <path d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" fill="#FF3D00"/>
+    <path d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" fill="#4CAF50"/>
+    <path d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" fill="#1976D2"/>
+  </svg>
+);
+
 const GoogleRatingTrendCard = ({ venueId }) => {
   const [currentRating, setCurrentRating] = useState(null);
   const [historicalData, setHistoricalData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [trend, setTrend] = useState(null);
+  const [dateRangePreset, setDateRangePreset] = useState('last30days');
+  const [dateRange, setDateRange] = useState(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    return { from: thirtyDaysAgo, to: endOfDay };
+  });
 
   useEffect(() => {
-    if (venueId) {
+    if (venueId && dateRange) {
       loadRatingData();
     }
-  }, [venueId]);
+  }, [venueId, dateRange]);
+
+  const handleDateRangeChange = ({ preset, range }) => {
+    setDateRangePreset(preset);
+    const endOfDay = new Date(range.to);
+    endOfDay.setHours(23, 59, 59, 999);
+    setDateRange({ from: range.from, to: endOfDay });
+  };
 
   const loadRatingData = async () => {
     try {
       setLoading(true);
 
-      // Get last 30 days of Google ratings
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
       const { data: googleRatings } = await supabase
         .from('venue_google_ratings')
         .select('rating, ratings_count, recorded_at')
         .eq('venue_id', venueId)
-        .gte('recorded_at', thirtyDaysAgo.toISOString())
+        .gte('recorded_at', dateRange.from.toISOString())
+        .lte('recorded_at', dateRange.to.toISOString())
         .order('recorded_at', { ascending: true });
 
       if (googleRatings && googleRatings.length > 0) {
@@ -105,12 +130,18 @@ const GoogleRatingTrendCard = ({ venueId }) => {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
     plugins: {
       legend: {
         display: false
       },
       tooltip: {
         enabled: true,
+        mode: 'index',
+        intersect: false,
         backgroundColor: '#1F2937',
         titleColor: '#F9FAFB',
         bodyColor: '#F9FAFB',
@@ -118,8 +149,17 @@ const GoogleRatingTrendCard = ({ venueId }) => {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
+          title: function(context) {
+            return context[0].label;
+          },
           label: function(context) {
-            return `${context.parsed.y.toFixed(1)} ⭐`;
+            const rating = context.parsed.y.toFixed(1);
+            const dataPoint = historicalData[context.dataIndex];
+            const reviews = dataPoint?.ratings_count?.toLocaleString() || '0';
+            return [
+              `Rating: ${rating}/5`,
+              `Reviews: ${reviews}`
+            ];
           }
         }
       },
@@ -193,9 +233,39 @@ const GoogleRatingTrendCard = ({ venueId }) => {
     );
   }
 
+  // Format last updated date
+  const formatLastUpdated = (date) => {
+    if (!date) return 'Never';
+    const d = new Date(date);
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 border border-gray-100">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Google Rating</h3>
+      {/* Header with logo and date range */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <GoogleLogo />
+          <h3 className="text-lg font-semibold text-gray-800">Google Rating</h3>
+        </div>
+        <DateRangeSelector
+          value={dateRangePreset}
+          onChange={handleDateRangeChange}
+        />
+      </div>
+
+      {/* Last Updated */}
+      {currentRating && (
+        <div className="flex justify-end mb-3">
+          <p className="text-xs text-gray-500">
+            Last updated: {formatLastUpdated(currentRating.recorded_at)}
+          </p>
+        </div>
+      )}
 
       {/* Current Rating */}
       <div className="mb-6">
@@ -203,7 +273,7 @@ const GoogleRatingTrendCard = ({ venueId }) => {
           <div className="text-4xl font-bold text-gray-900">
             {currentRating.rating.toFixed(1)}
           </div>
-          <div className="text-2xl text-gray-400 mb-1">⭐</div>
+          <div className="text-2xl text-gray-400 mb-1">/5</div>
           {trend && (
             <div className={`flex items-center gap-1 mb-1 ${
               trend.direction === 'up' ? 'text-green-600' : 'text-red-600'

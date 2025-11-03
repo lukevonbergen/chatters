@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { Line } from 'react-chartjs-2';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Calendar } from 'lucide-react';
+import { DateRangeSelector } from '../../ui/date-range-selector';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -25,31 +26,58 @@ ChartJS.register(
   Filler
 );
 
+// TripAdvisor logo SVG component
+const TripAdvisorLogo = () => (
+  <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="24" cy="24" r="20" fill="#00AA6C"/>
+    <circle cx="17" cy="24" r="6" fill="white"/>
+    <circle cx="31" cy="24" r="6" fill="white"/>
+    <circle cx="17" cy="24" r="3" fill="black"/>
+    <circle cx="31" cy="24" r="3" fill="black"/>
+    <path d="M11 18C11 18 8 15 4 15" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M37 18C37 18 40 15 44 15" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
 const TripAdvisorRatingTrendCard = ({ venueId }) => {
   const [currentRating, setCurrentRating] = useState(null);
   const [historicalData, setHistoricalData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [trend, setTrend] = useState(null);
+  const [dateRangePreset, setDateRangePreset] = useState('last30days');
+  const [dateRange, setDateRange] = useState(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    return { from: thirtyDaysAgo, to: endOfDay };
+  });
 
   useEffect(() => {
-    if (venueId) {
+    if (venueId && dateRange) {
       loadRatingData();
     }
-  }, [venueId]);
+  }, [venueId, dateRange]);
+
+  const handleDateRangeChange = ({ preset, range }) => {
+    setDateRangePreset(preset);
+    const endOfDay = new Date(range.to);
+    endOfDay.setHours(23, 59, 59, 999);
+    setDateRange({ from: range.from, to: endOfDay });
+  };
 
   const loadRatingData = async () => {
     try {
       setLoading(true);
 
-      // Get last 30 days of TripAdvisor ratings
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
       const { data: tripadvisorRatings } = await supabase
         .from('venue_tripadvisor_ratings')
         .select('rating, ratings_count, recorded_at')
         .eq('venue_id', venueId)
-        .gte('recorded_at', thirtyDaysAgo.toISOString())
+        .gte('recorded_at', dateRange.from.toISOString())
+        .lte('recorded_at', dateRange.to.toISOString())
         .order('recorded_at', { ascending: true });
 
       if (tripadvisorRatings && tripadvisorRatings.length > 0) {
@@ -105,12 +133,18 @@ const TripAdvisorRatingTrendCard = ({ venueId }) => {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
     plugins: {
       legend: {
         display: false
       },
       tooltip: {
         enabled: true,
+        mode: 'index',
+        intersect: false,
         backgroundColor: '#1F2937',
         titleColor: '#F9FAFB',
         bodyColor: '#F9FAFB',
@@ -118,8 +152,17 @@ const TripAdvisorRatingTrendCard = ({ venueId }) => {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
+          title: function(context) {
+            return context[0].label;
+          },
           label: function(context) {
-            return `${context.parsed.y.toFixed(1)} ⭐`;
+            const rating = context.parsed.y.toFixed(1);
+            const dataPoint = historicalData[context.dataIndex];
+            const reviews = dataPoint?.ratings_count?.toLocaleString() || '0';
+            return [
+              `Rating: ${rating}/5`,
+              `Reviews: ${reviews}`
+            ];
           }
         }
       },
@@ -193,9 +236,39 @@ const TripAdvisorRatingTrendCard = ({ venueId }) => {
     );
   }
 
+  // Format last updated date
+  const formatLastUpdated = (date) => {
+    if (!date) return 'Never';
+    const d = new Date(date);
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 border border-gray-100">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">TripAdvisor Rating</h3>
+      {/* Header with logo and date range */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <TripAdvisorLogo />
+          <h3 className="text-lg font-semibold text-gray-800">TripAdvisor Rating</h3>
+        </div>
+        <DateRangeSelector
+          value={dateRangePreset}
+          onChange={handleDateRangeChange}
+        />
+      </div>
+
+      {/* Last Updated */}
+      {currentRating && (
+        <div className="flex justify-end mb-3">
+          <p className="text-xs text-gray-500">
+            Last updated: {formatLastUpdated(currentRating.recorded_at)}
+          </p>
+        </div>
+      )}
 
       {/* Current Rating */}
       <div className="mb-6">
@@ -203,7 +276,7 @@ const TripAdvisorRatingTrendCard = ({ venueId }) => {
           <div className="text-4xl font-bold text-gray-900">
             {currentRating.rating.toFixed(1)}
           </div>
-          <div className="text-2xl text-gray-400 mb-1">⭐</div>
+          <div className="text-2xl text-gray-400 mb-1">/5</div>
           {trend && (
             <div className={`flex items-center gap-1 mb-1 ${
               trend.direction === 'up' ? 'text-green-600' : 'text-red-600'
