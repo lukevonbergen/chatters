@@ -15,6 +15,7 @@ const TripAdvisorIcon = ({ className }) => (
 export default function TripAdvisorRatingKPITile({ venueId, selectedVenues = [], isMultiSite = false, venueBreakdowns = {}, allVenues = [] }) {
   const [currentRating, setCurrentRating] = useState(null);
   const [initialRating, setInitialRating] = useState(null);
+  const [yesterdayRating, setYesterdayRating] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,8 +46,28 @@ export default function TripAdvisorRatingKPITile({ venueId, selectedVenues = [],
         .limit(1)
         .single();
 
+      // Get yesterday's TripAdvisor rating from historical_ratings
+      const now = new Date();
+      const startOfYesterday = new Date(now);
+      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+      startOfYesterday.setHours(0, 0, 0, 0);
+      const endOfYesterday = new Date(now);
+      endOfYesterday.setHours(0, 0, 0, 0);
+
+      const { data: yesterdayData } = await supabase
+        .from('historical_ratings')
+        .select('rating, ratings_count')
+        .eq('venue_id', venueId)
+        .eq('source', 'tripadvisor')
+        .gte('recorded_at', startOfYesterday.toISOString())
+        .lt('recorded_at', endOfYesterday.toISOString())
+        .order('recorded_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
       setCurrentRating(currentData);
       setInitialRating(initialData);
+      setYesterdayRating(yesterdayData);
       setLoading(false);
     };
 
@@ -75,11 +96,35 @@ export default function TripAdvisorRatingKPITile({ venueId, selectedVenues = [],
   };
 
   const getTrendInfo = () => {
+    // Use yesterday comparison if available, otherwise fall back to initial
+    if (yesterdayRating && currentRating) {
+      const current = parseFloat(currentRating.rating);
+      const yesterday = parseFloat(yesterdayRating.rating);
+      const diff = current - yesterday;
+
+      if (Math.abs(diff) < 0.05) {
+        return {
+          direction: "neutral",
+          positive: true,
+          value: "0.0",
+          text: "vs yesterday"
+        };
+      }
+
+      return {
+        direction: diff > 0 ? "up" : "down",
+        positive: diff > 0,
+        value: `${diff > 0 ? '+' : ''}${diff.toFixed(1)}`,
+        text: "vs yesterday"
+      };
+    }
+
+    // Fall back to initial rating comparison
     if (!hasImprovement) return null;
     return {
-      text: improvement.value > 0 
-        ? `+${improvement.value.toFixed(2)} improvement` 
-        : `${improvement.value.toFixed(2)} decline`,
+      text: improvement.value > 0
+        ? `+${improvement.value.toFixed(2)} since start`
+        : `${improvement.value.toFixed(2)} since start`,
       direction: improvement.value > 0 ? "up" : "down",
       positive: improvement.value > 0
     };

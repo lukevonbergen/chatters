@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./card";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 // Consistent color scheme for all reports
 export const reportColors = {
@@ -104,13 +105,36 @@ const MetricCard = React.forwardRef(({
           )}
           
           {trend && (
-            <div className={cn(
-              "text-xs font-medium",
-              trend.direction === "up" && trend.positive ? colors.accent : 
-              trend.direction === "down" && !trend.positive ? colors.accent :
-              "text-gray-500"
-            )}>
-              {trend.text}
+            <div className="flex items-center gap-1.5 mt-2">
+              {trend.direction === "up" && (
+                <div className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+                  trend.positive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                )}>
+                  <TrendingUp className="w-3 h-3" />
+                  {trend.value && <span>{trend.value}</span>}
+                </div>
+              )}
+              {trend.direction === "down" && (
+                <div className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+                  trend.positive ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                )}>
+                  <TrendingDown className="w-3 h-3" />
+                  {trend.value && <span>{trend.value}</span>}
+                </div>
+              )}
+              {trend.direction === "neutral" && (
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  <Minus className="w-3 h-3" />
+                  {trend.value && <span>{trend.value}</span>}
+                </div>
+              )}
+              {trend.text && (
+                <span className="text-xs text-gray-500">
+                  {trend.text}
+                </span>
+              )}
             </div>
           )}
         </div>
