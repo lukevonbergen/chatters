@@ -144,10 +144,15 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
     setCheckoutModalOpen(false);
     setClientSecret(null);
 
-    // Show appropriate success message based on payment method
-    if (status === 'processing') {
+    // Show appropriate success message based on status
+    if (status === 'setup_succeeded') {
+      // Setup mode - card saved, no charge
+      alert('✓ Payment details saved successfully!\n\nYour card has been securely saved. You will not be charged until your trial period expires.\n\nYou can continue using Chatters throughout your trial.');
+    } else if (status === 'processing') {
+      // Direct Debit payment processing
       alert('Direct Debit setup successful! Your payment will be processed within 3-5 business days. You\'ll receive access once the payment clears.');
     } else {
+      // Payment succeeded
       alert('Payment successful! Your subscription is now active.');
     }
 
