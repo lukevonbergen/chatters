@@ -106,16 +106,22 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         ? { email: userEmail, accountId: accountId }  // Setup only needs email + accountId
         : { email: userEmail, priceId, venueCount };  // Subscription needs pricing
 
+      console.log('Calling endpoint:', endpoint, 'with body:', body);
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to process payment');
+        const errorMessage = data.message || data.error || 'Failed to process payment';
+        const errorDetails = data.details ? ` (${data.details})` : '';
+        throw new Error(errorMessage + errorDetails);
       }
 
       if (!data.clientSecret) {
