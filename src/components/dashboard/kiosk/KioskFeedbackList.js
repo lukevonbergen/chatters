@@ -89,7 +89,7 @@ const groupBySession = (rows) => {
 const getRatingColour = (rating) => {
   if (rating == null) return 'text-gray-600 bg-gray-50 border-gray-200';
   if (rating <= 2) return 'text-red-600 bg-red-50 border-red-200';
-  if (rating <= 3) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+  if (rating <= 4) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
   return 'text-green-600 bg-green-50 border-green-200';
 };
 
@@ -97,7 +97,7 @@ const getUrgency = ({ session_rating, has_comment }) => {
   if (session_rating != null && session_rating <= 2) {
     return { label: 'URGENT', colour: 'bg-red-600 text-white', priority: 3 };
   }
-  if (session_rating != null && session_rating <= 3 && has_comment) {
+  if (session_rating != null && session_rating <= 4 && has_comment) {
     return { label: 'ATTENTION', colour: 'bg-yellow-500 text-white', priority: 2 };
   }
   return { label: 'INFO', colour: 'bg-blue-500 text-white', priority: 1 };
