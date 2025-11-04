@@ -631,12 +631,12 @@ const CustomerFeedbackPage = () => {
                   style={{
                     borderColor: primary,
                     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    color: textColor,
+                    color: tableNumber ? textColor : '#9ca3af',
                   }}
                 >
-                  <option value="">Choose your table</option>
+                  <option value="" style={{ color: '#9ca3af' }}>Choose your table</option>
                   {activeTables.map((tableNum) => (
-                    <option key={tableNum} value={tableNum}>
+                    <option key={tableNum} value={tableNum} style={{ color: textColor }}>
                       {tableNum}
                     </option>
                   ))}

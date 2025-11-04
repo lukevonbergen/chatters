@@ -19,7 +19,9 @@ const HighlightedInput = ({ value, onChange, placeholder, rows, className }) => 
         >
           {'{table}'}
         </span>
-      ) : part
+      ) : (
+        <span key={index}>{part}</span>
+      )
     );
   };
 
@@ -27,21 +29,21 @@ const HighlightedInput = ({ value, onChange, placeholder, rows, className }) => 
     // Textarea version
     return (
       <div className="relative">
-        {/* Hidden div for highlighting */}
+        {/* Highlighted overlay */}
         <div
-          className={`${className} absolute inset-0 pointer-events-none whitespace-pre-wrap break-words`}
-          style={{ color: 'transparent' }}
+          className={`${className} absolute inset-0 pointer-events-none whitespace-pre-wrap break-words overflow-hidden`}
+          style={{ color: '#111827' }}
         >
           {renderHighlightedText(value || '')}
         </div>
-        {/* Actual textarea */}
+        {/* Actual textarea - transparent text */}
         <textarea
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           rows={rows}
-          className={`${className} relative bg-transparent`}
-          style={{ caretColor: 'black' }}
+          className={`${className} relative`}
+          style={{ color: 'transparent', caretColor: 'black', backgroundColor: 'transparent' }}
         />
       </div>
     );
@@ -49,21 +51,21 @@ const HighlightedInput = ({ value, onChange, placeholder, rows, className }) => 
     // Input version
     return (
       <div className="relative">
-        {/* Hidden div for highlighting */}
+        {/* Highlighted overlay */}
         <div
           className={`${className} absolute inset-0 pointer-events-none whitespace-pre overflow-hidden`}
-          style={{ color: 'transparent' }}
+          style={{ color: '#111827' }}
         >
           {renderHighlightedText(value || '')}
         </div>
-        {/* Actual input */}
+        {/* Actual input - transparent text */}
         <input
           type="text"
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className={`${className} relative bg-transparent`}
-          style={{ caretColor: 'black' }}
+          className={`${className} relative`}
+          style={{ color: 'transparent', caretColor: 'black', backgroundColor: 'transparent' }}
         />
       </div>
     );
