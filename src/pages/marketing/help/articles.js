@@ -2,6 +2,9 @@
 // This file maps article slugs to their components for dynamic routing
 
 import QuickStartGuide from './QuickStartGuide';
+import SettingUpFirstVenue from './SettingUpFirstVenue';
+import CreatingQRCode from './CreatingQRCode';
+import TestingSystem from './TestingSystem';
 import QRCodeBestPractices from './QRCodeBestPractices';
 import UnderstandingKioskMode from './UnderstandingKioskMode';
 
@@ -15,17 +18,17 @@ export const articles = {
     title: 'Quick Start Guide'
   },
   'setting-up-first-venue': {
-    component: QuickStartGuide, // Placeholder - replace with actual component
+    component: SettingUpFirstVenue,
     category: 'Getting Started',
     title: 'Setting Up Your First Venue'
   },
   'creating-qr-code': {
-    component: QuickStartGuide, // Placeholder
+    component: CreatingQRCode,
     category: 'Getting Started',
     title: 'Creating Your QR Code'
   },
   'testing-system': {
-    component: QuickStartGuide, // Placeholder
+    component: TestingSystem,
     category: 'Getting Started',
     title: 'Testing Your System'
   },

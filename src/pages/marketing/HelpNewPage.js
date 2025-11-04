@@ -402,16 +402,12 @@ const HelpNewPage = () => {
           {/* Help Guide Categories */}
           <div className="space-y-16">
             {helpGuides.map((category, categoryIndex) => {
-              const Icon = category.icon;
               const colors = colorClasses[category.color];
 
               return (
                 <div key={categoryIndex} className="space-y-6">
                   {/* Category Header */}
                   <div className="flex items-center space-x-3">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colors.icon}`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
                     <h3 className="text-2xl font-bold text-primary font-satoshi">
                       {category.category}
                     </h3>
