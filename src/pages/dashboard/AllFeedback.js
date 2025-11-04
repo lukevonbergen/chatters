@@ -45,7 +45,7 @@ const AllFeedback = () => {
         .select(`
           *,
           questions (
-            question_text
+            question
           )
         `)
         .eq('venue_id', venueId)
@@ -574,7 +574,7 @@ const AllFeedback = () => {
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <div className="flex-1">
                               <p className="text-xs text-gray-500 mb-1">Question {index + 1}</p>
-                              <p className="font-medium text-gray-900">{item.questions?.question_text || 'Question not available'}</p>
+                              <p className="font-medium text-gray-900">{item.questions?.question || 'Question not available'}</p>
                             </div>
                             {item.rating && (
                               <div className="flex-shrink-0">
