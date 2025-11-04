@@ -3,6 +3,7 @@ import { supabase } from '../../../utils/supabase';
 import { useVenue } from '../../../context/VenueContext';
 import { CreditCard, Building2, Calendar, Receipt, ExternalLink, AlertCircle } from 'lucide-react';
 import StripeCheckoutModal from './StripeCheckoutModal';
+import SubscriptionManagement from './SubscriptionManagement';
 
 // Pricing configuration
 const PRICE_PER_VENUE_MONTHLY = 149; // £149 per venue per month
@@ -13,7 +14,6 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
   const [subscriptionType, setSubscriptionType] = useState('monthly');
   const [userEmail, setUserEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
   const [accountData, setAccountData] = useState(null);
   const [venueCount, setVenueCount] = useState(0);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
@@ -164,33 +164,6 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
     setCheckoutModalOpen(false);
     setClientSecret(null);
     setLoading(false);
-  };
-
-  const handleManageSubscription = async () => {
-    setPortalLoading(true);
-
-    try {
-      const response = await fetch('/api/create-portal-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail }),
-      });
-
-      const { url, error } = await response.json();
-
-      if (error) {
-        alert(error);
-        setPortalLoading(false);
-        return;
-      }
-
-      // Redirect to Stripe customer portal
-      window.location.href = url;
-    } catch (error) {
-      console.error('Portal session error:', error);
-      alert('Failed to open billing portal. Please try again.');
-      setPortalLoading(false);
-    }
   };
 
   // Calculate total pricing based on venue count
@@ -491,26 +464,14 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         </>
       )}
 
-      {/* Active Subscription Management */}
-      {accountData?.is_paid && accountData.stripe_customer_id && (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Subscription Management</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Manage your subscription, update payment methods, view invoices, and more in the Stripe customer portal.
-          </p>
-          <button
-            onClick={handleManageSubscription}
-            disabled={portalLoading}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {portalLoading ? 'Opening Portal...' : (
-              <>
-                <CreditCard className="w-5 h-5" />
-                Open Billing Portal
-                <ExternalLink className="w-4 h-4" />
-              </>
-            )}
-          </button>
+      {/* Active Subscription Management - In-App */}
+      {accountData?.is_paid && accountData.stripe_customer_id && accountId && (
+        <div className="mt-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Manage Your Subscription</h2>
+          <SubscriptionManagement
+            accountId={accountId}
+            userEmail={userEmail}
+          />
         </div>
       )}
 
