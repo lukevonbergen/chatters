@@ -63,10 +63,10 @@ const CustomerFeedbackPage = () => {
         console.log('Loading data for venueId:', venueId);
         console.log('VenueId type:', typeof venueId);
         
-        // Load venue data first (including feedback_hours and review links)
+        // Load venue data first (including feedback_hours, review links, and NPS settings)
         const { data: venueData, error: venueError } = await supabase
           .from('venues')
-          .select('logo, primary_color, secondary_color, feedback_hours, google_review_link, tripadvisor_link')
+          .select('logo, primary_color, secondary_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled')
           .eq('id', venueId);
 
         if (venueError) {
@@ -559,26 +559,28 @@ const CustomerFeedbackPage = () => {
           <div>
             <h2 className="text-xl font-semibold mb-4">Welcome!</h2>
 
-            {/* Email input - optional but prominent */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <input
-                type="email"
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-full border px-4 py-3 rounded-lg text-base"
-                style={{
-                  borderColor: primary,
-                  backgroundColor: secondary,
-                }}
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                Share your email to help us follow up and improve your experience
-              </p>
-            </div>
+            {/* Email input - optional but prominent - only show if NPS is enabled */}
+            {venue?.nps_enabled && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full border px-4 py-3 rounded-lg text-base"
+                  style={{
+                    borderColor: primary,
+                    backgroundColor: secondary,
+                  }}
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Share your email to help us follow up and improve your experience
+                </p>
+              </div>
+            )}
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
