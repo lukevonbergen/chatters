@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 
-const BrandingTab = ({ 
+const BrandingTab = ({
   logo, setLogo,
   primaryColor, setPrimaryColor,
   secondaryColor, setSecondaryColor,
-  venueId 
+  backgroundColor, setBackgroundColor,
+  textColor, setTextColor,
+  venueId
 }) => {
   // Separate loading and message states for each section
   const [logoLoading, setLogoLoading] = useState(false);
@@ -77,9 +79,11 @@ const BrandingTab = ({
     try {
       const { error } = await supabase
         .from('venues')
-        .update({ 
+        .update({
           primary_color: primaryColor,
-          secondary_color: secondaryColor 
+          secondary_color: secondaryColor,
+          background_color: backgroundColor,
+          text_color: textColor
         })
         .eq('id', venueId);
 
@@ -204,24 +208,100 @@ const BrandingTab = ({
               </div>
             </div>
 
+            {/* Background Color */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    value={backgroundColor}
+                    onChange={(e) => setBackgroundColor(e.target.value)}
+                    className="w-12 h-10 lg:w-16 lg:h-10 border border-gray-300 rounded-md cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={backgroundColor}
+                    onChange={(e) => setBackgroundColor(e.target.value)}
+                    className="w-24 lg:w-28 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="#ffffff"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 sm:ml-2">
+                  Feedback page background
+                </p>
+              </div>
+            </div>
+
+            {/* Text Color */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    value={textColor}
+                    onChange={(e) => setTextColor(e.target.value)}
+                    className="w-12 h-10 lg:w-16 lg:h-10 border border-gray-300 rounded-md cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={textColor}
+                    onChange={(e) => setTextColor(e.target.value)}
+                    className="w-24 lg:w-28 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="#111827"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 sm:ml-2">
+                  Main text color on feedback page
+                </p>
+              </div>
+            </div>
+
             {/* Color Preview */}
             <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Color Preview</h4>
               <div className="flex flex-wrap gap-3">
                 <div className="flex items-center space-x-2">
-                  <div 
-                    className="w-8 h-8 rounded border border-gray-200" 
+                  <div
+                    className="w-8 h-8 rounded border border-gray-200"
                     style={{ backgroundColor: primaryColor }}
                   ></div>
                   <span className="text-xs text-gray-600">Primary</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div 
-                    className="w-8 h-8 rounded border border-gray-200" 
+                  <div
+                    className="w-8 h-8 rounded border border-gray-200"
                     style={{ backgroundColor: secondaryColor }}
                   ></div>
                   <span className="text-xs text-gray-600">Secondary</span>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <div
+                    className="w-8 h-8 rounded border border-gray-200"
+                    style={{ backgroundColor: backgroundColor }}
+                  ></div>
+                  <span className="text-xs text-gray-600">Background</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div
+                    className="w-8 h-8 rounded border border-gray-200"
+                    style={{ backgroundColor: textColor }}
+                  ></div>
+                  <span className="text-xs text-gray-600">Text</span>
+                </div>
+              </div>
+              {/* Feedback Page Preview */}
+              <div className="mt-4 p-4 rounded-lg border-2 border-gray-200" style={{ backgroundColor: backgroundColor }}>
+                <p className="text-sm font-medium mb-2" style={{ color: textColor }}>
+                  Feedback Page Preview
+                </p>
+                <button
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  Sample Button
+                </button>
               </div>
             </div>
 

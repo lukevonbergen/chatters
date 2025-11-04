@@ -63,10 +63,10 @@ const CustomerFeedbackPage = () => {
         console.log('Loading data for venueId:', venueId);
         console.log('VenueId type:', typeof venueId);
         
-        // Load venue data first (including feedback_hours, review links, and NPS settings)
+        // Load venue data first (including feedback_hours, review links, NPS settings, and branding colors)
         const { data: venueData, error: venueError } = await supabase
           .from('venues')
-          .select('logo, primary_color, secondary_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled')
+          .select('logo, primary_color, secondary_color, background_color, text_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled')
           .eq('id', venueId);
 
         if (venueError) {
@@ -402,25 +402,25 @@ const CustomerFeedbackPage = () => {
 
   // Feedback unavailable state (outside of allowed hours)
   if (feedbackUnavailable) {
-    const primary = venue?.primary_color || '#111827';
-    const secondary = venue?.secondary_color || '#f3f4f6';
-    
+    const background = venue?.background_color || '#ffffff';
+    const textColor = venue?.text_color || '#111827';
+
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: secondary }}>
-        <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 text-center" style={{ color: primary }}>
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: background }}>
+        <div className="w-full max-w-md p-8 text-center">
           {venue?.logo && (
-            <div className="mb-6">
-              <img src={venue.logo} alt="Venue Logo" className="h-14 mx-auto" />
+            <div className="mb-8">
+              <img src={venue.logo} alt="Venue Logo" className="h-16 mx-auto" />
             </div>
           )}
-          
-          <div className="text-4xl mb-4">🕒</div>
-          <h2 className="text-xl font-semibold mb-4">Feedback Currently Unavailable</h2>
-          <p className="text-gray-600 text-sm mb-6">
+
+          <div className="text-6xl mb-6">🕒</div>
+          <h2 className="text-2xl font-bold mb-4" style={{ color: textColor }}>Feedback Currently Unavailable</h2>
+          <p className="text-base mb-8" style={{ color: textColor, opacity: 0.8 }}>
             We're not accepting feedback at the moment. Please try again during our service hours.
           </p>
-          
-          <div className="text-xs text-gray-400">
+
+          <div className="text-sm" style={{ color: textColor, opacity: 0.6 }}>
             Thank you for your interest in providing feedback!
           </div>
         </div>
@@ -449,53 +449,61 @@ const CustomerFeedbackPage = () => {
 
   // Success state
   if (isFinished) {
-    const showReviewPrompt = isAllFeedbackPositive() && 
+    const showReviewPrompt = isAllFeedbackPositive() &&
                             (venue?.google_review_link || venue?.tripadvisor_link);
-    
+    const primary = venue?.primary_color || '#111827';
+    const background = venue?.background_color || '#ffffff';
+    const textColor = venue?.text_color || '#111827';
+
     if (showReviewPrompt) {
-      const primary = venue?.primary_color || '#111827';
-      const secondary = venue?.secondary_color || '#f3f4f6';
-      
       return (
-        <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: secondary }}>
-          <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 text-center" style={{ color: primary }}>
+        <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: background }}>
+          <div className="w-full max-w-md p-8 text-center">
             {venue?.logo && (
-              <div className="mb-6">
-                <img src={venue.logo} alt="Venue Logo" className="h-14 mx-auto" />
+              <div className="mb-8">
+                <img src={venue.logo} alt="Venue Logo" className="h-16 mx-auto" />
               </div>
             )}
-            
-            <h2 className="text-xl font-semibold mb-4">Thanks for your positive feedback!</h2>
-            <p className="text-gray-600 text-sm mb-6">
+
+            <div className="text-6xl mb-6">🎉</div>
+            <h2 className="text-2xl font-bold mb-4" style={{ color: textColor }}>Thanks for your positive feedback!</h2>
+            <p className="text-base mb-8" style={{ color: textColor, opacity: 0.8 }}>
               We're so glad you had a great experience! Would you mind sharing your positive experience with others?
             </p>
-            
-            <div className="space-y-3">
+
+            <div className="space-y-4">
               {venue?.google_review_link && (
                 <a
                   href={venue.google_review_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-3 px-4 bg-custom-blue text-white rounded-lg font-medium hover:bg-custom-blue-hover transition-colors"
+                  className="block w-full py-4 px-4 text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg"
+                  style={{ backgroundColor: primary }}
                 >
                   Leave a Google Review
                 </a>
               )}
-              
+
               {venue?.tripadvisor_link && (
                 <a
                   href={venue.tripadvisor_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-3 px-4 bg-custom-green text-white rounded-lg font-medium hover:bg-custom-green-hover transition-colors"
+                  className="block w-full py-4 px-4 text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg"
+                  style={{ backgroundColor: primary }}
                 >
                   Review on TripAdvisor
                 </a>
               )}
-              
+
               <button
                 onClick={() => window.close()}
-                className="block w-full py-3 px-4 border border-gray-300 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition-colors mt-4"
+                className="block w-full py-3 px-4 rounded-xl font-medium hover:opacity-80 transition-all mt-4 border-2"
+                style={{
+                  borderColor: textColor,
+                  color: textColor,
+                  opacity: 0.7,
+                }}
               >
                 No thanks, close
               </button>
@@ -504,13 +512,13 @@ const CustomerFeedbackPage = () => {
         </div>
       );
     }
-    
+
     // Default success state for non-positive feedback or no review links
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen text-custom-green space-y-4">
-        <div className="text-4xl">✅</div>
-        <div className="text-xl font-semibold text-center">Thanks for your feedback!</div>
-        <div className="text-sm text-gray-500">Your response has been submitted successfully.</div>
+      <div className="flex flex-col justify-center items-center min-h-screen space-y-6 p-6" style={{ backgroundColor: background }}>
+        <div className="text-6xl">✅</div>
+        <div className="text-2xl font-bold text-center" style={{ color: textColor }}>Thanks for your feedback!</div>
+        <div className="text-base" style={{ color: textColor, opacity: 0.7 }}>Your response has been submitted successfully.</div>
       </div>
     );
   }
@@ -518,24 +526,29 @@ const CustomerFeedbackPage = () => {
   // Assistance requested state
   if (assistanceRequested) {
     const primary = venue?.primary_color || '#111827';
-    const secondary = venue?.secondary_color || '#f3f4f6';
-    
+    const background = venue?.background_color || '#ffffff';
+    const textColor = venue?.text_color || '#111827';
+
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: secondary }}>
-        <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 text-center" style={{ color: primary }}>
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: background }}>
+        <div className="w-full max-w-md p-8 text-center">
           {venue?.logo && (
-            <div className="mb-6">
-              <img src={venue.logo} alt="Venue Logo" className="h-14 mx-auto" />
+            <div className="mb-8">
+              <img src={venue.logo} alt="Venue Logo" className="h-16 mx-auto" />
             </div>
           )}
-          
-          <h2 className="text-xl font-semibold mb-4">Help is on the way!</h2>
-          <p className="text-gray-600 text-sm mb-6">
-            We've notified our team that Table {tableNumber} needs assistance. 
+
+          <div className="inline-block p-4 rounded-full mb-6" style={{ backgroundColor: `${primary}20` }}>
+            <HandHeart className="w-12 h-12" style={{ color: primary }} />
+          </div>
+
+          <h2 className="text-2xl font-bold mb-4" style={{ color: textColor }}>Help is on the way!</h2>
+          <p className="text-base mb-8" style={{ color: textColor, opacity: 0.8 }}>
+            We've notified our team that Table {tableNumber} needs assistance.
             Someone will be with you shortly.
           </p>
-          
-          <div className="text-xs text-gray-400">
+
+          <div className="text-sm" style={{ color: textColor, opacity: 0.6 }}>
             You can close this page now.
           </div>
         </div>
@@ -545,55 +558,59 @@ const CustomerFeedbackPage = () => {
 
   const primary = venue.primary_color || '#111827';
   const secondary = venue.secondary_color || '#f3f4f6';
+  const background = venue.background_color || '#ffffff';
+  const textColor = venue.text_color || '#111827';
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: secondary }}>
-      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-6 text-center" style={{ color: primary }}>
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: background }}>
+      <div className="w-full max-w-md p-6 text-center">
         {venue.logo && (
-          <div className="mb-6">
-            <img src={venue.logo} alt="Venue Logo" className="h-14 mx-auto" />
+          <div className="mb-8">
+            <img src={venue.logo} alt="Venue Logo" className="h-16 mx-auto" />
           </div>
         )}
 
         {!hasStarted ? (
           <div>
-            <h2 className="text-xl font-semibold mb-4">Welcome!</h2>
+            <h2 className="text-2xl font-bold mb-6" style={{ color: textColor }}>Welcome!</h2>
 
             {/* Email input - optional but prominent - only show if NPS is enabled */}
             {venue?.nps_enabled && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email <span className="text-gray-400 font-normal">(optional)</span>
+              <div className="mb-6 text-left">
+                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+                  Email <span style={{ color: textColor, opacity: 0.6 }}>(optional)</span>
                 </label>
                 <input
                   type="email"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className="w-full border px-4 py-3 rounded-lg text-base"
+                  className="w-full border-2 px-4 py-3 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all"
                   style={{
                     borderColor: primary,
-                    backgroundColor: secondary,
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    color: textColor,
                   }}
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs mt-2" style={{ color: textColor, opacity: 0.7 }}>
                   Share your email to help us follow up and improve your experience
                 </p>
               </div>
             )}
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Table Number {activeTables.length === 0 && <span className="text-gray-400 font-normal">(optional)</span>}
+            <div className="mb-8 text-left">
+              <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+                Table Number {activeTables.length === 0 && <span style={{ color: textColor, opacity: 0.6 }}>(optional)</span>}
               </label>
               {activeTables.length > 0 ? (
                 <select
                   value={tableNumber}
                   onChange={(e) => setTableNumber(e.target.value)}
-                  className="w-full border px-4 py-3 rounded-lg text-base"
+                  className="w-full border-2 px-4 py-3 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all"
                   style={{
                     borderColor: primary,
-                    backgroundColor: secondary,
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    color: textColor,
                   }}
                 >
                   <option value="">Choose your table</option>
@@ -609,10 +626,11 @@ const CustomerFeedbackPage = () => {
                   value={tableNumber}
                   onChange={(e) => setTableNumber(e.target.value)}
                   placeholder="Enter your table number"
-                  className="w-full border px-4 py-3 rounded-lg text-base"
+                  className="w-full border-2 px-4 py-3 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all"
                   style={{
                     borderColor: primary,
-                    backgroundColor: secondary,
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    color: textColor,
                   }}
                 />
               )}
@@ -621,7 +639,7 @@ const CustomerFeedbackPage = () => {
             <button
               onClick={() => setHasStarted(true)}
               disabled={activeTables.length > 0 && !tableNumber}
-              className="w-full py-3 rounded-lg font-semibold text-white text-lg transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-xl font-bold text-white text-lg transition-all hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
               style={{ backgroundColor: primary }}
             >
               Continue
@@ -629,82 +647,87 @@ const CustomerFeedbackPage = () => {
           </div>
         ) : current >= 0 ? (
           <div>
-            <div className="mb-4">
-              <div className="text-sm text-gray-500 mb-2">
+            <div className="mb-6">
+              <div className="text-sm mb-2 font-medium" style={{ color: textColor, opacity: 0.7 }}>
                 Question {current + 1} of {questions.length}
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="h-2 rounded-full transition-all duration-300" 
-                  style={{ 
+              <div className="w-full rounded-full h-3" style={{ backgroundColor: `${textColor}20` }}>
+                <div
+                  className="h-3 rounded-full transition-all duration-300"
+                  style={{
                     width: `${((current + 1) / questions.length) * 100}%`,
-                    backgroundColor: primary 
+                    backgroundColor: primary
                   }}
                 ></div>
               </div>
             </div>
-            
+
             {/* Show selected table */}
             {tableNumber && (
-              <div className="mb-4 text-sm text-gray-600">
+              <div className="mb-4 text-sm font-medium" style={{ color: textColor, opacity: 0.8 }}>
                 Feedback for Table {tableNumber}
               </div>
             )}
-            
-            <h2 className="text-lg font-semibold mb-6">{questions[current].question}</h2>
+
+            <h2 className="text-2xl font-bold mb-8" style={{ color: textColor }}>{questions[current].question}</h2>
             
             {/* Star rating system */}
-            <div className="space-y-6">
-              <div className="flex justify-center items-center space-x-2 px-2">
+            <div className="space-y-8">
+              <div className="flex justify-center items-center space-x-3 px-2">
                 {[1, 2, 3, 4, 5].map((rating) => (
                   <div key={rating} className="flex flex-col items-center">
                     <button
                       onClick={() => handleStarAnswer(rating)}
-                      className="p-2 rounded-full hover:scale-110 transition transform active:scale-95 flex items-center justify-center"
+                      className="p-3 rounded-full hover:scale-110 transition transform active:scale-95 flex items-center justify-center shadow-md"
                       style={{
-                        backgroundColor: secondary,
+                        backgroundColor: `${primary}15`,
                       }}
                     >
-                      <Star 
-                        className="w-8 h-8 sm:w-10 sm:h-10" 
+                      <Star
+                        className="w-9 h-9 sm:w-11 sm:h-11"
                         style={{ color: primary }}
                         fill={primary}
                       />
                     </button>
-                    <span className="text-xs mt-1 text-gray-500">
+                    <span className="text-sm mt-2 font-medium" style={{ color: textColor }}>
                       {rating}
                     </span>
                   </div>
                 ))}
               </div>
-              
+
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">Tap a star to rate</p>
-                <div className="flex justify-center space-x-4 text-xs text-gray-500">
+                <p className="text-sm mb-2 font-medium" style={{ color: textColor, opacity: 0.8 }}>Tap a star to rate</p>
+                <div className="flex justify-center space-x-6 text-xs" style={{ color: textColor, opacity: 0.6 }}>
                   <span>1 = Poor</span>
                   <span>5 = Excellent</span>
                 </div>
               </div>
 
               {/* Assistance Request Button */}
-              <div className="border-t pt-4 mt-6">
-                <p className="text-gray-600 text-sm mb-3 text-center">Don't want to leave feedback right now?</p>
+              <div className="pt-6 mt-6" style={{ borderTop: `2px solid ${textColor}20` }}>
+                <p className="text-sm mb-3 text-center" style={{ color: textColor, opacity: 0.8 }}>Don't want to leave feedback right now?</p>
                 <button
                   onClick={handleAssistanceRequest}
                   disabled={assistanceLoading}
-                  className="w-full bg-yellow-100 hover:bg-yellow-200 border-2 border-yellow-300 text-custom-yellow py-3 px-4 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-4 rounded-xl font-semibold transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed border-2 shadow-md"
+                  style={{
+                    backgroundColor: `${primary}10`,
+                    borderColor: primary,
+                    color: primary,
+                  }}
                 >
                   {assistanceLoading ? (
                     <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-custom-yellow mr-2"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 mr-2" style={{ borderColor: primary }}></div>
                       Requesting...
                     </div>
                   ) : (
                     <div className="flex items-center justify-center">
-                      <HandHeart className="w-4 h-4 mr-2" />
+                      <HandHeart className="w-5 h-5 mr-2" />
                       <div className="text-center">
-                        <div className="font-bold text-sm">Just need assistance?</div>
-                        <div className="text-xs">Our team will be right with you</div>
+                        <div className="font-bold">Just need assistance?</div>
+                        <div className="text-xs opacity-80">Our team will be right with you</div>
                       </div>
                     </div>
                   )}
@@ -714,21 +737,24 @@ const CustomerFeedbackPage = () => {
           </div>
         ) : (
           <div>
-            <h2 className="text-lg font-semibold mb-4">Anything else you'd like to tell us? <span className="text-sm font-normal text-gray-500">(Optional)</span></h2>
+            <h2 className="text-xl font-bold mb-4" style={{ color: textColor }}>
+              Anything else you'd like to tell us? <span className="text-sm font-normal" style={{ opacity: 0.6 }}>(Optional)</span>
+            </h2>
             <textarea
               value={freeText}
               onChange={(e) => setFreeText(e.target.value)}
-              rows={4}
+              rows={5}
               placeholder="Leave any additional comments (optional)..."
-              className="w-full p-3 border rounded-lg text-base mb-4"
+              className="w-full p-4 border-2 rounded-xl text-base mb-6 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all"
               style={{
                 borderColor: primary,
-                backgroundColor: secondary,
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                color: textColor,
               }}
             />
             <button
               onClick={handleSubmit}
-              className="w-full py-3 rounded-lg font-semibold text-white text-lg transition-colors hover:opacity-90"
+              className="w-full py-4 rounded-xl font-bold text-white text-lg transition-all hover:opacity-90 hover:scale-105 active:scale-95 shadow-lg"
               style={{ backgroundColor: primary }}
             >
               Submit Feedback
