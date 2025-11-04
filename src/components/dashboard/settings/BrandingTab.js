@@ -7,6 +7,7 @@ const BrandingTab = ({
   primaryColor, setPrimaryColor,
   backgroundColor, setBackgroundColor,
   textColor, setTextColor,
+  buttonTextColor, setButtonTextColor,
   assistanceTitle, setAssistanceTitle,
   assistanceMessage, setAssistanceMessage,
   assistanceIcon, setAssistanceIcon,
@@ -87,7 +88,8 @@ const BrandingTab = ({
         .update({
           primary_color: primaryColor,
           background_color: backgroundColor,
-          text_color: textColor
+          text_color: textColor,
+          button_text_color: buttonTextColor
         })
         .eq('id', venueId);
 
@@ -277,6 +279,31 @@ const BrandingTab = ({
               </div>
             </div>
 
+            {/* Button Text Color */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Button Text Color</label>
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    value={buttonTextColor}
+                    onChange={(e) => setButtonTextColor(e.target.value)}
+                    className="w-12 h-10 lg:w-16 lg:h-10 border border-gray-300 rounded-md cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={buttonTextColor}
+                    onChange={(e) => setButtonTextColor(e.target.value)}
+                    className="w-24 lg:w-28 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="#ffffff"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 sm:ml-2">
+                  Color of text on buttons
+                </p>
+              </div>
+            </div>
+
             {/* Color Preview */}
             <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Color Preview</h4>
@@ -302,6 +329,13 @@ const BrandingTab = ({
                   ></div>
                   <span className="text-xs text-gray-600">Text</span>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <div
+                    className="w-8 h-8 rounded border border-gray-200"
+                    style={{ backgroundColor: buttonTextColor }}
+                  ></div>
+                  <span className="text-xs text-gray-600">Button Text</span>
+                </div>
               </div>
               {/* Feedback Page Preview */}
               <div className="mt-4 p-4 rounded-lg border-2 border-gray-200" style={{ backgroundColor: backgroundColor }}>
@@ -309,8 +343,8 @@ const BrandingTab = ({
                   Feedback Page Preview
                 </p>
                 <button
-                  className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
-                  style={{ backgroundColor: primaryColor }}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold"
+                  style={{ backgroundColor: primaryColor, color: buttonTextColor }}
                 >
                   Sample Button
                 </button>
@@ -415,10 +449,44 @@ const BrandingTab = ({
                     })}
                   </div>
                   <h2 className="text-xl font-bold mb-2" style={{ color: textColor }}>
-                    {assistanceTitle || 'Help is on the way!'}
+                    {(assistanceTitle || 'Help is on the way!')
+                      .split(/(\{table\})/g)
+                      .map((part, index) =>
+                        part === '{table}' ? (
+                          <span
+                            key={index}
+                            className="inline-block px-2 py-0.5 rounded mx-1"
+                            style={{
+                              backgroundColor: '#fee2e2',
+                              color: '#991b1b',
+                              fontWeight: '600'
+                            }}
+                          >
+                            14
+                          </span>
+                        ) : part
+                      )
+                    }
                   </h2>
                   <p className="text-sm" style={{ color: textColor, opacity: 0.8 }}>
-                    {(assistanceMessage || 'We\'ve notified our team that you need assistance. Someone will be with you shortly.').replace('{table}', '14')}
+                    {(assistanceMessage || 'We\'ve notified our team that you need assistance. Someone will be with you shortly.')
+                      .split(/(\{table\})/g)
+                      .map((part, index) =>
+                        part === '{table}' ? (
+                          <span
+                            key={index}
+                            className="inline-block px-2 py-0.5 rounded mx-1"
+                            style={{
+                              backgroundColor: '#fee2e2',
+                              color: '#991b1b',
+                              fontWeight: '600'
+                            }}
+                          >
+                            14
+                          </span>
+                        ) : part
+                      )
+                    }
                   </p>
                 </div>
               </div>

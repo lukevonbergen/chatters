@@ -369,9 +369,17 @@ const QuestionManagementTab = ({
     }
   };
 
-  const filteredInactiveQuestions = inactiveQuestions.filter(q =>
-    q.question.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredInactiveQuestions = inactiveQuestions.filter(q => {
+    // Filter by search term
+    const matchesSearch = q.question.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Check if question text already exists in active questions
+    const isDuplicate = questions.some(activeQ =>
+      activeQ.question.toLowerCase().trim() === q.question.toLowerCase().trim()
+    );
+
+    return matchesSearch && !isDuplicate;
+  });
 
   const [isArchiveExpanded, setIsArchiveExpanded] = useState(false);
 

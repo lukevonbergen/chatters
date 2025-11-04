@@ -14,6 +14,7 @@ const SettingsBrandingPage = () => {
   const [primaryColor, setPrimaryColor] = useState('#1890ff');
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [textColor, setTextColor] = useState('#111827');
+  const [buttonTextColor, setButtonTextColor] = useState('#ffffff');
 
   // Assistance message customization
   const [assistanceTitle, setAssistanceTitle] = useState('Help is on the way!');
@@ -30,7 +31,7 @@ const SettingsBrandingPage = () => {
       // Fetch venue branding data
       const { data: venueData, error: venueError } = await supabase
         .from('venues')
-        .select('logo, primary_color, background_color, text_color, assistance_title, assistance_message, assistance_icon')
+        .select('logo, primary_color, background_color, text_color, button_text_color, assistance_title, assistance_message, assistance_icon')
         .eq('id', venueId)
         .single();
 
@@ -44,6 +45,7 @@ const SettingsBrandingPage = () => {
       setPrimaryColor(venueData.primary_color || '#1890ff');
       setBackgroundColor(venueData.background_color || '#ffffff');
       setTextColor(venueData.text_color || '#111827');
+      setButtonTextColor(venueData.button_text_color || '#ffffff');
 
       // Set assistance message data
       setAssistanceTitle(venueData.assistance_title || 'Help is on the way!');
@@ -73,6 +75,8 @@ const SettingsBrandingPage = () => {
           setBackgroundColor={setBackgroundColor}
           textColor={textColor}
           setTextColor={setTextColor}
+          buttonTextColor={buttonTextColor}
+          setButtonTextColor={setButtonTextColor}
           assistanceTitle={assistanceTitle}
           setAssistanceTitle={setAssistanceTitle}
           assistanceMessage={assistanceMessage}
