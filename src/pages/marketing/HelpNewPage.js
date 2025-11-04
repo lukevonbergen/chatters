@@ -29,22 +29,22 @@ const HelpNewPage = () => {
         {
           title: "Quick Start Guide",
           description: "Get up and running with Chatters in under 10 minutes",
-          link: "/help#getting-started"
+          link: "/help/quick-start-guide"
         },
         {
           title: "Setting Up Your First Venue",
           description: "Step-by-step guide to creating and configuring your venue",
-          link: "/help#getting-started"
+          link: "/help/setting-up-first-venue"
         },
         {
           title: "Creating Your QR Code",
           description: "Generate and deploy your first feedback QR code",
-          link: "/help#qr-codes"
+          link: "/help/creating-qr-code"
         },
         {
           title: "Testing Your System",
           description: "How to properly test your feedback system before going live",
-          link: "/help#getting-started"
+          link: "/help/testing-system"
         }
       ]
     },
@@ -56,22 +56,22 @@ const HelpNewPage = () => {
         {
           title: "QR Code Best Practices",
           description: "Learn where and how to place QR codes for maximum engagement",
-          link: "/help#qr-codes"
+          link: "/help/qr-code-best-practices"
         },
         {
           title: "Printing Your QR Codes",
           description: "Size recommendations and printing guidelines",
-          link: "/help#qr-codes"
+          link: "/help/printing-qr-codes"
         },
         {
           title: "QR Code Not Scanning?",
           description: "Troubleshoot common QR code scanning issues",
-          link: "/help#troubleshooting"
+          link: "/help/qr-code-troubleshooting"
         },
         {
           title: "Multiple QR Codes for One Venue",
           description: "Set up different QR codes for different areas",
-          link: "/help#qr-codes"
+          link: "/help/multiple-qr-codes"
         }
       ]
     },
@@ -83,22 +83,22 @@ const HelpNewPage = () => {
         {
           title: "Understanding Kiosk Mode",
           description: "Your real-time dashboard for customer feedback and alerts",
-          link: "/help#kiosk-mode"
+          link: "/help/understanding-kiosk-mode"
         },
         {
           title: "Setting Up Your Floor Plan",
           description: "Configure tables and areas for visual feedback display",
-          link: "/help#kiosk-mode"
+          link: "/help/setting-up-floor-plan"
         },
         {
           title: "Alert Colors Explained",
           description: "Learn the color-coded priority system for feedback",
-          link: "/help#kiosk-mode"
+          link: "/help/alert-colors-explained"
         },
         {
           title: "Staff Training for Kiosk Mode",
           description: "Best practices for training your team on the kiosk",
-          link: "/help#training"
+          link: "/help/staff-training-kiosk"
         }
       ]
     },
@@ -110,22 +110,22 @@ const HelpNewPage = () => {
         {
           title: "What Are Assistance Requests?",
           description: "Quick help requests from customers without formal feedback",
-          link: "/help#assistance-requests"
+          link: "/help/what-are-assistance-requests"
         },
         {
           title: "Responding to Assistance Requests",
           description: "Best practices for fast, effective responses",
-          link: "/help#assistance-requests"
+          link: "/help/responding-to-assistance"
         },
         {
           title: "Managing High Volume Requests",
           description: "Strategies for busy periods and multiple simultaneous requests",
-          link: "/help#assistance-requests"
+          link: "/help/managing-high-volume"
         },
         {
           title: "Assistance Request Analytics",
           description: "Track response times and common request patterns",
-          link: "/help#analytics"
+          link: "/help/assistance-analytics"
         }
       ]
     },
@@ -137,22 +137,22 @@ const HelpNewPage = () => {
         {
           title: "Branding Your Feedback Forms",
           description: "Upload logos and customize colors to match your brand",
-          link: "/help#customisation"
+          link: "/help/branding-feedback-forms"
         },
         {
           title: "Creating Effective Questions",
           description: "Write questions that get meaningful feedback",
-          link: "/help#customisation"
+          link: "/help/creating-effective-questions"
         },
         {
           title: "Question Types and Formats",
           description: "Choose the right question format for your needs",
-          link: "/help#customisation"
+          link: "/help/question-types-formats"
         },
         {
           title: "Setting Feedback Hours",
           description: "Configure when customers can leave feedback",
-          link: "/help#customisation"
+          link: "/help/setting-feedback-hours"
         }
       ]
     },
@@ -164,22 +164,22 @@ const HelpNewPage = () => {
         {
           title: "Understanding Your Dashboard",
           description: "Navigate key metrics and performance indicators",
-          link: "/help#analytics"
+          link: "/help/understanding-dashboard"
         },
         {
           title: "Exporting Data",
           description: "Export feedback data to Excel, CSV, or PDF",
-          link: "/help#analytics"
+          link: "/help/exporting-data"
         },
         {
           title: "Setting Up Automated Reports",
           description: "Schedule weekly or monthly reports via email",
-          link: "/help#analytics"
+          link: "/help/automated-reports"
         },
         {
           title: "Trend Analysis",
           description: "Identify patterns and track improvements over time",
-          link: "/help#analytics"
+          link: "/help/trend-analysis"
         }
       ]
     },
@@ -191,22 +191,22 @@ const HelpNewPage = () => {
         {
           title: "User Roles Explained",
           description: "Admin, Manager, and Staff permissions overview",
-          link: "/help#team-management"
+          link: "/help/user-roles-explained"
         },
         {
           title: "Adding Team Members",
           description: "Invite staff and assign appropriate access levels",
-          link: "/help#team-management"
+          link: "/help/adding-team-members"
         },
         {
           title: "Managing Permissions",
           description: "Control who can access which features and venues",
-          link: "/help#team-management"
+          link: "/help/managing-permissions"
         },
         {
           title: "Removing Team Members",
           description: "Safely remove user access when staff leave",
-          link: "/help#team-management"
+          link: "/help/removing-team-members"
         }
       ]
     },
@@ -218,22 +218,22 @@ const HelpNewPage = () => {
         {
           title: "Understanding Plans",
           description: "Compare Starter, Growth, and Enterprise plans",
-          link: "/help#billing"
+          link: "/help/understanding-plans"
         },
         {
           title: "Upgrading Your Plan",
           description: "Add more venues or unlock advanced features",
-          link: "/help#billing"
+          link: "/help/upgrading-plan"
         },
         {
           title: "Managing Your Subscription",
           description: "Update payment methods and billing information",
-          link: "/help#billing"
+          link: "/help/managing-subscription"
         },
         {
           title: "Cancellation & Data Export",
           description: "What happens when you cancel your account",
-          link: "/help#billing"
+          link: "/help/cancellation-data-export"
         }
       ]
     },
@@ -245,22 +245,22 @@ const HelpNewPage = () => {
         {
           title: "Common Issues & Solutions",
           description: "Quick fixes for the most frequent problems",
-          link: "/help#troubleshooting"
+          link: "/help/common-issues"
         },
         {
           title: "No Feedback Appearing",
           description: "Troubleshoot missing or delayed feedback",
-          link: "/help#troubleshooting"
+          link: "/help/no-feedback-appearing"
         },
         {
           title: "Kiosk Mode Not Updating",
           description: "Fix real-time sync issues with your dashboard",
-          link: "/help#troubleshooting"
+          link: "/help/kiosk-not-updating"
         },
         {
           title: "Browser Compatibility",
           description: "Supported browsers and device requirements",
-          link: "/help#troubleshooting"
+          link: "/help/browser-compatibility"
         }
       ]
     },
@@ -272,22 +272,22 @@ const HelpNewPage = () => {
         {
           title: "Data Security Overview",
           description: "How we protect your customer feedback data",
-          link: "/security"
+          link: "/help/data-security-overview"
         },
         {
           title: "GDPR Compliance",
           description: "Privacy controls and data protection measures",
-          link: "/security"
+          link: "/help/gdpr-compliance"
         },
         {
           title: "User Access Security",
           description: "Best practices for account and password security",
-          link: "/help#team-management"
+          link: "/help/user-access-security"
         },
         {
           title: "Data Retention Policy",
           description: "How long we store your feedback data",
-          link: "/privacy"
+          link: "/help/data-retention-policy"
         }
       ]
     }

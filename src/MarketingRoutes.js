@@ -10,6 +10,7 @@ import ContactPage from './pages/marketing/ContactPage';
 import SecurityPage from './pages/marketing/SecurityPage';
 import HelpPage from './pages/marketing/HelpPage';
 import HelpNewPage from './pages/marketing/HelpNewPage';
+import HelpArticleRoute from './pages/marketing/help/HelpArticleRoute';
 import TermsAndConditionsPage from './pages/marketing/Terms';
 import PrivacyPolicyPage from './pages/marketing/Privacy';
 import AboutPage from './pages/marketing/AboutPage';
@@ -46,6 +47,7 @@ const MarketingRoutes = () => {
       <Route path="/security" element={<SecurityPage />} />
       <Route path="/help" element={<HelpPage />} />
       <Route path="/help-new" element={<HelpNewPage />} />
+      <Route path="/help/:slug" element={<HelpArticleRoute />} />
       <Route path="/terms" element={<TermsAndConditionsPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
       <Route path="/about" element={<AboutPage />} />
