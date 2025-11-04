@@ -261,80 +261,6 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         </div>
       )}
 
-      {accountData?.is_paid && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
-          <CreditCard className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-green-800 font-medium">Active Subscription</p>
-            <p className="text-green-700 text-sm mt-1">
-              Your subscription is active and covers {venueCount} venue{venueCount !== 1 ? 's' : ''}. Scroll down to manage your subscription details.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-6 mb-8">
-        {/* Current Plan Card */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Receipt className="w-5 h-5 text-blue-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900">Current Plan</h3>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Status:</span>
-              <span className={`font-medium ${accountData?.is_paid ? 'text-green-600' : 'text-yellow-600'}`}>
-                {accountData?.is_paid ? 'Active' : accountData?.demo_account ? 'Demo Account' : 'Trial'}
-              </span>
-            </div>
-            {!accountData?.is_paid && accountData?.daysLeft !== null && accountData?.daysLeft !== undefined && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Trial ends:</span>
-                <span className="font-medium text-gray-900">{accountData?.daysLeft} days</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Venues Card */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Building2 className="w-5 h-5 text-purple-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900">Your Venues</h3>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Total venues:</span>
-              <span className="font-medium text-gray-900">{venueCount}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Price per venue:</span>
-              <span className="font-medium text-gray-900">
-                £{PRICE_PER_VENUE_MONTHLY}/mo
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Venue List */}
-      {accountData?.venues && accountData.venues.length > 0 && (
-        <div className="mb-8 bg-gray-50 border border-gray-200 rounded-xl p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Venues in your account</h3>
-          <div className="space-y-2">
-            {accountData.venues.map((venue) => (
-              <div key={venue.id} className="flex items-center gap-2 text-sm text-gray-700">
-                <Building2 className="w-4 h-4 text-gray-400" />
-                <span>{venue.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Pricing Plans */}
       {!accountData?.is_paid && (
@@ -455,22 +381,13 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
       {/* Active Subscription Management - In-App */}
       {accountData?.is_paid && accountData.stripe_customer_id && accountId && (
         <div className="mt-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Manage Your Subscription</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Subscription Details</h2>
           <SubscriptionManagement
             accountId={accountId}
             userEmail={userEmail}
           />
         </div>
       )}
-
-      {/* Pricing Note */}
-      <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>Note:</strong> Pricing is based on the number of venues in your account.
-          {venueCount > 1 ? ` You currently have ${venueCount} venues.` : ' Add more venues as you grow.'}
-          Each venue costs £{PRICE_PER_VENUE_MONTHLY}/month or £{PRICE_PER_VENUE_YEARLY}/year.
-        </p>
-      </div>
 
       {/* Stripe Checkout Modal */}
       <StripeCheckoutModal
