@@ -61,26 +61,31 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
 
   const getCurrentSection = () => {
     const currentPath = location.pathname;
-    
+
+    // Special handling for account settings pages
+    if (currentPath.startsWith('/account/')) {
+      return { id: 'account', label: 'Account Settings', icon: Settings, path: '/account' };
+    }
+
     // Special handling for different path patterns
     if (currentPath.startsWith('/settings/')) {
       return mainMenuItems.find(item => item.id === 'settings') || mainMenuItems[0];
     }
-    
+
     if (currentPath.startsWith('/feedback/') || currentPath === '/questions' || currentPath === '/feedbackfeed') {
       return mainMenuItems.find(item => item.id === 'feedback') || mainMenuItems[0];
     }
-    
+
     if (currentPath.startsWith('/reports/')) {
       return mainMenuItems.find(item => item.id === 'reports') || mainMenuItems[0];
     }
-    
+
     if (currentPath.startsWith('/staff/')) {
       return mainMenuItems.find(item => item.id === 'staff') || mainMenuItems[0];
     }
-    
+
     // Default path-based matching
-    const currentItem = mainMenuItems.find(item => 
+    const currentItem = mainMenuItems.find(item =>
       currentPath === item.path || currentPath.startsWith(item.path + '/')
     );
     return currentItem || mainMenuItems[0];
@@ -96,14 +101,22 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
     const currentSection = getCurrentSection();
 
     // Settings subtitles
-    if (currentPath.startsWith('/settings/')) {
+    if (currentPath.startsWith('/settings/') || currentPath.startsWith('/settings?')) {
       if (currentPath === '/settings/venues' || currentPath === '/settings?tab=Venue') return 'Venue information and settings';
       if (currentPath === '/settings/feedback' || currentPath === '/settings?tab=Feedback') return 'Feedback configuration';
       if (currentPath === '/settings/branding' || currentPath === '/settings?tab=Branding') return 'Brand colors and logo';
       if (currentPath === '/settings/integrations' || currentPath === '/settings?tab=Integrations') return 'Third-party integrations';
       if (currentPath === '/settings/billing' || currentPath === '/settings?tab=Billing') return 'Subscription and billing';
-      if (currentPath === '/settings' || currentPath === '/settings?tab=Account') return 'Account configuration';
+      if (currentPath === '/settings' || currentPath === '/settings?tab=Account') return 'Profile settings';
       return 'Account configuration';
+    }
+
+    // Account Settings pages (accessed via settings dropdown)
+    if (currentPath === '/account/profile') {
+      return 'Profile settings';
+    }
+    if (currentPath === '/account/billing') {
+      return 'Subscription and billing';
     }
 
     // Feedback subtitles
