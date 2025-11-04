@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import {
-  CreditCard,
   Download,
   RefreshCw,
   AlertCircle,
@@ -13,6 +12,82 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+
+// Card brand logo components
+const CardBrandLogo = ({ brand }) => {
+  const brandName = brand?.toLowerCase();
+
+  switch (brandName) {
+    case 'visa':
+      return (
+        <svg viewBox="0 0 48 32" className="w-12 h-8">
+          <rect width="48" height="32" rx="4" fill="#1434CB"/>
+          <path d="M20.5 11h-3.2l-2 10h2l2-10zm7.7 6.4l1.1-3 .6 3h-1.7zm2.3 3.6h1.8l-1.6-10h-1.6c-.4 0-.7.2-.8.5l-2.8 9.5h2.1l.4-1.1h2.6l.2 1.1zm-5.5-3.3c0-2.6-3.6-2.8-3.6-4 0-.4.4-.7 1.2-.8.4 0 1.5.1 2.7.7l.5-2.3c-.7-.2-1.5-.5-2.6-.5-2.5 0-4.2 1.3-4.2 3.2 0 1.4 1.2 2.1 2.2 2.6 1 .5 1.4.8 1.4 1.2 0 .7-.8 1-1.6 1-1.3 0-2.1-.3-2.7-.6l-.5 2.4c.6.3 1.8.5 3 .5 2.6 0 4.3-1.3 4.3-3.3zm-10.8-6.7l-3.3 10h-2.1l-1.6-6.2c-.1-.4-.2-.5-.5-.7-.5-.3-1.4-.5-2.1-.7l.1-.4h3.6c.5 0 .9.3 1 .8l.9 4.9 2.2-5.7h2.1z" fill="white"/>
+        </svg>
+      );
+    case 'mastercard':
+      return (
+        <svg viewBox="0 0 48 32" className="w-12 h-8">
+          <rect width="48" height="32" rx="4" fill="#000000"/>
+          <circle cx="18" cy="16" r="8" fill="#EB001B"/>
+          <circle cx="30" cy="16" r="8" fill="#FF5F00"/>
+          <path d="M24 9.6c-1.7 1.4-2.8 3.5-2.8 5.9s1.1 4.5 2.8 5.9c1.7-1.4 2.8-3.5 2.8-5.9s-1.1-4.5-2.8-5.9z" fill="#F79E1B"/>
+        </svg>
+      );
+    case 'amex':
+    case 'american express':
+      return (
+        <svg viewBox="0 0 48 32" className="w-12 h-8">
+          <rect width="48" height="32" rx="4" fill="#006FCF"/>
+          <path d="M15.5 13.5h-2.7l-.7 1.7-.7-1.7H8.7v4.8l-2.2-4.8H4l-2.5 5.5h1.5l.5-1.2h2.7l.5 1.2h2.8v-4.2l2 4.2h1.2l2-4.2v4.2h1.5v-5.5h-2.2zm-10.7 3.7l.9-2.1.9 2.1h-1.8zm15.7-3.7l-1.2 2.8-1.2-2.8h-2.2l2.2 4.3v1.2h1.5v-1.2l2.2-4.3h-1.3zm6.5 0h-4.5v5.5h4.5v-1.3h-3v-1h2.9v-1.2h-2.9v-1h3v-1zm5.5 2.3l1.5-2.3h-1.7l-.8 1.3-.8-1.3h-1.7l1.5 2.3-1.6 2.4h1.7l.9-1.4.9 1.4h1.7l-1.6-2.4z" fill="white"/>
+        </svg>
+      );
+    case 'discover':
+      return (
+        <svg viewBox="0 0 48 32" className="w-12 h-8">
+          <rect width="48" height="32" rx="4" fill="#FF6000"/>
+          <circle cx="36" cy="16" r="8" fill="#FFAB00"/>
+          <text x="8" y="20" fill="white" fontSize="10" fontWeight="bold" fontFamily="Arial">DISCOVER</text>
+        </svg>
+      );
+    case 'diners':
+    case 'diners club':
+      return (
+        <svg viewBox="0 0 48 32" className="w-12 h-8">
+          <rect width="48" height="32" rx="4" fill="#0079BE"/>
+          <circle cx="18" cy="16" r="7" fill="white"/>
+          <circle cx="30" cy="16" r="7" fill="white"/>
+          <path d="M24 9v14" stroke="#0079BE" strokeWidth="14"/>
+        </svg>
+      );
+    case 'jcb':
+      return (
+        <svg viewBox="0 0 48 32" className="w-12 h-8">
+          <rect width="48" height="32" rx="4" fill="#0E4C96"/>
+          <rect x="4" y="12" width="12" height="8" rx="1" fill="#CC0000"/>
+          <rect x="18" y="12" width="12" height="8" rx="1" fill="#00A0E9"/>
+          <rect x="32" y="12" width="12" height="8" rx="1" fill="#7FC04C"/>
+        </svg>
+      );
+    case 'unionpay':
+      return (
+        <svg viewBox="0 0 48 32" className="w-12 h-8">
+          <rect width="48" height="32" rx="4" fill="#002D72"/>
+          <circle cx="14" cy="16" r="6" fill="#E21836"/>
+          <circle cx="24" cy="16" r="6" fill="#00447C"/>
+          <circle cx="34" cy="16" r="6" fill="#007B84"/>
+        </svg>
+      );
+    default:
+      // Generic card icon for unknown brands
+      return (
+        <div className="w-12 h-8 bg-gradient-to-br from-gray-700 to-gray-900 rounded flex items-center justify-center">
+          <CreditCard className="w-6 h-6 text-white" />
+        </div>
+      );
+  }
+};
+
 
 // Update Payment Method Component
 const UpdatePaymentMethodForm = ({ onSuccess, onCancel }) => {
@@ -296,9 +371,7 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
             </div>
 
             <div className="flex items-center gap-4 mt-6">
-              <div className="w-16 h-10 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg flex items-center justify-center shadow-lg">
-                <CreditCard className="w-6 h-6 text-white" />
-              </div>
+              <CardBrandLogo brand={paymentMethod.brand} />
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide">Expires</p>
                 <p className="text-sm font-medium text-gray-900">
