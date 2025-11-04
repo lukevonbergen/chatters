@@ -66,7 +66,7 @@ const CustomerFeedbackPage = () => {
         // Load venue data first (including feedback_hours, review links, NPS settings, and branding colors)
         const { data: venueData, error: venueError } = await supabase
           .from('venues')
-          .select('logo, primary_color, secondary_color, background_color, text_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled')
+          .select('logo, primary_color, background_color, text_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled')
           .eq('id', venueId);
 
         if (venueError) {
@@ -557,7 +557,6 @@ const CustomerFeedbackPage = () => {
   }
 
   const primary = venue.primary_color || '#111827';
-  const secondary = venue.secondary_color || '#f3f4f6';
   const background = venue.background_color || '#ffffff';
   const textColor = venue.text_color || '#111827';
 

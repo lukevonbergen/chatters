@@ -4,7 +4,6 @@ import { supabase } from '../../../utils/supabase';
 const BrandingTab = ({
   logo, setLogo,
   primaryColor, setPrimaryColor,
-  secondaryColor, setSecondaryColor,
   backgroundColor, setBackgroundColor,
   textColor, setTextColor,
   venueId
@@ -81,7 +80,6 @@ const BrandingTab = ({
         .from('venues')
         .update({
           primary_color: primaryColor,
-          secondary_color: secondaryColor,
           background_color: backgroundColor,
           text_color: textColor
         })
@@ -154,7 +152,7 @@ const BrandingTab = ({
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Brand Colors</h3>
-            <p className="text-gray-600 text-sm">Set your primary and secondary brand colors.</p>
+            <p className="text-gray-600 text-sm">Customize your feedback page colors to match your brand.</p>
           </div>
 
           <div className="space-y-6">
@@ -179,31 +177,6 @@ const BrandingTab = ({
                 </div>
                 <p className="text-xs text-gray-500 sm:ml-2">
                   Used for buttons and key elements
-                </p>
-              </div>
-            </div>
-
-            {/* Secondary Color */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="color"
-                    value={secondaryColor}
-                    onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="w-12 h-10 lg:w-16 lg:h-10 border border-gray-300 rounded-md cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={secondaryColor}
-                    onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="w-24 lg:w-28 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="#000000"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 sm:ml-2">
-                  Used for accents and highlights
                 </p>
               </div>
             </div>
@@ -268,13 +241,6 @@ const BrandingTab = ({
                     style={{ backgroundColor: primaryColor }}
                   ></div>
                   <span className="text-xs text-gray-600">Primary</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div
-                    className="w-8 h-8 rounded border border-gray-200"
-                    style={{ backgroundColor: secondaryColor }}
-                  ></div>
-                  <span className="text-xs text-gray-600">Secondary</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div
