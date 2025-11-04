@@ -200,7 +200,7 @@ const BrandingTab = ({
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Brand Colors</h3>
-            <p className="text-gray-600 text-sm">Customize your feedback page colors to match your brand.</p>
+            <p className="text-gray-600 text-sm">Customise your feedback page colors to match your brand.</p>
           </div>
 
           <div className="space-y-6">
@@ -382,7 +382,7 @@ const BrandingTab = ({
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Assistance Request Message</h3>
-            <p className="text-gray-600 text-sm">Customize the message customers see after requesting assistance</p>
+            <p className="text-gray-600 text-sm">Customise the message customers see after requesting assistance</p>
           </div>
 
           <div className="space-y-6">
