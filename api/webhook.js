@@ -76,20 +76,37 @@ export default async function handler(req, res) {
         const customerId = subscription.customer;
         const isActive = subscription.status === 'active';
 
-        // Update account by stripe customer ID
-        const { error: updateError } = await supabase
-          .from('accounts')
-          .update({
-            is_paid: isActive,
-            stripe_subscription_id: subscription.id,
-            stripe_subscription_status: subscription.status,
-            trial_ends_at: isActive ? null : undefined,
-            account_type: isActive ? 'paid' : undefined
-          })
-          .eq('stripe_customer_id', customerId);
+        // Ignore canceled or ended subscriptions (old incomplete subscriptions)
+        if (subscription.ended_at || subscription.canceled_at) {
+          console.log('Ignoring ended/canceled subscription:', subscription.id, 'Status:', subscription.status);
+          break;
+        }
 
-        if (updateError) throw updateError;
-        console.log('Subscription updated:', subscription.id, 'Status:', subscription.status);
+        // Get current account to check if this is the active subscription
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('stripe_subscription_id, stripe_subscription_status')
+          .eq('stripe_customer_id', customerId)
+          .single();
+
+        // Only update if this is the current subscription OR if we don't have one yet
+        if (!account || !account.stripe_subscription_id || account.stripe_subscription_id === subscription.id) {
+          const { error: updateError } = await supabase
+            .from('accounts')
+            .update({
+              is_paid: isActive,
+              stripe_subscription_id: subscription.id,
+              stripe_subscription_status: subscription.status,
+              trial_ends_at: isActive ? null : undefined,
+              account_type: isActive ? 'paid' : undefined
+            })
+            .eq('stripe_customer_id', customerId);
+
+          if (updateError) throw updateError;
+          console.log('Subscription updated:', subscription.id, 'Status:', subscription.status);
+        } else {
+          console.log('Ignoring update for non-active subscription:', subscription.id, 'Current subscription:', account.stripe_subscription_id);
+        }
         break;
       }
 
@@ -97,6 +114,12 @@ export default async function handler(req, res) {
         const subscription = event.data.object;
         const customerId = subscription.customer;
         const isActive = subscription.status === 'active';
+
+        // Ignore canceled or ended subscriptions
+        if (subscription.ended_at || subscription.canceled_at) {
+          console.log('Ignoring ended/canceled subscription creation:', subscription.id, 'Status:', subscription.status);
+          break;
+        }
 
         // Update account when subscription is first created
         const { error: updateError } = await supabase
@@ -119,18 +142,29 @@ export default async function handler(req, res) {
         const subscription = event.data.object;
         const customerId = subscription.customer;
 
-        // Mark account as unpaid when subscription cancelled
-        const { error: updateError } = await supabase
+        // Get current account to check if this is the active subscription
+        const { data: account } = await supabase
           .from('accounts')
-          .update({
-            is_paid: false,
-            stripe_subscription_id: null,
-            stripe_subscription_status: 'canceled'
-          })
-          .eq('stripe_customer_id', customerId);
+          .select('stripe_subscription_id')
+          .eq('stripe_customer_id', customerId)
+          .single();
 
-        if (updateError) throw updateError;
-        console.log('Subscription cancelled:', subscription.id);
+        // Only mark as canceled if this is the current subscription
+        if (account && account.stripe_subscription_id === subscription.id) {
+          const { error: updateError } = await supabase
+            .from('accounts')
+            .update({
+              is_paid: false,
+              stripe_subscription_id: null,
+              stripe_subscription_status: 'canceled'
+            })
+            .eq('stripe_customer_id', customerId);
+
+          if (updateError) throw updateError;
+          console.log('Subscription cancelled:', subscription.id);
+        } else {
+          console.log('Ignoring deletion of non-active subscription:', subscription.id);
+        }
         break;
       }
 
