@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { supabase } from '../../../utils/supabase';
+import { MetricCard } from '../../ui/metric-card';
 
 function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
 function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return x; }
@@ -171,7 +172,6 @@ export default function ExpiredFeedbackTile({ venueId, timeframe = 'today' }) {
   }, [venueId, timeframe]);
 
   const expiredPercentage = totalCount > 0 ? ((expiredCount / totalCount) * 100) : 0;
-  const statusColor = expiredCount === 0 ? 'text-green-600' : expiredCount > 0 && expiredPercentage < 20 ? 'text-yellow-600' : 'text-red-600';
 
   // Calculate delta - show improvement if fewer expired items
   const expiredDelta = useMemo(() => {
@@ -180,24 +180,40 @@ export default function ExpiredFeedbackTile({ venueId, timeframe = 'today' }) {
     return Math.round(Math.random() * 15 + 5); // +5 to +20% (getting worse)
   }, [expiredCount]);
 
+  const calculateTrend = () => {
+    if (expiredDelta === 0) {
+      return {
+        direction: "neutral",
+        positive: true,
+        value: "0%",
+        text: "vs previous period"
+      };
+    }
+
+    return {
+      direction: expiredDelta > 0 ? "up" : "down",
+      positive: expiredDelta < 0, // Fewer expired items is positive
+      value: `${expiredDelta > 0 ? '+' : ''}${expiredDelta}%`,
+      text: "vs previous period"
+    };
+  };
+
+  // Determine variant based on expired count
+  const getVariant = () => {
+    if (expiredCount === 0) return "success";
+    if (expiredPercentage < 20) return "warning";
+    return "danger";
+  };
+
   return (
-    <div className="bg-gray-50 rounded-lg p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-          <AlertTriangle className="w-5 h-5 text-orange-600" />
-        </div>
-        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-          expiredDelta <= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-        }`}>
-          {expiredDelta <= 0 ? expiredDelta : `+${expiredDelta}`}%
-        </div>
-      </div>
-      <div className="text-2xl font-bold text-gray-900 mb-1">
-        {loading ? '—' : expiredCount}
-      </div>
-      <div className="text-sm text-gray-600">
-        Expired Feedback
-      </div>
-    </div>
+    <MetricCard
+      title="Expired Feedback"
+      value={loading ? '—' : expiredCount}
+      description={totalCount > 0 ? `${totalCount} total unresolved` : 'No unresolved items'}
+      icon={AlertTriangle}
+      variant={getVariant()}
+      loading={loading}
+      trend={calculateTrend()}
+    />
   );
 }

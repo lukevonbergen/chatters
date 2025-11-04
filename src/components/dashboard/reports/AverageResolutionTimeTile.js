@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock } from 'lucide-react';
 import { supabase } from '../../../utils/supabase';
+import { MetricCard } from '../../ui/metric-card';
 
 const TARGET_MINUTES = 120;
 
@@ -185,36 +186,37 @@ export default function AverageResolutionTimeTile({ venueId, timeframe = 'last7'
     return Math.min(100, pct);
   }, [avg]);
 
-  const delta = useMemo(() => {
+  const calculateTrend = () => {
     if (!baselineAvg || baselineAvg === 0) return null;
-    const d = ((avg - baselineAvg) / baselineAvg) * 100; // + = slower (worse)
-    return Math.round(d);
-  }, [avg, baselineAvg]);
 
-  const deltaColor = delta != null
-    ? (delta <= 0 ? 'text-green-600' : 'text-gray-900')
-    : 'text-gray-900';
+    const delta = ((avg - baselineAvg) / baselineAvg) * 100;
+
+    if (Math.abs(delta) < 0.5) {
+      return {
+        direction: "neutral",
+        positive: true,
+        value: "0%",
+        text: "vs previous period"
+      };
+    }
+
+    return {
+      direction: delta > 0 ? "up" : "down",
+      positive: delta < 0, // Lower resolution time is positive
+      value: `${delta > 0 ? '+' : ''}${Math.round(delta)}%`,
+      text: "vs previous period"
+    };
+  };
 
   return (
-    <div className="bg-gray-50 rounded-lg p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-          <Clock className="w-5 h-5 text-blue-600" />
-        </div>
-        {delta !== null && (
-          <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-            delta <= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          }`}>
-            {delta <= 0 ? delta : `+${delta}`}%
-          </div>
-        )}
-      </div>
-      <div className="text-2xl font-bold text-gray-900 mb-1">
-        {loading ? '—' : formatTime(avg)}
-      </div>
-      <div className="text-sm text-gray-600">
-        Avg. Resolution Time
-      </div>
-    </div>
+    <MetricCard
+      title="Avg. Resolution Time"
+      value={loading ? '—' : formatTime(avg)}
+      description={count > 0 ? `${count} items resolved` : 'No resolved items'}
+      icon={Clock}
+      variant="neutral"
+      loading={loading}
+      trend={calculateTrend()}
+    />
   );
 }
