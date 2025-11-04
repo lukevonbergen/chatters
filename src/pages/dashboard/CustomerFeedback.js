@@ -745,12 +745,9 @@ const CustomerFeedbackPage = () => {
                       Requesting...
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center">
-                      <HandHeart className="w-5 h-5 mr-2" />
-                      <div className="text-center">
-                        <div className="font-bold">Just need assistance?</div>
-                        <div className="text-xs opacity-80">Our team will be right with you</div>
-                      </div>
+                    <div className="text-center">
+                      <div className="font-bold">Just need assistance?</div>
+                      <div className="text-xs opacity-80">Our team will be right with you</div>
                     </div>
                   )}
                 </button>
