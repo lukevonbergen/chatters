@@ -358,7 +358,7 @@ const QuestionManagementTab = ({
   handleReplaceQuestion,
 }) => {
   const [view, setView] = useState('active'); // 'active', 'create', 'archive'
-  
+
   const handleAddInactive = (question) => {
     if (questions.length >= 5) {
       setSelectedInactiveQuestion(question);
@@ -375,35 +375,45 @@ const QuestionManagementTab = ({
 
   return (
     <div className="max-w-none">
-      <div className="space-y-8">
-        <SuggestedQuestionsSection 
-          filteredSuggestedQuestions={filteredSuggestedQuestions}
-          setNewQuestion={setNewQuestion}
-        />
-        <CreateQuestionSection 
-          newQuestion={newQuestion}
-          handleNewQuestionChange={handleNewQuestionChange}
-          questions={questions}
-          duplicateError={duplicateError}
-          handleAddQuestion={handleAddQuestion}
-        />
-        <ActiveQuestionsSection 
-          questions={questions}
-          editingQuestionId={editingQuestionId}
-          editingQuestionText={editingQuestionText}
-          handleEditTextChange={handleEditTextChange}
-          cancelEditingQuestion={cancelEditingQuestion}
-          saveEditedQuestion={saveEditedQuestion}
-          startEditingQuestion={startEditingQuestion}
-          handleDeleteQuestion={handleDeleteQuestion}
-        />
-        <ArchiveSection 
-          inactiveQuestions={inactiveQuestions}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filteredInactiveQuestions={filteredInactiveQuestions}
-          handleAddInactive={handleAddInactive}
-        />
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Column - Active Questions */}
+        <div className="space-y-6">
+          <ActiveQuestionsSection
+            questions={questions}
+            editingQuestionId={editingQuestionId}
+            editingQuestionText={editingQuestionText}
+            handleEditTextChange={handleEditTextChange}
+            cancelEditingQuestion={cancelEditingQuestion}
+            saveEditedQuestion={saveEditedQuestion}
+            startEditingQuestion={startEditingQuestion}
+            handleDeleteQuestion={handleDeleteQuestion}
+          />
+
+          <ArchiveSection
+            inactiveQuestions={inactiveQuestions}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filteredInactiveQuestions={filteredInactiveQuestions}
+            handleAddInactive={handleAddInactive}
+          />
+        </div>
+
+        {/* Right Column - Add Questions */}
+        <div className="space-y-6">
+          <CreateQuestionSection
+            newQuestion={newQuestion}
+            handleNewQuestionChange={handleNewQuestionChange}
+            questions={questions}
+            duplicateError={duplicateError}
+            handleAddQuestion={handleAddQuestion}
+          />
+
+          <SuggestedQuestionsSection
+            filteredSuggestedQuestions={filteredSuggestedQuestions}
+            setNewQuestion={setNewQuestion}
+          />
+        </div>
       </div>
 
       <ReplaceModal
