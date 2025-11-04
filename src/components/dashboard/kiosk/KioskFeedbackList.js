@@ -188,14 +188,22 @@ const KioskFeedbackList = ({
             {sorted.map((s) => {
               const urgency = getUrgency(s);
 
+              // Determine background color based on rating
+              const getBackgroundColor = (rating) => {
+                if (rating == null) return 'bg-blue-50 border-blue-200';
+                if (rating <= 2) return 'bg-red-50 border-red-200';
+                if (rating <= 4) return 'bg-yellow-50 border-yellow-200';
+                return 'bg-green-50 border-green-200';
+              };
+
               return (
                 <div
                   key={s.session_id}
                   className={`relative p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
                     selectedFeedback?.session_id === s.session_id
-                      ? 'border-blue-500 bg-blue-50 shadow-md'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
+                      ? 'border-blue-500 shadow-md'
+                      : 'hover:border-gray-400'
+                  } ${getBackgroundColor(s.session_rating)}`}
                 >
                   {/* Header / urgency */}
                   <div className="flex items-center justify-between mb-2">
