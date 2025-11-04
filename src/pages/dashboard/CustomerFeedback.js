@@ -583,14 +583,14 @@ const CustomerFeedbackPage = () => {
   const buttonTextColor = venue.button_text_color || '#ffffff';
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: background }}>
-      <div className="w-full max-w-md p-6 text-center">
-        {venue.logo && (
-          <div className="mb-8">
-            <img src={venue.logo} alt="Venue Logo" className="h-16 mx-auto" />
-          </div>
-        )}
+    <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: background }}>
+      {venue.logo && (
+        <div className="mb-8 mt-4">
+          <img src={venue.logo} alt="Venue Logo" className="h-24 sm:h-28 md:h-32 mx-auto" />
+        </div>
+      )}
 
+      <div className="w-full max-w-md p-6 text-center">
         {!hasStarted ? (
           <div>
             <h2 className="text-2xl font-bold mb-6" style={{ color: textColor }}>Welcome!</h2>
