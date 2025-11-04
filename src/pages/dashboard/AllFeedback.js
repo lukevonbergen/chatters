@@ -39,7 +39,8 @@ const AllFeedback = () => {
       const startDate = dayjs(dateFrom).startOf('day').toISOString();
       const endDate = dayjs(dateTo).endOf('day').toISOString();
 
-      const { data, error } = await supabase
+      // Fetch regular feedback
+      const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedback')
         .select('*')
         .eq('venue_id', venueId)
@@ -47,7 +48,36 @@ const AllFeedback = () => {
         .lte('created_at', endDate)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (feedbackError) throw feedbackError;
+
+      // Fetch assistance requests
+      const { data: assistanceData, error: assistanceError } = await supabase
+        .from('assistance_requests')
+        .select('*')
+        .eq('venue_id', venueId)
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+        .order('created_at', { ascending: false });
+
+      if (assistanceError) throw assistanceError;
+
+      // Convert assistance requests to feedback format
+      const assistanceAsFeedback = (assistanceData || []).map(assist => ({
+        id: assist.id,
+        session_id: assist.id, // Use assistance request ID as session ID
+        venue_id: assist.venue_id,
+        table_number: assist.table_number,
+        created_at: assist.created_at,
+        resolved_at: assist.resolved_at || (assist.status === 'resolved' ? assist.updated_at : null),
+        resolved_by: assist.resolved_by || null,
+        rating: null,
+        question_text: null,
+        additional_feedback: assist.message,
+        _is_assistance: true, // Flag to identify assistance requests
+      }));
+
+      // Combine both datasets
+      const data = [...(feedbackData || []), ...assistanceAsFeedback];
 
       // Group by session_id
       const sessionMap = {};
@@ -78,8 +108,8 @@ const AllFeedback = () => {
           .filter(Boolean);
 
         // Determine if this is an assistance request
-        // Assistance requests typically have no ratings and no question_text
-        const isAssistanceRequest = session.items.every(item => !item.rating && !item.question_text);
+        // Check if any item has the _is_assistance flag
+        const isAssistanceRequest = session.items.some(item => item._is_assistance);
 
         return {
           ...session,
