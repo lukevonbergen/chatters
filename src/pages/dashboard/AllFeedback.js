@@ -155,9 +155,9 @@ const AllFeedback = () => {
 
       // Rating filter
       if (ratingFilter !== 'all' && session.avg_rating !== null) {
-        if (ratingFilter === '1-2' && session.avg_rating > 2) return false;
-        if (ratingFilter === '3' && (session.avg_rating < 2.5 || session.avg_rating > 3.5)) return false;
-        if (ratingFilter === '4-5' && session.avg_rating < 3.5) return false;
+        if (ratingFilter === 'poor' && session.avg_rating >= 3) return false;
+        if (ratingFilter === 'average' && (session.avg_rating < 3 || session.avg_rating >= 4)) return false;
+        if (ratingFilter === 'good' && session.avg_rating < 4) return false;
       }
 
       // Search filter
@@ -331,9 +331,9 @@ const AllFeedback = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Ratings</option>
-                <option value="1-2">Poor (1-2 stars)</option>
-                <option value="3">Average (3 stars)</option>
-                <option value="4-5">Good (4-5 stars)</option>
+                <option value="poor">Poor (1-3 stars)</option>
+                <option value="average">Average (3 stars)</option>
+                <option value="good">Good (4-5 stars)</option>
               </select>
             </div>
           </div>

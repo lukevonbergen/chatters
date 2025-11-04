@@ -373,33 +373,13 @@ const QuestionManagementTab = ({
     q.question.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const [isArchiveExpanded, setIsArchiveExpanded] = useState(false);
+
   return (
-    <div className="max-w-none">
+    <div className="max-w-none space-y-8">
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column - Active Questions */}
-        <div className="space-y-6">
-          <ActiveQuestionsSection
-            questions={questions}
-            editingQuestionId={editingQuestionId}
-            editingQuestionText={editingQuestionText}
-            handleEditTextChange={handleEditTextChange}
-            cancelEditingQuestion={cancelEditingQuestion}
-            saveEditedQuestion={saveEditedQuestion}
-            startEditingQuestion={startEditingQuestion}
-            handleDeleteQuestion={handleDeleteQuestion}
-          />
-
-          <ArchiveSection
-            inactiveQuestions={inactiveQuestions}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            filteredInactiveQuestions={filteredInactiveQuestions}
-            handleAddInactive={handleAddInactive}
-          />
-        </div>
-
-        {/* Right Column - Add Questions */}
+        {/* Left Column - Add Questions */}
         <div className="space-y-6">
           <CreateQuestionSection
             newQuestion={newQuestion}
@@ -414,6 +394,113 @@ const QuestionManagementTab = ({
             setNewQuestion={setNewQuestion}
           />
         </div>
+
+        {/* Right Column - Current Questions */}
+        <div>
+          <ActiveQuestionsSection
+            questions={questions}
+            editingQuestionId={editingQuestionId}
+            editingQuestionText={editingQuestionText}
+            handleEditTextChange={handleEditTextChange}
+            cancelEditingQuestion={cancelEditingQuestion}
+            saveEditedQuestion={saveEditedQuestion}
+            startEditingQuestion={startEditingQuestion}
+            handleDeleteQuestion={handleDeleteQuestion}
+          />
+        </div>
+      </div>
+
+      {/* Archived Questions - Collapsible Section */}
+      <div className="border border-gray-200 rounded-lg bg-white">
+        <button
+          onClick={() => setIsArchiveExpanded(!isArchiveExpanded)}
+          className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors duration-150 rounded-lg"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
+              <Archive className="w-4 h-4 text-gray-600" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-900">
+              Question Archive ({inactiveQuestions.length})
+            </h3>
+          </div>
+          <div className={`transform transition-transform duration-200 ${isArchiveExpanded ? 'rotate-180' : ''}`}>
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </button>
+
+        {isArchiveExpanded && (
+          <div className="px-5 pb-5 border-t border-gray-100">
+            <div className="pt-5">
+              {inactiveQuestions.length > 0 && (
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search archived questions..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {filteredInactiveQuestions.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  {searchTerm ? (
+                    <>
+                      <Search className="w-8 h-8 mx-auto mb-3 text-gray-300" />
+                      <p className="font-medium mb-1">No questions found</p>
+                      <p className="text-sm">Try adjusting your search terms</p>
+                    </>
+                  ) : (
+                    <>
+                      <Archive className="w-8 h-8 mx-auto mb-3 text-gray-300" />
+                      <p className="font-medium mb-1">No archived questions</p>
+                      <p className="text-sm">Questions you remove will appear here</p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+                  {filteredInactiveQuestions.map((q) => (
+                    <div
+                      key={q.id}
+                      className="p-4 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                      onClick={() => handleAddInactive(q)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 mb-1">{q.question}</p>
+                          <p className="text-xs text-gray-500">Click to reactivate</p>
+                        </div>
+                        <div className="flex items-center space-x-3 ml-4">
+                          <span className="inline-flex items-center px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                            Archived
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddInactive(q);
+                            }}
+                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-all duration-200"
+                            title="Reactivate question"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <ReplaceModal
