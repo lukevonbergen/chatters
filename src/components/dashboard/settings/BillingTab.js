@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useVenue } from '../../../context/VenueContext';
-import { CreditCard, Building2, Calendar, Receipt, ExternalLink, AlertCircle } from 'lucide-react';
+import { CreditCard, Building2, Calendar, Receipt, AlertCircle } from 'lucide-react';
 import StripeCheckoutModal from './StripeCheckoutModal';
 import SubscriptionManagement from './SubscriptionManagement';
 
@@ -267,21 +267,9 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
           <div className="flex-1">
             <p className="text-green-800 font-medium">Active Subscription</p>
             <p className="text-green-700 text-sm mt-1">
-              Your subscription is active and covers {venueCount} venue{venueCount !== 1 ? 's' : ''}.
+              Your subscription is active and covers {venueCount} venue{venueCount !== 1 ? 's' : ''}. Scroll down to manage your subscription details.
             </p>
           </div>
-          <button
-            onClick={handleManageSubscription}
-            disabled={portalLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium disabled:opacity-50"
-          >
-            {portalLoading ? 'Loading...' : (
-              <>
-                Manage Subscription
-                <ExternalLink className="w-4 h-4" />
-              </>
-            )}
-          </button>
         </div>
       )}
 
