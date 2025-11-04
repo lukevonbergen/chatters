@@ -68,14 +68,13 @@ const StaffLeaderboard = () => {
     ] = await Promise.all([feedbackQuery, assistanceQuery]);
 
     if (feedbackError || assistanceError) {
-      console.error('Error fetching data:', feedbackError || assistanceError);
       return;
     }
 
     const feedbackCounts = {};
     const assistanceCounts = {};
 
-    // Count feedback sessions resolved by each employee (negative feedback only)
+    // Count feedback sessions resolved by each employee
     if (feedbackData?.length) {
       const sessionMap = {};
       feedbackData.forEach(item => {
@@ -109,7 +108,6 @@ const StaffLeaderboard = () => {
       .in('id', allEmployeeIds);
 
     if (employeeError) {
-      console.error('Error fetching employee data:', employeeError);
       return;
     }
 
@@ -144,7 +142,7 @@ const StaffLeaderboard = () => {
     if (staffStats.length === 0) return;
 
     const csvContent = [
-      ['Rank', 'Staff Name', 'Role', 'Negative Feedback Resolved', 'Assistance Requests Resolved', 'Total Resolved', 'Period'].join(','),
+      ['Rank', 'Staff Name', 'Role', 'Feedback Resolved', 'Assistance Requests Resolved', 'Total Resolved', 'Period'].join(','),
       ...staffStats.map(staff => [
         staff.rank,
         `"${staff.name}"`,
@@ -220,22 +218,16 @@ const StaffLeaderboard = () => {
         }
       });
 
-      console.log('Edge Function response:', response);
-
       if (response.error) {
-        console.error('Recognition email error:', response.error);
-        console.error('Response data:', response.data);
-
         // Try to get the actual response body for better error details
         if (response.response) {
           try {
             const errorBody = await response.response.json();
-            console.error('Error response body:', errorBody);
             if (errorBody.message) {
               throw new Error(errorBody.message);
             }
           } catch (jsonError) {
-            console.error('Could not parse error response:', jsonError);
+            // Could not parse error response
           }
         }
 
@@ -261,7 +253,6 @@ const StaffLeaderboard = () => {
       }, 2000);
 
     } catch (error) {
-      console.error('Error sending recognition:', error);
       setRecognitionMessage(`Error: ${error.message}`);
     } finally {
       setSendingRecognition(false);
@@ -326,7 +317,7 @@ const StaffLeaderboard = () => {
                     Staff Member
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Negative Feedback
+                    Feedback Resolved
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Assistance Requests
