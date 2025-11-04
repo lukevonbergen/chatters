@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabase';
+import { HandHeart, Bell, UserCheck, Sparkles } from 'lucide-react';
 
 const BrandingTab = ({
   logo, setLogo,
   primaryColor, setPrimaryColor,
   backgroundColor, setBackgroundColor,
   textColor, setTextColor,
+  assistanceTitle, setAssistanceTitle,
+  assistanceMessage, setAssistanceMessage,
+  assistanceIcon, setAssistanceIcon,
   venueId
 }) => {
   // Separate loading and message states for each section
@@ -13,6 +17,8 @@ const BrandingTab = ({
   const [logoMessage, setLogoMessage] = useState('');
   const [colorsLoading, setColorsLoading] = useState(false);
   const [colorsMessage, setColorsMessage] = useState('');
+  const [assistanceLoading, setAssistanceLoading] = useState(false);
+  const [assistanceUpdateMessage, setAssistanceUpdateMessage] = useState('');
 
   const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
@@ -96,6 +102,46 @@ const BrandingTab = ({
     } finally {
       setColorsLoading(false);
     }
+  };
+
+  const saveAssistanceSettings = async () => {
+    if (!venueId) return;
+
+    setAssistanceLoading(true);
+    setAssistanceUpdateMessage('');
+
+    try {
+      const { error } = await supabase
+        .from('venues')
+        .update({
+          assistance_title: assistanceTitle,
+          assistance_message: assistanceMessage,
+          assistance_icon: assistanceIcon
+        })
+        .eq('id', venueId);
+
+      if (error) {
+        throw new Error('Failed to save assistance settings: ' + error.message);
+      }
+
+      setAssistanceUpdateMessage('Assistance message settings saved successfully!');
+    } catch (error) {
+      setAssistanceUpdateMessage('Failed to save assistance settings: ' + error.message);
+    } finally {
+      setAssistanceLoading(false);
+    }
+  };
+
+  const iconOptions = [
+    { value: 'hand-heart', label: 'Hand Heart', icon: HandHeart },
+    { value: 'bell', label: 'Bell', icon: Bell },
+    { value: 'user-check', label: 'User Check', icon: UserCheck },
+    { value: 'sparkles', label: 'Sparkles', icon: Sparkles }
+  ];
+
+  const getIconComponent = (iconValue) => {
+    const option = iconOptions.find(opt => opt.value === iconValue);
+    return option ? option.icon : HandHeart;
   };
 
   return (
@@ -295,6 +341,112 @@ const BrandingTab = ({
           </div>
         </div>
       
+      </div>
+
+      {/* Assistance Message Customization Section */}
+      <div className="mt-8">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Assistance Request Message</h3>
+            <p className="text-gray-600 text-sm">Customize the message customers see after requesting assistance</p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Icon Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">Icon</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {iconOptions.map((option) => {
+                  const IconComponent = option.icon;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => setAssistanceIcon(option.value)}
+                      className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
+                        assistanceIcon === option.value
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <IconComponent className="w-8 h-8 mb-2" style={{ color: assistanceIcon === option.value ? primaryColor : '#6b7280' }} />
+                      <span className="text-xs font-medium text-gray-700">{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Title Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <input
+                type="text"
+                value={assistanceTitle}
+                onChange={(e) => setAssistanceTitle(e.target.value)}
+                placeholder="Help is on the way!"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Message Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+              <textarea
+                value={assistanceMessage}
+                onChange={(e) => setAssistanceMessage(e.target.value)}
+                placeholder="We've notified our team that you need assistance. Someone will be with you shortly."
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Use {'{table}'} as a placeholder for the table number (e.g., "Table {'{table}'} needs assistance")
+              </p>
+            </div>
+
+            {/* Preview */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Preview</h4>
+              <div className="bg-white rounded-lg p-6 border border-gray-200" style={{ backgroundColor: backgroundColor }}>
+                <div className="flex flex-col items-center text-center">
+                  <div className="inline-block p-4 rounded-full mb-4" style={{ backgroundColor: `${primaryColor}20` }}>
+                    {React.createElement(getIconComponent(assistanceIcon), {
+                      className: "w-12 h-12",
+                      style: { color: primaryColor }
+                    })}
+                  </div>
+                  <h2 className="text-xl font-bold mb-2" style={{ color: textColor }}>
+                    {assistanceTitle || 'Help is on the way!'}
+                  </h2>
+                  <p className="text-sm" style={{ color: textColor, opacity: 0.8 }}>
+                    {(assistanceMessage || 'We\'ve notified our team that you need assistance. Someone will be with you shortly.').replace('{table}', '14')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="pt-2">
+              <button
+                onClick={saveAssistanceSettings}
+                disabled={assistanceLoading}
+                className="w-full sm:w-auto bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {assistanceLoading ? 'Saving...' : 'Save Assistance Settings'}
+              </button>
+            </div>
+
+            {/* Message Display */}
+            {assistanceUpdateMessage && (
+              <div className={`text-sm p-3 rounded-md ${
+                assistanceUpdateMessage.includes('success')
+                  ? 'text-green-700 bg-green-50 border border-green-200'
+                  : 'text-red-700 bg-red-50 border border-red-200'
+              }`}>
+                {assistanceUpdateMessage}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

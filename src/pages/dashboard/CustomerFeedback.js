@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import { HandHeart, Star } from 'lucide-react';
+import { HandHeart, Star, Bell, UserCheck, Sparkles } from 'lucide-react';
 import AlertModal from '../../components/ui/AlertModal';
 
 const CustomerFeedbackPage = () => {
@@ -24,6 +24,17 @@ const CustomerFeedbackPage = () => {
   const [alertModal, setAlertModal] = useState(null);
   const [customerEmail, setCustomerEmail] = useState('');
   const [hasStarted, setHasStarted] = useState(false);
+
+  // Helper function to get the icon component based on the icon name
+  const getAssistanceIcon = (iconName) => {
+    const icons = {
+      'hand-heart': HandHeart,
+      'bell': Bell,
+      'user-check': UserCheck,
+      'sparkles': Sparkles
+    };
+    return icons[iconName] || HandHeart; // Default to HandHeart if unknown
+  };
 
   // Utility function to check if current time is within feedback hours
   const isFeedbackTimeAllowed = (feedbackHours) => {
@@ -63,10 +74,10 @@ const CustomerFeedbackPage = () => {
         console.log('Loading data for venueId:', venueId);
         console.log('VenueId type:', typeof venueId);
         
-        // Load venue data first (including feedback_hours, review links, NPS settings, and branding colors)
+        // Load venue data first (including feedback_hours, review links, NPS settings, branding colors, and assistance message)
         const { data: venueData, error: venueError } = await supabase
           .from('venues')
-          .select('logo, primary_color, background_color, text_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled')
+          .select('logo, primary_color, background_color, text_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled, assistance_title, assistance_message, assistance_icon')
           .eq('id', venueId);
 
         if (venueError) {
@@ -529,6 +540,15 @@ const CustomerFeedbackPage = () => {
     const background = venue?.background_color || '#ffffff';
     const textColor = venue?.text_color || '#111827';
 
+    // Get custom assistance message settings with defaults
+    const assistanceTitle = venue?.assistance_title || 'Help is on the way!';
+    const assistanceMessage = venue?.assistance_message || 'We\'ve notified our team that you need assistance. Someone will be with you shortly.';
+    const assistanceIconName = venue?.assistance_icon || 'hand-heart';
+    const AssistanceIcon = getAssistanceIcon(assistanceIconName);
+
+    // Replace {table} placeholder with actual table number
+    const formattedMessage = assistanceMessage.replace('{table}', tableNumber);
+
     return (
       <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: background }}>
         <div className="w-full max-w-md p-8 text-center">
@@ -539,13 +559,12 @@ const CustomerFeedbackPage = () => {
           )}
 
           <div className="inline-block p-4 rounded-full mb-6" style={{ backgroundColor: `${primary}20` }}>
-            <HandHeart className="w-12 h-12" style={{ color: primary }} />
+            <AssistanceIcon className="w-12 h-12" style={{ color: primary }} />
           </div>
 
-          <h2 className="text-2xl font-bold mb-4" style={{ color: textColor }}>Help is on the way!</h2>
+          <h2 className="text-2xl font-bold mb-4" style={{ color: textColor }}>{assistanceTitle}</h2>
           <p className="text-base mb-8" style={{ color: textColor, opacity: 0.8 }}>
-            We've notified our team that Table {tableNumber} needs assistance.
-            Someone will be with you shortly.
+            {formattedMessage}
           </p>
 
           <div className="text-sm" style={{ color: textColor, opacity: 0.6 }}>
