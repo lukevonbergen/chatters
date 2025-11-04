@@ -20,6 +20,7 @@ const AllFeedback = () => {
   const [dateTo, setDateTo] = useState(dayjs().format('YYYY-MM-DD'));
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'unresolved', 'resolved'
   const [ratingFilter, setRatingFilter] = useState('all'); // 'all', '1-2', '3', '4-5'
+  const [typeFilter, setTypeFilter] = useState('all'); // 'all', 'feedback', 'assistance'
   const [selectedSessions, setSelectedSessions] = useState(new Set());
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -76,12 +77,17 @@ const AllFeedback = () => {
           .map(item => item.additional_feedback)
           .filter(Boolean);
 
+        // Determine if this is an assistance request
+        // Assistance requests typically have no ratings and no question_text
+        const isAssistanceRequest = session.items.every(item => !item.rating && !item.question_text);
+
         return {
           ...session,
           avg_rating: avgRating,
           comments: comments,
           has_comments: comments.length > 0,
           is_resolved: session.items.every(item => item.resolved_at),
+          type: isAssistanceRequest ? 'assistance' : 'feedback',
         };
       });
 
@@ -101,6 +107,10 @@ const AllFeedback = () => {
   // Filtered sessions
   const filteredSessions = useMemo(() => {
     return feedbackSessions.filter(session => {
+      // Type filter
+      if (typeFilter === 'feedback' && session.type !== 'feedback') return false;
+      if (typeFilter === 'assistance' && session.type !== 'assistance') return false;
+
       // Status filter
       if (statusFilter === 'unresolved' && session.is_resolved) return false;
       if (statusFilter === 'resolved' && !session.is_resolved) return false;
@@ -122,7 +132,7 @@ const AllFeedback = () => {
 
       return true;
     });
-  }, [feedbackSessions, statusFilter, ratingFilter, searchTerm]);
+  }, [feedbackSessions, statusFilter, ratingFilter, typeFilter, searchTerm]);
 
   // Selection handlers
   const toggleSelectAll = () => {
@@ -211,8 +221,8 @@ const AllFeedback = () => {
       >
         {/* Filters */}
         <div className="mb-6 space-y-4">
-          {/* Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Date Range and Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 From Date
@@ -245,6 +255,21 @@ const AllFeedback = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Type
+              </label>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">All Types</option>
+                <option value="feedback">Feedback</option>
+                <option value="assistance">Assistance</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Status
               </label>
               <select
@@ -268,9 +293,9 @@ const AllFeedback = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Ratings</option>
-                <option value="1-2">Poor (1-2 ⭐)</option>
-                <option value="3">Average (3 ⭐)</option>
-                <option value="4-5">Good (4-5 ⭐)</option>
+                <option value="1-2">Poor (1-2 stars)</option>
+                <option value="3">Average (3 stars)</option>
+                <option value="4-5">Good (4-5 stars)</option>
               </select>
             </div>
           </div>
@@ -326,6 +351,7 @@ const AllFeedback = () => {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date/Time</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Table</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Type</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Avg Rating</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Questions</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Comments</th>
@@ -360,9 +386,20 @@ const AllFeedback = () => {
                       {session.table_number || 'N/A'}
                     </td>
                     <td className="px-4 py-3">
+                      {session.type === 'assistance' ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-300">
+                          Assistance
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300">
+                          Feedback
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
                       {session.avg_rating !== null ? (
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRatingBadge(session.avg_rating)}`}>
-                          {session.avg_rating.toFixed(1)} ⭐
+                          {session.avg_rating.toFixed(1)} stars
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">N/A</span>
@@ -449,16 +486,16 @@ const AllFeedback = () => {
                   <div>
                     <p className="text-sm text-gray-600">Average Rating</p>
                     <p className={`font-bold text-lg ${getRatingColor(selectedSession.avg_rating)}`}>
-                      {selectedSession.avg_rating !== null ? `${selectedSession.avg_rating.toFixed(1)} ⭐` : 'N/A'}
+                      {selectedSession.avg_rating !== null ? `${selectedSession.avg_rating.toFixed(1)} stars` : 'N/A'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Status</p>
                     <p className="font-medium text-gray-900">
                       {selectedSession.is_resolved ? (
-                        <span className="text-green-600">✓ Resolved</span>
+                        <span className="text-green-600">Resolved</span>
                       ) : (
-                        <span className="text-yellow-600">⚠ Unresolved</span>
+                        <span className="text-yellow-600">Unresolved</span>
                       )}
                     </p>
                   </div>
@@ -470,18 +507,26 @@ const AllFeedback = () => {
                   <div className="space-y-3">
                     {selectedSession.items.map((item, index) => (
                       <div key={item.id} className="p-3 border border-gray-200 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-medium text-gray-900">{item.question}</p>
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex-1">
+                            <p className="text-xs text-gray-500 mb-1">Question {index + 1}</p>
+                            <p className="font-medium text-gray-900">{item.question_text || 'No question text'}</p>
+                          </div>
                           {item.rating && (
-                            <span className={`font-bold ${getRatingColor(item.rating)}`}>
-                              {item.rating} ⭐
-                            </span>
+                            <div className="flex-shrink-0">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRatingBadge(item.rating)}`}>
+                                {item.rating} stars
+                              </span>
+                            </div>
                           )}
                         </div>
                         {item.additional_feedback && (
-                          <p className="text-sm text-gray-600 mt-2 p-2 bg-gray-50 rounded">
-                            "{item.additional_feedback}"
-                          </p>
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-500 mb-1">Comment:</p>
+                            <p className="text-sm text-gray-700 p-2 bg-gray-50 rounded italic">
+                              "{item.additional_feedback}"
+                            </p>
+                          </div>
                         )}
                       </div>
                     ))}
