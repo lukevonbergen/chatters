@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import {
   CreditCard,
-  Calendar,
-  Receipt,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
   Download,
-  RefreshCw
+  RefreshCw,
+  AlertCircle,
+  Check,
+  X,
+  ChevronRight
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -49,27 +48,30 @@ const UpdatePaymentMethodForm = ({ onSuccess, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="bg-gray-50 rounded-lg p-4">
+        <PaymentElement />
+      </div>
 
       {errorMessage && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
-          {errorMessage}
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-3">
         <button
           type="submit"
           disabled={!stripe || isProcessing}
-          className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          className="flex-1 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
         >
-          {isProcessing ? 'Updating...' : 'Update Payment Method'}
+          {isProcessing ? 'Updating...' : 'Save Payment Method'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+          className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
         >
           Cancel
         </button>
@@ -96,7 +98,6 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
     try {
       setLoading(true);
 
-      // Fetch subscription details from your API
       const response = await fetch('/api/get-subscription-details', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,7 +115,9 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
       }
 
       if (data.invoices) {
-        setInvoices(data.invoices);
+        // Filter out void/draft invoices, only show paid ones
+        const paidInvoices = data.invoices.filter(invoice => invoice.status === 'paid');
+        setInvoices(paidInvoices);
       }
 
     } catch (error) {
@@ -126,7 +129,6 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
 
   const handleUpdatePaymentMethod = async () => {
     try {
-      // Create a SetupIntent for updating payment method
       const response = await fetch('/api/create-setup-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -200,153 +202,172 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
 
   if (loading) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-16">
         <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading subscription details...</p>
+        <p className="text-gray-600 text-sm">Loading subscription details...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Subscription Overview */}
-      {subscription && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Active Subscription</h3>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              subscription.status === 'active'
-                ? 'bg-green-100 text-green-700'
-                : subscription.status === 'past_due'
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-red-100 text-red-700'
-            }`}>
-              {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Plan</p>
-              <p className="text-gray-900 font-medium">
-                {subscription.planName}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Amount</p>
-              <p className="text-gray-900 font-medium">
-                £{(subscription.amount / 100).toFixed(2)} / {subscription.interval}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Current Period</p>
-              <p className="text-gray-900 font-medium">
-                {new Date(subscription.current_period_start * 1000).toLocaleDateString()} - {new Date(subscription.current_period_end * 1000).toLocaleDateString()}
-              </p>
-            </div>
-            {subscription.cancel_at_period_end && (
+      {/* Subscription & Payment Method - Side by Side */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Subscription Card */}
+        {subscription && (
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Cancels On</p>
-                <p className="text-red-600 font-medium">
-                  {new Date(subscription.current_period_end * 1000).toLocaleDateString()}
+                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Current Plan</h3>
+                <p className="text-2xl font-bold text-gray-900">{subscription.planName}</p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                subscription.status === 'active'
+                  ? 'bg-green-100 text-green-700'
+                  : subscription.status === 'past_due'
+                  ? 'bg-yellow-100 text-yellow-700'
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                {subscription.status === 'active' ? 'Active' : subscription.status === 'past_due' ? 'Past Due' : 'Inactive'}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-t border-blue-200">
+                <span className="text-sm text-gray-600">Amount</span>
+                <span className="text-lg font-semibold text-gray-900">
+                  £{(subscription.amount / 100).toFixed(2)}
+                  <span className="text-sm font-normal text-gray-600">/{subscription.interval === 'month' ? 'mo' : 'yr'}</span>
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center py-2 border-t border-blue-200">
+                <span className="text-sm text-gray-600">Next billing</span>
+                <span className="text-sm font-medium text-gray-900">
+                  {new Date(subscription.current_period_end * 1000).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
+
+              {subscription.cancel_at_period_end && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-red-700">
+                      <p className="font-semibold mb-1">Cancellation Scheduled</p>
+                      <p>Access ends {new Date(subscription.current_period_end * 1000).toLocaleDateString('en-GB')}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!subscription.cancel_at_period_end && (
+                <button
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="mt-4 w-full text-sm text-red-600 hover:text-red-700 font-medium py-2 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  Cancel Subscription
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Payment Method Card */}
+        {paymentMethod && !showUpdatePayment && (
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Payment Method</h3>
+                <p className="text-lg font-semibold text-gray-900 capitalize">
+                  {paymentMethod.brand} •••• {paymentMethod.last4}
                 </p>
               </div>
-            )}
-          </div>
-
-          {!subscription.cancel_at_period_end && (
-            <button
-              onClick={() => setShowCancelConfirm(true)}
-              className="text-sm text-red-600 hover:text-red-700 font-medium"
-            >
-              Cancel Subscription
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Payment Method */}
-      {paymentMethod && !showUpdatePayment && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Payment Method</h3>
-            <button
-              onClick={handleUpdatePaymentMethod}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Update
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-8 bg-gray-100 rounded flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-gray-600" />
+              <button
+                onClick={handleUpdatePaymentMethod}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Update payment method"
+              >
+                <RefreshCw className="w-4 h-4 text-gray-600" />
+              </button>
             </div>
-            <div>
-              <p className="text-gray-900 font-medium">
-                {paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)} •••• {paymentMethod.last4}
-              </p>
-              <p className="text-sm text-gray-600">
-                Expires {paymentMethod.exp_month.toString().padStart(2, '0')}/{paymentMethod.exp_year}
-              </p>
+
+            <div className="flex items-center gap-4 mt-6">
+              <div className="w-16 h-10 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg flex items-center justify-center shadow-lg">
+                <CreditCard className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Expires</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {paymentMethod.exp_month.toString().padStart(2, '0')}/{paymentMethod.exp_year}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Update Payment Method Form */}
-      {showUpdatePayment && setupSecret && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Update Payment Method</h3>
-          <Elements stripe={stripePromise} options={{ clientSecret: setupSecret }}>
-            <UpdatePaymentMethodForm
-              onSuccess={handlePaymentUpdateSuccess}
-              onCancel={() => {
-                setShowUpdatePayment(false);
-                setSetupSecret(null);
-              }}
-            />
-          </Elements>
-        </div>
-      )}
+        {/* Update Payment Method Form */}
+        {showUpdatePayment && setupSecret && (
+          <div className="md:col-span-2 bg-white border border-gray-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Update Payment Method</h3>
+            <Elements stripe={stripePromise} options={{ clientSecret: setupSecret }}>
+              <UpdatePaymentMethodForm
+                onSuccess={handlePaymentUpdateSuccess}
+                onCancel={() => {
+                  setShowUpdatePayment(false);
+                  setSetupSecret(null);
+                }}
+              />
+            </Elements>
+          </div>
+        )}
+      </div>
 
-      {/* Invoices */}
+      {/* Invoices - Sleek List */}
       {invoices.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Billing History</h3>
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Billing History</h3>
+          </div>
 
-          <div className="space-y-3">
+          <div className="divide-y divide-gray-100">
             {invoices.map((invoice) => (
               <div
                 key={invoice.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="px-6 py-4 hover:bg-gray-50 transition-colors group"
               >
-                <div className="flex items-center gap-4">
-                  <Receipt className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-gray-900 font-medium">
-                      £{(invoice.amount_paid / 100).toFixed(2)}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(invoice.created * 1000).toLocaleDateString()}
-                    </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Check className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3">
+                        <p className="text-lg font-semibold text-gray-900">
+                          £{(invoice.amount_paid / 100).toFixed(2)}
+                        </p>
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
+                          Paid
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        {new Date(invoice.created * 1000).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    invoice.status === 'paid'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                  </span>
                   <button
                     onClick={() => downloadInvoice(invoice.id)}
-                    className="p-2 hover:bg-gray-200 rounded transition-colors"
-                    title="Download Invoice"
+                    className="ml-4 p-2 hover:bg-blue-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    title="Download invoice"
                   >
-                    <Download className="w-4 h-4 text-gray-600" />
+                    <Download className="w-4 h-4 text-blue-600" />
                   </button>
                 </div>
               </div>
@@ -355,34 +376,41 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
         </div>
       )}
 
+      {invoices.length === 0 && !loading && (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
+          <p className="text-gray-500 text-sm">No invoices yet</p>
+        </div>
+      )}
+
       {/* Cancel Confirmation Modal */}
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <AlertCircle className="w-6 h-6 text-red-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Cancel Subscription?</h3>
+              <h3 className="text-xl font-bold text-gray-900">Cancel Subscription?</h3>
             </div>
 
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to cancel your subscription? You'll continue to have access until the end of your current billing period on {subscription ? new Date(subscription.current_period_end * 1000).toLocaleDateString() : ''}.
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              You'll continue to have access until <strong>{subscription ? new Date(subscription.current_period_end * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</strong>.
+              After that, your subscription will end.
             </p>
 
             <div className="flex gap-3">
               <button
                 onClick={handleCancelSubscription}
                 disabled={cancelLoading}
-                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="flex-1 bg-red-600 text-white px-6 py-2.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                {cancelLoading ? 'Cancelling...' : 'Yes, Cancel Subscription'}
+                {cancelLoading ? 'Cancelling...' : 'Yes, Cancel'}
               </button>
               <button
                 onClick={() => setShowCancelConfirm(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >
-                Keep Subscription
+                Keep Plan
               </button>
             </div>
           </div>
