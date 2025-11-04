@@ -7,7 +7,7 @@ import TripAdvisorRatingTrendCard from '../../components/dashboard/reports/TripA
 import ConfigurableMultiVenueTile from '../../components/dashboard/reports/ConfigurableMultiVenueTile';
 import MetricSelectorModal from '../../components/dashboard/modals/MetricSelectorModal';
 import { ChartCard, ActivityCard } from '../../components/dashboard/layout/ModernCard';
-import { DateRangeSelector } from '../../components/ui/date-range-selector';
+import { DateRangeSelector, overviewPresetRanges } from '../../components/ui/date-range-selector';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
 import { Activity, TrendingUp, Calendar, Users, Star, BarChart3, Plus } from 'lucide-react';
@@ -355,6 +355,7 @@ const DashboardNew = () => {
             <DateRangeSelector
               value={dateRangePreset}
               onChange={handleDateRangeChange}
+              presets={overviewPresetRanges}
             />
           }
         >

@@ -2,7 +2,8 @@ import * as React from "react";
 import { Calendar, ChevronDown } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-const presetRanges = [
+// Default preset ranges for rating trends (Google/TripAdvisor)
+const defaultPresetRanges = [
   { label: "Last 7 days", value: "last7" },
   { label: "Last 14 days", value: "last14" },
   { label: "Last 30 days", value: "last30" },
@@ -10,7 +11,17 @@ const presetRanges = [
   { label: "All time", value: "alltime" },
 ];
 
-export function DateRangeSelector({ value = "last7", onChange, className }) {
+// Overview preset ranges (includes Today/Yesterday for metrics)
+export const overviewPresetRanges = [
+  { label: "Today", value: "today" },
+  { label: "Yesterday", value: "yesterday" },
+  { label: "Last 7 days", value: "last7" },
+  { label: "Last 14 days", value: "last14" },
+  { label: "Last 30 days", value: "last30" },
+  { label: "Last 60 days", value: "last60" },
+];
+
+export function DateRangeSelector({ value = "last7", onChange, className, presets = defaultPresetRanges }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [activePreset, setActivePreset] = React.useState(value);
   const dropdownRef = React.useRef(null);
@@ -37,6 +48,18 @@ export function DateRangeSelector({ value = "last7", onChange, className }) {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     switch (preset) {
+      case "today":
+        return {
+          from: today,
+          to: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
+        };
+      case "yesterday":
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return {
+          from: yesterday,
+          to: new Date(yesterday.getTime() + 24 * 60 * 60 * 1000 - 1)
+        };
       case "last7":
         const last7 = new Date(today);
         last7.setDate(last7.getDate() - 6);
@@ -59,10 +82,11 @@ export function DateRangeSelector({ value = "last7", onChange, className }) {
         allTime.setFullYear(allTime.getFullYear() - 2);
         return { from: allTime, to: today };
       default:
-        // Default to last 7 days
-        const defaultLast7 = new Date(today);
-        defaultLast7.setDate(defaultLast7.getDate() - 6);
-        return { from: defaultLast7, to: today };
+        // Default to today
+        return {
+          from: today,
+          to: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
+        };
     }
   };
 
@@ -74,7 +98,7 @@ export function DateRangeSelector({ value = "last7", onChange, className }) {
   };
 
   const getDisplayText = () => {
-    const preset = presetRanges.find(p => p.value === activePreset);
+    const preset = presets.find(p => p.value === activePreset);
     return preset?.label || "Select date range";
   };
 
@@ -99,7 +123,7 @@ export function DateRangeSelector({ value = "last7", onChange, className }) {
       {isOpen && (
         <div className="absolute z-50 mt-2 w-full sm:w-[200px] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
           <div className="py-1">
-            {presetRanges.map((preset) => (
+            {presets.map((preset) => (
               <button
                 key={preset.value}
                 onClick={() => handlePresetClick(preset.value)}
