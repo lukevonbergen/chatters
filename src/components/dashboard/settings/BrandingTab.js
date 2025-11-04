@@ -273,143 +273,99 @@ const BrandingTab = ({
             <p className="text-gray-600 text-sm">Customise your feedback page colors to match your brand.</p>
           </div>
 
-          <div className="space-y-6">
-            {/* Primary Color */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex items-center space-x-3">
+          <div className="space-y-4">
+            {/* 2x2 Color Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Primary Color */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+                <div className="flex items-center space-x-2">
                   <input
                     type="color"
                     value={primaryColor}
                     onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="w-12 h-10 lg:w-16 lg:h-10 border border-gray-300 rounded-md cursor-pointer"
+                    className="w-10 h-10 border border-gray-300 rounded-md cursor-pointer flex-shrink-0"
                   />
                   <input
                     type="text"
                     value={primaryColor}
                     onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="w-24 lg:w-28 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-2 py-2 border border-gray-300 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="#000000"
                   />
                 </div>
-                <p className="text-xs text-gray-500 sm:ml-2">
-                  Used for buttons and key elements
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Buttons & key elements</p>
               </div>
-            </div>
 
-            {/* Background Color */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex items-center space-x-3">
+              {/* Background Color */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Background</label>
+                <div className="flex items-center space-x-2">
                   <input
                     type="color"
                     value={backgroundColor}
                     onChange={(e) => setBackgroundColor(e.target.value)}
-                    className="w-12 h-10 lg:w-16 lg:h-10 border border-gray-300 rounded-md cursor-pointer"
+                    className="w-10 h-10 border border-gray-300 rounded-md cursor-pointer flex-shrink-0"
                   />
                   <input
                     type="text"
                     value={backgroundColor}
                     onChange={(e) => setBackgroundColor(e.target.value)}
-                    className="w-24 lg:w-28 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-2 py-2 border border-gray-300 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="#ffffff"
                   />
                 </div>
-                <p className="text-xs text-gray-500 sm:ml-2">
-                  Feedback page background
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Page background</p>
               </div>
-            </div>
 
-            {/* Text Color */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex items-center space-x-3">
+              {/* Text Color */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
+                <div className="flex items-center space-x-2">
                   <input
                     type="color"
                     value={textColor}
                     onChange={(e) => setTextColor(e.target.value)}
-                    className="w-12 h-10 lg:w-16 lg:h-10 border border-gray-300 rounded-md cursor-pointer"
+                    className="w-10 h-10 border border-gray-300 rounded-md cursor-pointer flex-shrink-0"
                   />
                   <input
                     type="text"
                     value={textColor}
                     onChange={(e) => setTextColor(e.target.value)}
-                    className="w-24 lg:w-28 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-2 py-2 border border-gray-300 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="#111827"
                   />
                 </div>
-                <p className="text-xs text-gray-500 sm:ml-2">
-                  Main text color on feedback page
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Main text color</p>
               </div>
-            </div>
 
-            {/* Button Text Color */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Button Text Color</label>
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex items-center space-x-3">
+              {/* Button Text Color */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+                <div className="flex items-center space-x-2">
                   <input
                     type="color"
                     value={buttonTextColor}
                     onChange={(e) => setButtonTextColor(e.target.value)}
-                    className="w-12 h-10 lg:w-16 lg:h-10 border border-gray-300 rounded-md cursor-pointer"
+                    className="w-10 h-10 border border-gray-300 rounded-md cursor-pointer flex-shrink-0"
                   />
                   <input
                     type="text"
                     value={buttonTextColor}
                     onChange={(e) => setButtonTextColor(e.target.value)}
-                    className="w-24 lg:w-28 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-2 py-2 border border-gray-300 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="#ffffff"
                   />
                 </div>
-                <p className="text-xs text-gray-500 sm:ml-2">
-                  Color of text on buttons
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Text on buttons</p>
               </div>
             </div>
 
             {/* Color Preview */}
             <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Color Preview</h4>
-              <div className="flex flex-wrap gap-3">
-                <div className="flex items-center space-x-2">
-                  <div
-                    className="w-8 h-8 rounded border border-gray-200"
-                    style={{ backgroundColor: primaryColor }}
-                  ></div>
-                  <span className="text-xs text-gray-600">Primary</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div
-                    className="w-8 h-8 rounded border border-gray-200"
-                    style={{ backgroundColor: backgroundColor }}
-                  ></div>
-                  <span className="text-xs text-gray-600">Background</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div
-                    className="w-8 h-8 rounded border border-gray-200"
-                    style={{ backgroundColor: textColor }}
-                  ></div>
-                  <span className="text-xs text-gray-600">Text</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div
-                    className="w-8 h-8 rounded border border-gray-200"
-                    style={{ backgroundColor: buttonTextColor }}
-                  ></div>
-                  <span className="text-xs text-gray-600">Button Text</span>
-                </div>
-              </div>
-              {/* Feedback Page Preview */}
-              <div className="mt-4 p-4 rounded-lg border-2 border-gray-200" style={{ backgroundColor: backgroundColor }}>
-                <p className="text-sm font-medium mb-2" style={{ color: textColor }}>
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Preview</h4>
+              <div className="p-4 rounded-lg border-2 border-gray-200" style={{ backgroundColor: backgroundColor }}>
+                <p className="text-sm font-medium mb-3" style={{ color: textColor }}>
                   Feedback Page Preview
                 </p>
                 <button
@@ -435,8 +391,8 @@ const BrandingTab = ({
             {/* Colors Message Display */}
             {colorsMessage && (
               <div className={`text-sm p-3 rounded-md ${
-                colorsMessage.includes('success') 
-                  ? 'text-green-700 bg-green-50 border border-green-200' 
+                colorsMessage.includes('success')
+                  ? 'text-green-700 bg-green-50 border border-green-200'
                   : 'text-red-700 bg-red-50 border border-red-200'
               }`}>
                 {colorsMessage}
