@@ -55,7 +55,7 @@ const groupBySession = (feedbackItems) => {
         type: 'feedback',
         avg_rating: avgRating,
         has_comments: hasComments,
-        urgency: avgRating <= 2 ? 3 : (avgRating <= 4) ? 2 : 1, // 3=urgent (≤2), 2=attention (>2 to ≤4), 1=good (>4)
+        urgency: avgRating < 3 ? 3 : (avgRating <= 4) ? 2 : 1, // 3=urgent (<3), 2=attention (3-4), 1=good (>4)
       };
     });
 };
@@ -144,8 +144,8 @@ const KioskPriorityQueue = ({
       }
     } else {
       // Feedback - color by rating
-      if (item.urgency === 3) return 'border-red-500 bg-red-100 border-2'; // Rating ≤2: Red
-      if (item.urgency === 2) return 'border-yellow-500 bg-yellow-100 border-2'; // Rating >2 to ≤4: Amber
+      if (item.urgency === 3) return 'border-red-500 bg-red-100 border-2'; // Rating <3: Red
+      if (item.urgency === 2) return 'border-yellow-500 bg-yellow-100 border-2'; // Rating 3-4: Amber
       return 'border-green-500 bg-green-100 border-2'; // Rating >4: Green
     }
   };

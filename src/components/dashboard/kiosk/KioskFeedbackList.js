@@ -88,13 +88,13 @@ const groupBySession = (rows) => {
 
 const getRatingColour = (rating) => {
   if (rating == null) return 'text-gray-600 bg-gray-50 border-gray-200';
-  if (rating <= 2) return 'text-red-600 bg-red-50 border-red-200';
+  if (rating < 3) return 'text-red-600 bg-red-50 border-red-200';
   if (rating <= 4) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
   return 'text-green-600 bg-green-50 border-green-200';
 };
 
 const getUrgency = ({ session_rating, has_comment }) => {
-  if (session_rating != null && session_rating <= 2) {
+  if (session_rating != null && session_rating < 3) {
     return { label: 'URGENT', colour: 'bg-red-600 text-white', priority: 3 };
   }
   if (session_rating != null && session_rating <= 4 && has_comment) {
@@ -191,8 +191,8 @@ const KioskFeedbackList = ({
               // Determine background color based on rating
               const getBackgroundColor = (rating) => {
                 if (rating == null) return 'bg-blue-50 border-blue-200';
-                if (rating <= 2) return 'bg-red-50 border-red-200'; // ≤2: Red
-                if (rating <= 4) return 'bg-yellow-50 border-yellow-200'; // >2 to ≤4: Amber
+                if (rating < 3) return 'bg-red-50 border-red-200'; // <3: Red
+                if (rating <= 4) return 'bg-yellow-50 border-yellow-200'; // 3-4: Amber
                 return 'bg-green-50 border-green-200'; // >4: Green
               };
 
