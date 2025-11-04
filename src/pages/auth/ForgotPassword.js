@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
-import { getDashboardUrl, getMarketingUrl } from '../../utils/domainUtils';
+import { getMarketingUrl } from '../../utils/domainUtils';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -18,12 +18,20 @@ const ForgotPassword = () => {
     setMessage('');
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: getDashboardUrl('/reset-password'),
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email }
       });
 
-      if (error) throw new Error(error.message);
-      setMessage('Password reset link sent to your email. Check your inbox!');
+      if (error) {
+        console.error('Password reset error:', error);
+        throw new Error(error.message || 'Failed to send password reset email');
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setMessage('Password reset link sent to your email. Check your inbox (and spam folder)!');
     } catch (err) {
       setError(err.message);
     } finally {
