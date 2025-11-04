@@ -93,16 +93,19 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
 
   const getSubtitleForSection = () => {
     const currentPath = location.pathname;
-    
+    const currentSection = getCurrentSection();
+
     // Settings subtitles
     if (currentPath.startsWith('/settings/')) {
-      if (currentPath === '/settings/venues') return 'Venue information and settings';
-      if (currentPath === '/settings/feedback') return 'Feedback configuration';
-      if (currentPath === '/settings/branding') return 'Brand colors and logo';
-      if (currentPath === '/settings/integrations') return 'Third-party integrations';
+      if (currentPath === '/settings/venues' || currentPath === '/settings?tab=Venue') return 'Venue information and settings';
+      if (currentPath === '/settings/feedback' || currentPath === '/settings?tab=Feedback') return 'Feedback configuration';
+      if (currentPath === '/settings/branding' || currentPath === '/settings?tab=Branding') return 'Brand colors and logo';
+      if (currentPath === '/settings/integrations' || currentPath === '/settings?tab=Integrations') return 'Third-party integrations';
+      if (currentPath === '/settings/billing' || currentPath === '/settings?tab=Billing') return 'Subscription and billing';
+      if (currentPath === '/settings' || currentPath === '/settings?tab=Account') return 'Account configuration';
       return 'Account configuration';
     }
-    
+
     // Feedback subtitles
     if (currentSection.id === 'feedback') {
       if (currentPath === '/questions' || currentPath === '/feedback/questions') return 'Manage feedback questions';
@@ -110,7 +113,33 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
       if (currentPath === '/feedback/qr') return 'QR code configuration';
       return 'Manage customer feedback';
     }
-    
+
+    // Reports subtitles
+    if (currentSection.id === 'reports') {
+      if (currentPath === '/reports/ratings') return 'Rating trends and analysis';
+      if (currentPath === '/reports/nps') return 'Net Promoter Score';
+      if (currentPath === '/reports/sentiment') return 'Sentiment analysis';
+      if (currentPath === '/reports/questions') return 'Question performance';
+      return 'Analytics and insights';
+    }
+
+    // Staff subtitles
+    if (currentSection.id === 'staff') {
+      if (currentPath === '/staff/leaderboard') return 'Team performance rankings';
+      if (currentPath === '/staff') return 'Team management';
+      return 'Team management';
+    }
+
+    // Floor Plan subtitles
+    if (currentSection.id === 'floorplan') {
+      return 'Venue layout and table management';
+    }
+
+    // Overview
+    if (currentSection.id === 'overview') {
+      return 'Welcome to your dashboard';
+    }
+
     return 'Welcome to your dashboard';
   };
 
@@ -159,12 +188,7 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
               {currentSection.label}
             </h1>
             <p className="text-sm text-gray-500">
-              {currentSection.id === 'overview' && 'Welcome to your dashboard'}
-              {currentSection.id === 'feedback' && getSubtitleForSection()}
-              {currentSection.id === 'reports' && 'Analytics and insights'}
-              {currentSection.id === 'staff' && 'Team management'}
-              {currentSection.id === 'floorplan' && 'Venue layout'}
-              {currentSection.id === 'settings' && getSubtitleForSection()}
+              {getSubtitleForSection()}
             </p>
           </div>
         </div>
