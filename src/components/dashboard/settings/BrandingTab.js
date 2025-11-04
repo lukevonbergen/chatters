@@ -2,6 +2,74 @@ import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { HandHeart, Bell, UserCheck, Sparkles } from 'lucide-react';
 
+// Helper component to render text with {table} highlighted
+const HighlightedInput = ({ value, onChange, placeholder, rows, className }) => {
+  const renderHighlightedText = (text) => {
+    if (!text) return null;
+    return text.split(/(\{table\})/g).map((part, index) =>
+      part === '{table}' ? (
+        <span
+          key={index}
+          className="inline-block px-1 rounded"
+          style={{
+            backgroundColor: '#fee2e2',
+            color: '#991b1b',
+            fontWeight: '600'
+          }}
+        >
+          {'{table}'}
+        </span>
+      ) : part
+    );
+  };
+
+  if (rows) {
+    // Textarea version
+    return (
+      <div className="relative">
+        {/* Hidden div for highlighting */}
+        <div
+          className={`${className} absolute inset-0 pointer-events-none whitespace-pre-wrap break-words`}
+          style={{ color: 'transparent' }}
+        >
+          {renderHighlightedText(value || '')}
+        </div>
+        {/* Actual textarea */}
+        <textarea
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={rows}
+          className={`${className} relative bg-transparent`}
+          style={{ caretColor: 'black' }}
+        />
+      </div>
+    );
+  } else {
+    // Input version
+    return (
+      <div className="relative">
+        {/* Hidden div for highlighting */}
+        <div
+          className={`${className} absolute inset-0 pointer-events-none whitespace-pre overflow-hidden`}
+          style={{ color: 'transparent' }}
+        >
+          {renderHighlightedText(value || '')}
+        </div>
+        {/* Actual input */}
+        <input
+          type="text"
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={`${className} relative bg-transparent`}
+          style={{ caretColor: 'black' }}
+        />
+      </div>
+    );
+  }
+};
+
 const BrandingTab = ({
   logo, setLogo,
   primaryColor, setPrimaryColor,
@@ -413,8 +481,7 @@ const BrandingTab = ({
             {/* Title Input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-              <input
-                type="text"
+              <HighlightedInput
                 value={assistanceTitle}
                 onChange={(e) => setAssistanceTitle(e.target.value)}
                 placeholder="Help is on the way!"
@@ -425,7 +492,7 @@ const BrandingTab = ({
             {/* Message Input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
-              <textarea
+              <HighlightedInput
                 value={assistanceMessage}
                 onChange={(e) => setAssistanceMessage(e.target.value)}
                 placeholder="We've notified our team that you need assistance. Someone will be with you shortly."

@@ -257,7 +257,7 @@ const ArchiveSection = ({
         <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
           <Archive className="w-4 h-4 text-gray-600" />
         </div>
-        Question Archive ({inactiveQuestions.length})
+        Question Archive ({filteredInactiveQuestions.length})
       </h3>
 
       {inactiveQuestions.length > 0 && (
@@ -429,7 +429,7 @@ const QuestionManagementTab = ({
               <Archive className="w-4 h-4 text-gray-600" />
             </div>
             <h3 className="text-base font-semibold text-gray-900">
-              Question Archive ({inactiveQuestions.length})
+              Question Archive ({filteredInactiveQuestions.length})
             </h3>
           </div>
           <div className={`transform transition-transform duration-200 ${isArchiveExpanded ? 'rotate-180' : ''}`}>

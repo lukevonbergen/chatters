@@ -77,7 +77,7 @@ const CustomerFeedbackPage = () => {
         // Load venue data first (including feedback_hours, review links, NPS settings, branding colors, and assistance message)
         const { data: venueData, error: venueError } = await supabase
           .from('venues')
-          .select('logo, primary_color, background_color, text_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled, assistance_title, assistance_message, assistance_icon')
+          .select('logo, primary_color, background_color, text_color, button_text_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled, assistance_title, assistance_message, assistance_icon')
           .eq('id', venueId);
 
         if (venueError) {
@@ -465,6 +465,7 @@ const CustomerFeedbackPage = () => {
     const primary = venue?.primary_color || '#111827';
     const background = venue?.background_color || '#ffffff';
     const textColor = venue?.text_color || '#111827';
+    const buttonTextColor = venue?.button_text_color || '#ffffff';
 
     if (showReviewPrompt) {
       return (
@@ -488,8 +489,8 @@ const CustomerFeedbackPage = () => {
                   href={venue.google_review_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-4 px-4 text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg"
-                  style={{ backgroundColor: primary }}
+                  className="block w-full py-4 px-4 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg"
+                  style={{ backgroundColor: primary, color: buttonTextColor }}
                 >
                   Leave a Google Review
                 </a>
@@ -500,8 +501,8 @@ const CustomerFeedbackPage = () => {
                   href={venue.tripadvisor_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-4 px-4 text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg"
-                  style={{ backgroundColor: primary }}
+                  className="block w-full py-4 px-4 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg"
+                  style={{ backgroundColor: primary, color: buttonTextColor }}
                 >
                   Review on TripAdvisor
                 </a>
@@ -546,8 +547,9 @@ const CustomerFeedbackPage = () => {
     const assistanceIconName = venue?.assistance_icon || 'hand-heart';
     const AssistanceIcon = getAssistanceIcon(assistanceIconName);
 
-    // Replace {table} placeholder with actual table number
-    const formattedMessage = assistanceMessage.replace('{table}', tableNumber);
+    // Replace {table} placeholder with actual table number in both title and message
+    const formattedTitle = assistanceTitle.replace(/\{table\}/g, tableNumber);
+    const formattedMessage = assistanceMessage.replace(/\{table\}/g, tableNumber);
 
     return (
       <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: background }}>
@@ -562,7 +564,7 @@ const CustomerFeedbackPage = () => {
             <AssistanceIcon className="w-12 h-12" style={{ color: primary }} />
           </div>
 
-          <h2 className="text-2xl font-bold mb-4" style={{ color: textColor }}>{assistanceTitle}</h2>
+          <h2 className="text-2xl font-bold mb-4" style={{ color: textColor }}>{formattedTitle}</h2>
           <p className="text-base mb-8" style={{ color: textColor, opacity: 0.8 }}>
             {formattedMessage}
           </p>
@@ -578,6 +580,7 @@ const CustomerFeedbackPage = () => {
   const primary = venue.primary_color || '#111827';
   const background = venue.background_color || '#ffffff';
   const textColor = venue.text_color || '#111827';
+  const buttonTextColor = venue.button_text_color || '#ffffff';
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: background }}>
@@ -657,8 +660,8 @@ const CustomerFeedbackPage = () => {
             <button
               onClick={() => setHasStarted(true)}
               disabled={activeTables.length > 0 && !tableNumber}
-              className="w-full py-4 rounded-xl font-bold text-white text-lg transition-all hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              style={{ backgroundColor: primary }}
+              className="w-full py-4 rounded-xl font-bold text-lg transition-all hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              style={{ backgroundColor: primary, color: buttonTextColor }}
             >
               Continue
             </button>
@@ -772,8 +775,8 @@ const CustomerFeedbackPage = () => {
             />
             <button
               onClick={handleSubmit}
-              className="w-full py-4 rounded-xl font-bold text-white text-lg transition-all hover:opacity-90 hover:scale-105 active:scale-95 shadow-lg"
-              style={{ backgroundColor: primary }}
+              className="w-full py-4 rounded-xl font-bold text-lg transition-all hover:opacity-90 hover:scale-105 active:scale-95 shadow-lg"
+              style={{ backgroundColor: primary, color: buttonTextColor }}
             >
               Submit Feedback
             </button>
