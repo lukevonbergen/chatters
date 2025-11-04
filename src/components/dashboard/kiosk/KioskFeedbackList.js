@@ -191,9 +191,9 @@ const KioskFeedbackList = ({
               // Determine background color based on rating
               const getBackgroundColor = (rating) => {
                 if (rating == null) return 'bg-blue-50 border-blue-200';
-                if (rating <= 2) return 'bg-red-50 border-red-200';
-                if (rating <= 4) return 'bg-yellow-50 border-yellow-200';
-                return 'bg-green-50 border-green-200';
+                if (rating <= 2) return 'bg-red-50 border-red-200'; // ≤2: Red
+                if (rating <= 4) return 'bg-yellow-50 border-yellow-200'; // >2 to ≤4: Amber
+                return 'bg-green-50 border-green-200'; // >4: Green
               };
 
               return (
