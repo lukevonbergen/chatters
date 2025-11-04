@@ -630,13 +630,14 @@ const CustomerFeedbackPage = () => {
                   className="w-full border-2 px-4 py-3 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all"
                   style={{
                     borderColor: primary,
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    color: tableNumber ? textColor : '#9ca3af',
+                    backgroundColor: tableNumber ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                    color: tableNumber ? buttonTextColor : '#9ca3af',
+                    opacity: tableNumber ? 1 : 0.85,
                   }}
                 >
-                  <option value="" style={{ color: '#9ca3af' }}>Choose your table</option>
+                  <option value="" style={{ color: '#9ca3af', opacity: 0.7 }}>Choose your table</option>
                   {activeTables.map((tableNum) => (
-                    <option key={tableNum} value={tableNum} style={{ color: textColor }}>
+                    <option key={tableNum} value={tableNum} style={{ color: buttonTextColor, backgroundColor: '#ffffff' }}>
                       {tableNum}
                     </option>
                   ))}
