@@ -7,6 +7,7 @@ import SignUpPage from './pages/auth/SignUp';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import SetPasswordPage from './pages/auth/set-password';
+import VerifyEmailChange from './pages/auth/VerifyEmailChange';
 
 // Venue‑aware app pages
 import DashboardPage from './pages/dashboard/DashboardNew';
@@ -91,6 +92,7 @@ const DashboardRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/set-password" element={<SetPasswordPage />} />
+      <Route path="/verify-email-change" element={<VerifyEmailChange />} />
 
       {/* Public guest feedback (no venue context) */}
       <Route path="/feedback" element={<CustomerFeedbackPage />} />

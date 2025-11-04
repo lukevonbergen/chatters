@@ -12,6 +12,10 @@ const ProfileTab = ({
   const [message, setMessage] = useState('');
   const [passwordResetLoading, setPasswordResetLoading] = useState(false);
   const [passwordResetMessage, setPasswordResetMessage] = useState('');
+  const [emailChangeLoading, setEmailChangeLoading] = useState(false);
+  const [emailChangeMessage, setEmailChangeMessage] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [showEmailChange, setShowEmailChange] = useState(false);
 
   const saveSettings = async () => {
     if (!venueId) return;
@@ -75,6 +79,52 @@ const ProfileTab = ({
     }
   };
 
+  const sendEmailChangeVerification = async () => {
+    if (!newEmail || !newEmail.trim()) {
+      setEmailChangeMessage('Please enter a new email address');
+      return;
+    }
+
+    if (newEmail.toLowerCase() === email.toLowerCase()) {
+      setEmailChangeMessage('New email must be different from current email');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      setEmailChangeMessage('Please enter a valid email address');
+      return;
+    }
+
+    setEmailChangeLoading(true);
+    setEmailChangeMessage('');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email-change', {
+        body: { currentEmail: email, newEmail: newEmail }
+      });
+
+      if (error) {
+        console.error('Email change error:', error);
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setEmailChangeMessage(`Verification email sent to ${newEmail}! Please check your inbox to confirm the change.`);
+      setNewEmail('');
+      setShowEmailChange(false);
+    } catch (error) {
+      console.error('Error sending email change:', error);
+      setEmailChangeMessage(`Error: ${error.message}`);
+    } finally {
+      setEmailChangeLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-none lg:max-w-2xl">
 
@@ -106,15 +156,66 @@ const ProfileTab = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-          <input
-            type="email"
-            placeholder="your@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed text-sm lg:text-base"
-          />
-          <p className="text-xs text-gray-500 mt-1">Email changes require verification and must be done through your account security settings.</p>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="your@example.com"
+              value={email}
+              disabled
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed text-sm lg:text-base"
+            />
+            <button
+              onClick={() => setShowEmailChange(!showEmailChange)}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              Change Email
+            </button>
+          </div>
+
+          {showEmailChange && (
+            <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-md space-y-3">
+              <p className="text-sm text-blue-900 font-medium">Enter your new email address</p>
+              <p className="text-xs text-blue-700">
+                We'll send a verification link to the new email address. Your current email will remain active until you verify the new one.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="new@example.com"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+                <button
+                  onClick={sendEmailChangeVerification}
+                  disabled={emailChangeLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {emailChangeLoading ? 'Sending...' : 'Send Verification'}
+                </button>
+              </div>
+              <button
+                onClick={() => {
+                  setShowEmailChange(false);
+                  setNewEmail('');
+                  setEmailChangeMessage('');
+                }}
+                className="text-sm text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {emailChangeMessage && (
+            <div className={`text-sm mt-2 p-3 rounded-md ${
+              emailChangeMessage.includes('sent') || emailChangeMessage.includes('Verification')
+                ? 'text-green-700 bg-green-50 border border-green-200'
+                : 'text-red-700 bg-red-50 border border-red-200'
+            }`}>
+              {emailChangeMessage}
+            </div>
+          )}
         </div>
 
         {/* Button with responsive sizing */}
