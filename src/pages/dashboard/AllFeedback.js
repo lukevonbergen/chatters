@@ -121,6 +121,9 @@ const AllFeedback = () => {
         };
       });
 
+      // Sort sessions by created_at (newest first)
+      sessions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
       setFeedbackSessions(sessions);
     } catch (error) {
       console.error('Error loading feedback:', error);
@@ -533,34 +536,61 @@ const AllFeedback = () => {
 
                 {/* Feedback Items */}
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Responses</h4>
-                  <div className="space-y-3">
-                    {selectedSession.items.map((item, index) => (
-                      <div key={item.id} className="p-3 border border-gray-200 rounded-lg">
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-500 mb-1">Question {index + 1}</p>
-                            <p className="font-medium text-gray-900">{item.question_text || 'No question text'}</p>
+                  <h4 className="font-semibold text-gray-900 mb-3">
+                    {selectedSession.type === 'assistance' ? 'Assistance Request Details' : 'Responses'}
+                  </h4>
+
+                  {selectedSession.type === 'assistance' ? (
+                    // Display assistance request details
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="flex-shrink-0 mt-1">
+                          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                            <span className="text-orange-600 text-lg">🆘</span>
                           </div>
-                          {item.rating && (
-                            <div className="flex-shrink-0">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRatingBadge(item.rating)}`}>
-                                {item.rating} stars
-                              </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 mb-2">Customer requested assistance</p>
+                          {selectedSession.items[0]?.additional_feedback && (
+                            <div className="bg-white p-3 rounded border border-orange-200">
+                              <p className="text-sm text-gray-700">
+                                {selectedSession.items[0].additional_feedback}
+                              </p>
                             </div>
                           )}
                         </div>
-                        {item.additional_feedback && (
-                          <div className="mt-2">
-                            <p className="text-xs text-gray-500 mb-1">Comment:</p>
-                            <p className="text-sm text-gray-700 p-2 bg-gray-50 rounded italic">
-                              "{item.additional_feedback}"
-                            </p>
-                          </div>
-                        )}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    // Display regular feedback responses
+                    <div className="space-y-3">
+                      {selectedSession.items.map((item, index) => (
+                        <div key={item.id} className="p-3 border border-gray-200 rounded-lg">
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex-1">
+                              <p className="text-xs text-gray-500 mb-1">Question {index + 1}</p>
+                              <p className="font-medium text-gray-900">{item.question_text || 'Question not available'}</p>
+                            </div>
+                            {item.rating && (
+                              <div className="flex-shrink-0">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRatingBadge(item.rating)}`}>
+                                  {item.rating} stars
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {item.additional_feedback && (
+                            <div className="mt-2">
+                              <p className="text-xs text-gray-500 mb-1">Comment:</p>
+                              <p className="text-sm text-gray-700 p-2 bg-gray-50 rounded italic">
+                                "{item.additional_feedback}"
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
