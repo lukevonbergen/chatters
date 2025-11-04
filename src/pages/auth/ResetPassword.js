@@ -18,51 +18,28 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const validateToken = async () => {
-      // Check for token in URL params (Resend flow)
+      // Check for token in URL params
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
 
-      if (token) {
-        // Validate token with backend
-        const { data, error } = await supabase.functions.invoke('validate-reset-token', {
-          body: { token }
-        });
-
-        if (error || !data?.valid) {
-          setError('Invalid or expired reset link.');
-          setTimeout(() => navigate('/forgot-password'), 3000);
-        } else {
-          setFormReady(true);
-        }
+      if (!token) {
+        setError('Invalid password reset link. Please request a new password reset.');
+        setTimeout(() => navigate('/forgot-password'), 3000);
         setIsLoading(false);
         return;
       }
 
-      // Fallback: Check for Supabase Auth recovery link (old flow)
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      const access_token = hashParams.get('access_token');
-      const refresh_token = hashParams.get('refresh_token');
-      const type = hashParams.get('type');
+      // Validate token with backend
+      const { data, error } = await supabase.functions.invoke('validate-reset-token', {
+        body: { token }
+      });
 
-      if (type === 'recovery' && access_token && refresh_token) {
-        const { error } = await supabase.auth.setSession({
-          access_token,
-          refresh_token,
-        });
-
-        if (error) {
-          console.error('[ResetPassword] setSession error:', error.message);
-          setError('Invalid or expired reset link.');
-          setTimeout(() => navigate('/forgot-password'), 3000);
-        } else {
-          console.log('[ResetPassword] Session set via recovery link');
-          setFormReady(true);
-        }
-      } else {
-        setError('Invalid password reset link.');
+      if (error || !data?.valid) {
+        setError('Invalid or expired reset link. Please request a new password reset.');
         setTimeout(() => navigate('/forgot-password'), 3000);
+      } else {
+        setFormReady(true);
       }
-
       setIsLoading(false);
     };
 
@@ -83,30 +60,22 @@ const ResetPassword = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
 
-      if (token) {
-        // Use Resend flow with token
-        const { data, error } = await supabase.functions.invoke('reset-password-with-token', {
-          body: { token, password }
-        });
+      if (!token) {
+        setError('Invalid password reset link.');
+        return;
+      }
 
-        if (error || !data?.success) {
-          console.error('[ResetPassword] Token-based reset error:', error);
-          setError('Failed to reset password. Please try again.');
-        } else {
-          setMessage('Password successfully reset! Redirecting...');
-          setTimeout(() => navigate('/signin'), 2000);
-        }
+      // Reset password using token
+      const { data, error } = await supabase.functions.invoke('reset-password-with-token', {
+        body: { token, password }
+      });
+
+      if (error || !data?.success) {
+        console.error('[ResetPassword] Token-based reset error:', error);
+        setError('Failed to reset password. Please try again.');
       } else {
-        // Fallback to Supabase Auth flow
-        const { error } = await supabase.auth.updateUser({ password });
-
-        if (error) {
-          console.error('[ResetPassword] Password update error:', error.message);
-          setError('Failed to reset password. Please try again.');
-        } else {
-          setMessage('Password successfully reset! Redirecting...');
-          setTimeout(() => navigate('/signin'), 2000);
-        }
+        setMessage('Password successfully reset! Redirecting...');
+        setTimeout(() => navigate('/signin'), 2000);
       }
     } catch (err) {
       console.error('[ResetPassword] Unexpected error:', err);
