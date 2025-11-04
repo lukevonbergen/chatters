@@ -47,6 +47,7 @@ import SettingsBrandingPage from './pages/dashboard/SettingsBranding';
 import AccountProfilePage from './pages/dashboard/AccountProfile';
 import AccountBillingPage from './pages/dashboard/AccountBilling';
 import FeedbackSettings from './pages/dashboard/FeedbackSettings';
+import AllFeedback from './pages/dashboard/AllFeedback';
 // Full version (requires Google Business Profile API approval)
 // import GoogleReviewsPage from './pages/dashboard/GoogleReviews';
 
@@ -111,6 +112,7 @@ const DashboardRoutes = () => {
         {/* Feedback Section */}
         <Route path="/feedback/qr" element={<FeedbackQRPage />} />
         <Route path="/feedback/questions" element={<FeedbackQuestionsPage />} />
+        <Route path="/feedback/all" element={<AllFeedback />} />
         
         {/* Legacy feedback routes (redirects or keep for compatibility) */}
         <Route path="/questions" element={<Navigate to="/feedback/questions" replace />} />

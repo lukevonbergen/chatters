@@ -33,7 +33,8 @@ import {
   UserCheck,
   Star,
   Award,
-  MessageCircle
+  MessageCircle,
+  List
 } from 'lucide-react';
 
 const navItems = [
@@ -48,11 +49,12 @@ const navItems = [
     id: 'feedback', 
     label: 'Feedback', 
     icon: MessageSquare, 
-    path: '/feedback/qr', 
+    path: '/feedback/qr',
     color: 'text-green-600',
     subItems: [
       { label: 'QR Code & Sharing', path: '/feedback/qr', icon: QrCode },
-      { label: 'Question Management', path: '/feedback/questions', icon: HelpCircle }
+      { label: 'Question Management', path: '/feedback/questions', icon: HelpCircle },
+      { label: 'All Feedback', path: '/feedback/all', icon: List }
     ]
   },
   {
