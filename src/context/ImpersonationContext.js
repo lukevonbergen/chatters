@@ -22,7 +22,6 @@ export const ImpersonationProvider = ({ children }) => {
 
     // Listen for impersonation changes via custom event
     const handleImpersonationEvent = (event) => {
-      console.log('🎭 ImpersonationContext: Received impersonation event', event.detail);
       if (event.detail?.impersonation) {
         setImpersonation(event.detail.impersonation);
       } else {
@@ -60,23 +59,17 @@ export const ImpersonationProvider = ({ children }) => {
   const loadImpersonation = () => {
     try {
       const stored = localStorage.getItem('impersonation');
-      console.log('🎭 Loading impersonation from localStorage:', stored);
       if (stored) {
         const parsed = JSON.parse(stored);
-        console.log('🎭 Setting impersonation:', parsed);
         setImpersonation(parsed);
-      } else {
-        console.log('🎭 No impersonation data in localStorage');
       }
     } catch (error) {
-      console.error('Error loading impersonation:', error);
       localStorage.removeItem('impersonation');
     }
   };
 
   const startImpersonation = async (accountId, accountName) => {
     if (!isAdmin) {
-      console.error('Only @getchatters.com users can impersonate');
       return false;
     }
 
@@ -90,9 +83,6 @@ export const ImpersonationProvider = ({ children }) => {
       localStorage.setItem('impersonation', JSON.stringify(impersonationData));
       setImpersonation(impersonationData);
 
-      // Log impersonation for audit
-      console.log(`Admin impersonation started: Account ${accountName} (${accountId})`);
-
       // Dispatch custom event to notify other components
       window.dispatchEvent(new CustomEvent('impersonationChanged', {
         detail: { impersonation: impersonationData }
@@ -100,7 +90,6 @@ export const ImpersonationProvider = ({ children }) => {
 
       return true;
     } catch (error) {
-      console.error('Error starting impersonation:', error);
       return false;
     }
   };
@@ -108,7 +97,6 @@ export const ImpersonationProvider = ({ children }) => {
   const endImpersonation = () => {
     localStorage.removeItem('impersonation');
     setImpersonation(null);
-    console.log('Admin impersonation ended');
   };
 
   const value = {

@@ -18,7 +18,6 @@ export const VenueProvider = ({ children }) => {
     const init = async (forceReload = false) => {
       // If forcing reload, reset initialized flag
       if (forceReload) {
-        console.log('🎭 VenueContext: Force reloading due to impersonation change');
         setInitialized(false);
       }
       try {
@@ -29,51 +28,32 @@ export const VenueProvider = ({ children }) => {
 
         const userId = session.user.id;
 
-        // Check for impersonation
+        // Check for impersonation - admins can view any account
         const impersonationData = localStorage.getItem('impersonation');
         if (impersonationData) {
-          console.log('🎭 VenueContext: Detected impersonation data');
           const { accountId } = JSON.parse(impersonationData);
 
-          // Load venues for impersonated account using admin API (bypasses RLS)
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const response = await fetch('/api/admin/impersonate', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({ accountId })
-            });
+          // Admin users can query venues directly (RLS allows admin access)
+          const { data: venues, error: venueError } = await supabase
+            .from('venues')
+            .select('id, name')
+            .eq('account_id', accountId)
+            .order('name');
 
-            if (!response.ok) {
-              console.error('🎭 Impersonation API failed:', response.status);
-              throw new Error('Failed to load impersonated venues');
+          if (!venueError && venues && venues.length > 0) {
+            setUserRole('master'); // Impersonate as master
+            setAllVenues(venues || []);
+
+            const cachedId = localStorage.getItem('chatters_currentVenueId');
+            const validCached = (venues || []).find(v => v.id === cachedId);
+            const selected = validCached || (venues || [])[0];
+
+            if (selected) {
+              setVenueId(selected.id);
+              setVenueName(selected.name);
+              localStorage.setItem('chatters_currentVenueId', selected.id);
             }
-
-            const { venues } = await response.json();
-            console.log('🎭 VenueContext: Loaded venues for impersonation:', venues);
-
-            if (venues && venues.length > 0) {
-              setUserRole('master'); // Impersonate as master
-              setAllVenues(venues || []);
-
-              const cachedId = localStorage.getItem('chatters_currentVenueId');
-              const validCached = (venues || []).find(v => v.id === cachedId);
-              const selected = validCached || (venues || [])[0];
-
-              if (selected) {
-                setVenueId(selected.id);
-                setVenueName(selected.name);
-                localStorage.setItem('chatters_currentVenueId', selected.id);
-                console.log('🎭 VenueContext: Set venue to', selected.name);
-              }
-              return;
-            }
-          } catch (error) {
-            console.error('🎭 Impersonation error:', error);
-            // Fall through to normal auth flow
+            return;
           }
         }
 
@@ -243,7 +223,6 @@ export const VenueProvider = ({ children }) => {
 
     // Listen for impersonation changes
     const handleImpersonationChange = () => {
-      console.log('🎭 VenueContext: Impersonation changed, reinitializing...');
       setInitialized(false);
       setLoading(true);
       init(true);

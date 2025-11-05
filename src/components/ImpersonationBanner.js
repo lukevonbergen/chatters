@@ -7,10 +7,7 @@ const ImpersonationBanner = () => {
   // Read directly from localStorage to avoid timing issues
   const impersonationData = localStorage.getItem('impersonation');
 
-  console.log('🎭 ImpersonationBanner render - localStorage:', impersonationData);
-
   if (!impersonationData) {
-    console.log('🎭 Banner returning null - no impersonation data');
     return null;
   }
 
@@ -19,7 +16,6 @@ const ImpersonationBanner = () => {
     const parsed = JSON.parse(impersonationData);
     accountName = parsed.accountName || '';
   } catch (e) {
-    console.error('🎭 Failed to parse impersonation data:', e);
     return null;
   }
 
