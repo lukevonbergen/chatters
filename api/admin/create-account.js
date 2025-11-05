@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { firstName, lastName, email, companyName, startTrial, trialDays } = req.body;
+  const { firstName, lastName, email, companyName, phone, startTrial, trialDays } = req.body;
 
   if (!firstName || !lastName || !email || !companyName) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -44,6 +44,7 @@ module.exports = async (req, res) => {
       .from('accounts')
       .insert({
         name: companyName,
+        phone: phone || null,
         is_paid: false,
         trial_ends_at: trialEndsAt,
         demo_account: false
