@@ -32,6 +32,7 @@ const VenueTab = ({
   const [userId, setUserId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { venueId, venueName }
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showCreateWarning, setShowCreateWarning] = useState(false);
 
   // Fetch venues for masters
   useEffect(() => {
@@ -88,13 +89,19 @@ const VenueTab = ({
     }
   };
 
-  const handleCreateVenue = async (e) => {
+  const handleCreateVenueSubmit = (e) => {
     e.preventDefault();
     if (!newVenue.name || !accountId || !userId) {
       setVenueMessage('Please fill in the venue name');
       return;
     }
 
+    // Show confirmation warning first
+    setShowCreateWarning(true);
+  };
+
+  const handleCreateVenue = async () => {
+    setShowCreateWarning(false);
     setVenueLoading(true);
     setVenueMessage('');
 
@@ -412,7 +419,7 @@ const VenueTab = ({
               <p className="text-gray-600 text-sm">Expand your business by adding more venues to your account. New venues are added to your next billing cycle.</p>
             </div>
 
-            <form onSubmit={handleCreateVenue} className="space-y-6">
+            <form onSubmit={handleCreateVenueSubmit} className="space-y-6">
               {/* Venue Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">New Venue Name *</label>
@@ -490,6 +497,53 @@ const VenueTab = ({
           </div>
         )}
       </div>
+
+      {/* Create Venue Confirmation Modal */}
+      {showCreateWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Add New Venue?</h3>
+            </div>
+
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              You're about to create <strong>"{newVenue.name}"</strong>.
+            </p>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+              <p className="text-sm text-blue-800">
+                <strong>Billing Information:</strong>
+              </p>
+              <ul className="text-sm text-blue-700 mt-2 space-y-1 ml-4">
+                <li>• This venue will be added to your subscription</li>
+                <li>• You'll be charged on your next billing date</li>
+                <li>• Cost: £149/month or £1,430/year per venue</li>
+                <li>• Prorated amount will apply for partial months</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCreateVenue}
+                disabled={venueLoading}
+                className="flex-1 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {venueLoading ? 'Creating...' : 'Yes, Create Venue'}
+              </button>
+              <button
+                onClick={() => setShowCreateWarning(false)}
+                disabled={venueLoading}
+                className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (

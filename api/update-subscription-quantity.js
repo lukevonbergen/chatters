@@ -48,7 +48,9 @@ module.exports = async (req, res) => {
     }
 
     // Get current subscription
-    const subscription = await stripe.subscriptions.retrieve(account.stripe_subscription_id);
+    const subscription = await stripe.subscriptions.retrieve(account.stripe_subscription_id, {
+      expand: ['items.data.price.product']
+    });
 
     if (!subscription || subscription.status === 'canceled') {
       return res.status(400).json({
@@ -58,8 +60,32 @@ module.exports = async (req, res) => {
     }
 
     // Get the subscription item (there should be only one)
-    const subscriptionItemId = subscription.items.data[0].id;
-    const currentQuantity = subscription.items.data[0].quantity;
+    const subscriptionItem = subscription.items.data[0];
+    const subscriptionItemId = subscriptionItem.id;
+    const currentQuantity = subscriptionItem.quantity;
+    const price = subscriptionItem.price;
+
+    // Check if this is a test/flat-rate plan (doesn't scale with venue count)
+    // Identify by product name or price metadata
+    const productName = price.product?.name || '';
+    const priceNickname = price.nickname || '';
+
+    // Skip quantity updates for test plans or flat-rate plans
+    if (productName.includes('Test') ||
+        productName.includes('test') ||
+        priceNickname.includes('Test') ||
+        priceNickname.includes('test') ||
+        price.metadata?.billing_type === 'flat') {
+      console.log(`Skipping quantity update for test/flat-rate plan: ${productName || priceNickname}`);
+      return res.status(200).json({
+        message: 'Test/flat-rate plan - quantity not updated',
+        productName,
+        priceNickname,
+        venueCount,
+        updated: false,
+        skipped: true
+      });
+    }
 
     // Only update if quantity has changed
     if (currentQuantity === venueCount) {
@@ -71,12 +97,12 @@ module.exports = async (req, res) => {
     }
 
     // Update the subscription quantity
-    // Stripe will prorate automatically:
-    // - Adding venues: charges immediately for the prorated amount
+    // Stripe will prorate automatically on the NEXT billing cycle:
+    // - Adding venues: adds prorated amount to next invoice
     // - Removing venues: credits the next invoice
     await stripe.subscriptionItems.update(subscriptionItemId, {
       quantity: venueCount,
-      proration_behavior: 'always_invoice', // Create immediate invoice for additions
+      proration_behavior: 'create_prorations', // Add to next invoice, don't charge now
     });
 
     console.log(`Updated subscription ${subscription.id} quantity from ${currentQuantity} to ${venueCount}`);
