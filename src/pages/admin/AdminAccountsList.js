@@ -46,7 +46,7 @@ const AdminAccountsList = () => {
         .from('accounts')
         .select(`
           *,
-          users!accounts_id_fkey(id, email, first_name, last_name, role),
+          users(id, email, first_name, last_name, role),
           venues(id)
         `)
         .order('created_at', { ascending: false });
