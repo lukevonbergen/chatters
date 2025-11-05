@@ -204,9 +204,7 @@ const UpdatedDashboardFrame = ({ children }) => {
               className="h-6 w-auto cursor-pointer"
               onClick={() => handleNavigation('/dashboard')}
             />
-            {isImpersonating && (
-              <ImpersonationBanner />
-            )}
+            <ImpersonationBanner />
           </div>
 
           {/* Desktop Nav links */}
