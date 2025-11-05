@@ -107,8 +107,10 @@ const VenueTab = ({
             account_id: accountId,
             logo: null,
             address: newVenue.address,
-            primary_color: '#000000',
-            secondary_color: '#ffffff',
+            primary_color: '#16A34A',
+            background_color: '#ffffff',
+            text_color: '#111827',
+            button_text_color: '#ffffff',
           },
         ])
         .select()
