@@ -444,18 +444,21 @@ const BrandingTab = ({
         </div>
       </div>
 
-      {/* Assistance Message Customization Section */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div className="mb-4">
-          <h3 className="text-base font-semibold text-gray-900">Assistance Request Message</h3>
-          <p className="text-gray-600 text-xs">Customize the message customers see after requesting assistance</p>
-        </div>
+      {/* Assistance & Thank You Messages - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Assistance Message Customization Section */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="mb-4">
+            <h3 className="text-base font-semibold text-gray-900">Assistance Request Message</h3>
+            <p className="text-gray-600 text-xs">Customize the message customers see after requesting assistance</p>
+          </div>
 
         <div className="space-y-6">
             {/* Icon Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">Icon</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {iconOptions.map((option) => {
                   const IconComponent = option.icon;
                   return (
@@ -562,9 +565,9 @@ const BrandingTab = ({
               <button
                 onClick={saveAssistanceSettings}
                 disabled={assistanceLoading}
-                className="w-full sm:w-auto bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {assistanceLoading ? 'Saving...' : 'Save Assistance Settings'}
+                {assistanceLoading ? 'Saving...' : 'Save Settings'}
               </button>
             </div>
 
@@ -581,18 +584,18 @@ const BrandingTab = ({
         </div>
       </div>
 
-      {/* Thank You Message Customization Section */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div className="mb-4">
-          <h3 className="text-base font-semibold text-gray-900">Thank You Message</h3>
-          <p className="text-gray-600 text-xs">Customize the message customers see after submitting feedback</p>
-        </div>
+        {/* Thank You Message Customization Section */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="mb-4">
+            <h3 className="text-base font-semibold text-gray-900">Thank You Message</h3>
+            <p className="text-gray-600 text-xs">Customize the message customers see after submitting feedback</p>
+          </div>
 
         <div className="space-y-6">
             {/* Icon Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">Icon</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {thankYouIconOptions.map((option) => {
                   const IconComponent = option.icon;
                   return (
@@ -664,9 +667,9 @@ const BrandingTab = ({
               <button
                 onClick={saveThankYouSettings}
                 disabled={thankYouLoading}
-                className="w-full sm:w-auto bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {thankYouLoading ? 'Saving...' : 'Save Thank You Settings'}
+                {thankYouLoading ? 'Saving...' : 'Save Settings'}
               </button>
             </div>
 
@@ -681,6 +684,8 @@ const BrandingTab = ({
             </div>
           )}
         </div>
+      </div>
+
       </div>
     </div>
   );

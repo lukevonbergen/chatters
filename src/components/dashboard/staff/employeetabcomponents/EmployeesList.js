@@ -143,6 +143,12 @@ const EmployeesList = ({
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Location
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Phone
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
                 </th>
@@ -188,6 +194,20 @@ const EmployeesList = ({
                       >
                         {employee.location}
                       </span>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {employee.email ? (
+                      <span className="text-sm text-gray-900">{employee.email}</span>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {employee.phone ? (
+                      <span className="text-sm text-gray-900">{employee.phone}</span>
                     ) : (
                       <span className="text-sm text-gray-400">-</span>
                     )}

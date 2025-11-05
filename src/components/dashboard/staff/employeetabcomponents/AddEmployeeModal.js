@@ -291,30 +291,6 @@ const AddEmployeeModal = ({
               />
             </div>
 
-            {/* Venue (for masters only) */}
-            {userRole === 'master' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Venue *
-                </label>
-                <select
-                  value={formData.venue_id}
-                  onChange={(e) => handleInputChange('venue_id', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    formErrors.venue_id ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">Select a venue</option>
-                  {allVenues.map(venue => (
-                    <option key={venue.id} value={venue.id}>{venue.name}</option>
-                  ))}
-                </select>
-                {formErrors.venue_id && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.venue_id}</p>
-                )}
-              </div>
-            )}
-
             {/* Role and Location */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
