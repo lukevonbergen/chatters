@@ -127,20 +127,8 @@ const VenueTab = ({
         throw new Error(venueError.message);
       }
 
-      // Create initial staff record for the master
-      const { error: staffError } = await supabase.from('staff').insert([
-        {
-          first_name: 'Master',
-          last_name: 'User',
-          user_id: userId,
-          venue_id: venueData.id,
-          role: 'master',
-        },
-      ]);
-
-      if (staffError) {
-        console.error('Staff creation error:', staffError);
-      }
+      // Note: Staff record is not needed for master users as they access venues through account_id
+      // Masters access all venues in their account automatically
 
       // Update Stripe subscription quantity (adds venue to next billing cycle)
       await updateStripeQuantity();
