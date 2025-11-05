@@ -135,7 +135,6 @@ const VenueTab = ({
           user_id: userId,
           venue_id: venueData.id,
           role: 'master',
-          email: '',
         },
       ]);
 

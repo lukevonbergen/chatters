@@ -70,6 +70,14 @@ module.exports = async (req, res) => {
     const productName = price.product?.name || '';
     const priceNickname = price.nickname || '';
 
+    // Debug logging
+    console.log('=== Stripe Subscription Debug ===');
+    console.log('Product Name:', productName);
+    console.log('Price Nickname:', priceNickname);
+    console.log('Price Metadata:', price.metadata);
+    console.log('Product Object:', price.product);
+    console.log('================================');
+
     // Skip quantity updates for test plans or flat-rate plans
     if (productName.includes('Test') ||
         productName.includes('test') ||
