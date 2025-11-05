@@ -161,13 +161,8 @@ const UpdatedDashboardFrame = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Impersonation Banner */}
-      <ImpersonationBanner />
-
-      {/* Content wrapper with padding for fixed banner */}
-      <div style={{ paddingTop: isImpersonating ? '52px' : '0' }}>
-        {/* Trial Banner - Only show for master users */}
-        {trialInfo && trialInfo.isActive && userRole === 'master' && (
+      {/* Trial Banner - Only show for master users */}
+      {trialInfo && trialInfo.isActive && userRole === 'master' && (
         <div className="bg-gray-100 border-b border-gray-200 px-4 py-3">
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -201,13 +196,18 @@ const UpdatedDashboardFrame = ({ children }) => {
       <header className="border-b bg-white px-4 md:px-6 py-4 flex items-center justify-between shadow-sm relative z-50">
         {/* Left: Logo + Desktop Nav */}
         <div className="flex items-center gap-6">
-          {/* Logo */}
-          <img
-            src="https://www.getchatters.com/img/Logo.svg"
-            alt="Chatters"
-            className="h-6 w-auto cursor-pointer"
-            onClick={() => handleNavigation('/dashboard')}
-          />
+          {/* Logo with impersonation badge */}
+          <div className="flex flex-col gap-1">
+            <img
+              src="https://www.getchatters.com/img/Logo.svg"
+              alt="Chatters"
+              className="h-6 w-auto cursor-pointer"
+              onClick={() => handleNavigation('/dashboard')}
+            />
+            {isImpersonating && (
+              <ImpersonationBanner />
+            )}
+          </div>
 
           {/* Desktop Nav links */}
           <nav className="hidden lg:flex gap-6">
@@ -541,9 +541,8 @@ const UpdatedDashboardFrame = ({ children }) => {
         </div>
       )}
 
-        {/* Main content */}
-        <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">{children}</main>
-      </div>
+      {/* Main content */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">{children}</main>
     </div>
   );
 };
