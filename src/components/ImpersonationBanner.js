@@ -7,7 +7,16 @@ const ImpersonationBanner = () => {
   const { impersonation, endImpersonation, isImpersonating } = useImpersonation();
   const navigate = useNavigate();
 
-  if (!isImpersonating) return null;
+  console.log('🎭 ImpersonationBanner render:', {
+    isImpersonating,
+    impersonation,
+    hasImpersonationData: !!impersonation
+  });
+
+  if (!isImpersonating) {
+    console.log('🎭 Banner returning null - not impersonating');
+    return null;
+  }
 
   const handleExit = () => {
     endImpersonation();
