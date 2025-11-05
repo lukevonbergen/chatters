@@ -366,20 +366,26 @@ const AdminAccountsList = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {account.trial_ends_at ? (
+                        {account.is_paid && account.subscription_period_end ? (
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            {new Date(account.trial_ends_at).toLocaleDateString()}
+                            <Calendar className="w-4 h-4 text-green-500" />
+                            <span className="text-green-700">
+                              {new Date(account.subscription_period_end).toLocaleDateString()}
+                            </span>
+                          </div>
+                        ) : account.trial_ends_at ? (
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4 text-blue-500" />
+                            <span className="text-blue-700">
+                              {new Date(account.trial_ends_at).toLocaleDateString()}
+                            </span>
                           </div>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex items-center gap-1.5">
-                          <Building2 className="w-4 h-4 text-gray-400" />
-                          {account.venueCount}
-                        </div>
+                        {account.venueCount}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(account.created_at).toLocaleDateString()}

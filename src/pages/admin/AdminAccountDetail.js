@@ -43,7 +43,7 @@ const AdminAccountDetail = () => {
         .from('accounts')
         .select(`
           *,
-          users!accounts_id_fkey(id, email, first_name, last_name, role)
+          users(id, email, first_name, last_name, role)
         `)
         .eq('id', accountId)
         .single();
