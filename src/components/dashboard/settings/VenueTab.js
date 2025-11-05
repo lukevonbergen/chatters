@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
+import { Trash2, AlertTriangle } from 'lucide-react';
 
 const VenueTab = ({ 
   name, setName,
@@ -29,6 +30,8 @@ const VenueTab = ({
   const [venueMessage, setVenueMessage] = useState('');
   const [accountId, setAccountId] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { venueId, venueName }
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Fetch venues for masters
   useEffect(() => {
@@ -62,6 +65,27 @@ const VenueTab = ({
       .order('created_at', { ascending: false });
 
     setVenues(venuesData || []);
+  };
+
+  const updateStripeQuantity = async () => {
+    try {
+      const response = await fetch('/api/update-subscription-quantity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId }),
+      });
+
+      const data = await response.json();
+
+      if (data.updated) {
+        console.log('Stripe subscription updated:', data);
+      } else {
+        console.log('Stripe subscription not updated:', data.message);
+      }
+    } catch (error) {
+      console.error('Error updating Stripe subscription:', error);
+      // Don't fail the venue operation if Stripe update fails
+    }
   };
 
   const handleCreateVenue = async (e) => {
@@ -110,7 +134,10 @@ const VenueTab = ({
         console.error('Staff creation error:', staffError);
       }
 
-      setVenueMessage('Venue created successfully! You can now assign managers to it in the Staff page.');
+      // Update Stripe subscription quantity (adds venue to next billing cycle)
+      await updateStripeQuantity();
+
+      setVenueMessage('Venue created successfully! This venue will be added to your next billing cycle. You can now assign managers to it in the Staff page.');
       setNewVenue({
         name: '',
         address: {
@@ -131,6 +158,59 @@ const VenueTab = ({
       setVenueMessage(`Failed to create venue: ${errorDetails}. Please contact support with this error code.`);
     } finally {
       setVenueLoading(false);
+    }
+  };
+
+  const handleDeleteVenue = async () => {
+    if (!deleteConfirm) return;
+
+    setDeleteLoading(true);
+    setVenueMessage('');
+
+    try {
+      const { venueId, venueName } = deleteConfirm;
+
+      // Check if this is the current venue being viewed
+      if (venueId === currentVenueId) {
+        setVenueMessage('Cannot delete the venue you are currently viewing. Please switch to another venue first.');
+        setDeleteConfirm(null);
+        setDeleteLoading(false);
+        return;
+      }
+
+      // Delete associated staff records first
+      const { error: staffError } = await supabase
+        .from('staff')
+        .delete()
+        .eq('venue_id', venueId);
+
+      if (staffError) {
+        throw new Error(`Failed to delete staff records: ${staffError.message}`);
+      }
+
+      // Delete the venue
+      const { error: venueError } = await supabase
+        .from('venues')
+        .delete()
+        .eq('id', venueId)
+        .eq('account_id', accountId); // Ensure user owns this venue
+
+      if (venueError) {
+        throw new Error(`Failed to delete venue: ${venueError.message}`);
+      }
+
+      // Update Stripe subscription quantity (removes venue from next billing cycle)
+      await updateStripeQuantity();
+
+      setVenueMessage(`Venue "${venueName}" deleted successfully! This venue will be removed from your next billing cycle.`);
+      setDeleteConfirm(null);
+      await fetchVenues();
+
+    } catch (error) {
+      console.error('Error deleting venue:', error);
+      setVenueMessage(`Failed to delete venue: ${error.message}`);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -274,12 +354,60 @@ const VenueTab = ({
         </div>
 
 
+        {/* Master-Only Section: Venue List & Delete */}
+        {userRole === 'master' && venues.length > 1 && (
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">Your Venues</h3>
+              <p className="text-sm text-gray-500 mt-1">Manage your existing venues</p>
+            </div>
+            <div className="p-6">
+              <div className="space-y-3">
+                {venues.map((venue) => (
+                  <div
+                    key={venue.id}
+                    className={`flex items-center justify-between p-4 rounded-lg border ${
+                      venue.id === currentVenueId
+                        ? 'border-blue-300 bg-blue-50'
+                        : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{venue.name}</h4>
+                      {venue.address?.city && (
+                        <p className="text-sm text-gray-500 mt-1">{venue.address.city}</p>
+                      )}
+                      {venue.id === currentVenueId && (
+                        <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                          Currently Viewing
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setDeleteConfirm({ venueId: venue.id, venueName: venue.name })}
+                      disabled={venue.id === currentVenueId}
+                      className={`p-2 rounded-lg transition-colors ${
+                        venue.id === currentVenueId
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : 'text-red-600 hover:bg-red-50'
+                      }`}
+                      title={venue.id === currentVenueId ? 'Cannot delete current venue' : 'Delete venue'}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Master-Only Section: Create New Venue */}
         {userRole === 'master' && (
           <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8">
             <div className="mb-6">
               <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Create Additional Venue</h3>
-              <p className="text-gray-600 text-sm">Expand your business by adding more venues to your account. Assign managers after creation.</p>
+              <p className="text-gray-600 text-sm">Expand your business by adding more venues to your account. New venues are added to your next billing cycle.</p>
             </div>
 
             <form onSubmit={handleCreateVenue} className="space-y-6">
@@ -360,6 +488,53 @@ const VenueTab = ({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Delete Venue?</h3>
+            </div>
+
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Are you sure you want to delete <strong>"{deleteConfirm.venueName}"</strong>?
+            </p>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+              <p className="text-sm text-yellow-800">
+                <strong>Important:</strong> This will:
+              </p>
+              <ul className="text-sm text-yellow-700 mt-2 space-y-1 ml-4">
+                <li>• Permanently delete all venue data</li>
+                <li>• Remove all staff assignments</li>
+                <li>• Delete all feedback and analytics</li>
+                <li>• Reduce your next billing cycle amount</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteVenue}
+                disabled={deleteLoading}
+                className="flex-1 bg-red-600 text-white px-6 py-2.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {deleteLoading ? 'Deleting...' : 'Yes, Delete Venue'}
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deleteLoading}
+                className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
