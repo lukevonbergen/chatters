@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
 import { supabase } from '../../../utils/supabase';
 import { isDevSite } from '../../../utils/domainUtils';
+import ImpersonationBanner from '../../../components/ImpersonationBanner';
 import {
   BarChart3,
   MessageSquare,
@@ -249,11 +250,14 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           {!collapsed && (
-            <img
-              src={isDevSite() ? "/img/CTS_DEV_LOGO.svg" : "https://www.getchatters.com/img/Logo.svg"}
-              alt="Chatters"
-              className="h-6 w-auto"
-            />
+            <div className="flex flex-col gap-1">
+              <img
+                src={isDevSite() ? "/img/CTS_DEV_LOGO.svg" : "https://www.getchatters.com/img/Logo.svg"}
+                alt="Chatters"
+                className="h-6 w-auto"
+              />
+              <ImpersonationBanner />
+            </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
