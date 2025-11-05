@@ -67,38 +67,60 @@ module.exports = async (req, res) => {
 
 // Handle subscription updates (status changes, quantity changes, etc.)
 async function handleSubscriptionUpdated(subscription) {
-  console.log('Subscription updated:', subscription.id);
+  console.log('=== SUBSCRIPTION UPDATED ===');
+  console.log('Subscription ID:', subscription.id);
   console.log('Status:', subscription.status);
-  console.log('Current period:', subscription.current_period_start, '-', subscription.current_period_end);
+  console.log('Current period end (unix):', subscription.current_period_end);
+  console.log('Current period end (ISO):', new Date(subscription.current_period_end * 1000).toISOString());
 
   // Find account by stripe_subscription_id
   const { data: account, error: findError } = await supabase
     .from('accounts')
-    .select('id')
+    .select('id, name, stripe_subscription_id')
     .eq('stripe_subscription_id', subscription.id)
     .single();
 
-  if (findError || !account) {
-    console.error('Account not found for subscription:', subscription.id);
+  if (findError) {
+    console.error('Database error finding account:', findError);
+    console.error('Error details:', JSON.stringify(findError, null, 2));
     return;
   }
 
+  if (!account) {
+    console.error('Account not found for subscription:', subscription.id);
+    console.error('This subscription is not linked to any account in the database');
+    return;
+  }
+
+  console.log('Found account:', account.id, '-', account.name);
+
   // Update account with new subscription status
   const isPaid = ['active', 'trialing'].includes(subscription.status);
+  const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
 
-  const { error: updateError } = await supabase
+  console.log('Attempting to update with:', {
+    stripe_subscription_status: subscription.status,
+    is_paid: isPaid,
+    subscription_period_end: periodEnd
+  });
+
+  const { data: updateData, error: updateError } = await supabase
     .from('accounts')
     .update({
       stripe_subscription_status: subscription.status,
       is_paid: isPaid,
-      subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString()
+      subscription_period_end: periodEnd
     })
-    .eq('id', account.id);
+    .eq('id', account.id)
+    .select();
 
   if (updateError) {
     console.error('Error updating account:', updateError);
+    console.error('Update error details:', JSON.stringify(updateError, null, 2));
   } else {
-    console.log(`Account ${account.id} updated: status=${subscription.status}, is_paid=${isPaid}`);
+    console.log(`✓ Account ${account.id} updated successfully`);
+    console.log('Updated data:', JSON.stringify(updateData, null, 2));
+    console.log('=== END SUBSCRIPTION UPDATED ===');
   }
 }
 
