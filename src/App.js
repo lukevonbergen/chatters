@@ -4,6 +4,7 @@ import './styles/modern-dashboard.css';
 import React, { useEffect, useState } from 'react';
 import { ModalProvider } from './context/ModalContext';
 import { LoadingProvider } from './context/LoadingContext';
+import { ImpersonationProvider } from './context/ImpersonationContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -76,14 +77,16 @@ function App() {
   return (
     <div className={isDashboardDomain ? 'font-sans' : 'font-marketing'}>
       <LoadingProvider>
-        <ModalProvider>
-          <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-          <Sentry.ErrorBoundary fallback={<p>Something went wrong!</p>} showDialog>
-            {isDashboardDomain ? <AppRoutes /> : <MarketingRoutes />}
-          </Sentry.ErrorBoundary>
-          <Analytics />
-          <SpeedInsights />
-        </ModalProvider>
+        <ImpersonationProvider>
+          <ModalProvider>
+            <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+            <Sentry.ErrorBoundary fallback={<p>Something went wrong!</p>} showDialog>
+              {isDashboardDomain ? <AppRoutes /> : <MarketingRoutes />}
+            </Sentry.ErrorBoundary>
+            <Analytics />
+            <SpeedInsights />
+          </ModalProvider>
+        </ImpersonationProvider>
       </LoadingProvider>
     </div>
   );

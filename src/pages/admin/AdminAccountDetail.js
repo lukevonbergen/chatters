@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Helmet } from 'react-helmet';
 import { supabase } from '../../utils/supabase';
+import { useImpersonation } from '../../context/ImpersonationContext';
 import {
   ArrowLeft,
   Edit3,
@@ -17,12 +18,14 @@ import {
   Plus,
   Trash2,
   Loader2,
-  Mail
+  Mail,
+  UserCircle2
 } from 'lucide-react';
 
 const AdminAccountDetail = () => {
   const { accountId } = useParams();
   const navigate = useNavigate();
+  const { startImpersonation, isAdmin } = useImpersonation();
   const [account, setAccount] = useState(null);
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -219,6 +222,28 @@ const AdminAccountDetail = () => {
     return `https://dashboard.stripe.com/${mode}customers/${account.stripe_customer_id}`;
   };
 
+  const handleImpersonate = async () => {
+    if (!isAdmin || !account) {
+      toast.error('Only Chatters admins can impersonate accounts');
+      return;
+    }
+
+    if (venues.length === 0) {
+      toast.error('This account has no venues to view');
+      return;
+    }
+
+    const success = await startImpersonation(account.id, account.name);
+    if (success) {
+      toast.success(`Now viewing as ${account.name}`);
+      // Clear venue selection to force reload with impersonated account
+      localStorage.removeItem('chatters_currentVenueId');
+      navigate('/dashboard');
+    } else {
+      toast.error('Failed to start impersonation');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -284,13 +309,24 @@ const AdminAccountDetail = () => {
               </div>
 
               {!editingAccount ? (
-                <button
-                  onClick={startEditing}
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <Edit3 className="w-4 h-4" />
-                  Edit Account
-                </button>
+                <div className="flex gap-2">
+                  {isAdmin && venues.length > 0 && (
+                    <button
+                      onClick={handleImpersonate}
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-purple-300 text-sm font-medium rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100"
+                    >
+                      <UserCircle2 className="w-4 h-4" />
+                      Impersonate
+                    </button>
+                  )}
+                  <button
+                    onClick={startEditing}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    Edit Account
+                  </button>
+                </div>
               ) : (
                 <div className="flex gap-2">
                   <button

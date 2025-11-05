@@ -152,6 +152,26 @@ const AdminAccountsList = () => {
     navigate('/signin');
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleDateString('en-GB', { month: 'short' });
+    const year = date.getFullYear();
+
+    // Get ordinal suffix (st, nd, rd, th)
+    const suffix = (day) => {
+      if (day > 3 && day < 21) return 'th';
+      switch (day % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
+    };
+
+    return `${day}${suffix(day)} ${month} ${year}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -377,19 +397,9 @@ const AdminAccountsList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {account.is_paid && account.subscription_period_end ? (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4 text-green-500" />
-                            <span className="text-green-700">
-                              {new Date(account.subscription_period_end).toLocaleDateString()}
-                            </span>
-                          </div>
+                          formatDate(account.subscription_period_end)
                         ) : account.trial_ends_at ? (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4 text-blue-500" />
-                            <span className="text-blue-700">
-                              {new Date(account.trial_ends_at).toLocaleDateString()}
-                            </span>
-                          </div>
+                          formatDate(account.trial_ends_at)
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}

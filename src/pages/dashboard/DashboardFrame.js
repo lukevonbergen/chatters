@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
 import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown, FiExternalLink } from 'react-icons/fi';
 import { Building2, Check } from 'lucide-react';
+import ImpersonationBanner from '../../components/ImpersonationBanner';
 
 import { Button } from '../../components/ui/button';
 import {
@@ -158,6 +159,9 @@ const UpdatedDashboardFrame = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Impersonation Banner */}
+      <ImpersonationBanner />
+
       {/* Trial Banner - Only show for master users */}
       {trialInfo && trialInfo.isActive && userRole === 'master' && (
         <div className="bg-gray-100 border-b border-gray-200 px-4 py-3">
