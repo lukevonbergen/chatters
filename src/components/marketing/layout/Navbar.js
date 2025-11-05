@@ -85,26 +85,49 @@ const Navbar = ({ overlay = false }) => {
       >
         <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 py-4 px-4">
           <div className="grid grid-cols-2 gap-2">
-            {links.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                className="group flex items-start space-x-2.5 p-2.5 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
-                onClick={() => setActiveDropdown(null)}
-              >
-                <div className={`flex-shrink-0 w-8 h-8 ${colors.bg} rounded-lg flex items-center justify-center ${colors.text} ${colors.hover} group-hover:text-white transition-all duration-200`}>
-                  {link.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-satoshi font-semibold text-black transition-colors duration-200 text-sm">
-                    {link.name}
+            {links.map((link) =>
+              link.path.startsWith('http') ? (
+                <a
+                  key={link.name}
+                  href={link.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-start space-x-2.5 p-2.5 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+                  onClick={() => setActiveDropdown(null)}
+                >
+                  <div className={`flex-shrink-0 w-8 h-8 ${colors.bg} rounded-lg flex items-center justify-center ${colors.text} ${colors.hover} group-hover:text-white transition-all duration-200`}>
+                    {link.icon}
                   </div>
-                  <div className="mt-0.5 text-xs text-gray-600 font-satoshi leading-snug">
-                    {link.description}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-satoshi font-semibold text-black transition-colors duration-200 text-sm">
+                      {link.name}
+                    </div>
+                    <div className="mt-0.5 text-xs text-gray-600 font-satoshi leading-snug">
+                      {link.description}
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </a>
+              ) : (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className="group flex items-start space-x-2.5 p-2.5 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+                  onClick={() => setActiveDropdown(null)}
+                >
+                  <div className={`flex-shrink-0 w-8 h-8 ${colors.bg} rounded-lg flex items-center justify-center ${colors.text} ${colors.hover} group-hover:text-white transition-all duration-200`}>
+                    {link.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-satoshi font-semibold text-black transition-colors duration-200 text-sm">
+                      {link.name}
+                    </div>
+                    <div className="mt-0.5 text-xs text-gray-600 font-satoshi leading-snug">
+                      {link.description}
+                    </div>
+                  </div>
+                </Link>
+              )
+            )}
           </div>
         </div>
       </div>
