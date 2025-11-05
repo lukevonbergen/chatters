@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabase';
-import { HandHeart, Bell, UserCheck, Sparkles } from 'lucide-react';
+import { HandHeart, Bell, UserCheck, Sparkles, CheckCircle, ThumbsUp, Heart, Smile, PartyPopper, Star } from 'lucide-react';
 
 // Helper component to render text with {table} highlighted
 const HighlightedInput = ({ value, onChange, placeholder, rows, className }) => {
@@ -81,6 +81,9 @@ const BrandingTab = ({
   assistanceTitle, setAssistanceTitle,
   assistanceMessage, setAssistanceMessage,
   assistanceIcon, setAssistanceIcon,
+  thankYouTitle, setThankYouTitle,
+  thankYouMessage, setThankYouMessage,
+  thankYouIcon, setThankYouIcon,
   venueId
 }) => {
   // Separate loading and message states for each section
@@ -90,6 +93,8 @@ const BrandingTab = ({
   const [colorsMessage, setColorsMessage] = useState('');
   const [assistanceLoading, setAssistanceLoading] = useState(false);
   const [assistanceUpdateMessage, setAssistanceUpdateMessage] = useState('');
+  const [thankYouLoading, setThankYouLoading] = useState(false);
+  const [thankYouUpdateMessage, setThankYouUpdateMessage] = useState('');
 
   const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
@@ -204,6 +209,34 @@ const BrandingTab = ({
     }
   };
 
+  const saveThankYouSettings = async () => {
+    if (!venueId) return;
+
+    setThankYouLoading(true);
+    setThankYouUpdateMessage('');
+
+    try {
+      const { error } = await supabase
+        .from('venues')
+        .update({
+          thank_you_title: thankYouTitle,
+          thank_you_message: thankYouMessage,
+          thank_you_icon: thankYouIcon
+        })
+        .eq('id', venueId);
+
+      if (error) {
+        throw new Error('Failed to save thank you settings: ' + error.message);
+      }
+
+      setThankYouUpdateMessage('Thank you message settings saved successfully!');
+    } catch (error) {
+      setThankYouUpdateMessage('Failed to save thank you settings: ' + error.message);
+    } finally {
+      setThankYouLoading(false);
+    }
+  };
+
   const iconOptions = [
     { value: 'hand-heart', label: 'Hand Heart', icon: HandHeart },
     { value: 'bell', label: 'Bell', icon: Bell },
@@ -211,9 +244,23 @@ const BrandingTab = ({
     { value: 'sparkles', label: 'Sparkles', icon: Sparkles }
   ];
 
+  const thankYouIconOptions = [
+    { value: 'check-circle', label: 'Check Circle', icon: CheckCircle },
+    { value: 'thumbs-up', label: 'Thumbs Up', icon: ThumbsUp },
+    { value: 'heart', label: 'Heart', icon: Heart },
+    { value: 'smile', label: 'Smile', icon: Smile },
+    { value: 'party-popper', label: 'Party', icon: PartyPopper },
+    { value: 'star', label: 'Star', icon: Star }
+  ];
+
   const getIconComponent = (iconValue) => {
     const option = iconOptions.find(opt => opt.value === iconValue);
     return option ? option.icon : HandHeart;
+  };
+
+  const getThankYouIconComponent = (iconValue) => {
+    const option = thankYouIconOptions.find(opt => opt.value === iconValue);
+    return option ? option.icon : CheckCircle;
   };
 
   return (
@@ -529,6 +576,108 @@ const BrandingTab = ({
                 : 'text-red-700 bg-red-50 border border-red-200'
             }`}>
               {assistanceUpdateMessage}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Thank You Message Customization Section */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="mb-4">
+          <h3 className="text-base font-semibold text-gray-900">Thank You Message</h3>
+          <p className="text-gray-600 text-xs">Customize the message customers see after submitting feedback</p>
+        </div>
+
+        <div className="space-y-6">
+            {/* Icon Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">Icon</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {thankYouIconOptions.map((option) => {
+                  const IconComponent = option.icon;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => setThankYouIcon(option.value)}
+                      className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
+                        thankYouIcon === option.value
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <IconComponent className="w-8 h-8 mb-2" style={{ color: thankYouIcon === option.value ? primaryColor : '#6b7280' }} />
+                      <span className="text-xs font-medium text-gray-700">{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Title Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <input
+                type="text"
+                value={thankYouTitle}
+                onChange={(e) => setThankYouTitle(e.target.value)}
+                placeholder="Thanks for your feedback!"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Message Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+              <textarea
+                value={thankYouMessage}
+                onChange={(e) => setThankYouMessage(e.target.value)}
+                placeholder="Your response has been submitted successfully."
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              />
+            </div>
+
+            {/* Preview */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Preview</h4>
+              <div className="bg-white rounded-lg p-6 border border-gray-200" style={{ backgroundColor: backgroundColor }}>
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-4">
+                    {React.createElement(getThankYouIconComponent(thankYouIcon), {
+                      className: "w-16 h-16",
+                      style: { color: primaryColor },
+                      strokeWidth: 2
+                    })}
+                  </div>
+                  <h2 className="text-2xl font-bold mb-2" style={{ color: textColor }}>
+                    {thankYouTitle || 'Thanks for your feedback!'}
+                  </h2>
+                  <p className="text-base" style={{ color: textColor, opacity: 0.7 }}>
+                    {thankYouMessage || 'Your response has been submitted successfully.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="pt-2">
+              <button
+                onClick={saveThankYouSettings}
+                disabled={thankYouLoading}
+                className="w-full sm:w-auto bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {thankYouLoading ? 'Saving...' : 'Save Thank You Settings'}
+              </button>
+            </div>
+
+          {/* Message Display */}
+          {thankYouUpdateMessage && (
+            <div className={`text-sm p-3 rounded-md ${
+              thankYouUpdateMessage.includes('success')
+                ? 'text-green-700 bg-green-50 border border-green-200'
+                : 'text-red-700 bg-red-50 border border-red-200'
+            }`}>
+              {thankYouUpdateMessage}
             </div>
           )}
         </div>

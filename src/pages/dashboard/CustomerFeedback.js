@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import { HandHeart, Star, Bell, UserCheck, Sparkles } from 'lucide-react';
+import { HandHeart, Star, Bell, UserCheck, Sparkles, CheckCircle, ThumbsUp, Heart, Smile, PartyPopper } from 'lucide-react';
 import AlertModal from '../../components/ui/AlertModal';
 
 const CustomerFeedbackPage = () => {
@@ -24,6 +24,7 @@ const CustomerFeedbackPage = () => {
   const [alertModal, setAlertModal] = useState(null);
   const [customerEmail, setCustomerEmail] = useState('');
   const [hasStarted, setHasStarted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Helper function to get the icon component based on the icon name
   const getAssistanceIcon = (iconName) => {
@@ -34,6 +35,19 @@ const CustomerFeedbackPage = () => {
       'sparkles': Sparkles
     };
     return icons[iconName] || HandHeart; // Default to HandHeart if unknown
+  };
+
+  // Helper function to get the thank you icon component
+  const getThankYouIcon = (iconName) => {
+    const icons = {
+      'check-circle': CheckCircle,
+      'thumbs-up': ThumbsUp,
+      'heart': Heart,
+      'smile': Smile,
+      'party-popper': PartyPopper,
+      'star': Star
+    };
+    return icons[iconName] || CheckCircle; // Default to CheckCircle if unknown
   };
 
   // Utility function to check if current time is within feedback hours
@@ -74,10 +88,10 @@ const CustomerFeedbackPage = () => {
         console.log('Loading data for venueId:', venueId);
         console.log('VenueId type:', typeof venueId);
         
-        // Load venue data first (including feedback_hours, review links, NPS settings, branding colors, and assistance message)
+        // Load venue data first (including feedback_hours, review links, NPS settings, branding colors, assistance message, and thank you message)
         const { data: venueData, error: venueError } = await supabase
           .from('venues')
-          .select('logo, primary_color, background_color, text_color, button_text_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled, assistance_title, assistance_message, assistance_icon')
+          .select('logo, primary_color, background_color, text_color, button_text_color, feedback_hours, google_review_link, tripadvisor_link, nps_enabled, assistance_title, assistance_message, assistance_icon, thank_you_title, thank_you_message, thank_you_icon')
           .eq('id', venueId);
 
         if (venueError) {
@@ -207,6 +221,7 @@ const CustomerFeedbackPage = () => {
   };
 
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
       const entries = [...feedbackAnswers];
       if (freeText.trim()) {
@@ -292,6 +307,8 @@ const CustomerFeedbackPage = () => {
         title: 'Submission Failed',
         message: 'Failed to submit feedback. Please try again.'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -526,11 +543,15 @@ const CustomerFeedbackPage = () => {
     }
 
     // Default success state for non-positive feedback or no review links
+    const ThankYouIcon = getThankYouIcon(venue?.thank_you_icon || 'check-circle');
+    const thankYouTitle = venue?.thank_you_title || 'Thanks for your feedback!';
+    const thankYouMessage = venue?.thank_you_message || 'Your response has been submitted successfully.';
+
     return (
       <div className="flex flex-col justify-center items-center min-h-screen space-y-6 p-6" style={{ backgroundColor: background }}>
-        <div className="text-6xl">✅</div>
-        <div className="text-2xl font-bold text-center" style={{ color: textColor }}>Thanks for your feedback!</div>
-        <div className="text-base" style={{ color: textColor, opacity: 0.7 }}>Your response has been submitted successfully.</div>
+        <ThankYouIcon className="w-16 h-16" style={{ color: primary }} strokeWidth={2} />
+        <div className="text-2xl font-bold text-center" style={{ color: textColor }}>{thankYouTitle}</div>
+        <div className="text-base text-center" style={{ color: textColor, opacity: 0.7 }}>{thankYouMessage}</div>
       </div>
     );
   }
@@ -773,10 +794,21 @@ const CustomerFeedbackPage = () => {
             />
             <button
               onClick={handleSubmit}
-              className="w-full py-4 rounded-xl font-bold text-lg transition-all hover:opacity-90 hover:scale-105 active:scale-95 shadow-lg"
+              disabled={isSubmitting}
+              className="w-full py-4 rounded-xl font-bold text-lg transition-all hover:opacity-90 hover:scale-105 active:scale-95 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               style={{ backgroundColor: primary, color: buttonTextColor }}
             >
-              Submit Feedback
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Submitting...
+                </>
+              ) : (
+                'Submit Feedback'
+              )}
             </button>
           </div>
         )}
