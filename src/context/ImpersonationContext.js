@@ -96,6 +96,7 @@ export const ImpersonationProvider = ({ children }) => {
 
   const endImpersonation = () => {
     localStorage.removeItem('impersonation');
+    localStorage.removeItem('chatters_currentVenueId');
     setImpersonation(null);
   };
 

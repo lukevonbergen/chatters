@@ -235,6 +235,8 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     await supabase.auth.signOut();
     localStorage.removeItem('chatters_remember_email');
     localStorage.removeItem('chatters_remember_me');
+    localStorage.removeItem('impersonation');
+    localStorage.removeItem('chatters_currentVenueId');
     sessionStorage.removeItem('chatters_temp_session');
     navigate('/signin');
   };

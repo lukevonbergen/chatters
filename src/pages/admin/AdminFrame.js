@@ -59,6 +59,8 @@ const AdminFrame = ({ children }) => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem('impersonation');
+    localStorage.removeItem('chatters_currentVenueId');
     navigate('/signin', { replace: true });
   };
 
