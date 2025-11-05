@@ -97,13 +97,14 @@ export default async function handler(req, res) {
               is_paid: isActive,
               stripe_subscription_id: subscription.id,
               stripe_subscription_status: subscription.status,
+              subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
               trial_ends_at: isActive ? null : undefined,
               account_type: isActive ? 'paid' : undefined
             })
             .eq('stripe_customer_id', customerId);
 
           if (updateError) throw updateError;
-          console.log('Subscription updated:', subscription.id, 'Status:', subscription.status);
+          console.log('Subscription updated:', subscription.id, 'Status:', subscription.status, 'Next billing:', new Date(subscription.current_period_end * 1000).toISOString());
         } else {
           console.log('Ignoring update for non-active subscription:', subscription.id, 'Current subscription:', account.stripe_subscription_id);
         }
@@ -128,13 +129,14 @@ export default async function handler(req, res) {
             is_paid: isActive,
             stripe_subscription_id: subscription.id,
             stripe_subscription_status: subscription.status,
+            subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
             trial_ends_at: isActive ? null : undefined,
             account_type: isActive ? 'paid' : undefined
           })
           .eq('stripe_customer_id', customerId);
 
         if (updateError) throw updateError;
-        console.log('Subscription created:', subscription.id, 'Status:', subscription.status);
+        console.log('Subscription created:', subscription.id, 'Status:', subscription.status, 'Next billing:', new Date(subscription.current_period_end * 1000).toISOString());
         break;
       }
 
