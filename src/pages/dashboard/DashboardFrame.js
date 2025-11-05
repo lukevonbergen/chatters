@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useVenue } from '../../context/VenueContext';
 import { useLoading } from '../../context/LoadingContext';
+import { useImpersonation } from '../../context/ImpersonationContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
 import { FiSettings, FiMenu, FiX, FiClock, FiZap, FiChevronDown, FiExternalLink } from 'react-icons/fi';
@@ -38,6 +39,7 @@ const UpdatedDashboardFrame = ({ children }) => {
   const navigate = useNavigate();
   const { venueId, venueName, allVenues, setCurrentVenue, userRole } = useVenue();
   const { showLoading } = useLoading();
+  const { isImpersonating } = useImpersonation();
   const [userInfo, setUserInfo] = useState(null);
 
   const handleNavigation = (to) => {
@@ -162,8 +164,10 @@ const UpdatedDashboardFrame = ({ children }) => {
       {/* Impersonation Banner */}
       <ImpersonationBanner />
 
-      {/* Trial Banner - Only show for master users */}
-      {trialInfo && trialInfo.isActive && userRole === 'master' && (
+      {/* Content wrapper with padding for fixed banner */}
+      <div style={{ paddingTop: isImpersonating ? '52px' : '0' }}>
+        {/* Trial Banner - Only show for master users */}
+        {trialInfo && trialInfo.isActive && userRole === 'master' && (
         <div className="bg-gray-100 border-b border-gray-200 px-4 py-3">
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -537,8 +541,9 @@ const UpdatedDashboardFrame = ({ children }) => {
         </div>
       )}
 
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">{children}</main>
+        {/* Main content */}
+        <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">{children}</main>
+      </div>
     </div>
   );
 };

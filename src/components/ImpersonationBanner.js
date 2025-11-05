@@ -15,23 +15,34 @@ const ImpersonationBanner = () => {
   };
 
   return (
-    <div className="bg-purple-600 text-white py-3 px-4 shadow-lg" style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div
+      className="bg-blue-600 text-white py-3 px-4 shadow-md border-b-2 border-blue-700"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999
+      }}
+    >
+      <div className="max-w-full mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <AlertCircle className="w-5 h-5" />
-          <span className="font-medium">
-            Viewing as: {impersonation?.accountName}
-          </span>
-          <span className="text-purple-200 text-sm">
-            (Impersonation Mode)
-          </span>
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+            <span className="font-semibold text-sm sm:text-base">
+              Impersonation Mode Active
+            </span>
+            <span className="text-xs sm:text-sm text-blue-100">
+              Viewing as: {impersonation?.accountName}
+            </span>
+          </div>
         </div>
         <button
           onClick={handleExit}
-          className="inline-flex items-center gap-2 px-3 py-1.5 bg-white text-purple-700 text-sm font-medium rounded-lg hover:bg-purple-50 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1.5 bg-white text-blue-700 text-sm font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-sm flex-shrink-0"
         >
           <X className="w-4 h-4" />
-          Exit Impersonation
+          Exit
         </button>
       </div>
     </div>
