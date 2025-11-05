@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Helmet } from 'react-helmet';
 import { supabase } from '../../utils/supabase';
 import {
   ArrowLeft,
@@ -50,8 +51,9 @@ const AdminAccountDetail = () => {
 
       if (accountError) throw accountError;
 
-      // Find master user
-      const masterUser = accountData.users?.find(u => u.role === 'master') || accountData.users?.[0];
+      // Find master user - prefer ones with complete profile (first_name and last_name)
+      const masterUsers = accountData.users?.filter(u => u.role === 'master') || [];
+      const masterUser = masterUsers.find(u => u.first_name && u.last_name) || masterUsers[0] || accountData.users?.[0];
       setAccount({ ...accountData, masterUser });
 
       // Load venues for this account
@@ -249,6 +251,9 @@ const AdminAccountDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>{account.name || 'Account'} - Admin Center - Chatters</title>
+      </Helmet>
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-8">

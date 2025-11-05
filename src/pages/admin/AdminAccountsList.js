@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Helmet } from 'react-helmet';
 import { supabase } from '../../utils/supabase';
 import {
   Search,
@@ -54,11 +55,17 @@ const AdminAccountsList = () => {
       if (accountsError) throw accountsError;
 
       // Process accounts to include venue count
-      const processedAccounts = accountsData?.map(account => ({
-        ...account,
-        venueCount: account.venues?.length || 0,
-        masterUser: account.users?.find(u => u.role === 'master') || account.users?.[0]
-      })) || [];
+      const processedAccounts = accountsData?.map(account => {
+        // Find master user - prefer ones with complete profile (first_name and last_name)
+        const masterUsers = account.users?.filter(u => u.role === 'master') || [];
+        const masterUser = masterUsers.find(u => u.first_name && u.last_name) || masterUsers[0] || account.users?.[0];
+
+        return {
+          ...account,
+          venueCount: account.venues?.length || 0,
+          masterUser
+        };
+      }) || [];
 
       setAccounts(processedAccounts);
 
@@ -158,6 +165,9 @@ const AdminAccountsList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>Admin Center - Chatters</title>
+      </Helmet>
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
@@ -318,7 +328,7 @@ const AdminAccountsList = () => {
                     Status
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Billing Date
+                    Next Billing Date
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Venues

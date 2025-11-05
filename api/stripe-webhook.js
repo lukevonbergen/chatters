@@ -91,6 +91,7 @@ async function handleSubscriptionUpdated(subscription) {
     .update({
       stripe_subscription_status: subscription.status,
       is_paid: isPaid,
+      subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString()
     })
     .eq('id', account.id);
 
@@ -211,16 +212,33 @@ async function handleSubscriptionCreated(subscription) {
   console.log('Customer:', subscription.customer);
   console.log('Status:', subscription.status);
 
-  // This is typically handled during checkout, but we can log it
-  const { data: account } = await supabase
+  // Find account by stripe_subscription_id
+  const { data: account, error: findError } = await supabase
     .from('accounts')
     .select('id')
     .eq('stripe_subscription_id', subscription.id)
     .single();
 
-  if (account) {
-    console.log(`Subscription ${subscription.id} already linked to account ${account.id}`);
-  } else {
+  if (findError || !account) {
     console.log(`New subscription ${subscription.id} - may need manual linking`);
+    return;
+  }
+
+  // Update account with subscription period end
+  const isPaid = ['active', 'trialing'].includes(subscription.status);
+
+  const { error: updateError } = await supabase
+    .from('accounts')
+    .update({
+      stripe_subscription_status: subscription.status,
+      is_paid: isPaid,
+      subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString()
+    })
+    .eq('id', account.id);
+
+  if (updateError) {
+    console.error('Error updating account:', updateError);
+  } else {
+    console.log(`Account ${account.id} subscription created: status=${subscription.status}, next_billing=${new Date(subscription.current_period_end * 1000).toISOString()}`);
   }
 }
