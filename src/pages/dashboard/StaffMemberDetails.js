@@ -19,6 +19,7 @@ const StaffMemberDetails = () => {
   const [timeFilter, setTimeFilter] = useState('all');
   const [totalStats, setTotalStats] = useState({
     feedbackResolved: 0,
+    feedbackCoResolved: 0,
     assistanceResolved: 0,
     totalResolved: 0
   });
@@ -114,12 +115,12 @@ const StaffMemberDetails = () => {
   const fetchResolvedItems = async (employeeId) => {
     const { start: fromDate } = getDateRange(timeFilter);
 
-    // Fetch resolved feedback sessions
+    // Fetch feedback sessions where employee is main resolver
     let feedbackQuery = supabase
       .from('feedback')
       .select(`
-        session_id, 
-        resolved_by, 
+        session_id,
+        resolved_by,
         resolved_at,
         rating,
         additional_feedback,
@@ -133,6 +134,26 @@ const StaffMemberDetails = () => {
       .not('resolved_by', 'is', null);
 
     if (fromDate) feedbackQuery = feedbackQuery.gte('resolved_at', fromDate);
+
+    // Fetch feedback sessions where employee is co-resolver
+    let coResolvedQuery = supabase
+      .from('feedback')
+      .select(`
+        session_id,
+        co_resolver_id,
+        resolved_at,
+        rating,
+        additional_feedback,
+        table_number,
+        created_at,
+        venue_id,
+        venues!inner (name)
+      `)
+      .eq('venue_id', venueId)
+      .eq('co_resolver_id', employeeId)
+      .not('co_resolver_id', 'is', null);
+
+    if (fromDate) coResolvedQuery = coResolvedQuery.gte('resolved_at', fromDate);
 
     // Fetch resolved assistance requests
     let assistanceQuery = supabase
@@ -155,18 +176,19 @@ const StaffMemberDetails = () => {
 
     const [
       { data: feedbackData, error: feedbackError },
+      { data: coResolvedData, error: coResolvedError },
       { data: assistanceData, error: assistanceError }
-    ] = await Promise.all([feedbackQuery, assistanceQuery]);
+    ] = await Promise.all([feedbackQuery, coResolvedQuery, assistanceQuery]);
 
-    if (feedbackError || assistanceError) {
-      console.error('Error fetching resolved items:', feedbackError || assistanceError);
+    if (feedbackError || coResolvedError || assistanceError) {
+      console.error('Error fetching resolved items:', feedbackError || coResolvedError || assistanceError);
       return;
     }
 
     // Combine and format the data
     const combinedData = [];
 
-    // Process feedback sessions (group by session_id to avoid duplicates)
+    // Process feedback sessions where employee is main resolver (group by session_id to avoid duplicates)
     if (feedbackData?.length) {
       const sessionMap = {};
       feedbackData.forEach(item => {
@@ -174,6 +196,7 @@ const StaffMemberDetails = () => {
           sessionMap[item.session_id] = {
             id: item.session_id,
             type: 'feedback',
+            isCoResolved: false,
             rating: item.rating,
             content: item.additional_feedback,
             table_number: item.table_number,
@@ -186,12 +209,34 @@ const StaffMemberDetails = () => {
       combinedData.push(...Object.values(sessionMap));
     }
 
+    // Process feedback sessions where employee is co-resolver
+    if (coResolvedData?.length) {
+      const coSessionMap = {};
+      coResolvedData.forEach(item => {
+        if (item.session_id && !coSessionMap[item.session_id]) {
+          coSessionMap[item.session_id] = {
+            id: item.session_id,
+            type: 'feedback',
+            isCoResolved: true,
+            rating: item.rating,
+            content: item.additional_feedback,
+            table_number: item.table_number,
+            created_at: item.created_at,
+            resolved_at: item.resolved_at,
+            venue_name: item.venues?.name
+          };
+        }
+      });
+      combinedData.push(...Object.values(coSessionMap));
+    }
+
     // Process assistance requests
     if (assistanceData?.length) {
       assistanceData.forEach(request => {
         combinedData.push({
           id: request.id,
           type: 'assistance',
+          isCoResolved: false,
           content: request.message,
           table_number: request.table_number,
           created_at: request.created_at,
@@ -207,17 +252,23 @@ const StaffMemberDetails = () => {
     setResolvedFeedback(combinedData);
 
     // Calculate stats
-    const feedbackCount = Object.keys(feedbackData?.reduce((acc, item) => {
+    const feedbackResolvedCount = Object.keys(feedbackData?.reduce((acc, item) => {
       if (item.session_id) acc[item.session_id] = true;
       return acc;
     }, {}) || {}).length;
-    
+
+    const feedbackCoResolvedCount = Object.keys(coResolvedData?.reduce((acc, item) => {
+      if (item.session_id) acc[item.session_id] = true;
+      return acc;
+    }, {}) || {}).length;
+
     const assistanceCount = assistanceData?.length || 0;
 
     setTotalStats({
-      feedbackResolved: feedbackCount,
+      feedbackResolved: feedbackResolvedCount,
+      feedbackCoResolved: feedbackCoResolvedCount,
       assistanceResolved: assistanceCount,
-      totalResolved: feedbackCount + assistanceCount
+      totalResolved: feedbackResolvedCount + feedbackCoResolvedCount + assistanceCount
     });
 
     // Calculate detailed analytics
@@ -557,18 +608,24 @@ const StaffMemberDetails = () => {
       {/* Comprehensive Analytics Dashboard */}
       
       {/* Key Performance Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{totalStats.totalResolved}</div>
-            <div className="text-sm text-gray-600">Total Resolved</div>
+            <div className="text-sm text-gray-500 mb-2">Performance Summary</div>
+            <div className="flex items-center justify-center gap-2 text-lg font-semibold">
+              <span className="text-gray-900">Resolved: {totalStats.feedbackResolved}</span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-900">Co-resolved: {totalStats.feedbackCoResolved}</span>
+              <span className="text-gray-400">|</span>
+              <span className="text-blue-600">Total: {totalStats.totalResolved}</span>
+            </div>
           </div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
-              {detailedAnalytics.averageResolutionTime > 0 
-                ? `${Math.round(detailedAnalytics.averageResolutionTime)}m` 
+              {detailedAnalytics.averageResolutionTime > 0
+                ? `${Math.round(detailedAnalytics.averageResolutionTime)}m`
                 : 'N/A'}
             </div>
             <div className="text-sm text-gray-600">Avg Resolution Time</div>
@@ -577,19 +634,11 @@ const StaffMemberDetails = () => {
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-yellow-600">
-              {detailedAnalytics.averageRating > 0 
-                ? detailedAnalytics.averageRating.toFixed(1) 
+              {detailedAnalytics.averageRating > 0
+                ? detailedAnalytics.averageRating.toFixed(1)
                 : 'N/A'}
             </div>
             <div className="text-sm text-gray-600">Avg Customer Rating</div>
-          </div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {detailedAnalytics.responseTimeCategories.under15min}
-            </div>
-            <div className="text-sm text-gray-600">Fast Response (&lt;15m)</div>
           </div>
         </div>
       </div>
@@ -843,13 +892,20 @@ const StaffMemberDetails = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        item.type === 'feedback' 
-                          ? 'bg-red-100 text-red-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {item.type === 'feedback' ? 'Negative Feedback' : 'Assistance'}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          item.type === 'feedback'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {item.type === 'feedback' ? 'Negative Feedback' : 'Assistance'}
+                        </span>
+                        {item.isCoResolved && (
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                            Co-resolved
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900 max-w-md">

@@ -85,7 +85,7 @@ const ReportsMetricsPage = () => {
       // Fetch feedback data
       const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedback')
-        .select('id, created_at, rating, resolution_type, resolved_at, resolved_by')
+        .select('id, created_at, rating, resolution_type, resolved_at, resolved_by, co_resolver_id')
         .eq('venue_id', venueId)
         .gte('created_at', start)
         .lte('created_at', end);
@@ -153,18 +153,29 @@ const ReportsMetricsPage = () => {
 
       // === STAFF PERFORMANCE METRICS ===
       const staffPerformance = {};
-      
-      // Process feedback resolutions
+
+      // Process feedback resolutions (main resolver)
       (feedbackData || []).forEach(item => {
         if (item.resolved_by && item.resolved_at && employeeMap[item.resolved_by]) {
           const staffName = employeeMap[item.resolved_by];
           if (!staffPerformance[staffName]) {
-            staffPerformance[staffName] = { resolutions: 0, totalTime: 0, feedbackResolutions: 0 };
+            staffPerformance[staffName] = { resolutions: 0, coResolutions: 0, totalTime: 0, feedbackResolutions: 0 };
           }
           staffPerformance[staffName].resolutions++;
           staffPerformance[staffName].feedbackResolutions++;
           const responseTime = new Date(item.resolved_at) - new Date(item.created_at);
           staffPerformance[staffName].totalTime += responseTime / (1000 * 60); // minutes
+        }
+
+        // Process co-resolver
+        if (item.co_resolver_id && item.resolved_at && employeeMap[item.co_resolver_id]) {
+          const coResolverName = employeeMap[item.co_resolver_id];
+          if (!staffPerformance[coResolverName]) {
+            staffPerformance[coResolverName] = { resolutions: 0, coResolutions: 0, totalTime: 0, feedbackResolutions: 0 };
+          }
+          staffPerformance[coResolverName].coResolutions++;
+          const responseTime = new Date(item.resolved_at) - new Date(item.created_at);
+          staffPerformance[coResolverName].totalTime += responseTime / (1000 * 60); // minutes
         }
       });
 
@@ -173,7 +184,7 @@ const ReportsMetricsPage = () => {
         if (item.resolved_by && item.resolved_at && employeeMap[item.resolved_by]) {
           const staffName = employeeMap[item.resolved_by];
           if (!staffPerformance[staffName]) {
-            staffPerformance[staffName] = { resolutions: 0, totalTime: 0, feedbackResolutions: 0 };
+            staffPerformance[staffName] = { resolutions: 0, coResolutions: 0, totalTime: 0, feedbackResolutions: 0 };
           }
           staffPerformance[staffName].resolutions++;
           const responseTime = new Date(item.resolved_at) - new Date(item.created_at);
@@ -181,18 +192,23 @@ const ReportsMetricsPage = () => {
         }
       });
 
-      // Find top performing staff member (most resolutions)
-      const topStaffMember = Object.keys(staffPerformance).length > 0 
-        ? Object.entries(staffPerformance).reduce((top, [name, data]) => 
-            data.resolutions > (top.resolutions || 0) ? { name, ...data } : top, {})
+      // Find top performing staff member (most total resolutions including co-resolutions)
+      const topStaffMember = Object.keys(staffPerformance).length > 0
+        ? Object.entries(staffPerformance).reduce((top, [name, data]) => {
+            const total = data.resolutions + data.coResolutions;
+            const topTotal = (top.resolutions || 0) + (top.coResolutions || 0);
+            return total > topTotal ? { name, ...data, totalResolutions: total } : top;
+          }, {})
         : null;
 
       const avgStaffResponseTime = Object.values(staffPerformance).length > 0
-        ? Object.values(staffPerformance).reduce((sum, staff) => 
+        ? Object.values(staffPerformance).reduce((sum, staff) =>
             sum + (staff.resolutions > 0 ? staff.totalTime / staff.resolutions : 0), 0) / Object.values(staffPerformance).length
         : 0;
 
-      const staffResolutionCount = Object.values(staffPerformance).reduce((sum, staff) => sum + staff.resolutions, 0);
+      const staffResolutionCount = Object.values(staffPerformance).reduce(
+        (sum, staff) => sum + staff.resolutions + staff.coResolutions, 0
+      );
 
       // === TIME PATTERN METRICS ===
       const allItems = [...(feedbackData || []), ...(assistanceData || [])];
@@ -325,20 +341,22 @@ const ReportsMetricsPage = () => {
       icon: Users,
       color: 'purple',
       metrics: [
-        { 
-          label: 'Top Performer', 
-          value: loading ? '—' : (metrics.topStaffMember ? metrics.topStaffMember.name : 'No data'), 
-          period: `${metrics.topStaffMember ? metrics.topStaffMember.resolutions : 0} resolutions` 
+        {
+          label: 'Top Performer',
+          value: loading ? '—' : (metrics.topStaffMember ? metrics.topStaffMember.name : 'No data'),
+          period: metrics.topStaffMember
+            ? `Resolved: ${metrics.topStaffMember.resolutions} | Co-resolved: ${metrics.topStaffMember.coResolutions} | Total: ${metrics.topStaffMember.totalResolutions}`
+            : '0 resolutions'
         },
-        { 
-          label: 'Avg Staff Response', 
-          value: loading ? '—' : formatTime(metrics.avgStaffResponseTime), 
-          period: 'Time to resolve' 
+        {
+          label: 'Avg Staff Response',
+          value: loading ? '—' : formatTime(metrics.avgStaffResponseTime),
+          period: 'Time to resolve'
         },
-        { 
-          label: 'Total Staff Resolutions', 
-          value: loading ? '—' : formatNumber(metrics.staffResolutionCount), 
-          period: 'Issues handled by staff' 
+        {
+          label: 'Total Staff Resolutions',
+          value: loading ? '—' : formatNumber(metrics.staffResolutionCount),
+          period: 'Issues handled by staff'
         }
       ]
     },

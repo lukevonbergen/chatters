@@ -39,13 +39,23 @@ const AllFeedback = () => {
       const startDate = dayjs(dateFrom).startOf('day').toISOString();
       const endDate = dayjs(dateTo).endOf('day').toISOString();
 
-      // Fetch regular feedback with question text
+      // Fetch regular feedback with question text and resolver info
       const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedback')
         .select(`
           *,
           questions (
             question
+          ),
+          resolver:resolved_by (
+            id,
+            first_name,
+            last_name
+          ),
+          co_resolver:co_resolver_id (
+            id,
+            first_name,
+            last_name
           )
         `)
         .eq('venue_id', venueId)
@@ -95,6 +105,8 @@ const AllFeedback = () => {
             created_at: item.created_at,
             resolved_at: item.resolved_at,
             resolved_by: item.resolved_by,
+            resolver: item.resolver,
+            co_resolver: item.co_resolver,
             items: [],
           };
         }
@@ -537,6 +549,17 @@ const AllFeedback = () => {
                       )}
                     </p>
                   </div>
+                  {selectedSession.is_resolved && selectedSession.resolver && (
+                    <div className="col-span-2">
+                      <p className="text-sm text-gray-600 mb-1">Resolved By</p>
+                      <p className="font-medium text-gray-900">
+                        {selectedSession.resolver.first_name} {selectedSession.resolver.last_name}
+                        {selectedSession.co_resolver && (
+                          <span> with {selectedSession.co_resolver.first_name} {selectedSession.co_resolver.last_name}</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Feedback Items */}

@@ -186,7 +186,7 @@ const METRIC_CONFIG = {
       ] = await Promise.all([
         supabase
           .from('feedback')
-          .select('venue_id, session_id, resolved_by')
+          .select('venue_id, session_id, resolved_by, co_resolver_id')
           .in('venue_id', venueIds)
           .not('resolved_by', 'is', null)
           .gte('resolved_at', dateRange.from.toISOString())
@@ -211,26 +211,44 @@ const METRIC_CONFIG = {
 
       // Initialize counts per venue per staff member
       const venueFeedbackCounts = {};
+      const venueFeedbackCoResolvedCounts = {};
       const venueAssistanceCounts = {};
       venueIds.forEach(id => {
         venueFeedbackCounts[id] = {};
+        venueFeedbackCoResolvedCounts[id] = {};
         venueAssistanceCounts[id] = {};
       });
 
       // Count feedback sessions per staff member per venue
       if (feedbackData?.length) {
         const venueSessionMap = {};
-        venueIds.forEach(id => venueSessionMap[id] = {});
+        const venueCoResolverMap = {};
+        venueIds.forEach(id => {
+          venueSessionMap[id] = {};
+          venueCoResolverMap[id] = {};
+        });
 
         feedbackData.forEach(item => {
           if (item.session_id && item.resolved_by) {
             venueSessionMap[item.venue_id][item.session_id] = item.resolved_by;
           }
+          // Track co-resolver per session
+          if (item.session_id && item.co_resolver_id) {
+            venueCoResolverMap[item.venue_id][item.session_id] = item.co_resolver_id;
+          }
         });
 
+        // Count main resolvers
         Object.entries(venueSessionMap).forEach(([venueId, sessions]) => {
           Object.values(sessions).forEach(employeeId => {
             venueFeedbackCounts[venueId][employeeId] = (venueFeedbackCounts[venueId][employeeId] || 0) + 1;
+          });
+        });
+
+        // Count co-resolvers
+        Object.entries(venueCoResolverMap).forEach(([venueId, sessions]) => {
+          Object.values(sessions).forEach(employeeId => {
+            venueFeedbackCoResolvedCounts[venueId][employeeId] = (venueFeedbackCoResolvedCounts[venueId][employeeId] || 0) + 1;
           });
         });
       }
@@ -248,6 +266,9 @@ const METRIC_CONFIG = {
       // Get all unique staff IDs
       const staffIds = new Set();
       Object.values(venueFeedbackCounts).forEach(counts => {
+        Object.keys(counts).forEach(id => staffIds.add(id));
+      });
+      Object.values(venueFeedbackCoResolvedCounts).forEach(counts => {
         Object.keys(counts).forEach(id => staffIds.add(id));
       });
       Object.values(venueAssistanceCounts).forEach(counts => {
@@ -268,13 +289,18 @@ const METRIC_CONFIG = {
       // Calculate best staff member for each venue
       return venueIds.map(venueId => {
         const feedbackCounts = venueFeedbackCounts[venueId] || {};
+        const coResolvedCounts = venueFeedbackCoResolvedCounts[venueId] || {};
         const assistanceCounts = venueAssistanceCounts[venueId] || {};
 
-        // Combine counts
-        const allStaffIds = new Set([...Object.keys(feedbackCounts), ...Object.keys(assistanceCounts)]);
+        // Combine counts - include co-resolved in total
+        const allStaffIds = new Set([
+          ...Object.keys(feedbackCounts),
+          ...Object.keys(coResolvedCounts),
+          ...Object.keys(assistanceCounts)
+        ]);
         const staffArray = Array.from(allStaffIds).map(staffId => ({
           staffId,
-          count: (feedbackCounts[staffId] || 0) + (assistanceCounts[staffId] || 0),
+          count: (feedbackCounts[staffId] || 0) + (coResolvedCounts[staffId] || 0) + (assistanceCounts[staffId] || 0),
           name: employeeMap[staffId] || 'Unknown'
         }));
 

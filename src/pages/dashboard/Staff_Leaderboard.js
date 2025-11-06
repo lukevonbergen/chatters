@@ -44,10 +44,10 @@ const StaffLeaderboard = () => {
   const fetchStaffLeaderboard = async (venueId) => {
     const { start: fromDate } = getDateRange(timeFilter);
 
-    // Fetch resolved feedback sessions
+    // Fetch resolved feedback sessions with co-resolver info
     let feedbackQuery = supabase
       .from('feedback')
-      .select('session_id, resolved_by, resolved_at')
+      .select('session_id, resolved_by, co_resolver_id, resolved_at')
       .eq('venue_id', venueId)
       .not('resolved_by', 'is', null);
 
@@ -71,20 +71,33 @@ const StaffLeaderboard = () => {
       return;
     }
 
-    const feedbackCounts = {};
+    const feedbackResolvedCounts = {};
+    const feedbackCoResolvedCounts = {};
     const assistanceCounts = {};
 
     // Count feedback sessions resolved by each employee
     if (feedbackData?.length) {
       const sessionMap = {};
+      const coResolverMap = {};
+
       feedbackData.forEach(item => {
         if (item.session_id && item.resolved_by) {
           sessionMap[item.session_id] = item.resolved_by;
+          // Track co-resolver per session
+          if (item.co_resolver_id) {
+            coResolverMap[item.session_id] = item.co_resolver_id;
+          }
         }
       });
-      
+
+      // Count main resolvers
       Object.values(sessionMap).forEach(employeeId => {
-        feedbackCounts[employeeId] = (feedbackCounts[employeeId] || 0) + 1;
+        feedbackResolvedCounts[employeeId] = (feedbackResolvedCounts[employeeId] || 0) + 1;
+      });
+
+      // Count co-resolvers
+      Object.values(coResolverMap).forEach(employeeId => {
+        feedbackCoResolvedCounts[employeeId] = (feedbackCoResolvedCounts[employeeId] || 0) + 1;
       });
     }
 
@@ -97,8 +110,13 @@ const StaffLeaderboard = () => {
       });
     }
 
-    // Get all unique employee IDs from both types of resolutions
-    const allEmployeeIds = [...new Set([...Object.keys(feedbackCounts), ...Object.keys(assistanceCounts)])];
+    // Get all unique employee IDs from all types of resolutions
+    const allEmployeeIds = [...new Set([
+      ...Object.keys(feedbackResolvedCounts),
+      ...Object.keys(feedbackCoResolvedCounts),
+      ...Object.keys(assistanceCounts)
+    ])];
+
     if (allEmployeeIds.length === 0) return setStaffStats([]);
 
     // Fetch employee details (staff are stored in employees table)
@@ -112,15 +130,22 @@ const StaffLeaderboard = () => {
     }
 
     const combined = employeeData
-      .map(e => ({
-        id: e.id,
-        name: `${e.first_name} ${e.last_name}`,
-        role: e.role,
-        location: e.location,
-        feedbackResolved: feedbackCounts[e.id] || 0,
-        assistanceResolved: assistanceCounts[e.id] || 0,
-        totalResolved: (feedbackCounts[e.id] || 0) + (assistanceCounts[e.id] || 0),
-      }))
+      .map(e => {
+        const feedbackResolved = feedbackResolvedCounts[e.id] || 0;
+        const feedbackCoResolved = feedbackCoResolvedCounts[e.id] || 0;
+        const assistanceResolved = assistanceCounts[e.id] || 0;
+
+        return {
+          id: e.id,
+          name: `${e.first_name} ${e.last_name}`,
+          role: e.role,
+          location: e.location,
+          feedbackResolved,
+          feedbackCoResolved,
+          assistanceResolved,
+          totalResolved: feedbackResolved + feedbackCoResolved + assistanceResolved,
+        };
+      })
       .filter(e => e.totalResolved > 0) // Only show employees who have resolved something
       .sort((a, b) => b.totalResolved - a.totalResolved)
       .map((s, index) => ({ ...s, rank: index + 1 }));
@@ -142,12 +167,13 @@ const StaffLeaderboard = () => {
     if (staffStats.length === 0) return;
 
     const csvContent = [
-      ['Rank', 'Staff Name', 'Role', 'Feedback Resolved', 'Assistance Requests Resolved', 'Total Resolved', 'Period'].join(','),
+      ['Rank', 'Staff Name', 'Role', 'Resolved', 'Co-resolved', 'Assistance', 'Total', 'Period'].join(','),
       ...staffStats.map(staff => [
         staff.rank,
         `"${staff.name}"`,
         `"${staff.role}"`,
         staff.feedbackResolved,
+        staff.feedbackCoResolved,
         staff.assistanceResolved,
         staff.totalResolved,
         getPeriodText(timeFilter)
@@ -317,13 +343,16 @@ const StaffLeaderboard = () => {
                     Staff Member
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Feedback Resolved
+                    Resolved
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Assistance Requests
+                    Co-resolved
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Total Resolved
+                    Assistance
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Total
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Actions
@@ -376,6 +405,11 @@ const StaffLeaderboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="text-lg font-bold text-gray-900">
                         {staff.feedbackResolved}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="text-lg font-bold text-gray-900">
+                        {staff.feedbackCoResolved}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -450,14 +484,18 @@ const StaffLeaderboard = () => {
                   Send a recognition email to <strong>{recognitionModal.name}</strong> for their outstanding performance!
                 </p>
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="grid grid-cols-4 gap-4 text-center">
                     <div>
                       <div className="text-2xl font-bold text-green-700">{recognitionModal.rank}</div>
                       <div className="text-xs text-green-600">Rank</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-green-700">{recognitionModal.feedbackResolved}</div>
-                      <div className="text-xs text-green-600">Feedback</div>
+                      <div className="text-xs text-green-600">Resolved</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-700">{recognitionModal.feedbackCoResolved}</div>
+                      <div className="text-xs text-green-600">Co-resolved</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-green-700">{recognitionModal.totalResolved}</div>
