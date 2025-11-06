@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../utils/supabase';
+import { supabase, logQuery } from '../utils/supabase';
 
 const useOverviewStats = (venueId) => {
   const [stats, setStats] = useState(null);
@@ -21,42 +21,57 @@ const useOverviewStats = (venueId) => {
       setLoading(true);
       setError(null);
 
+      console.log('%c⏱️  [PERF] Starting: Overview Stats Fetch', 'color: #3b82f6; font-weight: bold', { venueId });
+      const pageStartTime = performance.now();
+
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const yesterdayStart = new Date(todayStart);
       yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
       // Fetch today's feedback sessions (including resolution info)
-      const { data: todayFeedback } = await supabase
-        .from('feedback')
-        .select('id, session_id, rating, created_at, resolved_at, is_actioned')
-        .eq('venue_id', venueId)
-        .gte('created_at', todayStart.toISOString())
-        .order('created_at', { ascending: false });
+      const { data: todayFeedback } = await logQuery(
+        'feedback:today',
+        supabase
+          .from('feedback')
+          .select('id, session_id, rating, created_at, resolved_at, is_actioned')
+          .eq('venue_id', venueId)
+          .gte('created_at', todayStart.toISOString())
+          .order('created_at', { ascending: false })
+      );
 
       // Fetch yesterday's feedback for comparison
-      const { data: yesterdayFeedback } = await supabase
-        .from('feedback')
-        .select('id, session_id, rating, resolved_at, is_actioned')
-        .eq('venue_id', venueId)
-        .gte('created_at', yesterdayStart.toISOString())
-        .lt('created_at', todayStart.toISOString());
+      const { data: yesterdayFeedback } = await logQuery(
+        'feedback:yesterday',
+        supabase
+          .from('feedback')
+          .select('id, session_id, rating, resolved_at, is_actioned')
+          .eq('venue_id', venueId)
+          .gte('created_at', yesterdayStart.toISOString())
+          .lt('created_at', todayStart.toISOString())
+      );
 
       // Fetch today's assistance requests
-      const { data: todayAssistance } = await supabase
-        .from('assistance_requests')
-        .select('id, created_at, acknowledged_at, resolved_at')
-        .eq('venue_id', venueId)
-        .gte('created_at', todayStart.toISOString())
-        .order('created_at', { ascending: false });
+      const { data: todayAssistance } = await logQuery(
+        'assistance_requests:today',
+        supabase
+          .from('assistance_requests')
+          .select('id, created_at, acknowledged_at, resolved_at')
+          .eq('venue_id', venueId)
+          .gte('created_at', todayStart.toISOString())
+          .order('created_at', { ascending: false })
+      );
 
       // Fetch yesterday's assistance for comparison
-      const { data: yesterdayAssistance } = await supabase
-        .from('assistance_requests')
-        .select('id, created_at, acknowledged_at, resolved_at')
-        .eq('venue_id', venueId)
-        .gte('created_at', yesterdayStart.toISOString())
-        .lt('created_at', todayStart.toISOString());
+      const { data: yesterdayAssistance } = await logQuery(
+        'assistance_requests:yesterday',
+        supabase
+          .from('assistance_requests')
+          .select('id, created_at, acknowledged_at, resolved_at')
+          .eq('venue_id', venueId)
+          .gte('created_at', yesterdayStart.toISOString())
+          .lt('created_at', todayStart.toISOString())
+      );
 
       // Calculate stats - count unique sessions
       const todaySessionIds = new Set(todayFeedback?.map(f => f.session_id) || []);
@@ -158,7 +173,15 @@ const useOverviewStats = (venueId) => {
         completionTrendDirection: completionTrend?.direction
       });
 
+      const totalDuration = performance.now() - pageStartTime;
+      const color = totalDuration < 500 ? '#22c55e' : totalDuration < 1000 ? '#eab308' : totalDuration < 2000 ? '#f97316' : '#ef4444';
+      console.log(
+        `%c✓ [PERF] Overview Stats Fetch Complete: ${totalDuration.toFixed(2)}ms`,
+        `color: ${color}; font-weight: bold`
+      );
+
     } catch (err) {
+      console.error('%c❌ [PERF] Overview Stats Fetch Failed', 'color: #ef4444; font-weight: bold', err);
       setError(err);
     } finally {
       setLoading(false);

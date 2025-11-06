@@ -1,12 +1,11 @@
 // utils/supabase.js
 import { createClient } from '@supabase/supabase-js';
-import perfLogger from './performanceLogger';
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-// Create base Supabase client
-const baseSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Create Supabase client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     storage: localStorage,
@@ -15,50 +14,38 @@ const baseSupabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Wrap Supabase client to add performance logging
-const createPerformanceProxy = (target, tableName = '') => {
-  return new Proxy(target, {
-    get(obj, prop) {
-      const value = obj[prop];
+// Performance logging wrapper - use this to wrap any query you want to measure
+export const logQuery = async (queryName, queryPromise) => {
+  if (process.env.NODE_ENV !== 'development') {
+    return await queryPromise;
+  }
 
-      // If it's a function that returns a promise, wrap it with performance logging
-      if (typeof value === 'function') {
-        return function(...args) {
-          const result = value.apply(obj, args);
+  const startTime = performance.now();
 
-          // If the result is a PromiseBuilder (has .then), wrap it
-          if (result && typeof result.then === 'function') {
-            const queryLabel = `${tableName}.${String(prop)}${args.length ? `(${JSON.stringify(args[0]).substring(0, 50)}...)` : '()'}`;
+  try {
+    const result = await queryPromise;
+    const duration = performance.now() - startTime;
+    const rowCount = Array.isArray(result.data) ? result.data.length : null;
 
-            // Wrap the promise to log timing
-            const startTime = performance.now();
-            return result.then((data) => {
-              const duration = performance.now() - startTime;
-              const rowCount = Array.isArray(data?.data) ? data.data.length : null;
-              perfLogger.logQuery(queryLabel, duration, rowCount, data?.error);
-              return data;
-            }).catch((error) => {
-              const duration = performance.now() - startTime;
-              perfLogger.logQuery(queryLabel, duration, null, error);
-              throw error;
-            });
-          }
+    // Color based on duration
+    const color = duration < 100 ? '#22c55e' : duration < 500 ? '#eab308' : duration < 1000 ? '#f97316' : '#ef4444';
+    const status = result.error ? '❌' : '✓';
+    const rows = rowCount !== null ? ` (${rowCount} rows)` : '';
 
-          // If it's a query builder (from, select, etc.), proxy it too
-          if (result && typeof result === 'object' && (prop === 'from' || prop === 'rpc')) {
-            return createPerformanceProxy(result, args[0] || tableName);
-          }
+    console.log(
+      `%c${status} [QUERY] ${queryName}: ${duration.toFixed(2)}ms${rows}`,
+      `color: ${color}; font-weight: bold`,
+      result.error || ''
+    );
 
-          return result;
-        };
-      }
-
-      return value;
-    }
-  });
+    return result;
+  } catch (error) {
+    const duration = performance.now() - startTime;
+    console.log(
+      `%c❌ [QUERY] ${queryName}: ${duration.toFixed(2)}ms`,
+      `color: #ef4444; font-weight: bold`,
+      error
+    );
+    throw error;
+  }
 };
-
-// Export wrapped Supabase client
-export const supabase = process.env.NODE_ENV === 'development'
-  ? createPerformanceProxy(baseSupabase)
-  : baseSupabase;

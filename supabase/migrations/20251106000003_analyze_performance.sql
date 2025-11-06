@@ -5,6 +5,7 @@ DO $$
 DECLARE
     table_name text;
     tables text[] := ARRAY['feedback', 'assistance_requests', 'nps_submissions', 'employees', 'venues', 'users', 'staff', 'custom_dashboard_tiles'];
+    rec record;
 BEGIN
     RAISE NOTICE '=== EXISTING INDEXES ===';
     FOREACH table_name IN ARRAY tables
@@ -121,7 +122,6 @@ BEGIN
         EXECUTE format('SELECT pg_size_pretty(pg_total_relation_size(%L))', 'public.' || table_name) INTO table_size;
         RAISE NOTICE 'Table: % - Rows: %, Size: %', table_name, row_count, table_size;
     END LOOP;
+    RAISE NOTICE '';
+    RAISE NOTICE '=== Performance indexes created successfully ===';
 END $$;
-
-RAISE NOTICE '';
-RAISE NOTICE '=== Performance indexes created successfully ===';
