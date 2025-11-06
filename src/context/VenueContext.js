@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase, logQuery } from '../utils/supabase';
 
 const VenueContext = createContext();
@@ -11,19 +11,19 @@ export const VenueProvider = ({ children }) => {
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
+  const isInitializingRef = useRef(false);
 
   useEffect(() => {
     if (initialized) return;
 
     const init = async (forceReload = false) => {
-      // Prevent concurrent initialization
-      if (isInitializing && !forceReload) {
+      // Prevent concurrent initialization using ref (synchronous check)
+      if (isInitializingRef.current && !forceReload) {
         console.log('%c⚠️  [PERF] Skipping duplicate VenueContext Init', 'color: #f59e0b; font-weight: bold');
         return;
       }
 
-      setIsInitializing(true);
+      isInitializingRef.current = true;
       console.log('%c⏱️  [PERF] Starting: VenueContext Init', 'color: #8b5cf6; font-weight: bold');
       const contextStartTime = performance.now();
 
@@ -242,7 +242,7 @@ export const VenueProvider = ({ children }) => {
         );
         setLoading(false);
         setInitialized(true);
-        setIsInitializing(false);
+        isInitializingRef.current = false;
       }
     };
 
