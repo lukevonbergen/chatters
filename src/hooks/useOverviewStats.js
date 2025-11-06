@@ -30,7 +30,7 @@ const useOverviewStats = (venueId) => {
       yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
       // Fetch today's feedback sessions (including resolution info)
-      const { data: todayFeedback } = await logQuery(
+      const todayFeedbackResult = await logQuery(
         'feedback:today',
         supabase
           .from('feedback')
@@ -39,9 +39,10 @@ const useOverviewStats = (venueId) => {
           .gte('created_at', todayStart.toISOString())
           .order('created_at', { ascending: false })
       );
+      const todayFeedback = todayFeedbackResult.data;
 
       // Fetch yesterday's feedback for comparison
-      const { data: yesterdayFeedback } = await logQuery(
+      const yesterdayFeedbackResult = await logQuery(
         'feedback:yesterday',
         supabase
           .from('feedback')
@@ -50,9 +51,10 @@ const useOverviewStats = (venueId) => {
           .gte('created_at', yesterdayStart.toISOString())
           .lt('created_at', todayStart.toISOString())
       );
+      const yesterdayFeedback = yesterdayFeedbackResult.data;
 
       // Fetch today's assistance requests
-      const { data: todayAssistance } = await logQuery(
+      const todayAssistanceResult = await logQuery(
         'assistance_requests:today',
         supabase
           .from('assistance_requests')
@@ -61,9 +63,10 @@ const useOverviewStats = (venueId) => {
           .gte('created_at', todayStart.toISOString())
           .order('created_at', { ascending: false })
       );
+      const todayAssistance = todayAssistanceResult.data;
 
       // Fetch yesterday's assistance for comparison
-      const { data: yesterdayAssistance } = await logQuery(
+      const yesterdayAssistanceResult = await logQuery(
         'assistance_requests:yesterday',
         supabase
           .from('assistance_requests')
@@ -72,6 +75,7 @@ const useOverviewStats = (venueId) => {
           .gte('created_at', yesterdayStart.toISOString())
           .lt('created_at', todayStart.toISOString())
       );
+      const yesterdayAssistance = yesterdayAssistanceResult.data;
 
       // Calculate stats - count unique sessions
       const todaySessionIds = new Set(todayFeedback?.map(f => f.session_id) || []);
