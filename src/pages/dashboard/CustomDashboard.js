@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
 import { DateRangeSelector, overviewPresetRanges } from '../../components/ui/date-range-selector';
 import ConfigurableMultiVenueTile from '../../components/dashboard/reports/ConfigurableMultiVenueTile';
-import NPSDonutChartTile from '../../components/dashboard/reports/NPSDonutChartTile';
+import NPSChartTile from '../../components/dashboard/reports/NPSChartTile';
 import MetricSelectorModal from '../../components/dashboard/modals/MetricSelectorModal';
+import NPSConfigModal from '../../components/dashboard/modals/NPSConfigModal';
 import usePageTitle from '../../hooks/usePageTitle';
 import { Plus, GripVertical, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -14,7 +15,9 @@ const CustomDashboard = () => {
   const [tiles, setTiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNPSConfigOpen, setIsNPSConfigOpen] = useState(false);
   const [editingTilePosition, setEditingTilePosition] = useState(null);
+  const [configuringTile, setConfiguringTile] = useState(null);
   const [draggedTile, setDraggedTile] = useState(null);
   const [dateRangePreset, setDateRangePreset] = useState('today');
   const [dateRange, setDateRange] = useState(() => {
@@ -64,6 +67,41 @@ const CustomDashboard = () => {
   const handleChangeTileMetric = (position) => {
     setEditingTilePosition(position);
     setIsModalOpen(true);
+  };
+
+  const handleConfigureNPSTile = (tile) => {
+    setConfiguringTile(tile);
+    setIsNPSConfigOpen(true);
+  };
+
+  const handleSaveNPSConfig = async (config) => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId || !configuringTile) return;
+
+      const { error } = await supabase
+        .from('custom_dashboard_tiles')
+        .update({
+          date_range_preset: config.date_range_preset,
+          chart_type: config.chart_type
+        })
+        .eq('user_id', userId)
+        .eq('id', configuringTile.id);
+
+      if (error) {
+        console.error('Error updating tile config:', error);
+        toast.error('Failed to update tile configuration');
+        return;
+      }
+
+      toast.success('Tile configuration updated');
+      loadTiles();
+    } catch (error) {
+      console.error('Error in handleSaveNPSConfig:', error);
+      toast.error('An error occurred');
+    }
   };
 
   const handleMetricSelect = async (metricType) => {
@@ -299,10 +337,13 @@ const CustomDashboard = () => {
               </div>
 
               {tile.metric_type === 'nps_chart' ? (
-                <NPSDonutChartTile
-                  dateRange={dateRange}
+                <NPSChartTile
+                  config={{
+                    date_range_preset: tile.date_range_preset || 'all_time',
+                    chart_type: tile.chart_type || 'donut'
+                  }}
                   onRemove={() => handleRemoveTile(tile.position)}
-                  onChangeMetric={() => handleChangeTileMetric(tile.position)}
+                  onConfigure={() => handleConfigureNPSTile(tile)}
                 />
               ) : (
                 <ConfigurableMultiVenueTile
@@ -360,6 +401,17 @@ const CustomDashboard = () => {
             : null
         }
         existingMetrics={tiles.map(t => t.metric_type)}
+      />
+
+      {/* NPS Configuration Modal */}
+      <NPSConfigModal
+        isOpen={isNPSConfigOpen}
+        onClose={() => {
+          setIsNPSConfigOpen(false);
+          setConfiguringTile(null);
+        }}
+        onSave={handleSaveNPSConfig}
+        currentConfig={configuringTile || {}}
       />
     </div>
   );
