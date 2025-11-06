@@ -47,6 +47,7 @@ import AccountProfilePage from './pages/dashboard/AccountProfile';
 import AccountBillingPage from './pages/dashboard/AccountBilling';
 import FeedbackSettings from './pages/dashboard/FeedbackSettings';
 import AllFeedback from './pages/dashboard/AllFeedback';
+import CustomDashboard from './pages/dashboard/CustomDashboard';
 // Full version (requires Google Business Profile API approval)
 // import GoogleReviewsPage from './pages/dashboard/GoogleReviews';
 
@@ -107,7 +108,8 @@ const DashboardRoutes = () => {
       {/* Authenticated app: venue context + dashboard frame */}
       <Route element={<DashboardShell />}>
         <Route path="/dashboard" element={<DashboardPage />} />
-        
+        <Route path="/custom" element={<CustomDashboard />} />
+
         {/* Feedback Section */}
         <Route path="/feedback/qr" element={<FeedbackQRPage />} />
         <Route path="/feedback/questions" element={<FeedbackQuestionsPage />} />
