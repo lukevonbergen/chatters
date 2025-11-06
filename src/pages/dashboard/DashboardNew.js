@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
+import perfLogger from '../../utils/performanceLogger';
 import OverviewStats from '../../components/dashboard/overview/OverviewStats';
 import RecentActivity from '../../components/dashboard/overview/RecentActivity';
 import GoogleRatingTrendCard from '../../components/dashboard/reports/GoogleRatingTrendCard';
@@ -16,6 +17,14 @@ import toast from 'react-hot-toast';
 const DashboardNew = () => {
   usePageTitle('Overview');
   const { venueId, venueName, allVenues, userRole } = useVenue();
+
+  // Log page load
+  useEffect(() => {
+    perfLogger.start('DashboardNew:PageLoad', { venueId, venueName });
+    return () => {
+      perfLogger.end('DashboardNew:PageLoad');
+    };
+  }, []);
   const [recentActivity, setRecentActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [userName, setUserName] = useState('');
