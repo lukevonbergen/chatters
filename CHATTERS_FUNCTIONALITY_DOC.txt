@@ -1,0 +1,639 @@
+# CHATTERS - COMPLETE FUNCTIONALITY GUIDE
+
+## WHAT IS CHATTERS?
+
+Chatters is a React SaaS platform designed for hospitality venues (restaurants, pubs, hotels, events, retail) to capture real-time customer feedback, resolve issues before they become negative reviews, track staff performance, and improve customer satisfaction.
+
+The platform serves venues through a dual-domain architecture:
+- Marketing site: Main domain (getchatters.com)
+- Dashboard app: Subdomain (my.getchatters.com)
+
+## WHY IT HELPS
+
+Chatters solves critical problems for hospitality venues:
+
+1. ISSUE PREVENTION - Catches customer problems in real-time before they become negative public reviews
+2. STAFF ACCOUNTABILITY - Tracks which staff members resolve issues and recognizes top performers
+3. REAL-TIME RESPONSE - Assistance requests get immediate attention from staff
+4. CUSTOMER INSIGHTS - Aggregates feedback across locations and time periods to identify patterns
+5. REVIEW MANAGEMENT - Directs satisfied customers to Google/TripAdvisor to leave positive reviews
+6. OPERATIONAL EFFICIENCY - Visual kiosk interface prioritizes urgent customer issues
+7. MULTI-LOCATION MANAGEMENT - Centralized control for venue chains
+8. CUSTOMER LOYALTY - NPS system measures long-term satisfaction trends
+9. DATA-DRIVEN DECISIONS - Comprehensive analytics and reporting capabilities
+10. TABLE-LEVEL GRANULARITY - Floor plan tracking identifies specific problem areas
+
+## HOW IT HELPS
+
+### CUSTOMER JOURNEY
+1. Customer scans QR code at their table
+2. Optionally enters email for follow-up NPS survey
+3. Selects table number from dropdown or manual entry
+4. Rates experience on up to 5 customizable questions (1-5 stars)
+5. Can add free-text comments
+6. Can request immediate assistance at any point
+7. Submits feedback and sees thank you message
+8. If feedback is positive, directed to Google/TripAdvisor review links
+
+### STAFF WORKFLOW
+1. Staff see real-time notifications for assistance requests
+2. Kiosk mode shows priority queue (urgent feedback first, then assistance)
+3. Interactive floor plan displays color-coded tables by feedback status
+4. Staff can navigate by zone, acknowledge requests, and mark as resolved
+5. Resolution tracking builds staff performance metrics
+6. Leaderboards and recognition emails motivate team performance
+
+### MANAGEMENT WORKFLOW
+1. Dashboard shows real-time stats across all venues
+2. Reports analyze feedback trends, NPS scores, staff performance
+3. Settings allow branding customization (logo, colors, messages)
+4. Question management system (up to 5 active questions, drag-to-reorder)
+5. Multi-venue oversight with customizable metric tiles
+6. Export capabilities for deeper analysis
+
+## DASHBOARD PAGES
+
+### CORE DASHBOARD (/dashboard)
+Main overview with:
+- Personalized greeting
+- Real-time stats (feedback count, assistance requests, average ratings)
+- Multi-venue overview tiles (customizable)
+- Google/TripAdvisor rating trends
+- Recent activity feed (last 24 hours)
+- Real-time notifications for assistance requests
+
+### FEEDBACK MANAGEMENT
+- /feedback/qr - QR code generator and sharing tools
+- /feedback/questions - Question management (up to 5 active, drag-to-reorder)
+- /feedback/all - All feedback submissions view
+- /feedbackfeed - Live feed of customer feedback with text comments
+
+### REPORTS & ANALYTICS
+- /reports/feedback - Daily feedback breakdown, ratings distribution, completion rates
+- /reports/performance - Performance metrics and trends over time
+- /reports/impact - Business impact analysis
+- /reports/insights - Customer insights and pattern detection
+- /reports/metrics - Key metrics dashboard
+- /reports/nps - Net Promoter Score analytics with trend charts
+- /reports/builder - Custom report builder
+
+### STAFF MANAGEMENT
+- /staff/leaderboard - Staff performance rankings with feedback resolution counts, recognition email system, CSV export
+- /staff/employees - Employee database management
+- /staff/managers - Manager access control
+- /staff/roles - Role management
+- /staff/locations - Location assignments
+- /staff/recognition - Recognition history
+
+### SETTINGS
+- /settings/venues - Venue information (name, address, contact, operating hours)
+- /settings/feedback - Feedback collection settings:
+  - Review platform links (Google, TripAdvisor)
+  - Session timeout (1-24 hours)
+  - Feedback collection hours (day/time restrictions)
+  - NPS email settings (delay, cooldown, custom question)
+- /settings/branding - Visual customization:
+  - Logo upload
+  - Color scheme (primary, background, text, button text)
+  - Assistance message customization (title, text, icon)
+  - Thank you message customization (title, text, icon)
+- /settings/integrations - Third-party connections
+
+### ACCOUNT MANAGEMENT
+- /account/profile - User profile settings
+- /account/billing - Subscription management (Stripe integration)
+
+### SPECIAL FEATURES
+- /floorplan - Interactive floor plan designer:
+  - Zone creation and management
+  - Drag-and-drop table placement
+  - Multiple table shapes (square, circle, long)
+  - Table resizing capabilities
+  - Desktop-only feature
+
+- /kiosk - Staff kiosk mode:
+  - Priority queue (urgent feedback first, then assistance)
+  - Real-time floor plan with color-coded tables
+  - Zone-based navigation
+  - Feedback resolution tracking
+  - Manual navigation (no auto-return)
+
+- /reviews - Google Reviews integration (requires API approval)
+
+## KEY FEATURES IN DETAIL
+
+### REAL-TIME FEEDBACK COLLECTION
+- QR code-based feedback system
+- Star ratings (1-5) for each question
+- Optional free-text comments
+- Table number selection (dropdown or manual entry)
+- Email collection for NPS surveys (optional)
+- Session-based tracking with UUIDs
+- Mobile-optimized customer interface
+- Time-restricted availability (configurable collection hours)
+
+### ASSISTANCE REQUEST SYSTEM
+- Customers can request help without leaving feedback
+- Real-time notifications to staff (toast alerts)
+- Status tracking (pending → acknowledged → resolved)
+- Staff assignment tracking
+- Resolution notes
+- Priority display in kiosk (urgent requests shown first)
+
+### QUESTION MANAGEMENT
+- Up to 5 active questions per venue
+- Drag-and-drop reordering interface
+- Question archive system (deactivate without deleting)
+- Suggested questions library
+- Character limit validation (100 chars max)
+- Duplicate detection
+
+### STAFF PERFORMANCE TRACKING
+- Individual staff resolution metrics
+- Feedback handling statistics
+- Assistance request completion counts
+- Leaderboard rankings
+- Recognition email system
+- CSV data export for payroll/HR integration
+- Time-period filtering (daily, weekly, monthly)
+
+### NPS (NET PROMOTER SCORE)
+- Email-based survey system
+- Automated send scheduling (12/24/36 hour delays)
+- NPS score calculation (-100 to +100)
+- Promoters/Passives/Detractors breakdown
+- Response rate tracking
+- Email cooldown period (prevents spam)
+- Trend analysis over time
+- Recent responses table
+
+### MULTI-VENUE SUPPORT
+- Account-level grouping
+- Cross-venue analytics and comparisons
+- Centralized management dashboard
+- Venue switching interface with localStorage persistence
+- Context-aware navigation
+- Aggregate statistics across all locations
+
+### BRANDING & CUSTOMIZATION
+- Custom logo upload (stored in Supabase Storage)
+- Primary brand color picker
+- Background color customization
+- Text color customization
+- Button text color customization
+- Live preview in feedback forms
+- Custom assistance message (title, text, icon)
+- Custom thank you message (title, text, icon)
+- Icon library (hand-heart, bell, user-check, sparkles, check-circle, thumbs-up, heart, smile, party-popper, star)
+
+### ANALYTICS & REPORTING
+- Total sessions and response counts
+- Average satisfaction ratings across all questions
+- Rating distribution charts (1-5 stars)
+- Completion rates
+- Action tracking (resolved vs unresolved feedback)
+- Low score alerts (ratings ≤2 stars)
+- Time-based filtering (today, yesterday, 7/14/30 days, all-time)
+- Google & TripAdvisor rating trends
+- Historical rating change tracking
+- Staff performance comparisons
+- Export to CSV
+
+### INTEGRATIONS
+- Stripe for subscription payments (£29/month or £278/year)
+- Resend for transactional emails
+- Google Business Profile API (OAuth2, review links, rating sync)
+- TripAdvisor API (location linking, review links)
+- Supabase backend (PostgreSQL, real-time subscriptions, authentication)
+- Vercel hosting with edge functions
+- Sentry error tracking
+
+### AUTOMATION FEATURES
+- Real-time notifications (WebSocket via Supabase)
+- Automated NPS email scheduling (hourly cron job)
+- Email cooldown system (prevents duplicate surveys)
+- Assistance request alerts (toast notifications)
+- Live dashboard updates (30-second fallback polling)
+- Automated review redirects (positive feedback → review platforms)
+- Password reset emails
+- Staff invitation emails
+- Recognition emails
+- Email change verification
+
+## USER ROLES & ACCESS CONTROL
+
+### ADMIN ROLE
+- Full system access across all accounts
+- Bypasses VenueContext
+- Separate routing from regular users
+- Can impersonate other users
+- Access to all venues and settings
+
+### MASTER ROLE
+- Account owner level
+- Multiple venue access within account
+- Billing and subscription management
+- Can add/remove managers
+- Full analytics access
+- Staff management capabilities
+
+### MANAGER ROLE
+- Venue-specific access via staff table
+- Limited to assigned venues
+- Feedback and staff management
+- Cannot access billing
+- Cannot add other managers
+- Performance tracking and reports
+
+## TECHNICAL ARCHITECTURE
+
+### FRONTEND
+- React with React Router
+- Tailwind CSS for styling
+- Radix UI component library
+- shadcn/ui components
+- Ant Design components
+- Chart.js and Recharts for data visualization
+- Context API for state management (VenueContext, ModalContext)
+- Real-time updates via Supabase subscriptions
+
+### BACKEND
+- Supabase (PostgreSQL database)
+- Row Level Security (RLS) policies
+- Supabase Edge Functions (TypeScript)
+- Real-time WebSocket subscriptions
+- Supabase Storage for file uploads
+
+### DATABASE STRUCTURE
+Key tables:
+- users: Authentication and role assignment
+- accounts: Top-level account grouping
+- venues: Venue information linked to accounts
+- staff: Many-to-many relationship between users and venues
+- feedback_sessions: Customer session tracking
+- feedback: Individual feedback submissions
+- assistance_requests: Help request tracking
+- questions: Configurable feedback questions
+- nps_submissions: NPS survey responses
+- venue_settings: Branding and configuration
+- floor_plans: Table layout data
+- tables: Individual table records with zones
+
+### EXTERNAL SERVICES
+- Stripe for payment processing
+- Resend for email delivery
+- Google Business Profile API
+- TripAdvisor API
+- Vercel for hosting and serverless functions
+- Sentry for error monitoring and tracking
+
+### DOMAIN-BASED ROUTING
+App.js detects domain to serve different content:
+- window.location.hostname.startsWith('my.') → Dashboard app (AppRoutes)
+- Other domains → Marketing site (MarketingRoutes)
+
+### ROLE-BASED ROUTING
+AppRoutes.js handles automatic redirection:
+- Admin users → /admin routes, bypass VenueContext
+- Master users → /dashboard with VenueContext
+- Manager users → /dashboard with venue-specific VenueContext
+- Unauthenticated → /signin
+
+## DATA FLOW EXAMPLES
+
+### FEEDBACK SUBMISSION FLOW
+1. Customer scans QR code → /feedback/{venueId}
+2. System creates feedback_session in database
+3. Customer answers questions → feedback records created with ratings
+4. System calculates average rating across all answers
+5. If rating ≤2, marked for urgent attention
+6. Staff see real-time notification in dashboard
+7. Kiosk shows color-coded table on floor plan
+8. Staff resolves issue, marks feedback as actioned
+9. Analytics update in real-time
+10. If positive rating and email provided, NPS email scheduled
+
+### ASSISTANCE REQUEST FLOW
+1. Customer clicks "Request Assistance" button
+2. System creates assistance_request record
+3. Real-time notification sent to all staff viewing dashboard
+4. Toast alert appears with table number
+5. Request appears in kiosk priority queue
+6. Staff member acknowledges request
+7. assistance_request.staff_id updated
+8. Status changes to "acknowledged"
+9. Staff resolves issue at table
+10. Marks as resolved in kiosk
+11. Resolution counted in staff performance metrics
+
+### NPS EMAIL FLOW
+1. Customer completes feedback with email address
+2. nps_submissions record created with status "pending"
+3. send_at timestamp set based on delay setting (12/24/36 hours)
+4. Hourly cron job runs send-nps-emails edge function
+5. Function queries pending emails where send_at <= now
+6. Checks cooldown period (no recent NPS to same email)
+7. Sends email via Resend API
+8. Updates status to "sent" or "failed"
+9. Customer clicks link in email
+10. Directed to /nps-submit/{submissionId}
+11. Rates likelihood to recommend (0-10)
+12. System calculates NPS category (Detractor/Passive/Promoter)
+13. Analytics update with new NPS data
+
+### VENUE SWITCHING FLOW
+1. User clicks venue dropdown in VenueContext
+2. setSelectedVenue() called with new venueId
+3. localStorage updated with venueId
+4. VenueContext re-renders all consuming components
+5. All API calls now use new venueId
+6. Dashboard reloads with new venue data
+7. Floor plan, kiosk, reports all scoped to new venue
+
+### STAFF RECOGNITION FLOW
+1. Manager views staff leaderboard
+2. Clicks "Send Recognition Email" for top performer
+3. System queries staff member's resolution count
+4. Email sent via Resend with personalized metrics
+5. recognition_emails table updated
+6. Email includes performance stats and encouragement
+
+## CONFIGURATION OPTIONS
+
+### VENUE SETTINGS
+- Venue name, address, phone number, website
+- Operating hours
+- Logo image upload
+- Google Business Profile connection (Place ID)
+- TripAdvisor connection (Location ID)
+
+### FEEDBACK SETTINGS
+- Active questions (up to 5, drag-to-reorder)
+- Session timeout duration (1-24 hours)
+- Feedback collection hours (day/time scheduling)
+- Google review link
+- TripAdvisor review link
+- Enable/disable review redirects
+
+### NPS SETTINGS
+- Enable/disable NPS emails
+- Send delay after feedback (12/24/36 hours)
+- Custom NPS question text
+- Cooldown period (default 24 hours)
+- Email template customization
+
+### BRANDING SETTINGS
+- Primary color (hex picker)
+- Background color (hex picker)
+- Text color (hex picker)
+- Button text color (hex picker)
+- Logo upload (PNG/JPG/SVG)
+- Assistance message title
+- Assistance message text
+- Assistance message icon
+- Thank you message title
+- Thank you message text
+- Thank you message icon
+
+### SUBSCRIPTION SETTINGS (Stripe)
+- Monthly plan: £29/month
+- Annual plan: £278/year (2 months free)
+- Payment method management
+- Invoice downloads
+- Subscription cancellation
+- Trial period handling
+
+## KIOSK MODE DETAILS
+
+The kiosk is a critical real-time operational tool for staff:
+
+### PRIORITY QUEUE SYSTEM
+1. URGENT FEEDBACK - Ratings ≤2 stars shown first (red indicators)
+2. ASSISTANCE REQUESTS - Help requests shown second (amber indicators)
+3. REGULAR FEEDBACK - Normal feedback shown last (blue indicators)
+
+### VISUAL FLOOR PLAN
+- Color-coded tables based on feedback status
+- Real-time updates as new feedback arrives
+- Zone-based filtering
+- Click table to view feedback details
+- Table shapes: square, circle, long (customizable)
+
+### RESOLUTION WORKFLOW
+1. Staff sees priority item at top of queue
+2. Clicks to view details (ratings, comments, time submitted)
+3. Clicks "Acknowledge" button (optional)
+4. Goes to table to resolve issue
+5. Returns to kiosk, clicks "Mark as Resolved"
+6. System records staff member who resolved
+7. Next priority item automatically shown
+8. No auto-return (staff manually navigates)
+
+### KIOSK INTERFACE FEATURES
+- Desktop-only (mobile shows warning)
+- Real-time WebSocket updates
+- Fallback to 30-second polling
+- Zone selector for large venues
+- Table number display
+- Time since feedback submitted
+- Star ratings visible
+- Text comments expandable
+- Staff assignment tracking
+
+## REPORTING & ANALYTICS DETAILS
+
+### FEEDBACK REPORTS
+- Total sessions vs completed feedback
+- Response rate percentage
+- Average rating per question
+- Rating distribution charts (bar/pie)
+- Low score alerts (≤2 stars)
+- Most common text feedback themes (manual analysis)
+- Peak feedback times (hour/day analysis)
+- Table hotspots (most feedback by table)
+
+### NPS REPORTS
+- Overall NPS score (-100 to +100)
+- Promoters count and percentage (9-10)
+- Passives count and percentage (7-8)
+- Detractors count and percentage (0-6)
+- Response rate (surveys sent vs completed)
+- Email delivery status (sent/pending/failed)
+- NPS trend over time (line chart)
+- Score distribution (bar chart)
+- Recent responses table
+
+### STAFF PERFORMANCE REPORTS
+- Individual resolution counts
+- Assistance request handling
+- Average resolution time (if tracked)
+- Leaderboard rankings
+- Time-period comparisons
+- Recognition history
+- CSV export with date range filtering
+
+### IMPACT REPORTS
+- Before/after rating comparisons
+- Issue resolution impact on ratings
+- Staff performance correlation with satisfaction
+- Venue comparison metrics
+- Review platform rating trends
+- Customer retention indicators
+
+### CUSTOM REPORT BUILDER
+- Date range selection
+- Metric selection (checkboxes)
+- Venue filtering
+- Export formats
+- Saved report templates
+- Scheduled report generation (if implemented)
+
+## MOBILE RESPONSIVENESS
+
+### CUSTOMER FEEDBACK INTERFACE
+- Fully mobile-optimized
+- Touch-friendly star ratings
+- Large tap targets for buttons
+- Progressive form (one question per screen)
+- Mobile-friendly keyboard for text input
+- Table number dropdown scrollable
+- Assistance button always visible
+
+### DASHBOARD MOBILE VIEW
+- Responsive grid layouts
+- Collapsible navigation
+- Mobile-friendly charts
+- Touch-friendly dropdowns
+- Swipeable metric cards
+- Mobile-optimized tables with horizontal scroll
+
+### DESKTOP-ONLY FEATURES
+- Floor plan editor (too complex for mobile)
+- Kiosk mode (requires larger screen)
+- Some advanced reporting interfaces
+
+## SECURITY FEATURES
+
+### AUTHENTICATION
+- Supabase Auth (email/password)
+- Password reset via email
+- Email change verification
+- Session management
+- Remember me functionality
+
+### AUTHORIZATION
+- Row Level Security (RLS) policies in Supabase
+- Role-based access control (admin/master/manager)
+- Venue-scoped data access
+- Staff-venue relationship enforcement
+- API endpoint protection
+
+### DATA PRIVACY
+- Customer emails optional
+- GDPR-compliant data handling
+- Feedback anonymization options
+- Data export capabilities
+- Account deletion process
+
+### PAYMENT SECURITY
+- Stripe PCI compliance
+- No credit card data stored locally
+- Webhook signature verification
+- Secure checkout sessions
+
+## ERROR HANDLING
+
+### USER-FACING ERRORS
+- Toast notifications for failures
+- Form validation messages
+- Friendly error pages
+- Retry mechanisms
+- Offline detection
+
+### TECHNICAL ERROR TRACKING
+- Sentry integration for error monitoring
+- Error boundaries in React components
+- API error logging
+- Webhook failure alerts
+- Database constraint violations logged
+
+## FUTURE AI/ML OPPORTUNITIES
+
+Currently, Chatters has NO AI/ML features implemented. However, the data collected enables these potential features:
+
+1. SENTIMENT ANALYSIS - Analyze free-text comments for sentiment beyond star ratings
+2. PREDICTIVE SATISFACTION - Machine learning models to predict customer satisfaction
+3. AUTOMATED RESPONSES - AI-generated response suggestions for staff
+4. QUESTION OPTIMIZATION - ML to determine which questions are most effective
+5. STAFF PERFORMANCE PREDICTION - Predict staff performance trends
+6. CHURN RISK IDENTIFICATION - Identify venues at risk of canceling subscription
+7. CUSTOMER CLUSTERING - Group customers by feedback patterns
+8. ISSUE CATEGORIZATION - Auto-categorize feedback into problem types
+9. PEAK TIME PREDICTION - Forecast busy periods based on historical data
+10. REVIEW SCORE PREDICTION - Predict likelihood of public review based on feedback
+
+## MONETIZATION MODEL
+
+### SUBSCRIPTION TIERS
+- Monthly: £29/month per account
+- Annual: £278/year per account (saves £70, ~20% discount)
+
+### WHAT'S INCLUDED
+- Unlimited feedback submissions
+- Unlimited staff users
+- Multiple venue support
+- All analytics and reporting features
+- NPS email surveys
+- Custom branding
+- Floor plan and kiosk mode
+- Integrations (Google, TripAdvisor, Stripe)
+- Email support
+
+### PAYMENT FLOW
+1. User signs up (trial or direct to paid)
+2. Stripe Checkout session created
+3. User enters payment details
+4. Webhook confirms subscription created
+5. User role updated to "master"
+6. Access granted to all features
+7. Monthly/annual billing cycle begins
+8. Invoices sent via Stripe
+
+### SUBSCRIPTION MANAGEMENT
+- Self-service billing portal
+- Update payment method
+- Cancel subscription
+- Download invoices
+- View usage stats
+- Upgrade/downgrade plans
+
+## SUPPORT & DOCUMENTATION
+
+### IN-APP GUIDANCE
+- Tooltips on complex features
+- Onboarding tutorials (if implemented)
+- Help text in settings
+- Empty state illustrations with instructions
+
+### EXTERNAL RESOURCES
+- Marketing site with feature explanations
+- Knowledge base articles (if implemented)
+- Video tutorials (if implemented)
+- Email support for technical issues
+
+## SUMMARY OF VALUE PROPOSITION
+
+Chatters transforms hospitality feedback management by:
+
+1. CAPTURING FEEDBACK IN THE MOMENT - QR codes at tables get instant, authentic responses
+2. PREVENTING REVIEW DAMAGE - Resolve issues before customers leave negative public reviews
+3. EMPOWERING STAFF - Real-time kiosk shows exactly where help is needed
+4. REWARDING PERFORMANCE - Leaderboards and recognition motivate excellent service
+5. DIRECTING HAPPY CUSTOMERS - Positive feedback → review platform links boost ratings
+6. PROVIDING ACTIONABLE DATA - Analytics identify patterns, not just individual complaints
+7. SCALING ACROSS LOCATIONS - Multi-venue management for hospitality groups
+8. CUSTOMIZING BRAND EXPERIENCE - White-label branding maintains venue identity
+9. MEASURING LOYALTY - NPS tracks long-term customer satisfaction trends
+10. SIMPLIFYING OPERATIONS - One platform for feedback, staff, analytics, and review management
+
+The platform sits at the intersection of customer feedback, staff management, and online reputation, creating a comprehensive solution for hospitality operators who want to deliver exceptional experiences and build lasting customer relationships.

@@ -16,7 +16,6 @@ import {
   ExternalLink,
   Clock,
   Plus,
-  Trash2,
   Loader2,
   Mail,
   UserCircle2
@@ -556,67 +555,68 @@ const AdminAccountDetail = () => {
                 </div>
               </div>
 
-              <div className="p-6">
-                {venues.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {venues.map((venue) => (
-                      <div
-                        key={venue.id}
-                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-gray-400" />
-                            <h4 className="font-medium text-gray-900">{venue.name}</h4>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 text-sm text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-gray-400" />
-                            <span>{venue.table_count || 0} tables</span>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            Created {new Date(venue.created_at).toLocaleDateString()}
-                          </div>
-                        </div>
-
-                        <div className="mt-4 flex justify-end gap-2">
-                          <button
-                            onClick={() => {/* TODO: Edit venue */}}
-                            className="px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {/* TODO: Delete venue */}}
-                            className="px-3 py-1.5 text-sm text-red-600 hover:text-red-800 transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+              {venues.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Venue Name
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Address
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tables
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Created
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {venues.map((venue) => (
+                        <tr key={venue.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm font-medium text-gray-900">{venue.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-900">
+                              {venue.address || <span className="text-gray-400">No address</span>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {venue.table_count || 0}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(venue.created_at).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="p-4 bg-gray-50 rounded-2xl w-fit mx-auto mb-4">
+                    <Building2 className="h-10 w-10 text-gray-400" />
                   </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="p-4 bg-gray-50 rounded-2xl w-fit mx-auto mb-4">
-                      <Building2 className="h-10 w-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">No venues yet</h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Create the first venue for this account
-                    </p>
-                    <button
-                      onClick={() => navigate(`/admin/accounts/${accountId}/venues/new`)}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add First Venue
-                    </button>
-                  </div>
-                )}
-              </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">No venues yet</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Create the first venue for this account
+                  </p>
+                  <button
+                    onClick={() => navigate(`/admin/accounts/${accountId}/venues/new`)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add First Venue
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

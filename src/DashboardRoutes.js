@@ -13,7 +13,6 @@ import VerifyEmailChange from './pages/auth/VerifyEmailChange';
 import DashboardPage from './pages/dashboard/DashboardNew';
 import ManageQuestions from './pages/dashboard/ManageQuestions';
 import Floorplan from './pages/dashboard/Floorplan';
-import TablesDashboard from './pages/dashboard/Dashboard_Tables';
 import SettingsPage from './pages/dashboard/SettingsPage';
 import TemplatesPage from './pages/dashboard/QRTemplates';
 import ReportsPage from './pages/dashboard/ReportsPage';
@@ -117,7 +116,6 @@ const DashboardRoutes = () => {
         {/* Legacy feedback routes (redirects or keep for compatibility) */}
         <Route path="/questions" element={<Navigate to="/feedback/questions" replace />} />
         <Route path="/feedbackfeed" element={<FeedbackFeed />} />
-        <Route path="/tablefeedback" element={<TablesDashboard />} />
         
         {/* Reports Section */}
         <Route path="/reports/feedback" element={<ReportsFeedbackPage />} />
