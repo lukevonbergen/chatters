@@ -112,10 +112,10 @@ const StarRating = ({ rating, className = '' }) => {
   );
 };
 
-const FeedbackDetailModal = ({ 
-  isOpen, 
-  onClose, 
-  feedbackItems = [], 
+const FeedbackDetailModal = ({
+  isOpen,
+  onClose,
+  feedbackItems = [],
   onMarkResolved,
   venueId
 }) => {
@@ -127,6 +127,11 @@ const FeedbackDetailModal = ({
   const [resolutionMessage, setResolutionMessage] = useState('');
   const [isResolving, setIsResolving] = useState(false);
   const [alertModal, setAlertModal] = useState(null);
+
+  // Co-resolver state
+  const [enableCoResolving, setEnableCoResolving] = useState(false);
+  const [addCoResolver, setAddCoResolver] = useState(false);
+  const [selectedCoResolver, setSelectedCoResolver] = useState('');
   
   // Clear form when modal closes
   useEffect(() => {
@@ -135,6 +140,8 @@ const FeedbackDetailModal = ({
       setResolutionType('resolved');
       setDismissalReason('');
       setResolutionMessage('');
+      setAddCoResolver(false);
+      setSelectedCoResolver('');
     }
   }, [isOpen]);
   
@@ -152,7 +159,7 @@ const FeedbackDetailModal = ({
         // Get current authenticated user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError) throw userError;
-        
+
         if (user) {
           // Get user profile from your users table
           const { data: userProfile } = await supabase
@@ -160,10 +167,21 @@ const FeedbackDetailModal = ({
             .select('id, email, role, account_id')
             .eq('id', user.id)
             .single();
-          
+
           setCurrentUser(userProfile);
         }
-        
+
+        // Get venue settings for co-resolver feature
+        if (venueId) {
+          const { data: venueData } = await supabase
+            .from('venues')
+            .select('enable_co_resolving')
+            .eq('id', venueId)
+            .single();
+
+          setEnableCoResolving(venueData?.enable_co_resolving || false);
+        }
+
         // Get employees for this venue (all staff are stored in employees table)
         if (venueId) {
           const { data: employeesData, error: employeesError } = await supabase
@@ -254,20 +272,30 @@ const FeedbackDetailModal = ({
       });
       return;
     }
-    
+
+    // Validate co-resolver if enabled and checkbox is checked
+    if (enableCoResolving && addCoResolver && !selectedCoResolver) {
+      setAlertModal({
+        type: 'warning',
+        title: 'Missing Co-Resolver',
+        message: 'Please select a co-resolver or uncheck the "Add co-resolver" box.'
+      });
+      return;
+    }
+
     setIsResolving(true);
-    
+
     try {
       const sessionIds = sessions.map(s => s.session_id);
-      
+
       // Parse the selected staff member
       let resolvedById = null;
       let resolverInfo = '';
-      
+
       if (selectedStaffMember.startsWith('employee-')) {
         // Employee selected - use their ID directly for resolved_by
         const selectedEmployee = staffMembers.find(s => s.source === 'employee' && String(s.id) === String(selectedStaffMember.replace('employee-', '')));
-        
+
         if (selectedEmployee) {
           // Validate that this employee actually exists in the database
           const { data: dbEmployee, error: employeeCheckError } = await supabase
@@ -276,19 +304,42 @@ const FeedbackDetailModal = ({
             .eq('id', selectedEmployee.id)
             .eq('venue_id', venueId)
             .single();
-            
+
           if (employeeCheckError || !dbEmployee) {
             throw new Error(`Employee "${selectedEmployee.display_name}" not found in database. Please refresh the page and try again.`);
           }
-          
+
           resolvedById = selectedEmployee.id;
           resolverInfo = `Resolved by ${selectedEmployee.display_name}`;
         }
       }
-      
+
+      // Parse co-resolver if selected
+      let coResolverId = null;
+      if (enableCoResolving && addCoResolver && selectedCoResolver) {
+        if (selectedCoResolver.startsWith('employee-')) {
+          const coResolverEmployee = staffMembers.find(s => s.source === 'employee' && String(s.id) === String(selectedCoResolver.replace('employee-', '')));
+
+          if (coResolverEmployee) {
+            // Validate that this employee exists
+            const { data: dbCoResolver, error: coResolverCheckError } = await supabase
+              .from('employees')
+              .select('id, first_name, last_name')
+              .eq('id', coResolverEmployee.id)
+              .eq('venue_id', venueId)
+              .single();
+
+            if (!coResolverCheckError && dbCoResolver) {
+              coResolverId = coResolverEmployee.id;
+              resolverInfo += ` with ${coResolverEmployee.display_name}`;
+            }
+          }
+        }
+      }
+
       // Fallback: if no resolvedById was set, use the first available employee
       if (!resolvedById) {
-        
+
         // If there are any employees, use the first one
         const anyEmployee = staffMembers.find(s => s.source === 'employee');
         if (anyEmployee) {
@@ -301,19 +352,24 @@ const FeedbackDetailModal = ({
           resolverInfo = 'Resolved via kiosk (no staff attribution)';
         }
       }
-      
+
       // Use correct Supabase database fields
       const updateData = {
         is_actioned: true,
         resolved_at: new Date().toISOString(),
         resolution_type: resolutionType
       };
-      
+
       // Only set resolved_by if we have a valid staff ID
       if (resolvedById) {
         updateData.resolved_by = resolvedById;
       }
-      
+
+      // Set co_resolver_id if provided
+      if (coResolverId) {
+        updateData.co_resolver_id = coResolverId;
+      }
+
       // Add dismissal fields if dismissing
       if (resolutionType === 'dismissed') {
         updateData.dismissed = true;
@@ -339,14 +395,14 @@ const FeedbackDetailModal = ({
           updateData.resolution_notes = resolutionMessage.trim();
         }
       }
-      
+
       const { error } = await supabase
         .from('feedback')
         .update(updateData)
         .in('session_id', sessionIds);
-      
+
       if (error) throw error;
-      
+
       // Pass the actual staff ID (without prefix) to the parent function
       await onMarkResolved(sessionIds, resolvedById);
       onClose();
@@ -715,6 +771,86 @@ const FeedbackDetailModal = ({
                 </div>
               )}
             </div>
+
+            {/* Co-Resolver Section - Only show if feature is enabled and main resolver is selected */}
+            {enableCoResolving && selectedStaffMember && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="space-y-4">
+                  {/* Checkbox to enable co-resolver */}
+                  <label className="flex items-start cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={addCoResolver}
+                      onChange={(e) => {
+                        setAddCoResolver(e.target.checked);
+                        if (!e.target.checked) {
+                          setSelectedCoResolver('');
+                        }
+                      }}
+                      className="mt-1 mr-3 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <div>
+                      <div className="text-sm font-semibold text-blue-900">Add co-resolver</div>
+                      <div className="text-xs text-blue-700 mt-1">Select a second staff member who helped resolve this issue</div>
+                    </div>
+                  </label>
+
+                  {/* Co-resolver dropdown - only show if checkbox is checked */}
+                  {addCoResolver && (
+                    <div>
+                      <label htmlFor="coResolver" className="block text-sm font-semibold text-slate-700 mb-2">
+                        Co-Resolver <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="coResolver"
+                        value={selectedCoResolver}
+                        onChange={(e) => setSelectedCoResolver(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium shadow-sm"
+                      >
+                        <option value="">Choose co-resolver...</option>
+
+                        {staffMembers.length === 0 && (
+                          <option value="" disabled>No staff members found for this venue</option>
+                        )}
+
+                        {staffMembers.some(person => person.source === 'employee') && (
+                          <optgroup label="Staff Members">
+                            {staffMembers
+                              .filter(person => {
+                                // Exclude the main resolver from co-resolver options
+                                const personId = `employee-${person.id}`;
+                                return person.source === 'employee' && personId !== selectedStaffMember;
+                              })
+                              .map(employee => (
+                                <option key={`employee-${employee.id}`} value={`employee-${employee.id}`}>
+                                  {employee.display_name} ({employee.role_display})
+                                </option>
+                              ))
+                            }
+                          </optgroup>
+                        )}
+                      </select>
+                      {selectedCoResolver && (() => {
+                        const coResolverStaff = staffMembers.find(s => {
+                          if (selectedCoResolver.startsWith('employee-')) {
+                            return s.source === 'employee' && String(s.id) === String(selectedCoResolver.replace('employee-', ''));
+                          }
+                          return false;
+                        });
+                        return coResolverStaff ? (
+                          <div className="mt-2 flex items-center gap-2 text-sm">
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span className="text-slate-600">
+                              <strong>{coResolverStaff.display_name}</strong> ({coResolverStaff.role_display})
+                            </span>
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Resolution Message (Optional) - Only show for resolved type */}
             {resolutionType === 'resolved' && (

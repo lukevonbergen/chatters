@@ -30,6 +30,11 @@ const FeedbackSettings = () => {
   const [npsLoading, setNpsLoading] = useState(false);
   const [npsMessage, setNpsMessage] = useState('');
 
+  // Co-resolver state
+  const [enableCoResolving, setEnableCoResolving] = useState(false);
+  const [coResolverLoading, setCoResolverLoading] = useState(false);
+  const [coResolverMessage, setCoResolverMessage] = useState('');
+
   // Fetch data on component mount
   useEffect(() => {
     if (!venueId) return;
@@ -40,7 +45,7 @@ const FeedbackSettings = () => {
     try {
       const { data: venueData, error } = await supabase
         .from('venues')
-        .select('tripadvisor_link, google_review_link, session_timeout_hours, nps_enabled, nps_delay_hours, nps_question, place_id, tripadvisor_location_id')
+        .select('tripadvisor_link, google_review_link, session_timeout_hours, nps_enabled, nps_delay_hours, nps_question, place_id, tripadvisor_location_id, enable_co_resolving')
         .eq('id', venueId)
         .single();
 
@@ -58,6 +63,7 @@ const FeedbackSettings = () => {
       setNpsQuestion(venueData.nps_question || 'How likely are you to recommend us to a friend or colleague?');
       setPlaceId(venueData.place_id || '');
       setTripadvisorLocationId(venueData.tripadvisor_location_id || '');
+      setEnableCoResolving(venueData.enable_co_resolving || false);
     } catch (error) {
       console.error('Error fetching feedback settings:', error);
     }
@@ -176,6 +182,32 @@ const FeedbackSettings = () => {
     }
   };
 
+  // Save Co-resolver settings
+  const saveCoResolverSettings = async () => {
+    if (!venueId) return;
+
+    setCoResolverLoading(true);
+    setCoResolverMessage('');
+
+    try {
+      const { error } = await supabase
+        .from('venues')
+        .update({
+          enable_co_resolving: enableCoResolving
+        })
+        .eq('id', venueId);
+
+      if (error) throw error;
+
+      setCoResolverMessage('Co-resolver settings updated successfully!');
+    } catch (error) {
+      console.error('Error saving co-resolver settings:', error);
+      setCoResolverMessage(`Failed to save co-resolver settings: ${error.message}`);
+    } finally {
+      setCoResolverLoading(false);
+    }
+  };
+
   if (!venueId) {
     return null;
   }
@@ -184,7 +216,7 @@ const FeedbackSettings = () => {
     <div className="space-y-6">
       <ChartCard
         title="Feedback Settings"
-        subtitle="Configure review platform links, session timeout, and feedback collection hours"
+        subtitle="Configure review platform links, session timeout, feedback collection hours, and co-resolver feature"
       >
         <div className="space-y-8">
           {/* Review Platform Links Section */}
@@ -499,6 +531,117 @@ const FeedbackSettings = () => {
                     : 'text-red-700 bg-red-50 border border-red-200'
                 }`}>
                   {npsMessage}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Co-Resolver Settings Section */}
+        <div className="border-t border-gray-200 mt-8 pt-8">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Co-Resolver Feature</h3>
+            <p className="text-sm text-gray-500 mt-1">Allow staff to assign a secondary team member who helped resolve feedback</p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Enable/Disable Toggle */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Enable Co-Resolvers
+                </label>
+                <p className="text-xs text-gray-500">Allow selecting a second staff member when resolving feedback</p>
+              </div>
+              <div className="lg:col-span-2">
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enableCoResolving}
+                    onChange={(e) => setEnableCoResolving(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <span className="ms-3 text-sm font-medium text-gray-700">
+                    {enableCoResolving ? 'Enabled' : 'Disabled'}
+                  </span>
+                </label>
+                {enableCoResolving && (
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="text-sm text-blue-800">
+                        <strong>Example:</strong> If John notices a guest's food issue and Sarah (the chef) makes new food, John can resolve the feedback and add Sarah as a co-resolver to recognize her contribution.
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* How it Works */}
+            {enableCoResolving && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="lg:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    How It Works
+                  </label>
+                  <p className="text-xs text-gray-500">Co-resolver workflow in kiosk mode</p>
+                </div>
+                <div className="lg:col-span-2 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-green-700">1</span>
+                    </div>
+                    <p className="text-sm text-gray-700">Select the main resolver (required)</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-green-700">2</span>
+                    </div>
+                    <p className="text-sm text-gray-700">Check "Add co-resolver" box (optional)</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-green-700">3</span>
+                    </div>
+                    <p className="text-sm text-gray-700">Select a second staff member from the dropdown</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-green-700">4</span>
+                    </div>
+                    <p className="text-sm text-gray-700">Both staff members get credit in reports and metrics</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Save Action */}
+            <div className="border-t border-gray-100 pt-4">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-gray-500">
+                  {enableCoResolving
+                    ? 'Staff can now assign co-resolvers in kiosk mode'
+                    : 'Enable to allow team collaboration tracking'}
+                </div>
+                <button
+                  onClick={saveCoResolverSettings}
+                  disabled={coResolverLoading}
+                  className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {coResolverLoading ? 'Saving...' : 'Save Co-Resolver Settings'}
+                </button>
+              </div>
+              {coResolverMessage && (
+                <div className={`text-xs p-2 rounded-lg mt-3 ${
+                  coResolverMessage.includes('success')
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-red-700 bg-red-50 border border-red-200'
+                }`}>
+                  {coResolverMessage}
                 </div>
               )}
             </div>
