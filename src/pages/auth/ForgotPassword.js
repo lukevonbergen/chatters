@@ -40,14 +40,14 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-green-100 via-orange-100 to-purple-100 flex items-center justify-center p-4 sm:p-6">
-      {/* Mobile Layout - Dark theme with spacing */}
-      <div className="lg:hidden w-full bg-gray-900 rounded-2xl shadow-2xl flex flex-col min-h-[80vh] my-8">
+    <div className="min-h-screen flex">
+      {/* Mobile Layout - Dark theme */}
+      <div className="lg:hidden w-full bg-gray-900 flex flex-col min-h-screen">
         {/* Mobile Header */}
         <div className="flex items-center justify-between p-6">
           <a
             href={getMarketingUrl()}
-            className="text-gray-300 hover:text-white flex items-center transition-colors text-sm"
+            className="text-gray-300 hover:text-white flex items-center transition-colors text-sm font-medium"
           >
             <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
             Back to website
@@ -122,58 +122,59 @@ const ForgotPassword = () => {
         </div>
       </div>
 
-      {/* Desktop Layout - Original design */}
-      <div className="hidden lg:block w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex flex-col lg:flex-row min-h-[600px]">
-          {/* Left Panel - Brand */}
-          <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 lg:p-12 flex flex-col justify-center relative">
-            <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-10">
-              <a
-                href={getMarketingUrl()}
-                className="text-gray-600 hover:text-gray-900 flex items-center transition-colors text-sm"
-              >
-                <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
-                Back to website
-              </a>
-            </div>
+      {/* Desktop Layout - Full screen split */}
+      <div className="hidden lg:flex w-full min-h-screen">
+        {/* Left Panel - Brand with gradient background */}
+        <div className="w-1/2 bg-gradient-to-br from-blue-100 via-green-100 via-orange-100 to-purple-100 p-12 flex flex-col justify-center relative">
+          <div className="absolute top-8 left-8 z-10">
+            <a
+              href={getMarketingUrl()}
+              className="text-gray-700 hover:text-gray-900 flex items-center transition-colors text-sm font-medium"
+            >
+              <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+              Back to website
+            </a>
+          </div>
 
-            <div className="mb-6 lg:mb-8 mt-12 sm:mt-8 lg:mt-0">
-              <div className="flex items-center mb-4 lg:mb-6">
+          <div className="max-w-lg mx-auto w-full">
+            <div className="mb-12">
+              <div className="flex items-center mb-8">
                 <img
                   src={getMarketingUrl('/img/Logo.svg')}
                   alt="Chatters Logo"
-                  className="h-6 sm:h-8 w-auto"
+                  className="h-10 w-auto"
                 />
               </div>
 
               <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 lg:mb-4 leading-tight">
+                <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
                   Forgot your password?
                 </h1>
-                <p className="text-gray-600 text-base lg:text-lg leading-relaxed">
+                <p className="text-gray-700 text-xl leading-relaxed">
                   No worries! Enter your email address and we'll send you a secure link to reset your password.
                 </p>
               </div>
             </div>
 
-            <div className="space-y-3 lg:space-y-4">
-              <div className="flex items-center text-gray-600 text-sm lg:text-base">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+            <div className="space-y-5">
+              <div className="flex items-center text-gray-700 text-lg">
+                <div className="w-2.5 h-2.5 bg-green-500 rounded-full mr-4 flex-shrink-0"></div>
                 <span>Secure password reset process</span>
               </div>
-              <div className="flex items-center text-gray-600 text-sm lg:text-base">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+              <div className="flex items-center text-gray-700 text-lg">
+                <div className="w-2.5 h-2.5 bg-green-500 rounded-full mr-4 flex-shrink-0"></div>
                 <span>Link expires in 1 hour for security</span>
               </div>
-              <div className="flex items-center text-gray-600 text-sm lg:text-base">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+              <div className="flex items-center text-gray-700 text-lg">
+                <div className="w-2.5 h-2.5 bg-green-500 rounded-full mr-4 flex-shrink-0"></div>
                 <span>Back to your dashboard quickly</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right Panel - Form */}
-          <div className="w-full lg:w-1/2 bg-gray-900 p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
+        {/* Right Panel - Black Form */}
+        <div className="w-1/2 bg-black p-12 flex flex-col justify-center">
             <div className="max-w-sm mx-auto w-full">
               <div className="mb-6 lg:mb-8">
                 <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
@@ -230,7 +231,6 @@ const ForgotPassword = () => {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };
