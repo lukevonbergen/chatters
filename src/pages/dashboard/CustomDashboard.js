@@ -96,8 +96,16 @@ const CustomDashboard = () => {
         return;
       }
 
+      // Update tiles in-place without full reload
+      setTiles(prevTiles =>
+        prevTiles.map(tile =>
+          tile.id === configuringTile.id
+            ? { ...tile, date_range_preset: config.date_range_preset, chart_type: config.chart_type }
+            : tile
+        )
+      );
+
       toast.success('Tile configuration updated');
-      loadTiles();
     } catch (error) {
       console.error('Error in handleSaveNPSConfig:', error);
       toast.error('An error occurred');

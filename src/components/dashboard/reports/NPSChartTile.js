@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../utils/supabase';
+import { supabase, logQuery } from '../../../utils/supabase';
 import { useVenue } from '../../../context/VenueContext';
-import { X, Settings as SettingsIcon } from 'lucide-react';
+import { X, Settings as SettingsIcon, RefreshCw } from 'lucide-react';
 import { getDateRangeFromPreset } from '../../../utils/dateRangePresets';
 
 // Import visualization components
@@ -13,6 +13,7 @@ import NPSKPITile from './nps/NPSKPITile';
 const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
   const { venueId } = useVenue();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [npsData, setNpsData] = useState({
     score: 0,
     promoters: 0,
@@ -22,32 +23,63 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
     trend: null,
     trendDirection: 'neutral'
   });
+  // Cache data by date range to avoid refetching when only chart type changes
+  const [cachedData, setCachedData] = useState({});
 
   const dateRangePreset = config.date_range_preset || 'all_time';
   const chartType = config.chart_type || 'donut';
+  const prevChartTypeRef = React.useRef(chartType);
 
   useEffect(() => {
     if (venueId) {
-      fetchNPSData();
+      // Check if we have cached data for this date range
+      const cacheKey = `${venueId}_${dateRangePreset}`;
+      if (cachedData[cacheKey]) {
+        setNpsData(cachedData[cacheKey]);
+        setLoading(false);
+      } else {
+        fetchNPSData();
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [venueId, dateRangePreset]);
+
+  // Handle chart type changes with refreshing state
+  useEffect(() => {
+    if (prevChartTypeRef.current !== chartType) {
+      setRefreshing(true);
+      // Short delay to show transition
+      const timer = setTimeout(() => {
+        setRefreshing(false);
+        prevChartTypeRef.current = chartType;
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [chartType]);
 
   const fetchNPSData = async () => {
     try {
       setLoading(true);
+      console.log('%c⏱️  [PERF] Starting: NPS Tile Data Fetch', 'color: #3b82f6; font-weight: bold', { dateRangePreset });
+      const startTime = performance.now();
 
       const dateRange = getDateRangeFromPreset(dateRangePreset);
       const startDate = dateRange.from.toISOString();
       const endDate = dateRange.to.toISOString();
 
       // Fetch NPS responses for the selected date range
-      const { data: currentData, error: currentError } = await supabase
-        .from('nps_submissions')
-        .select('score, responded_at')
-        .eq('venue_id', venueId)
-        .not('score', 'is', null)
-        .gte('responded_at', startDate)
-        .lte('responded_at', endDate);
+      const currentResult = await logQuery(
+        'nps_submissions:current_period',
+        supabase
+          .from('nps_submissions')
+          .select('score, responded_at')
+          .eq('venue_id', venueId)
+          .not('score', 'is', null)
+          .gte('responded_at', startDate)
+          .lte('responded_at', endDate)
+      );
+      const currentData = currentResult.data;
+      const currentError = currentResult.error;
 
       if (currentError) throw currentError;
 
@@ -57,13 +89,17 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
       previousStart.setDate(previousStart.getDate() - daysDiff);
       const previousEnd = new Date(dateRange.from);
 
-      const { data: previousData } = await supabase
-        .from('nps_submissions')
-        .select('score')
-        .eq('venue_id', venueId)
-        .not('score', 'is', null)
-        .gte('responded_at', previousStart.toISOString())
-        .lt('responded_at', previousEnd.toISOString());
+      const previousResult = await logQuery(
+        'nps_submissions:previous_period',
+        supabase
+          .from('nps_submissions')
+          .select('score')
+          .eq('venue_id', venueId)
+          .not('score', 'is', null)
+          .gte('responded_at', previousStart.toISOString())
+          .lt('responded_at', previousEnd.toISOString())
+      );
+      const previousData = previousResult.data;
 
       // Calculate current NPS
       const promoters = currentData?.filter(r => r.score >= 9).length || 0;
@@ -92,7 +128,7 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
         }
       }
 
-      setNpsData({
+      const newData = {
         score: npsScore,
         promoters,
         passives,
@@ -100,9 +136,22 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
         total,
         trend,
         trendDirection
-      });
+      };
+
+      setNpsData(newData);
+
+      // Cache the data for this date range
+      const cacheKey = `${venueId}_${dateRangePreset}`;
+      setCachedData(prev => ({ ...prev, [cacheKey]: newData }));
+
+      const totalDuration = performance.now() - startTime;
+      const color = totalDuration < 500 ? '#22c55e' : totalDuration < 1000 ? '#eab308' : totalDuration < 2000 ? '#f97316' : '#ef4444';
+      console.log(
+        `%c✓ [PERF] NPS Tile Data Fetch Complete: ${totalDuration.toFixed(2)}ms`,
+        `color: ${color}; font-weight: bold`
+      );
     } catch (error) {
-      console.error('Error fetching NPS data:', error);
+      console.error('%c❌ [PERF] NPS Tile Data Fetch Failed', 'color: #ef4444; font-weight: bold', error);
     } finally {
       setLoading(false);
     }
@@ -140,13 +189,36 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
     return labels[preset] || 'All Time';
   };
 
+  const handleRefresh = () => {
+    // Clear cache for this date range and refetch
+    const cacheKey = `${venueId}_${dateRangePreset}`;
+    setCachedData(prev => {
+      const newCache = { ...prev };
+      delete newCache[cacheKey];
+      return newCache;
+    });
+    fetchNPSData();
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900">NPS Score</h3>
-          <p className="text-sm text-gray-500 mt-1">{getPresetLabel(dateRangePreset)}</p>
+        <div className="flex-1 flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            className={`p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors ${
+              loading ? 'animate-spin cursor-not-allowed' : ''
+            }`}
+            title="Refresh data"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">NPS Score</h3>
+            <p className="text-sm text-gray-500 mt-1">{getPresetLabel(dateRangePreset)}</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -167,7 +239,15 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
       </div>
 
       {/* Chart Content */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 relative">
+        {refreshing && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+            <div className="text-center">
+              <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs text-gray-600">Updating view...</p>
+            </div>
+          </div>
+        )}
         {renderChart()}
       </div>
     </div>
