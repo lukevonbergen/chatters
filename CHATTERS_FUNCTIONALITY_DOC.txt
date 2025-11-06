@@ -264,6 +264,22 @@ Main overview with:
 - Real-time WebSocket subscriptions
 - Supabase Storage for file uploads
 
+### INFRASTRUCTURE & COST OPTIMIZATION
+- Vercel hosting with serverless functions
+- Vercel Cron Jobs (2 daily scheduled tasks)
+  - Google/TripAdvisor ratings refresh: Daily at midnight
+  - Google reviews sync: Daily at 1 AM
+- Supabase Edge Functions for email processing
+  - NPS email sending (batch limit: 50 per run)
+- Real-time subscriptions with proper cleanup
+  - Dashboard: Activity notifications
+  - Kiosk: Feedback and assistance updates
+  - Fallback polling: 30-second intervals (optimization opportunity)
+- Webhook processing with Stripe signature verification
+  - Handles subscription lifecycle events
+  - Payment success/failure tracking
+  - No retry loop protection (optimization needed)
+
 ### DATABASE STRUCTURE
 Key tables:
 - users: Authentication and role assignment
