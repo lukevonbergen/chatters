@@ -585,7 +585,15 @@ const AdminAccountDetail = () => {
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-900">
-                              {venue.address || <span className="text-gray-400">No address</span>}
+                              {venue.address ? (
+                                <>
+                                  {venue.address.line1 && <div>{venue.address.line1}</div>}
+                                  {venue.address.line2 && <div>{venue.address.line2}</div>}
+                                  {venue.address.city && <div>{venue.address.city}{venue.address.postcode && `, ${venue.address.postcode}`}</div>}
+                                </>
+                              ) : (
+                                <span className="text-gray-400">No address</span>
+                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
