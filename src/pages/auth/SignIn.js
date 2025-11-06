@@ -381,12 +381,11 @@ const SignInPage = () => {
 
               {/* Optional: small note for first-time admin setup */}
               {/* <p className="mt-4 text-xs text-gray-400">
-                If you’re an internal user, make sure your email ends with @getchatters.com or your user role is set to admin.
+                If you're an internal user, make sure your email ends with @getchatters.com or your user role is set to admin.
               </p> */}
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };
