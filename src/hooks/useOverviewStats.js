@@ -30,6 +30,7 @@ const useOverviewStats = (venueId) => {
       yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
       // Fetch today's feedback sessions (including resolution info)
+      console.log('%c→ About to fetch feedback:today', 'color: #9333ea');
       const todayFeedbackResult = await logQuery(
         'feedback:today',
         supabase
@@ -39,6 +40,7 @@ const useOverviewStats = (venueId) => {
           .gte('created_at', todayStart.toISOString())
           .order('created_at', { ascending: false })
       );
+      console.log('%c← Finished feedback:today', 'color: #9333ea');
       const todayFeedback = todayFeedbackResult.data;
 
       // Fetch yesterday's feedback for comparison

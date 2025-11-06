@@ -16,14 +16,18 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Performance logging wrapper - use this to wrap any query you want to measure
 export const logQuery = async (queryName, queryPromise) => {
+  console.log(`%c[DEBUG] logQuery called: ${queryName}`, 'color: #06b6d4');
+
   if (process.env.NODE_ENV !== 'development') {
     return await queryPromise;
   }
 
   const startTime = performance.now();
+  console.log(`%c[DEBUG] Starting timer for: ${queryName}`, 'color: #06b6d4');
 
   try {
     const result = await queryPromise;
+    console.log(`%c[DEBUG] Query completed: ${queryName}`, 'color: #06b6d4');
     const duration = performance.now() - startTime;
     const rowCount = Array.isArray(result.data) ? result.data.length : null;
 
