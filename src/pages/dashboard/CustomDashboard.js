@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
-import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import { DateRangeSelector, overviewPresetRanges } from '../../components/ui/date-range-selector';
 import ConfigurableMultiVenueTile from '../../components/dashboard/reports/ConfigurableMultiVenueTile';
+import NPSDonutChartTile from '../../components/dashboard/reports/NPSDonutChartTile';
 import MetricSelectorModal from '../../components/dashboard/modals/MetricSelectorModal';
 import usePageTitle from '../../hooks/usePageTitle';
 import { Plus, GripVertical, Settings } from 'lucide-react';
@@ -180,9 +180,6 @@ const CustomDashboard = () => {
 
       if (!userId) return;
 
-      const draggedPosition = draggedTile.position;
-      const targetPosition = targetTile.position;
-
       // Create a copy of tiles array and reorder
       const newTiles = [...tiles];
       const draggedIndex = newTiles.findIndex(t => t.id === draggedTile.id);
@@ -301,13 +298,21 @@ const CustomDashboard = () => {
                 </div>
               </div>
 
-              <ConfigurableMultiVenueTile
-                metricType={tile.metric_type}
-                position={tile.position}
-                dateRange={dateRange}
-                onRemove={() => handleRemoveTile(tile.position)}
-                onChangeMetric={() => handleChangeTileMetric(tile.position)}
-              />
+              {tile.metric_type === 'nps_chart' ? (
+                <NPSDonutChartTile
+                  dateRange={dateRange}
+                  onRemove={() => handleRemoveTile(tile.position)}
+                  onChangeMetric={() => handleChangeTileMetric(tile.position)}
+                />
+              ) : (
+                <ConfigurableMultiVenueTile
+                  metricType={tile.metric_type}
+                  position={tile.position}
+                  dateRange={dateRange}
+                  onRemove={() => handleRemoveTile(tile.position)}
+                  onChangeMetric={() => handleChangeTileMetric(tile.position)}
+                />
+              )}
             </div>
           ))}
 

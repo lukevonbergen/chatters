@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, BarChart3, ThumbsUp, Star, AlertTriangle, Award } from 'lucide-react';
+import { X, BarChart3, ThumbsUp, Star, AlertTriangle, Award, PieChart } from 'lucide-react';
 
 const AVAILABLE_METRICS = [
   {
@@ -43,6 +43,12 @@ const AVAILABLE_METRICS = [
     label: 'TripAdvisor Rating',
     description: 'Current TripAdvisor review rating',
     icon: Star
+  },
+  {
+    value: 'nps_chart',
+    label: 'NPS Score Chart',
+    description: 'Net Promoter Score with breakdown by category',
+    icon: PieChart
   }
 ];
 
