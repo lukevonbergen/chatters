@@ -40,7 +40,7 @@ Chatters solves critical problems for hospitality venues:
 2. Kiosk mode shows priority queue (urgent feedback first, then assistance)
 3. Interactive floor plan displays color-coded tables by feedback status
 4. Staff can navigate by zone, acknowledge requests, and mark as resolved
-5. Resolution tracking builds staff performance metrics
+5. Resolution tracking builds staff performance metrics (including co-resolver credits)
 6. Leaderboards and recognition emails motivate team performance
 
 ### MANAGEMENT WORKFLOW
@@ -92,6 +92,7 @@ Main overview with:
   - Session timeout (1-24 hours)
   - Feedback collection hours (day/time restrictions)
   - NPS email settings (delay, cooldown, custom question)
+  - Co-resolver feature toggle (enable/disable collaborative feedback resolution)
 - /settings/branding - Visual customization:
   - Logo upload
   - Color scheme (primary, background, text, button text)
@@ -150,12 +151,13 @@ Main overview with:
 
 ### STAFF PERFORMANCE TRACKING
 - Individual staff resolution metrics
-- Feedback handling statistics
+- Feedback handling statistics (including co-resolver credits)
 - Assistance request completion counts
-- Leaderboard rankings
+- Leaderboard rankings (based on total resolutions including co-resolved)
 - Recognition email system
 - CSV data export for payroll/HR integration
 - Time-period filtering (daily, weekly, monthly)
+- Separate tracking: resolved vs co-resolved counts
 
 ### NPS (NET PROMOTER SCORE)
 - Email-based survey system
@@ -200,13 +202,29 @@ Main overview with:
 - Export to CSV
 
 ### INTEGRATIONS
-- Stripe for subscription payments (£29/month or £278/year)
+- Stripe for subscription payments (£149/month or £119/year)
 - Resend for transactional emails
 - Google Business Profile API (OAuth2, review links, rating sync)
 - TripAdvisor API (location linking, review links)
 - Supabase backend (PostgreSQL, real-time subscriptions, authentication)
 - Vercel hosting with edge functions
 - Sentry error tracking
+
+### CO-RESOLVER FEATURE (Collaborative Feedback Resolution)
+- Venue-specific setting (enable/disable per venue)
+- Only applies to feedback resolution, not assistance requests
+- Main resolver required before co-resolver can be added
+- Optional checkbox "Add co-resolver" in kiosk resolution modal
+- Dropdown excludes main resolver from co-resolver options
+- Both resolvers receive full credit in performance metrics
+- Display format: "Resolved by [Name] with [Co-resolver Name]"
+- Metrics format: "Resolved: X | Co-resolved: Y | Total: Z"
+- Leaderboards rank by total resolutions (resolved + co-resolved)
+- Separate column tracking in staff leaderboard and reports
+- Co-resolver counts included in all analytics and exports
+- Encourages team collaboration and mentoring
+- Particularly useful for training new staff members
+- Helps track team-based problem resolution
 
 ### AUTOMATION FEATURES
 - Real-time notifications (WebSocket via Supabase)
@@ -284,10 +302,10 @@ Main overview with:
 Key tables:
 - users: Authentication and role assignment
 - accounts: Top-level account grouping
-- venues: Venue information linked to accounts
+- venues: Venue information linked to accounts (includes enable_co_resolving setting)
 - staff: Many-to-many relationship between users and venues
 - feedback_sessions: Customer session tracking
-- feedback: Individual feedback submissions
+- feedback: Individual feedback submissions (includes co_resolver_id for collaborative resolution)
 - assistance_requests: Help request tracking
 - questions: Configurable feedback questions
 - nps_submissions: NPS survey responses
@@ -374,6 +392,20 @@ AppRoutes.js handles automatic redirection:
 5. recognition_emails table updated
 6. Email includes performance stats and encouragement
 
+### CO-RESOLVER FLOW
+1. Staff member selects main resolver in kiosk resolution modal
+2. If co-resolver feature enabled, checkbox appears: "Add co-resolver"
+3. Staff checks box to enable co-resolver selection
+4. Dropdown appears with all staff excluding main resolver
+5. Staff selects co-resolver from dropdown
+6. Validation ensures co-resolver is selected if checkbox is checked
+7. Both resolver and co-resolver IDs saved to feedback.resolved_by and feedback.co_resolver_id
+8. Display shows "Resolved by [Main] with [Co-resolver]"
+9. Both staff members receive full credit in metrics
+10. Leaderboard shows separate columns: Resolved | Co-resolved | Total
+11. Analytics include both resolver types in performance calculations
+12. CSV exports include co-resolver data for reporting
+
 ## CONFIGURATION OPTIONS
 
 ### VENUE SETTINGS
@@ -390,6 +422,7 @@ AppRoutes.js handles automatic redirection:
 - Google review link
 - TripAdvisor review link
 - Enable/disable review redirects
+- Co-resolver feature toggle (collaborative resolution)
 
 ### NPS SETTINGS
 - Enable/disable NPS emails
@@ -412,8 +445,8 @@ AppRoutes.js handles automatic redirection:
 - Thank you message icon
 
 ### SUBSCRIPTION SETTINGS (Stripe)
-- Monthly plan: £29/month
-- Annual plan: £278/year (2 months free)
+- Monthly plan: £149/month
+- Annual plan: £119/year
 - Payment method management
 - Invoice downloads
 - Subscription cancellation
@@ -480,13 +513,15 @@ The kiosk is a critical real-time operational tool for staff:
 - Recent responses table
 
 ### STAFF PERFORMANCE REPORTS
-- Individual resolution counts
+- Individual resolution counts (main resolver + co-resolver)
+- Separate tracking of resolved vs co-resolved contributions
 - Assistance request handling
 - Average resolution time (if tracked)
-- Leaderboard rankings
+- Leaderboard rankings (total resolutions)
 - Time-period comparisons
 - Recognition history
 - CSV export with date range filtering
+- Co-resolver collaboration metrics
 
 ### IMPACT REPORTS
 - Before/after rating comparisons
@@ -591,8 +626,8 @@ Currently, Chatters has NO AI/ML features implemented. However, the data collect
 ## MONETIZATION MODEL
 
 ### SUBSCRIPTION TIERS
-- Monthly: £29/month per account
-- Annual: £278/year per account (saves £70, ~20% discount)
+- Monthly: £149/month per venue
+- Annual: £119/year per venue
 
 ### WHAT'S INCLUDED
 - Unlimited feedback submissions

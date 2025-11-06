@@ -26,10 +26,10 @@ const useOverviewStats = (venueId) => {
       const yesterdayStart = new Date(todayStart);
       yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
-      // Fetch today's feedback sessions
+      // Fetch today's feedback sessions (including resolution info)
       const { data: todayFeedback } = await supabase
         .from('feedback')
-        .select('id, session_id, rating, created_at')
+        .select('id, session_id, rating, created_at, resolved_at, is_actioned')
         .eq('venue_id', venueId)
         .gte('created_at', todayStart.toISOString())
         .order('created_at', { ascending: false });
@@ -37,7 +37,7 @@ const useOverviewStats = (venueId) => {
       // Fetch yesterday's feedback for comparison
       const { data: yesterdayFeedback } = await supabase
         .from('feedback')
-        .select('id, session_id, rating')
+        .select('id, session_id, rating, resolved_at, is_actioned')
         .eq('venue_id', venueId)
         .gte('created_at', yesterdayStart.toISOString())
         .lt('created_at', todayStart.toISOString());
@@ -76,24 +76,46 @@ const useOverviewStats = (venueId) => {
         ? yesterdayRatings.reduce((a, b) => a + b, 0) / yesterdayRatings.length
         : null;
 
-      // Response time calculation
-      const resolvedToday = todayAssistance?.filter(a => a.resolved_at) || [];
-      const avgResponseTime = resolvedToday.length > 0 
-        ? calculateAverageResponseTime(resolvedToday)
+      // Response time calculation - include both feedback and assistance
+      const resolvedAssistanceToday = todayAssistance?.filter(a => a.resolved_at) || [];
+      const resolvedFeedbackToday = todayFeedback?.filter(f => f.resolved_at && f.is_actioned) || [];
+      const allResolvedToday = [...resolvedAssistanceToday, ...resolvedFeedbackToday];
+
+      const avgResponseTime = allResolvedToday.length > 0
+        ? calculateAverageResponseTime(allResolvedToday)
         : null;
 
-      const resolvedYesterday = yesterdayAssistance?.filter(a => a.resolved_at) || [];
-      const yesterdayAvgResponseTime = resolvedYesterday.length > 0 
-        ? calculateAverageResponseTimeMs(resolvedYesterday)
+      const resolvedAssistanceYesterday = yesterdayAssistance?.filter(a => a.resolved_at) || [];
+      const resolvedFeedbackYesterday = yesterdayFeedback?.filter(f => f.resolved_at && f.is_actioned) || [];
+      const allResolvedYesterday = [...resolvedAssistanceYesterday, ...resolvedFeedbackYesterday];
+
+      const yesterdayAvgResponseTime = allResolvedYesterday.length > 0
+        ? calculateAverageResponseTimeMs(allResolvedYesterday)
         : null;
 
-      // Completion rate
-      const totalToday = todayAssistance?.length || 0;
-      const completedToday = resolvedToday.length;
+      // Completion rate - include both feedback sessions and assistance
+      const totalFeedbackSessionsToday = todaySessionIds.size;
+      const resolvedFeedbackSessionsToday = new Set(
+        todayFeedback?.filter(f => f.resolved_at && f.is_actioned).map(f => f.session_id) || []
+      ).size;
+
+      const totalAssistanceToday = todayAssistance?.length || 0;
+      const resolvedAssistanceCountToday = resolvedAssistanceToday.length;
+
+      const totalToday = totalFeedbackSessionsToday + totalAssistanceToday;
+      const completedToday = resolvedFeedbackSessionsToday + resolvedAssistanceCountToday;
       const completionRate = totalToday > 0 ? Math.round((completedToday / totalToday) * 100) : null;
 
-      const totalYesterday = yesterdayAssistance?.length || 0;
-      const completedYesterday = resolvedYesterday.length;
+      const totalFeedbackSessionsYesterday = yesterdaySessionIds.size;
+      const resolvedFeedbackSessionsYesterday = new Set(
+        yesterdayFeedback?.filter(f => f.resolved_at && f.is_actioned).map(f => f.session_id) || []
+      ).size;
+
+      const totalAssistanceYesterday = yesterdayAssistance?.length || 0;
+      const resolvedAssistanceCountYesterday = resolvedAssistanceYesterday.length;
+
+      const totalYesterday = totalFeedbackSessionsYesterday + totalAssistanceYesterday;
+      const completedYesterday = resolvedFeedbackSessionsYesterday + resolvedAssistanceCountYesterday;
       const yesterdayCompletionRate = totalYesterday > 0 ? (completedYesterday / totalYesterday) * 100 : null;
 
       // Active alerts (unresolved assistance requests)
@@ -110,8 +132,8 @@ const useOverviewStats = (venueId) => {
       const satisfactionTrend = avgSatisfaction && yesterdayAvgSatisfaction 
         ? calculateTrend(parseFloat(avgSatisfaction), yesterdayAvgSatisfaction, true)
         : null;
-      const responseTimeTrend = avgResponseTime && yesterdayAvgResponseTime 
-        ? calculateTrend(calculateAverageResponseTimeMs(resolvedToday), yesterdayAvgResponseTime, false, true)
+      const responseTimeTrend = avgResponseTime && yesterdayAvgResponseTime
+        ? calculateTrend(calculateAverageResponseTimeMs(allResolvedToday), yesterdayAvgResponseTime, false, true)
         : null;
       const completionTrend = completionRate && yesterdayCompletionRate 
         ? calculateTrend(completionRate, yesterdayCompletionRate, true)
