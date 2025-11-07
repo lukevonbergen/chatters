@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
-import { DateRangeSelector, overviewPresetRanges } from '../../components/ui/date-range-selector';
 import ConfigurableMultiVenueTile from '../../components/dashboard/reports/ConfigurableMultiVenueTile';
 import NPSChartTile from '../../components/dashboard/reports/NPSChartTile';
 import FeedbackChartTile from '../../components/dashboard/reports/FeedbackChartTile';
@@ -8,36 +7,100 @@ import MetricSelectorModal from '../../components/dashboard/modals/MetricSelecto
 import NPSConfigModal from '../../components/dashboard/modals/NPSConfigModal';
 import FeedbackConfigModal from '../../components/dashboard/modals/FeedbackConfigModal';
 import usePageTitle from '../../hooks/usePageTitle';
-import { Plus, GripVertical, Settings } from 'lucide-react';
+import { Plus, GripVertical, Settings, Save, X, Edit2, Trash2, LayoutDashboard } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CustomDashboard = () => {
-  usePageTitle('Custom Dashboard');
+  usePageTitle('Dashboard Views');
 
-  const [tiles, setTiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // View management state
+  const [views, setViews] = useState([]);
+  const [currentView, setCurrentView] = useState(null);
+  const [loadingViews, setLoadingViews] = useState(true);
+
+  // Tile state - separate draft and saved
+  const [savedTiles, setSavedTiles] = useState([]);
+  const [draftTiles, setDraftTiles] = useState([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // UI state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNPSConfigOpen, setIsNPSConfigOpen] = useState(false);
   const [isFeedbackConfigOpen, setIsFeedbackConfigOpen] = useState(false);
   const [editingTilePosition, setEditingTilePosition] = useState(null);
   const [configuringTile, setConfiguringTile] = useState(null);
   const [draggedTile, setDraggedTile] = useState(null);
-  const [dateRangePreset, setDateRangePreset] = useState('today');
-  const [dateRange, setDateRange] = useState(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfDay = new Date(today);
-    endOfDay.setHours(23, 59, 59, 999);
-    return { from: today, to: endOfDay };
-  });
+  const [isRenamingView, setIsRenamingView] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
-    loadTiles();
+    loadViews();
   }, []);
 
-  const loadTiles = async () => {
+  useEffect(() => {
+    if (currentView) {
+      loadTiles(currentView.id);
+    }
+  }, [currentView]);
+
+  const loadViews = async () => {
     try {
-      setLoading(true);
+      setLoadingViews(true);
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId) return;
+
+      const { data, error } = await supabase
+        .from('dashboard_views')
+        .select('*')
+        .eq('user_id', userId)
+        .order('position', { ascending: true });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        // Create default view if none exist
+        await createDefaultView(userId);
+        return;
+      }
+
+      setViews(data);
+      const defaultView = data.find(v => v.is_default) || data[0];
+      setCurrentView(defaultView);
+    } catch (error) {
+      console.error('Error loading views:', error);
+      toast.error('Failed to load dashboard views');
+    } finally {
+      setLoadingViews(false);
+    }
+  };
+
+  const createDefaultView = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('dashboard_views')
+        .insert({
+          user_id: userId,
+          name: 'Default View',
+          is_default: true,
+          position: 0
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setViews([data]);
+      setCurrentView(data);
+    } catch (error) {
+      console.error('Error creating default view:', error);
+      toast.error('Failed to create default view');
+    }
+  };
+
+  const loadTiles = async (viewId) => {
+    try {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth?.user?.id;
 
@@ -46,20 +109,114 @@ const CustomDashboard = () => {
       const { data, error } = await supabase
         .from('custom_dashboard_tiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('view_id', viewId)
         .order('position', { ascending: true });
 
-      if (error) {
-        console.error('Error loading tiles:', error);
+      if (error) throw error;
+
+      setSavedTiles(data || []);
+      setDraftTiles(data || []);
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Error loading tiles:', error);
+      toast.error('Failed to load tiles');
+    }
+  };
+
+  const handleCreateView = async () => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId) return;
+
+      const viewName = `View ${views.length + 1}`;
+      const { data, error } = await supabase
+        .from('dashboard_views')
+        .insert({
+          user_id: userId,
+          name: viewName,
+          is_default: false,
+          position: views.length
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setViews(prev => [...prev, data]);
+      setCurrentView(data);
+    } catch (error) {
+      console.error('Error creating view:', error);
+      toast.error('Failed to create view');
+    }
+  };
+
+  const handleRenameView = async (viewId, newName) => {
+    try {
+      if (!newName.trim()) {
+        toast.error('View name cannot be empty');
         return;
       }
 
-      setTiles(data || []);
+      const { error } = await supabase
+        .from('dashboard_views')
+        .update({ name: newName.trim() })
+        .eq('id', viewId);
+
+      if (error) throw error;
+
+      setViews(prev =>
+        prev.map(v => (v.id === viewId ? { ...v, name: newName.trim() } : v))
+      );
+      if (currentView?.id === viewId) {
+        setCurrentView(prev => ({ ...prev, name: newName.trim() }));
+      }
+      setIsRenamingView(null);
     } catch (error) {
-      console.error('Error in loadTiles:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error renaming view:', error);
+      toast.error('Failed to rename view');
     }
+  };
+
+  const handleDeleteView = async (viewId) => {
+    try {
+      if (views.length === 1) {
+        toast.error('Cannot delete the last view');
+        return;
+      }
+
+      if (!confirm('Are you sure you want to delete this view? All tiles will be removed.')) {
+        return;
+      }
+
+      const { error } = await supabase
+        .from('dashboard_views')
+        .delete()
+        .eq('id', viewId);
+
+      if (error) throw error;
+
+      const remainingViews = views.filter(v => v.id !== viewId);
+      setViews(remainingViews);
+
+      // Switch to first view if current view was deleted
+      if (currentView?.id === viewId) {
+        setCurrentView(remainingViews[0]);
+      }
+    } catch (error) {
+      console.error('Error deleting view:', error);
+      toast.error('Failed to delete view');
+    }
+  };
+
+  const handleSwitchView = (view) => {
+    if (hasUnsavedChanges) {
+      if (!confirm('You have unsaved changes. Discard them?')) {
+        return;
+      }
+    }
+    setCurrentView(view);
   };
 
   const handleAddTile = () => {
@@ -67,9 +224,39 @@ const CustomDashboard = () => {
     setIsModalOpen(true);
   };
 
-  const handleChangeTileMetric = (position) => {
-    setEditingTilePosition(position);
-    setIsModalOpen(true);
+  const handleMetricSelect = (metricType) => {
+    if (editingTilePosition !== null) {
+      // Update existing tile in draft
+      setDraftTiles(prevTiles =>
+        prevTiles.map(tile =>
+          tile.position === editingTilePosition
+            ? { ...tile, metric_type: metricType }
+            : tile
+        )
+      );
+    } else {
+      // Add new tile to draft
+      const nextPosition = draftTiles.length;
+      const newTile = {
+        id: `temp-${Date.now()}`, // Temporary ID
+        metric_type: metricType,
+        position: nextPosition,
+        view_id: currentView.id
+      };
+      setDraftTiles(prevTiles => [...prevTiles, newTile]);
+    }
+    setHasUnsavedChanges(true);
+  };
+
+  const handleRemoveTile = (position) => {
+    const remainingTiles = draftTiles.filter(t => t.position !== position);
+    // Reorder positions
+    const reorderedTiles = remainingTiles.map((tile, index) => ({
+      ...tile,
+      position: index
+    }));
+    setDraftTiles(reorderedTiles);
+    setHasUnsavedChanges(true);
   };
 
   const handleConfigureNPSTile = (tile) => {
@@ -82,192 +269,31 @@ const CustomDashboard = () => {
     setIsFeedbackConfigOpen(true);
   };
 
-  const handleSaveNPSConfig = async (config) => {
-    try {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth?.user?.id;
-
-      if (!userId || !configuringTile) return;
-
-      const { error } = await supabase
-        .from('custom_dashboard_tiles')
-        .update({
-          date_range_preset: config.date_range_preset,
-          chart_type: config.chart_type
-        })
-        .eq('user_id', userId)
-        .eq('id', configuringTile.id);
-
-      if (error) {
-        console.error('Error updating tile config:', error);
-        toast.error('Failed to update tile configuration');
-        return;
-      }
-
-      // Update tiles in-place without full reload
-      setTiles(prevTiles =>
-        prevTiles.map(tile =>
-          tile.id === configuringTile.id
-            ? { ...tile, date_range_preset: config.date_range_preset, chart_type: config.chart_type }
-            : tile
-        )
-      );
-
-      toast.success('Tile configuration updated');
-    } catch (error) {
-      console.error('Error in handleSaveNPSConfig:', error);
-      toast.error('An error occurred');
-    }
+  const handleSaveNPSConfig = (config) => {
+    setDraftTiles(prevTiles =>
+      prevTiles.map(tile =>
+        tile.id === configuringTile.id
+          ? { ...tile, date_range_preset: config.date_range_preset, chart_type: config.chart_type }
+          : tile
+      )
+    );
+    setHasUnsavedChanges(true);
   };
 
-  const handleSaveFeedbackConfig = async (config) => {
-    try {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth?.user?.id;
-
-      if (!userId || !configuringTile) return;
-
-      const { error } = await supabase
-        .from('custom_dashboard_tiles')
-        .update({
-          date_range_preset: config.date_range_preset,
-          chart_type: config.chart_type,
-          venue_ids: config.venue_ids
-        })
-        .eq('user_id', userId)
-        .eq('id', configuringTile.id);
-
-      if (error) {
-        console.error('Error updating tile config:', error);
-        toast.error('Failed to update tile configuration');
-        return;
-      }
-
-      // Update tiles in-place without full reload
-      setTiles(prevTiles =>
-        prevTiles.map(tile =>
-          tile.id === configuringTile.id
-            ? {
-                ...tile,
-                date_range_preset: config.date_range_preset,
-                chart_type: config.chart_type,
-                venue_ids: config.venue_ids
-              }
-            : tile
-        )
-      );
-
-      toast.success('Tile configuration updated');
-    } catch (error) {
-      console.error('Error in handleSaveFeedbackConfig:', error);
-      toast.error('An error occurred');
-    }
-  };
-
-  const handleMetricSelect = async (metricType) => {
-    try {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth?.user?.id;
-
-      if (!userId) return;
-
-      if (editingTilePosition !== null) {
-        // Update existing tile
-        const { error } = await supabase
-          .from('custom_dashboard_tiles')
-          .update({ metric_type: metricType })
-          .eq('user_id', userId)
-          .eq('position', editingTilePosition);
-
-        if (error) {
-          console.error('Error updating tile:', error);
-          toast.error('Failed to update tile');
-          return;
-        }
-
-        // Update tiles in-place without full reload
-        setTiles(prevTiles =>
-          prevTiles.map(tile =>
-            tile.position === editingTilePosition
-              ? { ...tile, metric_type: metricType }
-              : tile
-          )
-        );
-
-        toast.success('Tile updated successfully');
-      } else {
-        // Add new tile
-        const nextPosition = tiles.length;
-
-        const { data, error } = await supabase
-          .from('custom_dashboard_tiles')
-          .insert({
-            user_id: userId,
-            metric_type: metricType,
-            position: nextPosition
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Error adding tile:', error);
-          toast.error('Failed to add tile');
-          return;
-        }
-
-        // Add new tile to state without full reload
-        setTiles(prevTiles => [...prevTiles, data]);
-
-        toast.success('Tile added successfully');
-      }
-    } catch (error) {
-      console.error('Error in handleMetricSelect:', error);
-      toast.error('An error occurred');
-    }
-  };
-
-  const handleRemoveTile = async (position) => {
-    try {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth?.user?.id;
-
-      if (!userId) return;
-
-      const { error } = await supabase
-        .from('custom_dashboard_tiles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('position', position);
-
-      if (error) {
-        console.error('Error removing tile:', error);
-        toast.error('Failed to remove tile');
-        return;
-      }
-
-      // Reorder remaining tiles in database
-      const remainingTiles = tiles.filter(t => t.position !== position);
-      for (let i = 0; i < remainingTiles.length; i++) {
-        if (remainingTiles[i].position !== i) {
-          await supabase
-            .from('custom_dashboard_tiles')
-            .update({ position: i })
-            .eq('user_id', userId)
-            .eq('id', remainingTiles[i].id);
-
-          // Update position in the tile object
-          remainingTiles[i] = { ...remainingTiles[i], position: i };
-        }
-      }
-
-      // Update state without full reload
-      setTiles(remainingTiles);
-
-      toast.success('Tile removed successfully');
-    } catch (error) {
-      console.error('Error in handleRemoveTile:', error);
-      toast.error('An error occurred');
-    }
+  const handleSaveFeedbackConfig = (config) => {
+    setDraftTiles(prevTiles =>
+      prevTiles.map(tile =>
+        tile.id === configuringTile.id
+          ? {
+              ...tile,
+              date_range_preset: config.date_range_preset,
+              chart_type: config.chart_type,
+              venue_ids: config.venue_ids
+            }
+          : tile
+      )
+    );
+    setHasUnsavedChanges(true);
   };
 
   const handleDragStart = (e, tile) => {
@@ -280,7 +306,7 @@ const CustomDashboard = () => {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = async (e, targetTile) => {
+  const handleDrop = (e, targetTile) => {
     e.preventDefault();
 
     if (!draggedTile || draggedTile.id === targetTile.id) {
@@ -288,56 +314,83 @@ const CustomDashboard = () => {
       return;
     }
 
+    // Reorder in draft
+    const newTiles = [...draftTiles];
+    const draggedIndex = newTiles.findIndex(t => t.id === draggedTile.id);
+    const targetIndex = newTiles.findIndex(t => t.id === targetTile.id);
+
+    const [removed] = newTiles.splice(draggedIndex, 1);
+    newTiles.splice(targetIndex, 0, removed);
+
+    // Update positions
+    const reorderedTiles = newTiles.map((tile, index) => ({
+      ...tile,
+      position: index
+    }));
+
+    setDraftTiles(reorderedTiles);
+    setHasUnsavedChanges(true);
+    setDraggedTile(null);
+  };
+
+  const handleSaveDashboard = async () => {
     try {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth?.user?.id;
 
-      if (!userId) return;
+      if (!userId || !currentView) return;
 
-      // Create a copy of tiles array and reorder
-      const newTiles = [...tiles];
-      const draggedIndex = newTiles.findIndex(t => t.id === draggedTile.id);
-      const targetIndex = newTiles.findIndex(t => t.id === targetTile.id);
+      // Delete all existing tiles for this view
+      const { error: deleteError } = await supabase
+        .from('custom_dashboard_tiles')
+        .delete()
+        .eq('view_id', currentView.id);
 
-      // Remove dragged tile and insert at target position
-      const [removed] = newTiles.splice(draggedIndex, 1);
-      newTiles.splice(targetIndex, 0, removed);
+      if (deleteError) throw deleteError;
 
-      // Update positions in database
-      for (let i = 0; i < newTiles.length; i++) {
-        if (newTiles[i].position !== i) {
-          await supabase
-            .from('custom_dashboard_tiles')
-            .update({ position: i })
-            .eq('user_id', userId)
-            .eq('id', newTiles[i].id);
-        }
+      // Insert all draft tiles
+      if (draftTiles.length > 0) {
+        const tilesToInsert = draftTiles.map(tile => ({
+          user_id: userId,
+          view_id: currentView.id,
+          metric_type: tile.metric_type,
+          position: tile.position,
+          date_range_preset: tile.date_range_preset,
+          chart_type: tile.chart_type,
+          venue_ids: tile.venue_ids
+        }));
+
+        const { error: insertError } = await supabase
+          .from('custom_dashboard_tiles')
+          .insert(tilesToInsert);
+
+        if (insertError) throw insertError;
       }
 
-      toast.success('Tiles reordered successfully');
-      loadTiles();
+      // Reload tiles to get proper IDs
+      await loadTiles(currentView.id);
+      toast.success('Dashboard saved');
     } catch (error) {
-      console.error('Error reordering tiles:', error);
-      toast.error('Failed to reorder tiles');
-    } finally {
-      setDraggedTile(null);
+      console.error('Error saving dashboard:', error);
+      toast.error('Failed to save dashboard');
     }
   };
 
-  const handleDateRangeChange = ({ preset, range }) => {
-    setDateRangePreset(preset);
-    const endOfDay = new Date(range.to);
-    endOfDay.setHours(23, 59, 59, 999);
-    setDateRange({ from: range.from, to: endOfDay });
+  const handleDiscardChanges = () => {
+    if (!confirm('Discard all unsaved changes?')) {
+      return;
+    }
+    setDraftTiles(savedTiles);
+    setHasUnsavedChanges(false);
   };
 
-  if (loading) {
+  if (loadingViews) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Custom Dashboard</h1>
-            <p className="text-gray-600 mt-1">Build your personalized metrics view</p>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard Views</h1>
+            <p className="text-gray-600 mt-1">Loading...</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -351,34 +404,117 @@ const CustomDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Custom Dashboard</h1>
-          <p className="text-gray-600 mt-1">
-            {tiles.length === 0
-              ? 'Add tiles to create your personalized dashboard'
-              : 'Drag and drop tiles to reorder, or add more metrics'}
-          </p>
+      {/* Header with View Tabs and Save Button */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard Views</h1>
+          <div className="flex items-center gap-2">
+            {hasUnsavedChanges && (
+              <button
+                onClick={handleDiscardChanges}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                Discard
+              </button>
+            )}
+            <button
+              onClick={handleSaveDashboard}
+              disabled={!hasUnsavedChanges}
+              className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                hasUnsavedChanges
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <Save className="w-4 h-4" />
+              Save Changes
+            </button>
+          </div>
         </div>
-        <DateRangeSelector
-          value={dateRangePreset}
-          onChange={handleDateRangeChange}
-          presets={overviewPresetRanges}
-        />
+
+        {/* View Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {views.map(view => (
+            <div
+              key={view.id}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+                currentView?.id === view.id
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 hover:border-gray-300 text-gray-700'
+              }`}
+            >
+              {isRenamingView === view.id ? (
+                <input
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={() => handleRenameView(view.id, renameValue)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleRenameView(view.id, renameValue);
+                    if (e.key === 'Escape') setIsRenamingView(null);
+                  }}
+                  autoFocus
+                  className="w-32 px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <>
+                  <button
+                    onClick={() => handleSwitchView(view)}
+                    className="font-medium"
+                  >
+                    {view.name}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsRenamingView(view.id);
+                      setRenameValue(view.name);
+                    }}
+                    className="p-1 hover:bg-white rounded transition-colors"
+                    title="Rename view"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                  </button>
+                  {views.length > 1 && (
+                    <button
+                      onClick={() => handleDeleteView(view.id)}
+                      className="p-1 hover:bg-red-100 rounded transition-colors text-red-600"
+                      title="Delete view"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+          <button
+            onClick={handleCreateView}
+            className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all text-gray-600 hover:text-blue-600"
+          >
+            <Plus className="w-4 h-4" />
+            New View
+          </button>
+        </div>
+
+        {hasUnsavedChanges && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2 text-sm text-yellow-800">
+            <LayoutDashboard className="w-4 h-4" />
+            You have unsaved changes. Click "Save Changes" to persist your updates.
+          </div>
+        )}
       </div>
 
       {/* Empty State */}
-      {tiles.length === 0 && (
+      {draftTiles.length === 0 && (
         <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-12 text-center border-2 border-dashed border-blue-200">
           <div className="max-w-md mx-auto">
             <Settings className="w-16 h-16 text-blue-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Create Your Custom Dashboard
+              Build Your {currentView?.name}
             </h2>
             <p className="text-gray-600 mb-6">
-              Add metric tiles to build a personalized view of your most important data.
-              Track what matters most to you across all your venues.
+              Add metric tiles to track your most important data.
             </p>
             <button
               onClick={handleAddTile}
@@ -392,9 +528,9 @@ const CustomDashboard = () => {
       )}
 
       {/* Tiles Grid */}
-      {tiles.length > 0 && (
+      {draftTiles.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tiles.map((tile) => (
+          {draftTiles.map((tile) => (
             <div
               key={tile.id}
               draggable
@@ -435,9 +571,15 @@ const CustomDashboard = () => {
                 <ConfigurableMultiVenueTile
                   metricType={tile.metric_type}
                   position={tile.position}
-                  dateRange={dateRange}
+                  dateRange={{
+                    from: new Date(),
+                    to: new Date()
+                  }}
                   onRemove={() => handleRemoveTile(tile.position)}
-                  onChangeMetric={() => handleChangeTileMetric(tile.position)}
+                  onChangeMetric={() => {
+                    setEditingTilePosition(tile.position);
+                    setIsModalOpen(true);
+                  }}
                 />
               )}
             </div>
@@ -463,19 +605,6 @@ const CustomDashboard = () => {
         </div>
       )}
 
-      {/* Helper Text */}
-      {tiles.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <Settings className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800">
-              <strong>Tip:</strong> Hover over a tile and use the grip icon to drag and reorder.
-              Click the gear icon on any tile to change its metric or remove it.
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Metric Selector Modal */}
       <MetricSelectorModal
         isOpen={isModalOpen}
@@ -483,10 +612,10 @@ const CustomDashboard = () => {
         onSelect={handleMetricSelect}
         currentMetric={
           editingTilePosition !== null
-            ? tiles.find(t => t.position === editingTilePosition)?.metric_type
+            ? draftTiles.find(t => t.position === editingTilePosition)?.metric_type
             : null
         }
-        existingMetrics={tiles.map(t => t.metric_type)}
+        existingMetrics={draftTiles.map(t => t.metric_type)}
       />
 
       {/* NPS Configuration Modal */}
