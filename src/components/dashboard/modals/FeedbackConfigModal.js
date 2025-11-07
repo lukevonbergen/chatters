@@ -1,0 +1,234 @@
+import React, { useState } from 'react';
+import { X, BarChart3, PieChart, LayoutGrid } from 'lucide-react';
+import { useVenue } from '../../../context/VenueContext';
+
+const FeedbackConfigModal = ({ isOpen, onClose, onSave, currentConfig }) => {
+  const { venueId, allVenues } = useVenue();
+
+  const [dateRangePreset, setDateRangePreset] = useState(currentConfig.date_range_preset || 'all_time');
+  const [chartType, setChartType] = useState(currentConfig.chart_type || 'kpi');
+  const [selectedVenueIds, setSelectedVenueIds] = useState(
+    currentConfig.venue_ids || (venueId ? [venueId] : [])
+  );
+
+  if (!isOpen) return null;
+
+  const handleSave = () => {
+    onSave({
+      date_range_preset: dateRangePreset,
+      chart_type: chartType,
+      venue_ids: selectedVenueIds
+    });
+    onClose();
+  };
+
+  const toggleVenue = (vId) => {
+    setSelectedVenueIds(prev => {
+      if (prev.includes(vId)) {
+        // Don't allow deselecting all venues
+        if (prev.length === 1) return prev;
+        return prev.filter(id => id !== vId);
+      } else {
+        return [...prev, vId];
+      }
+    });
+  };
+
+  const selectAllVenues = () => {
+    setSelectedVenueIds(allVenues.map(v => v.id));
+  };
+
+  const selectCurrentVenue = () => {
+    if (venueId) {
+      setSelectedVenueIds([venueId]);
+    }
+  };
+
+  const dateRangeOptions = [
+    { value: '7_days', label: 'Last 7 Days' },
+    { value: 'this_month', label: 'This Month' },
+    { value: 'last_month', label: 'Last Month' },
+    { value: 'last_quarter', label: 'Last Quarter' },
+    { value: 'all_time', label: 'All Time' }
+  ];
+
+  const chartTypeOptions = [
+    { value: 'kpi', label: 'KPI Grid', icon: LayoutGrid, description: 'Key metrics at a glance' },
+    { value: 'donut', label: 'Donut Chart', icon: PieChart, description: 'Rating distribution' },
+    { value: 'bar', label: 'Bar Chart', icon: BarChart3, description: 'Rating breakdown' }
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Configure Feedback Chart</h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+
+          {/* Date Range Section */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Date Range</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {dateRangeOptions.map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => setDateRangePreset(option.value)}
+                  className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                    dateRangePreset === option.value
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Chart Type Section */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Chart Type</h3>
+            <div className="space-y-2">
+              {chartTypeOptions.map(option => {
+                const Icon = option.icon;
+                const isSelected = chartType === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setChartType(option.value)}
+                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${
+                        isSelected ? 'bg-blue-100' : 'bg-gray-100'
+                      }`}>
+                        <Icon className={`w-5 h-5 ${
+                          isSelected ? 'text-blue-600' : 'text-gray-600'
+                        }`} />
+                      </div>
+                      <div className="flex-1">
+                        <div className={`font-medium ${
+                          isSelected ? 'text-blue-900' : 'text-gray-900'
+                        }`}>
+                          {option.label}
+                        </div>
+                        <div className={`text-sm ${
+                          isSelected ? 'text-blue-700' : 'text-gray-500'
+                        }`}>
+                          {option.description}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div className="flex items-center justify-center w-6 h-6 bg-blue-600 rounded-full">
+                          <svg
+                            className="w-4 h-4 text-white"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Venue Selection Section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-700">Venues</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={selectCurrentVenue}
+                  className="text-xs px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                >
+                  Current Only
+                </button>
+                <button
+                  onClick={selectAllVenues}
+                  className="text-xs px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                >
+                  Select All
+                </button>
+              </div>
+            </div>
+            <div className="border rounded-lg max-h-48 overflow-y-auto">
+              {allVenues.map(venue => (
+                <label
+                  key={venue.id}
+                  className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedVenueIds.includes(venue.id)}
+                    onChange={() => toggleVenue(venue.id)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">{venue.name}</span>
+                  {venue.id === venueId && (
+                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full ml-auto">
+                      Current
+                    </span>
+                  )}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              {selectedVenueIds.length} venue{selectedVenueIds.length !== 1 ? 's' : ''} selected
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={selectedVenueIds.length === 0}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                selectedVenueIds.length > 0
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              Save Configuration
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default FeedbackConfigModal;

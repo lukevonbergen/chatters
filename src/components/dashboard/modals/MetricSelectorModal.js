@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, BarChart3, ThumbsUp, Star, AlertTriangle, Award, PieChart } from 'lucide-react';
+import { X, BarChart3, ThumbsUp, Star, AlertTriangle, Award, PieChart, MessageSquare } from 'lucide-react';
 
 const AVAILABLE_METRICS = [
   {
@@ -49,6 +49,12 @@ const AVAILABLE_METRICS = [
     label: 'NPS Score Chart',
     description: 'Net Promoter Score with breakdown by category',
     icon: PieChart
+  },
+  {
+    value: 'feedback_chart',
+    label: 'Overall Feedback Chart',
+    description: 'Feedback metrics with multi-venue support and multiple views',
+    icon: MessageSquare
   }
 ];
 

@@ -3,8 +3,10 @@ import { supabase } from '../../utils/supabase';
 import { DateRangeSelector, overviewPresetRanges } from '../../components/ui/date-range-selector';
 import ConfigurableMultiVenueTile from '../../components/dashboard/reports/ConfigurableMultiVenueTile';
 import NPSChartTile from '../../components/dashboard/reports/NPSChartTile';
+import FeedbackChartTile from '../../components/dashboard/reports/FeedbackChartTile';
 import MetricSelectorModal from '../../components/dashboard/modals/MetricSelectorModal';
 import NPSConfigModal from '../../components/dashboard/modals/NPSConfigModal';
+import FeedbackConfigModal from '../../components/dashboard/modals/FeedbackConfigModal';
 import usePageTitle from '../../hooks/usePageTitle';
 import { Plus, GripVertical, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -16,6 +18,7 @@ const CustomDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNPSConfigOpen, setIsNPSConfigOpen] = useState(false);
+  const [isFeedbackConfigOpen, setIsFeedbackConfigOpen] = useState(false);
   const [editingTilePosition, setEditingTilePosition] = useState(null);
   const [configuringTile, setConfiguringTile] = useState(null);
   const [draggedTile, setDraggedTile] = useState(null);
@@ -74,6 +77,11 @@ const CustomDashboard = () => {
     setIsNPSConfigOpen(true);
   };
 
+  const handleConfigureFeedbackTile = (tile) => {
+    setConfiguringTile(tile);
+    setIsFeedbackConfigOpen(true);
+  };
+
   const handleSaveNPSConfig = async (config) => {
     try {
       const { data: auth } = await supabase.auth.getUser();
@@ -108,6 +116,50 @@ const CustomDashboard = () => {
       toast.success('Tile configuration updated');
     } catch (error) {
       console.error('Error in handleSaveNPSConfig:', error);
+      toast.error('An error occurred');
+    }
+  };
+
+  const handleSaveFeedbackConfig = async (config) => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+
+      if (!userId || !configuringTile) return;
+
+      const { error } = await supabase
+        .from('custom_dashboard_tiles')
+        .update({
+          date_range_preset: config.date_range_preset,
+          chart_type: config.chart_type,
+          venue_ids: config.venue_ids
+        })
+        .eq('user_id', userId)
+        .eq('id', configuringTile.id);
+
+      if (error) {
+        console.error('Error updating tile config:', error);
+        toast.error('Failed to update tile configuration');
+        return;
+      }
+
+      // Update tiles in-place without full reload
+      setTiles(prevTiles =>
+        prevTiles.map(tile =>
+          tile.id === configuringTile.id
+            ? {
+                ...tile,
+                date_range_preset: config.date_range_preset,
+                chart_type: config.chart_type,
+                venue_ids: config.venue_ids
+              }
+            : tile
+        )
+      );
+
+      toast.success('Tile configuration updated');
+    } catch (error) {
+      console.error('Error in handleSaveFeedbackConfig:', error);
       toast.error('An error occurred');
     }
   };
@@ -353,6 +405,16 @@ const CustomDashboard = () => {
                   onRemove={() => handleRemoveTile(tile.position)}
                   onConfigure={() => handleConfigureNPSTile(tile)}
                 />
+              ) : tile.metric_type === 'feedback_chart' ? (
+                <FeedbackChartTile
+                  config={{
+                    date_range_preset: tile.date_range_preset || 'all_time',
+                    chart_type: tile.chart_type || 'kpi',
+                    venue_ids: tile.venue_ids || []
+                  }}
+                  onRemove={() => handleRemoveTile(tile.position)}
+                  onConfigure={() => handleConfigureFeedbackTile(tile)}
+                />
               ) : (
                 <ConfigurableMultiVenueTile
                   metricType={tile.metric_type}
@@ -419,6 +481,17 @@ const CustomDashboard = () => {
           setConfiguringTile(null);
         }}
         onSave={handleSaveNPSConfig}
+        currentConfig={configuringTile || {}}
+      />
+
+      {/* Feedback Configuration Modal */}
+      <FeedbackConfigModal
+        isOpen={isFeedbackConfigOpen}
+        onClose={() => {
+          setIsFeedbackConfigOpen(false);
+          setConfiguringTile(null);
+        }}
+        onSave={handleSaveFeedbackConfig}
         currentConfig={configuringTile || {}}
       />
     </div>
