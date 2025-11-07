@@ -185,18 +185,29 @@ const CustomDashboard = () => {
           return;
         }
 
+        // Update tiles in-place without full reload
+        setTiles(prevTiles =>
+          prevTiles.map(tile =>
+            tile.position === editingTilePosition
+              ? { ...tile, metric_type: metricType }
+              : tile
+          )
+        );
+
         toast.success('Tile updated successfully');
       } else {
         // Add new tile
         const nextPosition = tiles.length;
 
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('custom_dashboard_tiles')
           .insert({
             user_id: userId,
             metric_type: metricType,
             position: nextPosition
-          });
+          })
+          .select()
+          .single();
 
         if (error) {
           console.error('Error adding tile:', error);
@@ -204,10 +215,11 @@ const CustomDashboard = () => {
           return;
         }
 
+        // Add new tile to state without full reload
+        setTiles(prevTiles => [...prevTiles, data]);
+
         toast.success('Tile added successfully');
       }
-
-      loadTiles();
     } catch (error) {
       console.error('Error in handleMetricSelect:', error);
       toast.error('An error occurred');
@@ -233,9 +245,7 @@ const CustomDashboard = () => {
         return;
       }
 
-      toast.success('Tile removed successfully');
-
-      // Reorder remaining tiles
+      // Reorder remaining tiles in database
       const remainingTiles = tiles.filter(t => t.position !== position);
       for (let i = 0; i < remainingTiles.length; i++) {
         if (remainingTiles[i].position !== i) {
@@ -244,10 +254,16 @@ const CustomDashboard = () => {
             .update({ position: i })
             .eq('user_id', userId)
             .eq('id', remainingTiles[i].id);
+
+          // Update position in the tile object
+          remainingTiles[i] = { ...remainingTiles[i], position: i };
         }
       }
 
-      loadTiles();
+      // Update state without full reload
+      setTiles(remainingTiles);
+
+      toast.success('Tile removed successfully');
     } catch (error) {
       console.error('Error in handleRemoveTile:', error);
       toast.error('An error occurred');

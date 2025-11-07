@@ -173,11 +173,6 @@ const FeedbackConfigModal = ({ isOpen, onClose, onSave, currentConfig }) => {
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700">{venue.name}</span>
-                  {venue.id === venueId && (
-                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full ml-auto">
-                      Current
-                    </span>
-                  )}
                 </label>
               ))}
             </div>
