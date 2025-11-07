@@ -13,10 +13,12 @@ const VenueSettingsPage = () => {
 
   // Determine if we're in multi-venue list mode (accessed from Multi Venue > Venues)
   // vs single-venue edit mode (accessed from Venue Settings submenu)
-  // Simple heuristic: if user has multiple venues and explicitly navigating to /settings/venues,
-  // show the list view. If accessed from venue settings submenu, user can still edit individual venues
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'edit'
-  const isMultiVenueMode = allVenues.length > 1 && viewMode === 'list';
+  // /settings/venues = Multi Venue list view (only for multi-venue users)
+  // /settings/venue-details = Single venue edit form (always)
+  const isVenueDetailsRoute = location.pathname === '/settings/venue-details';
+  const initialViewMode = isVenueDetailsRoute ? 'edit' : 'list';
+  const [viewMode, setViewMode] = useState(initialViewMode);
+  const isMultiVenueMode = allVenues.length > 1 && viewMode === 'list' && !isVenueDetailsRoute;
 
   usePageTitle(isMultiVenueMode ? 'Venues Management' : 'Venue Settings');
 

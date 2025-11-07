@@ -81,7 +81,8 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
 
     // Settings subtitles
     if (currentPath.startsWith('/settings/') || currentPath.startsWith('/settings?')) {
-      if (currentPath === '/settings/venues' || currentPath === '/settings?tab=Venue') return 'Venue information and settings';
+      if (currentPath === '/settings/venues' || currentPath === '/settings?tab=Venue') return 'Manage all venues';
+      if (currentPath === '/settings/venue-details') return 'Venue information and settings';
       if (currentPath === '/settings/feedback' || currentPath === '/settings?tab=Feedback') return 'Feedback configuration';
       if (currentPath === '/settings/branding' || currentPath === '/settings?tab=Branding') return 'Brand colors and logo';
       if (currentPath === '/settings/integrations' || currentPath === '/settings?tab=Integrations') return 'Third-party integrations';

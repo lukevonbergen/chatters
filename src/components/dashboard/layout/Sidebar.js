@@ -115,6 +115,7 @@ const venueNavItems = [
     path: '/settings/feedback',
     color: 'text-gray-600',
     subItems: [
+      { label: 'Venue Details', path: '/settings/venue-details', icon: Building2 },
       { label: 'Feedback', path: '/settings/feedback', icon: MessageSquare },
       { label: 'Branding', path: '/settings/branding', icon: Palette },
       { label: 'Integrations', path: '/settings/integrations', icon: Activity }

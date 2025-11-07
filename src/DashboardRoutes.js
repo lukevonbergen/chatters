@@ -154,6 +154,7 @@ const DashboardRoutes = () => {
         
         {/* Settings Section */}
         <Route path="/settings/venues" element={<VenueSettingsPage />} />
+        <Route path="/settings/venue-details" element={<VenueSettingsPage />} />
         <Route path="/settings/feedback" element={<FeedbackSettings />} />
         <Route path="/settings/branding" element={<SettingsBrandingPage />} />
         <Route path="/settings/integrations" element={<IntegrationsSettingsPage />} />
