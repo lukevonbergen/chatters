@@ -1,35 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVenue } from '../../../context/VenueContext';
-import { supabase } from '../../../utils/supabase';
 import {
-  ChevronDown,
   Settings,
-  LogOut,
-  Building2,
-  Check,
   ExternalLink,
   BarChart3,
   MessageSquare,
   Users,
   Map,
-  Trophy,
   Home,
-  Plus,
   Clock
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '../../ui/dropdown-menu';
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '../../ui/popover';
 import { Button } from '../../ui/button';
 
 const mainMenuItems = [
@@ -53,20 +34,9 @@ const subMenuItems = {
 };
 
 const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
-  const [switchingVenue, setSwitchingVenue] = useState(false);
-  const [venuePopoverOpen, setVenuePopoverOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    venueId,
-    venueName,
-    allVenues,
-    setCurrentVenue,
-    selectedVenueIds,
-    isAllVenuesMode,
-    updateVenueSelection,
-    userRole
-  } = useVenue();
+  const { userRole } = useVenue();
 
   const getCurrentSection = () => {
     const currentPath = location.pathname;
@@ -215,7 +185,7 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
           </div>
         </div>
 
-        {/* Right Side - Venue Selector + Settings */}
+        {/* Right Side - Kiosk + Trial Info */}
         <div className="flex items-center gap-3">
           {/* Trial Info */}
           {trialInfo && trialInfo.isActive && userRole === 'master' && (
@@ -225,7 +195,7 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
                 Trial: <span className="font-semibold">{trialInfo.daysLeft}</span> day{trialInfo.daysLeft !== 1 ? 's' : ''} left
               </span>
               <button
-                onClick={() => navigate('/settings/billing')}
+                onClick={() => navigate('/account/billing')}
                 className="ml-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
               >
                 Upgrade
@@ -243,126 +213,6 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
             <span>Kiosk</span>
             <ExternalLink className="w-4 h-4" />
           </Button>
-
-          {/* Multi-Venue Selector */}
-          {(userRole === 'master' || allVenues.length > 1) && (
-            <Popover open={venuePopoverOpen} onOpenChange={setVenuePopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 px-3 py-2 h-10 min-w-[160px] justify-between border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  {switchingVenue ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
-                      <span className="text-sm text-gray-500">Updating...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Building2 className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                      <span className="truncate text-sm font-medium text-gray-900">
-                        {isAllVenuesMode
-                          ? 'All Venues'
-                          : selectedVenueIds.length === 1
-                          ? venueName
-                          : `${selectedVenueIds.length} Venues Selected`}
-                      </span>
-                    </div>
-                  )}
-                  <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-72 p-0 rounded-xl shadow-xl border border-gray-200 bg-white z-[100] relative"
-                side="bottom"
-                align="end"
-                sideOffset={8}
-              >
-                <div className="p-3 border-b border-gray-100">
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Select Venues
-                  </div>
-                </div>
-                <div className="p-2 max-h-80 overflow-y-auto">
-                  {/* All Venues Option */}
-                  <label
-                    className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isAllVenuesMode}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSwitchingVenue(true);
-                          updateVenueSelection(allVenues.map(v => v.id), true);
-                          setTimeout(() => setSwitchingVenue(false), 300);
-                        }
-                      }}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                      <span className="text-sm font-semibold text-gray-900">All Venues</span>
-                    </div>
-                    <span className="text-xs text-gray-500">{allVenues.length}</span>
-                  </label>
-
-                  <div className="my-2 border-t border-gray-100"></div>
-
-                  {/* Individual Venues */}
-                  {allVenues.map((venue) => (
-                    <label
-                      key={venue.id}
-                      className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedVenueIds.includes(venue.id)}
-                        onChange={(e) => {
-                          let newSelection;
-                          if (e.target.checked) {
-                            // Add venue
-                            newSelection = [...selectedVenueIds, venue.id];
-                          } else {
-                            // Remove venue (must keep at least one)
-                            newSelection = selectedVenueIds.filter(id => id !== venue.id);
-                            if (newSelection.length === 0) {
-                              // Don't allow deselecting all
-                              return;
-                            }
-                          }
-                          setSwitchingVenue(true);
-                          updateVenueSelection(newSelection);
-                          setTimeout(() => setSwitchingVenue(false), 300);
-                        }}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="truncate text-sm text-gray-700">{venue.name}</span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-                {userRole === 'master' && (
-                  <div className="p-2 border-t border-gray-100">
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        navigate('/settings?tab=Venue');
-                        setVenuePopoverOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add New Venue
-                    </Button>
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
-          )}
-
         </div>
       </div>
     </header>

@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  ChevronDown,
   Home,
   HelpCircle,
   Rss,
@@ -35,44 +36,25 @@ import {
   Star,
   Award,
   MessageCircle,
-  List
+  List,
+  LayoutDashboard
 } from 'lucide-react';
 
-const navItems = [
-  { 
-    id: 'overview', 
-    label: 'Overview', 
-    icon: Home, 
-    path: '/dashboard', 
-    color: 'text-blue-600' 
-  },
-  { 
-    id: 'feedback', 
-    label: 'Feedback', 
-    icon: MessageSquare, 
-    path: '/feedback/qr',
-    color: 'text-green-600',
-    subItems: [
-      { label: 'QR Code & Sharing', path: '/feedback/qr', icon: QrCode },
-      { label: 'Question Management', path: '/feedback/questions', icon: HelpCircle },
-      { label: 'All Feedback', path: '/feedback/all', icon: List }
-    ]
+// Venue Management Section - Single venue context
+const venueNavItems = [
+  {
+    id: 'overview',
+    label: 'Overview',
+    icon: Home,
+    path: '/dashboard',
+    color: 'text-blue-600'
   },
   {
-    id: 'reports',
-    label: 'Reports',
-    icon: BarChart3,
-    path: '/reports/feedback',
-    color: 'text-purple-600',
-    subItems: [
-      { label: 'Feedback', path: '/reports/feedback', icon: MessageSquare },
-      { label: 'Performance', path: '/reports/performance', icon: TrendingUp },
-      { label: 'Impact', path: '/reports/impact', icon: Target },
-      { label: 'Insights', path: '/reports/insights', icon: Zap },
-      { label: 'Metrics', path: '/reports/metrics', icon: PieChart },
-      { label: 'NPS', path: '/reports/nps', icon: Star },
-      { label: 'Builder', path: '/reports/builder', icon: FileText }
-    ]
+    id: 'feedback',
+    label: 'Questions',
+    icon: HelpCircle,
+    path: '/feedback/questions',
+    color: 'text-green-600'
   },
   {
     id: 'reviews',
@@ -83,6 +65,28 @@ const navItems = [
     badge: 'BETA'
   },
   {
+    id: 'reports',
+    label: 'Reporting',
+    icon: BarChart3,
+    path: '/reports/feedback',
+    color: 'text-purple-600',
+    subItems: [
+      { label: 'Feedback', path: '/reports/feedback', icon: MessageSquare },
+      { label: 'Performance', path: '/reports/performance', icon: TrendingUp },
+      { label: 'Impact', path: '/reports/impact', icon: Target },
+      { label: 'Insights', path: '/reports/insights', icon: Zap },
+      { label: 'Metrics', path: '/reports/metrics', icon: PieChart },
+      { label: 'Custom', path: '/reports/builder', icon: FileText }
+    ]
+  },
+  {
+    id: 'nps',
+    label: 'NPS',
+    icon: Star,
+    path: '/reports/nps',
+    color: 'text-amber-600'
+  },
+  {
     id: 'staff',
     label: 'Staff',
     icon: Users,
@@ -90,32 +94,61 @@ const navItems = [
     color: 'text-orange-600',
     subItems: [
       { label: 'Leaderboard', path: '/staff/leaderboard', icon: Trophy },
-      { label: 'Recognition History', path: '/staff/recognition', icon: Award },
-      { label: 'Managers', path: '/staff/managers', icon: UserCheck },
+      { label: 'Recognition', path: '/staff/recognition', icon: Award },
       { label: 'Employees', path: '/staff/employees', icon: Users },
+      { label: 'Managers', path: '/staff/managers', icon: UserCheck },
       { label: 'Roles', path: '/staff/roles', icon: UserPlus, badge: 'BETA' },
       { label: 'Locations', path: '/staff/locations', icon: Building2, badge: 'BETA' }
     ]
   },
-  { 
-    id: 'floorplan', 
-    label: 'Floor Plan', 
-    icon: Map, 
-    path: '/floorplan', 
-    color: 'text-indigo-600' 
+  {
+    id: 'floorplan',
+    label: 'Floor Plan',
+    icon: Map,
+    path: '/floorplan',
+    color: 'text-indigo-600'
   },
-  { 
-    id: 'settings', 
-    label: 'Settings', 
-    icon: Settings, 
-    path: '/settings/venues', 
+  {
+    id: 'venue-settings',
+    label: 'Venue Settings',
+    icon: Settings,
+    path: '/settings/feedback',
     color: 'text-gray-600',
     subItems: [
-      { label: 'Venues', path: '/settings/venues', icon: Building2 },
-      { label: 'Feedback Settings', path: '/settings/feedback', icon: MessageSquare },
+      { label: 'Feedback', path: '/settings/feedback', icon: MessageSquare },
       { label: 'Branding', path: '/settings/branding', icon: Palette },
       { label: 'Integrations', path: '/settings/integrations', icon: Activity }
     ]
+  }
+];
+
+// Multi-Venue Section - Cross-venue analysis
+const multiVenueNavItems = [
+  {
+    id: 'multi-dashboard',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    path: '/custom',
+    color: 'text-blue-600'
+  },
+  {
+    id: 'multi-reporting',
+    label: 'Reporting',
+    icon: BarChart3,
+    path: '/reports/feedback',
+    color: 'text-purple-600',
+    subItems: [
+      { label: 'Portfolio Overview', path: '/overview/details', icon: TrendingUp },
+      { label: 'Venue Comparison', path: '/reports/nps', icon: Building2 },
+      { label: 'Custom Reports', path: '/reports/builder', icon: FileText }
+    ]
+  },
+  {
+    id: 'venues-management',
+    label: 'Venues',
+    icon: Building2,
+    path: '/settings/venues',
+    color: 'text-indigo-600'
   }
 ];
 
@@ -136,12 +169,22 @@ const getAccountItems = (userRole, trialInfo) => {
 const Sidebar = ({ collapsed, setCollapsed }) => {
   const [activeSubmenu, setActiveSubmenu] = useState(null);
   const [trialInfo, setTrialInfo] = useState(null);
+  const [venueDropdownOpen, setVenueDropdownOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { userRole } = useVenue();
-  
+  const {
+    venueId,
+    venueName,
+    allVenues,
+    setCurrentVenue,
+    userRole
+  } = useVenue();
+
   // Get account items based on user role and trial status
   const accountItems = getAccountItems(userRole, trialInfo);
+
+  // Determine if user has access to multiple venues
+  const hasMultipleVenues = allVenues.length > 1;
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -214,13 +257,14 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
   // Auto-open submenu based on current route
   React.useEffect(() => {
-    const currentItem = navItems.find(item => 
+    const allNavItems = [...venueNavItems, ...(hasMultipleVenues ? multiVenueNavItems : [])];
+    const currentItem = allNavItems.find(item =>
       item.subItems && item.subItems.some(subItem => isActive(subItem.path))
     );
     if (currentItem && !collapsed) {
       setActiveSubmenu(currentItem.id);
     }
-  }, [location.pathname, collapsed]);
+  }, [location.pathname, collapsed, hasMultipleVenues]);
 
   const toggleSubmenu = (itemId) => {
     if (collapsed) {
@@ -269,9 +313,55 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           </button>
         </div>
 
+        {/* Venue Dropdown */}
+        {!collapsed && (
+          <div className="px-3 pt-4 pb-2">
+            {hasMultipleVenues ? (
+              <div className="relative">
+                <button
+                  onClick={() => setVenueDropdownOpen(!venueDropdownOpen)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Building2 className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                    <span className="text-sm font-medium text-gray-900 truncate">{venueName}</span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${venueDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {venueDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    {allVenues.map((venue) => (
+                      <button
+                        key={venue.id}
+                        onClick={() => {
+                          setCurrentVenue(venue.id);
+                          setVenueDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                          venue.id === venueId ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        <Building2 className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{venue.name}</span>
+                        {venue.id === venueId && <span className="ml-auto text-blue-600">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200">
+                <Building2 className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-900 truncate">{venueName}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Navigation Items */}
-        <nav className="mt-4 px-2 flex-1 overflow-y-auto custom-scrollbar">
-          {navItems.map((item) => {
+        <nav className="mt-2 px-2 flex-1 overflow-y-auto custom-scrollbar">
+          {/* Render Venue Management Section */}
+          {venueNavItems.map((item) => {
             const Icon = item.icon;
             const itemActive = isActive(item.path) || hasActiveSubitem(item.subItems);
             const showSubmenu = !collapsed && activeSubmenu === item.id && item.subItems;
@@ -295,10 +385,10 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                       )}
                     </div>
                     {!collapsed && item.subItems && (
-                      <ChevronRight 
+                      <ChevronRight
                         className={`w-4 h-4 transition-transform duration-200 ${
                           showSubmenu ? 'rotate-90' : ''
-                        }`} 
+                        }`}
                       />
                     )}
                   </button>
@@ -350,6 +440,96 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                               {subItem.badge}
                             </span>
                           )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Multi-Venue Section Divider */}
+          {hasMultipleVenues && !collapsed && (
+            <div className="my-4 px-3">
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Multi Venue
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Render Multi-Venue Section */}
+          {hasMultipleVenues && multiVenueNavItems.map((item) => {
+            const Icon = item.icon;
+            const itemActive = isActive(item.path) || hasActiveSubitem(item.subItems);
+            const showSubmenu = !collapsed && activeSubmenu === item.id && item.subItems;
+
+            return (
+              <div key={item.id} className="mb-1">
+                {/* Main Nav Item */}
+                {item.subItems ? (
+                  <button
+                    onClick={() => toggleSubmenu(item.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
+                      itemActive
+                        ? 'bg-gray-100 text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <Icon className={`w-5 h-5 ${itemActive ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} />
+                      {!collapsed && (
+                        <span className="ml-3 font-medium text-sm">{item.label}</span>
+                      )}
+                    </div>
+                    {!collapsed && item.subItems && (
+                      <ChevronRight
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          showSubmenu ? 'rotate-90' : ''
+                        }`}
+                      />
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    to={item.path}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
+                      itemActive
+                        ? 'bg-gray-100 text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    title={collapsed ? item.label : ''}
+                  >
+                    <div className="flex items-center">
+                      <Icon className={`w-5 h-5 ${itemActive ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} />
+                      {!collapsed && (
+                        <span className="ml-3 font-medium text-sm">{item.label}</span>
+                      )}
+                    </div>
+                  </Link>
+                )}
+
+                {/* Submenu Items */}
+                {showSubmenu && (
+                  <div className="ml-2 mt-1 space-y-1 border-l-2 border-gray-100 pl-4">
+                    {item.subItems.map((subItem) => {
+                      const SubIcon = subItem.icon;
+                      return (
+                        <Link
+                          key={subItem.path}
+                          to={subItem.path}
+                          className={`flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors group ${
+                            isActive(subItem.path)
+                              ? 'bg-blue-50 text-blue-700 font-medium'
+                              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <SubIcon className="w-4 h-4 mr-2" />
+                            {subItem.label}
+                          </div>
                         </Link>
                       );
                     })}
