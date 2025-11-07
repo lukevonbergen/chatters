@@ -353,7 +353,8 @@ const CustomDashboard = () => {
 
       if (deleteError) throw deleteError;
 
-      // Insert all draft tiles
+      // Insert all draft tiles and get the returned data with proper IDs
+      let newTiles = [];
       if (draftTiles.length > 0) {
         const tilesToInsert = draftTiles.map(tile => ({
           user_id: userId,
@@ -365,15 +366,20 @@ const CustomDashboard = () => {
           venue_ids: tile.venue_ids
         }));
 
-        const { error: insertError } = await supabase
+        const { data, error: insertError } = await supabase
           .from('custom_dashboard_tiles')
-          .insert(tilesToInsert);
+          .insert(tilesToInsert)
+          .select();
 
         if (insertError) throw insertError;
+        newTiles = data || [];
       }
 
-      // Reload tiles to get proper IDs
-      await loadTiles(currentView.id);
+      // Update saved tiles and draft tiles with proper IDs from database
+      setSavedTiles(newTiles);
+      setDraftTiles(newTiles);
+      setHasUnsavedChanges(false);
+
       toast.success('Dashboard saved');
     } catch (error) {
       console.error('Error saving dashboard:', error);
