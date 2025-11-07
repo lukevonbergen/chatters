@@ -186,7 +186,7 @@ const CustomDashboard = () => {
         return;
       }
 
-      if (!confirm('Are you sure you want to delete this view? All tiles will be removed.')) {
+      if (!window.confirm('Are you sure you want to delete this view? All tiles will be removed.')) {
         return;
       }
 
@@ -212,7 +212,7 @@ const CustomDashboard = () => {
 
   const handleSwitchView = (view) => {
     if (hasUnsavedChanges) {
-      if (!confirm('You have unsaved changes. Discard them?')) {
+      if (!window.confirm('You have unsaved changes. Discard them?')) {
         return;
       }
     }
@@ -377,7 +377,7 @@ const CustomDashboard = () => {
   };
 
   const handleDiscardChanges = () => {
-    if (!confirm('Discard all unsaved changes?')) {
+    if (!window.confirm('Discard all unsaved changes?')) {
       return;
     }
     setDraftTiles(savedTiles);
