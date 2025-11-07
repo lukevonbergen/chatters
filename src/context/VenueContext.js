@@ -5,13 +5,94 @@ const VenueContext = createContext();
 export const useVenue = () => useContext(VenueContext);
 
 export const VenueProvider = ({ children }) => {
+  // Legacy single venue state (kept for backward compatibility)
   const [venueId, setVenueId] = useState('');
   const [venueName, setVenueName] = useState('');
+
+  // New multi-venue state
+  const [selectedVenueIds, setSelectedVenueIds] = useState([]);
+  const [isAllVenuesMode, setIsAllVenuesMode] = useState(false);
+
   const [allVenues, setAllVenues] = useState([]);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const isInitializingRef = useRef(false);
+
+  // Helper function to initialize venue selection from localStorage or defaults
+  const initializeVenueSelection = (venues) => {
+    if (!venues || venues.length === 0) return;
+
+    try {
+      // Check if multi-venue selection is saved in localStorage
+      const savedSelection = localStorage.getItem('chatters_venueSelection');
+
+      if (savedSelection) {
+        const parsed = JSON.parse(savedSelection);
+        const { isAllVenues, venueIds } = parsed;
+
+        if (isAllVenues) {
+          // All Venues mode
+          setIsAllVenuesMode(true);
+          setSelectedVenueIds(venues.map(v => v.id));
+          // Set first venue as primary for backward compatibility
+          setVenueId(venues[0].id);
+          setVenueName(venues[0].name);
+        } else if (venueIds && Array.isArray(venueIds) && venueIds.length > 0) {
+          // Validate saved venue IDs
+          const validIds = venueIds.filter(id => venues.find(v => v.id === id));
+
+          if (validIds.length > 0) {
+            setIsAllVenuesMode(false);
+            setSelectedVenueIds(validIds);
+            // Set first selected venue as primary for backward compatibility
+            const firstVenue = venues.find(v => v.id === validIds[0]);
+            if (firstVenue) {
+              setVenueId(firstVenue.id);
+              setVenueName(firstVenue.name);
+            }
+          } else {
+            // Saved IDs are invalid, fallback to default
+            initializeDefaultSelection(venues);
+          }
+        } else {
+          // Invalid saved data, fallback to default
+          initializeDefaultSelection(venues);
+        }
+      } else {
+        // No saved selection, use default behavior
+        initializeDefaultSelection(venues);
+      }
+    } catch (error) {
+      console.error('Error parsing venue selection from localStorage:', error);
+      initializeDefaultSelection(venues);
+    }
+  };
+
+  // Helper to initialize default venue selection
+  const initializeDefaultSelection = (venues) => {
+    if (venues.length === 1) {
+      // Single venue: select it
+      setIsAllVenuesMode(false);
+      setSelectedVenueIds([venues[0].id]);
+      setVenueId(venues[0].id);
+      setVenueName(venues[0].name);
+      localStorage.setItem('chatters_venueSelection', JSON.stringify({
+        isAllVenues: false,
+        venueIds: [venues[0].id]
+      }));
+    } else {
+      // Multiple venues: default to "All Venues"
+      setIsAllVenuesMode(true);
+      setSelectedVenueIds(venues.map(v => v.id));
+      setVenueId(venues[0].id); // Set first as primary for backward compatibility
+      setVenueName(venues[0].name);
+      localStorage.setItem('chatters_venueSelection', JSON.stringify({
+        isAllVenues: true,
+        venueIds: venues.map(v => v.id)
+      }));
+    }
+  };
 
   useEffect(() => {
     if (initialized) return;
@@ -63,15 +144,8 @@ export const VenueProvider = ({ children }) => {
             setUserRole('master'); // Impersonate as master
             setAllVenues(venues || []);
 
-            const cachedId = localStorage.getItem('chatters_currentVenueId');
-            const validCached = (venues || []).find(v => v.id === cachedId);
-            const selected = validCached || (venues || [])[0];
-
-            if (selected) {
-              setVenueId(selected.id);
-              setVenueName(selected.name);
-              localStorage.setItem('chatters_currentVenueId', selected.id);
-            }
+            // Initialize multi-venue selection
+            initializeVenueSelection(venues);
             return;
           }
         }
@@ -142,15 +216,9 @@ export const VenueProvider = ({ children }) => {
           }
 
           setAllVenues(venues || []);
-          const cachedId = localStorage.getItem('chatters_currentVenueId');
-          const validCached = (venues || []).find(v => v.id === cachedId);
-          const selected = validCached || (venues || [])[0];
 
-          if (selected) {
-            setVenueId(selected.id);
-            setVenueName(selected.name);
-            localStorage.setItem('chatters_currentVenueId', selected.id);
-          }
+          // Initialize multi-venue selection
+          initializeVenueSelection(venues);
           return;
         }
 
@@ -197,15 +265,8 @@ export const VenueProvider = ({ children }) => {
 
           setAllVenues(uniqueVenues);
 
-          const cachedId = localStorage.getItem('chatters_currentVenueId');
-          const validCached = uniqueVenues.find(v => v.id === cachedId);
-          const selected = validCached || uniqueVenues[0];
-
-          if (selected) {
-            setVenueId(selected.id);
-            setVenueName(selected.name);
-            localStorage.setItem('chatters_currentVenueId', selected.id);
-          }
+          // Initialize multi-venue selection
+          initializeVenueSelection(uniqueVenues);
           return;
         }
 
@@ -287,22 +348,69 @@ export const VenueProvider = ({ children }) => {
     };
   }, [initialized]);
 
+  // Legacy function: sets a single venue (also updates multi-venue state)
   const setCurrentVenue = (id) => {
     const found = allVenues.find(v => v.id === id);
     if (!found) return;
+
+    // Update legacy single-venue state
     setVenueId(found.id);
     setVenueName(found.name);
     localStorage.setItem('chatters_currentVenueId', found.id);
+
+    // Update multi-venue state
+    setIsAllVenuesMode(false);
+    setSelectedVenueIds([found.id]);
+    localStorage.setItem('chatters_venueSelection', JSON.stringify({
+      isAllVenues: false,
+      venueIds: [found.id]
+    }));
+  };
+
+  // New function: update multi-venue selection
+  const updateVenueSelection = (venueIds, allVenuesMode = false) => {
+    if (!venueIds || venueIds.length === 0) return;
+
+    // Validate venue IDs
+    const validIds = venueIds.filter(id => allVenues.find(v => v.id === id));
+    if (validIds.length === 0) return;
+
+    // If all venues are selected, switch to "All Venues" mode
+    const shouldBeAllVenues = allVenuesMode || validIds.length === allVenues.length;
+
+    setIsAllVenuesMode(shouldBeAllVenues);
+    setSelectedVenueIds(validIds);
+
+    // Update primary venue for backward compatibility (first selected)
+    const firstVenue = allVenues.find(v => v.id === validIds[0]);
+    if (firstVenue) {
+      setVenueId(firstVenue.id);
+      setVenueName(firstVenue.name);
+    }
+
+    // Save to localStorage
+    localStorage.setItem('chatters_venueSelection', JSON.stringify({
+      isAllVenues: shouldBeAllVenues,
+      venueIds: validIds
+    }));
   };
 
   return (
     <VenueContext.Provider
       value={{
+        // Legacy single-venue values (kept for backward compatibility)
         venueId,
         venueName,
+        setCurrentVenue,
+
+        // New multi-venue values
+        selectedVenueIds,
+        isAllVenuesMode,
+        updateVenueSelection,
+
+        // Common values
         allVenues,
         userRole,
-        setCurrentVenue,
         loading,
       }}
     >

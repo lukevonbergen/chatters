@@ -57,7 +57,16 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
   const [venuePopoverOpen, setVenuePopoverOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { venueId, venueName, allVenues, setCurrentVenue, userRole } = useVenue();
+  const {
+    venueId,
+    venueName,
+    allVenues,
+    setCurrentVenue,
+    selectedVenueIds,
+    isAllVenuesMode,
+    updateVenueSelection,
+    userRole
+  } = useVenue();
 
   const getCurrentSection = () => {
     const currentPath = location.pathname;
@@ -235,7 +244,7 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
             <ExternalLink className="w-4 h-4" />
           </Button>
 
-          {/* Venue Selector */}
+          {/* Multi-Venue Selector */}
           {(userRole === 'master' || allVenues.length > 1) && (
             <Popover open={venuePopoverOpen} onOpenChange={setVenuePopoverOpen}>
               <PopoverTrigger asChild>
@@ -246,59 +255,93 @@ const ModernHeader = ({ sidebarCollapsed, trialInfo }) => {
                   {switchingVenue ? (
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 border-2 border-t-transparent border-gray-500 rounded-full animate-spin" />
-                      <span className="text-sm text-gray-500">Switching...</span>
+                      <span className="text-sm text-gray-500">Updating...</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 min-w-0">
                       <Building2 className="w-4 h-4 text-gray-500 flex-shrink-0" />
                       <span className="truncate text-sm font-medium text-gray-900">
-                        {venueName || 'Select Venue'}
+                        {isAllVenuesMode
+                          ? 'All Venues'
+                          : selectedVenueIds.length === 1
+                          ? venueName
+                          : `${selectedVenueIds.length} Venues Selected`}
                       </span>
                     </div>
                   )}
                   <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent 
-                className="w-64 p-0 rounded-xl shadow-xl border border-gray-200 bg-white z-[100] relative" 
-                side="bottom" 
+              <PopoverContent
+                className="w-72 p-0 rounded-xl shadow-xl border border-gray-200 bg-white z-[100] relative"
+                side="bottom"
                 align="end"
                 sideOffset={8}
               >
                 <div className="p-3 border-b border-gray-100">
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Switch Venue
+                    Select Venues
                   </div>
                 </div>
-                <div className="p-2 max-h-64 overflow-y-auto">
-                  {allVenues.map((venue) => (
-                    <Button
-                      key={venue.id}
-                      variant="ghost"
-                      disabled={switchingVenue}
-                      onClick={async () => {
-                        if (venue.id === venueId) {
-                          setVenuePopoverOpen(false);
-                          return;
+                <div className="p-2 max-h-80 overflow-y-auto">
+                  {/* All Venues Option */}
+                  <label
+                    className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isAllVenuesMode}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSwitchingVenue(true);
+                          updateVenueSelection(allVenues.map(v => v.id), true);
+                          setTimeout(() => setSwitchingVenue(false), 300);
                         }
-                        setSwitchingVenue(true);
-                        await new Promise((resolve) => setTimeout(resolve, 300));
-                        setCurrentVenue(venue.id);
-                        setVenuePopoverOpen(false);
-                        setSwitchingVenue(false);
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 mb-1 rounded-lg ${
-                        venue.id === venueId ? 'bg-gray-100 text-gray-900' : 'hover:bg-gray-50'
-                      }`}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      <span className="text-sm font-semibold text-gray-900">All Venues</span>
+                    </div>
+                    <span className="text-xs text-gray-500">{allVenues.length}</span>
+                  </label>
+
+                  <div className="my-2 border-t border-gray-100"></div>
+
+                  {/* Individual Venues */}
+                  {allVenues.map((venue) => (
+                    <label
+                      key={venue.id}
+                      className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={selectedVenueIds.includes(venue.id)}
+                        onChange={(e) => {
+                          let newSelection;
+                          if (e.target.checked) {
+                            // Add venue
+                            newSelection = [...selectedVenueIds, venue.id];
+                          } else {
+                            // Remove venue (must keep at least one)
+                            newSelection = selectedVenueIds.filter(id => id !== venue.id);
+                            if (newSelection.length === 0) {
+                              // Don't allow deselecting all
+                              return;
+                            }
+                          }
+                          setSwitchingVenue(true);
+                          updateVenueSelection(newSelection);
+                          setTimeout(() => setSwitchingVenue(false), 300);
+                        }}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
                         <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="truncate text-sm">{venue.name}</span>
+                        <span className="truncate text-sm text-gray-700">{venue.name}</span>
                       </div>
-                      {venue.id === venueId && (
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                      )}
-                    </Button>
+                    </label>
                   ))}
                 </div>
                 {userRole === 'master' && (
