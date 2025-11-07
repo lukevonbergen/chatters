@@ -11,7 +11,7 @@ import NPSLineChart from './nps/NPSLineChart';
 import NPSKPITile from './nps/NPSKPITile';
 
 const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
-  const { venueId } = useVenue();
+  const { venueId, allVenues } = useVenue();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [npsData, setNpsData] = useState({
@@ -23,17 +23,21 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
     trend: null,
     trendDirection: 'neutral'
   });
-  // Cache data by date range to avoid refetching when only chart type changes
+  // Cache data by date range and venue to avoid refetching when only chart type changes
   const [cachedData, setCachedData] = useState({});
 
   const dateRangePreset = config.date_range_preset || 'all_time';
   const chartType = config.chart_type || 'donut';
+  // Default to current venue if venue_ids is null, undefined, or empty array
+  const selectedVenueId = (config.venue_ids && config.venue_ids.length > 0)
+    ? config.venue_ids[0]
+    : venueId;
   const prevChartTypeRef = React.useRef(chartType);
 
   useEffect(() => {
-    if (venueId) {
-      // Check if we have cached data for this date range
-      const cacheKey = `${venueId}_${dateRangePreset}`;
+    if (selectedVenueId) {
+      // Check if we have cached data for this date range and venue
+      const cacheKey = `${selectedVenueId}_${dateRangePreset}`;
       if (cachedData[cacheKey]) {
         setNpsData(cachedData[cacheKey]);
         setLoading(false);
@@ -42,7 +46,7 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [venueId, dateRangePreset]);
+  }, [selectedVenueId, dateRangePreset]);
 
   // Handle chart type changes with refreshing state
   useEffect(() => {
@@ -73,7 +77,7 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
         supabase
           .from('nps_submissions')
           .select('score, responded_at')
-          .eq('venue_id', venueId)
+          .eq('venue_id', selectedVenueId)
           .not('score', 'is', null)
           .gte('responded_at', startDate)
           .lte('responded_at', endDate)
@@ -94,7 +98,7 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
         supabase
           .from('nps_submissions')
           .select('score')
-          .eq('venue_id', venueId)
+          .eq('venue_id', selectedVenueId)
           .not('score', 'is', null)
           .gte('responded_at', previousStart.toISOString())
           .lt('responded_at', previousEnd.toISOString())
@@ -140,8 +144,8 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
 
       setNpsData(newData);
 
-      // Cache the data for this date range
-      const cacheKey = `${venueId}_${dateRangePreset}`;
+      // Cache the data for this date range and venue
+      const cacheKey = `${selectedVenueId}_${dateRangePreset}`;
       setCachedData(prev => ({ ...prev, [cacheKey]: newData }));
 
       const totalDuration = performance.now() - startTime;
@@ -189,9 +193,15 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
     return labels[preset] || 'All Time';
   };
 
+  const getVenueLabel = () => {
+    if (!selectedVenueId) return 'No venue selected';
+    const venue = allVenues.find(v => v.id === selectedVenueId);
+    return venue?.name || 'Unknown Venue';
+  };
+
   const handleRefresh = () => {
-    // Clear cache for this date range and refetch
-    const cacheKey = `${venueId}_${dateRangePreset}`;
+    // Clear cache for this date range and venue, then refetch
+    const cacheKey = `${selectedVenueId}_${dateRangePreset}`;
     setCachedData(prev => {
       const newCache = { ...prev };
       delete newCache[cacheKey];
@@ -217,7 +227,9 @@ const NPSChartTile = ({ config = {}, onRemove, onConfigure }) => {
           </button>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">NPS Score</h3>
-            <p className="text-sm text-gray-500 mt-1">{getPresetLabel(dateRangePreset)}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {getVenueLabel()} • {getPresetLabel(dateRangePreset)}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">

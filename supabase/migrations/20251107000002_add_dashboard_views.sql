@@ -13,6 +13,17 @@ CREATE TABLE IF NOT EXISTS dashboard_views (
 ALTER TABLE custom_dashboard_tiles
 ADD COLUMN IF NOT EXISTS view_id UUID REFERENCES dashboard_views(id) ON DELETE CASCADE;
 
+-- Drop the old unique constraint on (user_id, position) if it exists
+-- This constraint is no longer valid since tiles are now scoped to views
+ALTER TABLE custom_dashboard_tiles
+DROP CONSTRAINT IF EXISTS custom_dashboard_tiles_user_id_position_key;
+
+-- Create new unique constraint on (view_id, position) instead
+-- This ensures tile positions are unique within each view
+ALTER TABLE custom_dashboard_tiles
+ADD CONSTRAINT custom_dashboard_tiles_view_id_position_key
+UNIQUE (view_id, position);
+
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_dashboard_views_user_id ON dashboard_views(user_id);
 CREATE INDEX IF NOT EXISTS idx_dashboard_tiles_view_id ON custom_dashboard_tiles(view_id);

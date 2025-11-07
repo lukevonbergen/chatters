@@ -273,7 +273,12 @@ const CustomDashboard = () => {
     setDraftTiles(prevTiles =>
       prevTiles.map(tile =>
         tile.id === configuringTile.id
-          ? { ...tile, date_range_preset: config.date_range_preset, chart_type: config.chart_type }
+          ? {
+              ...tile,
+              date_range_preset: config.date_range_preset,
+              chart_type: config.chart_type,
+              venue_ids: config.venue_ids
+            }
           : tile
       )
     );
@@ -552,7 +557,8 @@ const CustomDashboard = () => {
                 <NPSChartTile
                   config={{
                     date_range_preset: tile.date_range_preset || 'all_time',
-                    chart_type: tile.chart_type || 'donut'
+                    chart_type: tile.chart_type || 'donut',
+                    venue_ids: tile.venue_ids || []
                   }}
                   onRemove={() => handleRemoveTile(tile.position)}
                   onConfigure={() => handleConfigureNPSTile(tile)}
