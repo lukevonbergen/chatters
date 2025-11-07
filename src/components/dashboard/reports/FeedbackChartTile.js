@@ -32,7 +32,10 @@ const FeedbackChartTile = ({ config = {}, onRemove, onConfigure }) => {
 
   const dateRangePreset = config.date_range_preset || 'all_time';
   const chartType = config.chart_type || 'kpi';
-  const selectedVenueIds = config.venue_ids || (venueId ? [venueId] : []);
+  // Default to current venue if venue_ids is null, undefined, or empty array
+  const selectedVenueIds = (config.venue_ids && config.venue_ids.length > 0)
+    ? config.venue_ids
+    : (venueId ? [venueId] : []);
   const prevChartTypeRef = React.useRef(chartType);
 
   useEffect(() => {

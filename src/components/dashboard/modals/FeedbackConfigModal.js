@@ -7,8 +7,11 @@ const FeedbackConfigModal = ({ isOpen, onClose, onSave, currentConfig }) => {
 
   const [dateRangePreset, setDateRangePreset] = useState(currentConfig.date_range_preset || 'all_time');
   const [chartType, setChartType] = useState(currentConfig.chart_type || 'kpi');
-  const [selectedVenueIds, setSelectedVenueIds] = useState(
-    currentConfig.venue_ids || (venueId ? [venueId] : [])
+  // Single venue selection - store as array with one item for consistency
+  const [selectedVenueId, setSelectedVenueId] = useState(
+    (currentConfig.venue_ids && currentConfig.venue_ids.length > 0)
+      ? currentConfig.venue_ids[0]
+      : venueId
   );
 
   if (!isOpen) return null;
@@ -17,30 +20,14 @@ const FeedbackConfigModal = ({ isOpen, onClose, onSave, currentConfig }) => {
     onSave({
       date_range_preset: dateRangePreset,
       chart_type: chartType,
-      venue_ids: selectedVenueIds
+      venue_ids: [selectedVenueId]  // Single item array
     });
     onClose();
   };
 
-  const toggleVenue = (vId) => {
-    setSelectedVenueIds(prev => {
-      if (prev.includes(vId)) {
-        // Don't allow deselecting all venues
-        if (prev.length === 1) return prev;
-        return prev.filter(id => id !== vId);
-      } else {
-        return [...prev, vId];
-      }
-    });
-  };
-
-  const selectAllVenues = () => {
-    setSelectedVenueIds(allVenues.map(v => v.id));
-  };
-
   const selectCurrentVenue = () => {
     if (venueId) {
-      setSelectedVenueIds([venueId]);
+      setSelectedVenueId(venueId);
     }
   };
 
@@ -163,21 +150,13 @@ const FeedbackConfigModal = ({ isOpen, onClose, onSave, currentConfig }) => {
           {/* Venue Selection Section */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-700">Venues</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={selectCurrentVenue}
-                  className="text-xs px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                >
-                  Current Only
-                </button>
-                <button
-                  onClick={selectAllVenues}
-                  className="text-xs px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                >
-                  Select All
-                </button>
-              </div>
+              <h3 className="text-sm font-semibold text-gray-700">Venue</h3>
+              <button
+                onClick={selectCurrentVenue}
+                className="text-xs px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              >
+                Current Venue
+              </button>
             </div>
             <div className="border rounded-lg max-h-48 overflow-y-auto">
               {allVenues.map(venue => (
@@ -186,10 +165,12 @@ const FeedbackConfigModal = ({ isOpen, onClose, onSave, currentConfig }) => {
                   className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                 >
                   <input
-                    type="checkbox"
-                    checked={selectedVenueIds.includes(venue.id)}
-                    onChange={() => toggleVenue(venue.id)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    type="radio"
+                    name="venue"
+                    value={venue.id}
+                    checked={selectedVenueId === venue.id}
+                    onChange={() => setSelectedVenueId(venue.id)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700">{venue.name}</span>
                   {venue.id === venueId && (
@@ -201,7 +182,7 @@ const FeedbackConfigModal = ({ isOpen, onClose, onSave, currentConfig }) => {
               ))}
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              {selectedVenueIds.length} venue{selectedVenueIds.length !== 1 ? 's' : ''} selected
+              Select a single venue for this tile
             </p>
           </div>
 
@@ -215,9 +196,9 @@ const FeedbackConfigModal = ({ isOpen, onClose, onSave, currentConfig }) => {
             </button>
             <button
               onClick={handleSave}
-              disabled={selectedVenueIds.length === 0}
+              disabled={!selectedVenueId}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                selectedVenueIds.length > 0
+                selectedVenueId
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
