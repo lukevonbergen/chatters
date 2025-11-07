@@ -16,7 +16,14 @@ import toast from 'react-hot-toast';
 
 const DashboardNew = () => {
   usePageTitle('Overview');
-  const { venueId, venueName, allVenues, userRole } = useVenue();
+  const {
+    venueId,
+    venueName,
+    allVenues,
+    userRole,
+    selectedVenueIds,
+    isAllVenuesMode
+  } = useVenue();
 
   // Log page load
   useEffect(() => {
@@ -40,6 +47,11 @@ const DashboardNew = () => {
     return { from: today, to: endOfDay };
   });
 
+  // Multi-venue aggregated stats
+  const [aggregatedStats, setAggregatedStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const isMultiVenue = selectedVenueIds.length > 1;
+
   useEffect(() => {
     loadUserName();
     loadUserTiles();
@@ -47,7 +59,7 @@ const DashboardNew = () => {
 
     // Load recent activity
     loadRecentActivity();
-    
+
     // Real-time subscription for assistance requests
     const subscription = supabase
       .channel(`dashboard-activity-${venueId}`)
@@ -104,6 +116,13 @@ const DashboardNew = () => {
       subscription.unsubscribe();
     };
   }, [venueId]);
+
+  // Fetch aggregated stats when venue selection changes
+  useEffect(() => {
+    if (isMultiVenue && selectedVenueIds.length > 0) {
+      fetchAggregatedStats(selectedVenueIds);
+    }
+  }, [selectedVenueIds, isMultiVenue]);
 
   const loadUserName = async () => {
     try {
@@ -172,6 +191,110 @@ const DashboardNew = () => {
       console.error('Error loading recent activity:', error);
     } finally {
       setActivityLoading(false);
+    }
+  };
+
+  // Fetch aggregated stats across multiple venues
+  const fetchAggregatedStats = async (venueIds) => {
+    if (!venueIds || venueIds.length === 0) return;
+
+    try {
+      setStatsLoading(true);
+
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+      // Fetch today's feedback for all selected venues
+      const { data: todayFeedback } = await supabase
+        .from('feedback')
+        .select('id, session_id, rating, created_at, resolved_at, is_actioned, venue_id')
+        .in('venue_id', venueIds)
+        .gte('created_at', todayStart.toISOString());
+
+      // Fetch yesterday's feedback for comparison
+      const { data: yesterdayFeedback } = await supabase
+        .from('feedback')
+        .select('id, session_id, rating, resolved_at, is_actioned, venue_id')
+        .in('venue_id', venueIds)
+        .gte('created_at', yesterdayStart.toISOString())
+        .lt('created_at', todayStart.toISOString());
+
+      // Fetch today's assistance requests
+      const { data: todayAssistance } = await supabase
+        .from('assistance_requests')
+        .select('id, created_at, acknowledged_at, resolved_at, venue_id')
+        .in('venue_id', venueIds)
+        .gte('created_at', todayStart.toISOString());
+
+      // Calculate aggregated stats
+      const todaySessionIds = new Set(todayFeedback?.map(f => f.session_id) || []);
+      const todaySessions = todaySessionIds.size;
+
+      const yesterdaySessionIds = new Set(yesterdayFeedback?.map(f => f.session_id) || []);
+      const yesterdaySessions = yesterdaySessionIds.size;
+
+      // Average satisfaction
+      const todayRatings = todayFeedback?.filter(f => f.rating).map(f => f.rating) || [];
+      const avgSatisfaction = todayRatings.length > 0
+        ? (todayRatings.reduce((a, b) => a + b, 0) / todayRatings.length).toFixed(1)
+        : null;
+
+      // Active alerts (unresolved assistance requests)
+      const activeAlerts = todayAssistance?.filter(a => !a.resolved_at).length || 0;
+
+      // Resolved today (both feedback and assistance)
+      const resolvedFeedback = todayFeedback?.filter(f => f.resolved_at && f.is_actioned).length || 0;
+      const resolvedAssistance = todayAssistance?.filter(a => a.resolved_at).length || 0;
+      const resolvedToday = resolvedFeedback + resolvedAssistance;
+
+      // Response time calculation
+      const resolvedAssistanceToday = todayAssistance?.filter(a => a.resolved_at) || [];
+      const assistanceResponseTimes = resolvedAssistanceToday.map(a => {
+        const created = new Date(a.created_at);
+        const resolved = new Date(a.resolved_at);
+        return (resolved - created) / (1000 * 60); // minutes
+      });
+
+      const resolvedFeedbackToday = todayFeedback?.filter(f => f.resolved_at && f.is_actioned) || [];
+      const feedbackResponseTimes = resolvedFeedbackToday.map(f => {
+        const created = new Date(f.created_at);
+        const resolved = new Date(f.resolved_at);
+        return (resolved - created) / (1000 * 60); // minutes
+      });
+
+      const allResponseTimes = [...assistanceResponseTimes, ...feedbackResponseTimes];
+      const avgResponseTime = allResponseTimes.length > 0
+        ? Math.round(allResponseTimes.reduce((a, b) => a + b, 0) / allResponseTimes.length) + ' min'
+        : '--';
+
+      // Completion rate
+      const totalItems = todayFeedback?.length + todayAssistance?.length || 0;
+      const completionRate = totalItems > 0
+        ? Math.round((resolvedToday / totalItems) * 100)
+        : 0;
+
+      // Calculate trends
+      const sessionsTrend = yesterdaySessions > 0
+        ? Math.round(((todaySessions - yesterdaySessions) / yesterdaySessions) * 100)
+        : 0;
+
+      setAggregatedStats({
+        todaySessions,
+        avgSatisfaction,
+        avgResponseTime,
+        completionRate,
+        activeAlerts,
+        resolvedToday,
+        currentActivity: todaySessions > 20 ? 'High' : todaySessions > 10 ? 'Medium' : 'Low',
+        sessionsTrend: Math.abs(sessionsTrend),
+        sessionsTrendDirection: sessionsTrend > 0 ? 'up' : 'down'
+      });
+    } catch (error) {
+      console.error('Error fetching aggregated stats:', error);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -337,11 +460,17 @@ const DashboardNew = () => {
               {getGreeting()}{userName ? `, ${userName}` : ''}
             </h1>
             <p className="text-gray-600 mt-1">
-              Welcome back to <span className="font-semibold text-gray-800">{venueName}</span>
+              {isAllVenuesMode ? (
+                <>Viewing metrics across <span className="font-semibold text-gray-800">all venues</span></>
+              ) : isMultiVenue ? (
+                <>Viewing metrics for <span className="font-semibold text-gray-800">{selectedVenueIds.length} selected venues</span></>
+              ) : (
+                <>Welcome back to <span className="font-semibold text-gray-800">{venueName}</span></>
+              )}
             </p>
           </div>
         </div>
-        
+
         {getMultiVenueGreeting() && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mt-4">
             <p className="text-sm text-blue-700 font-medium flex items-center gap-2">
@@ -353,7 +482,14 @@ const DashboardNew = () => {
       </div>
 
       {/* Overview Stats */}
-      <OverviewStats />
+      {isMultiVenue ? (
+        <OverviewStats
+          multiVenueStats={aggregatedStats}
+          isMultiSite={true}
+        />
+      ) : (
+        <OverviewStats />
+      )}
 
       {/* Configurable Multi-Venue Tiles */}
       {(userTiles.length > 0 || userTiles.length < 3) && (
@@ -402,11 +538,13 @@ const DashboardNew = () => {
         </ChartCard>
       )}
 
-      {/* Platform Ratings Trends */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <GoogleRatingTrendCard venueId={venueId} />
-        <TripAdvisorRatingTrendCard venueId={venueId} />
-      </div>
+      {/* Platform Ratings Trends - Hidden when multiple venues selected */}
+      {!isMultiVenue && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <GoogleRatingTrendCard venueId={venueId} />
+          <TripAdvisorRatingTrendCard venueId={venueId} />
+        </div>
+      )}
 
       {/* Recent Activity - Full Width */}
       <ChartCard
