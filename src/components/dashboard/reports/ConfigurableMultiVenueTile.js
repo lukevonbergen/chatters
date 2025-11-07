@@ -416,13 +416,34 @@ const METRIC_CONFIG = {
   }
 };
 
+// Helper function to get config with fallback for unimplemented metrics
+const getMetricConfig = (metricType) => {
+  if (METRIC_CONFIG[metricType]) {
+    return METRIC_CONFIG[metricType];
+  }
+
+  // Return placeholder config for unimplemented metrics
+  return {
+    title: metricType.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+    icon: BarChart3,
+    isComingSoon: true,
+    fetchData: async (venueIds) => {
+      return venueIds.map(venueId => ({
+        venueId,
+        value: 0,
+        displayValue: 'Coming Soon'
+      }));
+    }
+  };
+};
+
 const ConfigurableMultiVenueTile = ({ metricType, position, onRemove, onChangeMetric, dateRange }) => {
   const { allVenues } = useVenue();
   const [venueStats, setVenueStats] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const config = METRIC_CONFIG[metricType];
-  const Icon = config?.icon || BarChart3;
+  const config = getMetricConfig(metricType);
+  const Icon = config.icon;
 
   useEffect(() => {
     if (!allVenues || allVenues.length === 0 || !dateRange) return;
@@ -478,12 +499,17 @@ const ConfigurableMultiVenueTile = ({ metricType, position, onRemove, onChangeMe
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+    <div className={`bg-white rounded-xl shadow-sm p-6 border ${config.isComingSoon ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-100'}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Icon className="w-5 h-5 text-blue-600" />
+          <Icon className={`w-5 h-5 ${config.isComingSoon ? 'text-yellow-600' : 'text-blue-600'}`} />
           <h3 className="text-lg font-semibold text-gray-800">{config.title}</h3>
+          {config.isComingSoon && (
+            <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">
+              Coming Soon
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -504,23 +530,30 @@ const ConfigurableMultiVenueTile = ({ metricType, position, onRemove, onChangeMe
       </div>
 
       {/* Venue Breakdown */}
-      <div className="space-y-2">
-        {venueStats.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-sm">No data available</p>
-          </div>
-        ) : (
-          venueStats.map((stat) => (
-            <div
-              key={stat.venueId}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <span className="text-sm font-medium text-gray-700">{stat.venueName}</span>
-              <span className="text-sm font-semibold text-gray-900">{stat.displayValue}</span>
+      {config.isComingSoon ? (
+        <div className="text-center py-8">
+          <p className="text-sm text-gray-600 mb-2">This report is coming soon!</p>
+          <p className="text-xs text-gray-500">We're working on bringing you this analytics feature.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {venueStats.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">No data available</p>
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            venueStats.map((stat) => (
+              <div
+                key={stat.venueId}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <span className="text-sm font-medium text-gray-700">{stat.venueName}</span>
+                <span className="text-sm font-semibold text-gray-900">{stat.displayValue}</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };
