@@ -1,0 +1,381 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, Users, Star, Clock, Target, AlertTriangle, CheckCircle, Activity, TrendingUp, ArrowLeft } from 'lucide-react';
+import { useVenue } from '../../context/VenueContext';
+import { supabase } from '../../utils/supabase';
+import { MetricCard, ChartCard } from '../../components/dashboard/layout/ModernCard';
+
+const OverviewDetails = () => {
+  const navigate = useNavigate();
+  const { selectedVenueIds, isAllVenuesMode, allVenues } = useVenue();
+  const [venueStats, setVenueStats] = useState({});
+  const [expandedVenues, setExpandedVenues] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+
+  // If not in multi-venue mode, redirect to main overview
+  useEffect(() => {
+    if (selectedVenueIds.length <= 1) {
+      navigate('/overview');
+    }
+  }, [selectedVenueIds, navigate]);
+
+  // Fetch detailed stats for each venue
+  useEffect(() => {
+    const fetchVenueStats = async () => {
+      if (selectedVenueIds.length <= 1) return;
+
+      setLoading(true);
+      const stats = {};
+
+      try {
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterdayStart = new Date(todayStart);
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+        // Fetch stats for each venue
+        for (const venueId of selectedVenueIds) {
+          // Today's feedback
+          const { data: todayFeedback } = await supabase
+            .from('feedback')
+            .select('id, session_id, rating, created_at, resolved_at, is_actioned')
+            .eq('venue_id', venueId)
+            .gte('created_at', todayStart.toISOString());
+
+          // Yesterday's feedback for trend
+          const { data: yesterdayFeedback } = await supabase
+            .from('feedback')
+            .select('id, session_id')
+            .eq('venue_id', venueId)
+            .gte('created_at', yesterdayStart.toISOString())
+            .lt('created_at', todayStart.toISOString());
+
+          // Active assistance requests (alerts)
+          const { data: activeAssistance } = await supabase
+            .from('assistance_requests')
+            .select('id')
+            .eq('venue_id', venueId)
+            .eq('status', 'pending');
+
+          // Resolved assistance today
+          const { data: resolvedAssistance } = await supabase
+            .from('assistance_requests')
+            .select('id')
+            .eq('venue_id', venueId)
+            .eq('status', 'resolved')
+            .gte('resolved_at', todayStart.toISOString());
+
+          // Calculate metrics
+          const todaySessionIds = new Set(todayFeedback?.map(f => f.session_id) || []);
+          const todaySessions = todaySessionIds.size;
+
+          const yesterdaySessionIds = new Set(yesterdayFeedback?.map(f => f.session_id) || []);
+          const yesterdaySessions = yesterdaySessionIds.size;
+          const sessionsTrend = yesterdaySessions > 0
+            ? (((todaySessions - yesterdaySessions) / yesterdaySessions) * 100).toFixed(1)
+            : 0;
+
+          const todayRatings = todayFeedback?.filter(f => f.rating).map(f => f.rating) || [];
+          const avgSatisfaction = todayRatings.length > 0
+            ? (todayRatings.reduce((a, b) => a + b, 0) / todayRatings.length).toFixed(1)
+            : null;
+
+          // Calculate average response time
+          const resolvedFeedback = todayFeedback?.filter(f => f.resolved_at) || [];
+          let avgResponseTime = '--';
+          if (resolvedFeedback.length > 0) {
+            const totalMinutes = resolvedFeedback.reduce((sum, f) => {
+              const created = new Date(f.created_at);
+              const resolved = new Date(f.resolved_at);
+              return sum + (resolved - created) / (1000 * 60);
+            }, 0);
+            const avgMinutes = totalMinutes / resolvedFeedback.length;
+            avgResponseTime = avgMinutes < 60
+              ? `${Math.round(avgMinutes)}m`
+              : `${(avgMinutes / 60).toFixed(1)}h`;
+          }
+
+          // Calculate completion rate
+          const totalFeedback = todayFeedback?.length || 0;
+          const completedFeedback = todayFeedback?.filter(f => f.is_actioned || f.resolved_at).length || 0;
+          const completionRate = totalFeedback > 0
+            ? Math.round((completedFeedback / totalFeedback) * 100)
+            : null;
+
+          // Calculate peak hour
+          const hourCounts = {};
+          todayFeedback?.forEach(f => {
+            const hour = new Date(f.created_at).getHours();
+            hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+          });
+          const peakHour = Object.keys(hourCounts).length > 0
+            ? Object.entries(hourCounts).reduce((a, b) => b[1] > a[1] ? b : a)[0]
+            : null;
+          const peakHourDisplay = peakHour ? `${peakHour}:00` : '--';
+
+          const venue = allVenues.find(v => v.id === venueId);
+          stats[venueId] = {
+            name: venue?.name || 'Unknown Venue',
+            todaySessions,
+            avgSatisfaction,
+            avgResponseTime,
+            completionRate,
+            activeAlerts: activeAssistance?.length || 0,
+            resolvedToday: resolvedAssistance?.length || 0,
+            currentActivity: todaySessions > 20 ? 'High' : todaySessions > 10 ? 'Medium' : 'Low',
+            peakHour: peakHourDisplay,
+            sessionsTrend: Math.abs(sessionsTrend),
+            sessionsTrendDirection: sessionsTrend > 0 ? 'up' : 'down',
+            totalFeedback,
+            ratingBreakdown: {
+              5: todayRatings.filter(r => r === 5).length,
+              4: todayRatings.filter(r => r === 4).length,
+              3: todayRatings.filter(r => r === 3).length,
+              2: todayRatings.filter(r => r === 2).length,
+              1: todayRatings.filter(r => r === 1).length,
+            }
+          };
+        }
+
+        setVenueStats(stats);
+      } catch (error) {
+        console.error('Error fetching venue stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVenueStats();
+  }, [selectedVenueIds, allVenues]);
+
+  const toggleVenue = (venueId) => {
+    const newExpanded = new Set(expandedVenues);
+    if (newExpanded.has(venueId)) {
+      newExpanded.delete(venueId);
+    } else {
+      newExpanded.add(venueId);
+    }
+    setExpandedVenues(newExpanded);
+  };
+
+  const expandAll = () => {
+    setExpandedVenues(new Set(selectedVenueIds));
+  };
+
+  const collapseAll = () => {
+    setExpandedVenues(new Set());
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/overview')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Overview
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900">Venue Details</h1>
+        </div>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl p-6 border border-gray-100 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
+              <div className="h-32 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8">
+      {/* Header */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate('/overview')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Overview
+        </button>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Venue Details</h1>
+            <p className="text-gray-600 mt-1">
+              {isAllVenuesMode ? (
+                <>Detailed breakdown for <span className="font-semibold">all venues</span></>
+              ) : (
+                <>Detailed breakdown for <span className="font-semibold">{selectedVenueIds.length} selected venues</span></>
+              )}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={expandAll}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Expand All
+            </button>
+            <button
+              onClick={collapseAll}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Collapse All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Venue Breakdown */}
+      <div className="space-y-4">
+        {selectedVenueIds.map((venueId) => {
+          const stats = venueStats[venueId];
+          if (!stats) return null;
+
+          const isExpanded = expandedVenues.has(venueId);
+
+          return (
+            <ChartCard key={venueId} className="overflow-hidden">
+              {/* Venue Header */}
+              <button
+                onClick={() => toggleVenue(venueId)}
+                className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <h2 className="text-lg font-semibold text-gray-900">{stats.name}</h2>
+                    <p className="text-sm text-gray-600">
+                      {stats.todaySessions} sessions · {stats.totalFeedback} feedback items
+                    </p>
+                  </div>
+                </div>
+                {isExpanded ? (
+                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                )}
+              </button>
+
+              {/* Venue Details */}
+              {isExpanded && (
+                <div className="px-6 pb-6 border-t border-gray-100">
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                    <MetricCard
+                      icon={Users}
+                      title="Today's Sessions"
+                      value={stats.todaySessions.toString()}
+                      subtitle="Customer interactions"
+                      color="blue"
+                      trend={stats.sessionsTrend}
+                      trendDirection={stats.sessionsTrendDirection}
+                    />
+
+                    <MetricCard
+                      icon={Star}
+                      title="Satisfaction Score"
+                      value={stats.avgSatisfaction ? `${stats.avgSatisfaction}/5` : '--'}
+                      subtitle="Today's average"
+                      color="amber"
+                    />
+
+                    <MetricCard
+                      icon={Clock}
+                      title="Avg Response Time"
+                      value={stats.avgResponseTime}
+                      subtitle="To all feedback"
+                      color="green"
+                    />
+
+                    <MetricCard
+                      icon={Target}
+                      title="Completion Rate"
+                      value={stats.completionRate ? `${stats.completionRate}%` : '--'}
+                      subtitle="Issues resolved"
+                      color="purple"
+                    />
+
+                    <MetricCard
+                      icon={AlertTriangle}
+                      title="Active Alerts"
+                      value={stats.activeAlerts.toString()}
+                      subtitle="Requiring attention"
+                      color={stats.activeAlerts > 0 ? 'red' : 'green'}
+                    />
+
+                    <MetricCard
+                      icon={CheckCircle}
+                      title="Resolved Today"
+                      value={stats.resolvedToday.toString()}
+                      subtitle="Issues closed"
+                      color="green"
+                    />
+
+                    <MetricCard
+                      icon={Activity}
+                      title="Current Activity"
+                      value={stats.currentActivity}
+                      subtitle="Traffic level"
+                      color="indigo"
+                    />
+
+                    <MetricCard
+                      icon={TrendingUp}
+                      title="Today's Peak"
+                      value={stats.peakHour}
+                      subtitle="Busiest time"
+                      color="purple"
+                    />
+                  </div>
+
+                  {/* Rating Breakdown */}
+                  {stats.avgSatisfaction && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Rating Breakdown</h3>
+                      <div className="space-y-2">
+                        {[5, 4, 3, 2, 1].map((rating) => {
+                          const count = stats.ratingBreakdown[rating];
+                          const percentage = stats.totalFeedback > 0
+                            ? Math.round((count / stats.totalFeedback) * 100)
+                            : 0;
+
+                          return (
+                            <div key={rating} className="flex items-center gap-3">
+                              <div className="flex items-center gap-1 w-16">
+                                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                                <span className="text-sm font-medium text-gray-700">{rating}</span>
+                              </div>
+                              <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                              <div className="w-16 text-right">
+                                <span className="text-sm font-medium text-gray-900">{count}</span>
+                                <span className="text-xs text-gray-500 ml-1">({percentage}%)</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </ChartCard>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default OverviewDetails;

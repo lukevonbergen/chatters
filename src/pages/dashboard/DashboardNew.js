@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import perfLogger from '../../utils/performanceLogger';
 import OverviewStats from '../../components/dashboard/overview/OverviewStats';
@@ -11,11 +12,12 @@ import { ChartCard, ActivityCard } from '../../components/dashboard/layout/Moder
 import { DateRangeSelector, overviewPresetRanges } from '../../components/ui/date-range-selector';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
-import { Activity, TrendingUp, Calendar, Users, Star, BarChart3, Plus } from 'lucide-react';
+import { Activity, TrendingUp, Calendar, Users, Star, BarChart3, Plus, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DashboardNew = () => {
   usePageTitle('Overview');
+  const navigate = useNavigate();
   const {
     venueId,
     venueName,
@@ -483,10 +485,24 @@ const DashboardNew = () => {
 
       {/* Overview Stats */}
       {isMultiVenue ? (
-        <OverviewStats
-          multiVenueStats={aggregatedStats}
-          isMultiSite={true}
-        />
+        <div>
+          <OverviewStats
+            multiVenueStats={aggregatedStats}
+            isMultiSite={true}
+          />
+          {/* View More Button */}
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => navigate('/overview/details')}
+              className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 group"
+            >
+              <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600">
+                View detailed breakdown
+              </span>
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
+            </button>
+          </div>
+        </div>
       ) : (
         <OverviewStats />
       )}

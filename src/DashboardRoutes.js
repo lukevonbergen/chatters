@@ -48,6 +48,8 @@ import AccountBillingPage from './pages/dashboard/AccountBilling';
 import FeedbackSettings from './pages/dashboard/FeedbackSettings';
 import AllFeedback from './pages/dashboard/AllFeedback';
 import CustomDashboard from './pages/dashboard/CustomDashboard';
+import OverviewDetails from './pages/dashboard/OverviewDetails';
+import NPSReportDetail from './pages/dashboard/NPSReportDetail';
 // Full version (requires Google Business Profile API approval)
 // import GoogleReviewsPage from './pages/dashboard/GoogleReviews';
 
@@ -108,6 +110,7 @@ const DashboardRoutes = () => {
       {/* Authenticated app: venue context + dashboard frame */}
       <Route element={<DashboardShell />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/overview/details" element={<OverviewDetails />} />
         <Route path="/custom" element={<CustomDashboard />} />
 
         {/* Feedback Section */}
@@ -126,6 +129,7 @@ const DashboardRoutes = () => {
         <Route path="/reports/insights" element={<CustomerInsightsPage />} />
         <Route path="/reports/metrics" element={<ReportsMetricsPage />} />
         <Route path="/reports/nps" element={<ReportsNPSPage />} />
+        <Route path="/nps-report/:venueId" element={<NPSReportDetail />} />
         <Route path="/reports/builder" element={<ReportBuilderPage />} />
 
         {/* Reviews Section */}

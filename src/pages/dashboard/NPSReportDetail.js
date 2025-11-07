@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useVenue } from '../../context/VenueContext';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import usePageTitle from '../../hooks/usePageTitle';
 import { ChartCard } from '../../components/dashboard/layout/ModernCard';
-import { TrendingUp, TrendingDown, Minus, Mail, MailCheck, MailX, ChevronRight, Building2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Mail, MailCheck, MailX, ArrowLeft } from 'lucide-react';
 import {
   AreaChart,
   Area,
@@ -18,27 +17,39 @@ import {
   Cell,
 } from 'recharts';
 
-const ReportsNPS = () => {
-  usePageTitle('NPS Reports');
+const NPSReportDetail = () => {
+  const { venueId } = useParams();
   const navigate = useNavigate();
-  const { venueId, selectedVenueIds, isAllVenuesMode, allVenues } = useVenue();
+  const [venueName, setVenueName] = useState('');
+
+  usePageTitle(`NPS Report - ${venueName}`);
 
   const [loading, setLoading] = useState(true);
   const [npsData, setNpsData] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [dateRange, setDateRange] = useState('30'); // days
-  const [venueNPSData, setVenueNPSData] = useState({});
-
-  const isMultiVenue = selectedVenueIds.length > 1;
 
   useEffect(() => {
     if (!venueId) return;
-    if (isMultiVenue) {
-      loadMultiVenueNPSData();
-    } else {
-      loadNPSData();
+    loadVenueName();
+    loadNPSData();
+  }, [venueId, dateRange]);
+
+  const loadVenueName = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('venues')
+        .select('name')
+        .eq('id', venueId)
+        .single();
+
+      if (error) throw error;
+      setVenueName(data?.name || 'Unknown Venue');
+    } catch (error) {
+      console.error('Error loading venue name:', error);
+      setVenueName('Unknown Venue');
     }
-  }, [venueId, dateRange, isMultiVenue, selectedVenueIds]);
+  };
 
   const loadNPSData = async () => {
     try {
@@ -61,57 +72,6 @@ const ReportsNPS = () => {
       calculateNPSMetrics(data || []);
     } catch (error) {
       console.error('Error loading NPS data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadMultiVenueNPSData = async () => {
-    try {
-      setLoading(true);
-
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - parseInt(dateRange));
-
-      const venueData = {};
-
-      // Load NPS data for each venue
-      for (const vId of selectedVenueIds) {
-        const { data, error } = await supabase
-          .from('nps_submissions')
-          .select('*')
-          .eq('venue_id', vId)
-          .gte('created_at', startDate.toISOString())
-          .order('created_at', { ascending: true });
-
-        if (error) {
-          console.error(`Error loading NPS data for venue ${vId}:`, error);
-          continue;
-        }
-
-        const responses = data.filter((s) => s.score !== null);
-        const promoters = responses.filter((s) => s.score >= 9).length;
-        const detractors = responses.filter((s) => s.score <= 6).length;
-        const npsScore =
-          responses.length > 0
-            ? Math.round(((promoters - detractors) / responses.length) * 100)
-            : null;
-
-        const venue = allVenues.find((v) => v.id === vId);
-        venueData[vId] = {
-          name: venue?.name || 'Unknown Venue',
-          npsScore,
-          responses: responses.length,
-          sent: data.filter((s) => s.sent_at).length,
-          promoters,
-          passives: responses.filter((s) => s.score >= 7 && s.score <= 8).length,
-          detractors,
-        };
-      }
-
-      setVenueNPSData(venueData);
-    } catch (error) {
-      console.error('Error loading multi-venue NPS data:', error);
     } finally {
       setLoading(false);
     }
@@ -198,10 +158,6 @@ const ReportsNPS = () => {
     return <TrendingDown className="w-5 h-5 text-red-600" />;
   };
 
-  if (!venueId) {
-    return null;
-  }
-
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -210,120 +166,33 @@ const ReportsNPS = () => {
     );
   }
 
-  // Multi-venue list view
-  if (isMultiVenue) {
-    const sortedVenues = Object.entries(venueNPSData).sort((a, b) => {
-      const scoreA = a[1].npsScore !== null ? a[1].npsScore : -101;
-      const scoreB = b[1].npsScore !== null ? b[1].npsScore : -101;
-      return scoreB - scoreA;
-    });
-
+  if (!npsData) {
     return (
-      <div className="space-y-6">
-        <ChartCard
-          title="NPS Reports"
-          subtitle={isAllVenuesMode ? "All venues overview" : `${selectedVenueIds.length} selected venues`}
-          actions={
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Period:</label>
-              <select
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="7">Last 7 days</option>
-                <option value="30">Last 30 days</option>
-                <option value="90">Last 90 days</option>
-                <option value="365">Last year</option>
-              </select>
-            </div>
-          }
+      <div className="p-6">
+        <button
+          onClick={() => navigate('/reports/nps')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
         >
-          <div className="space-y-4">
-            {sortedVenues.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                No NPS data available for selected venues
-              </div>
-            ) : (
-              sortedVenues.map(([venueId, data]) => {
-                const getNPSColor = (score) => {
-                  if (score >= 50) return 'text-green-600 bg-green-50 border-green-200';
-                  if (score >= 0) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-                  return 'text-red-600 bg-red-50 border-red-200';
-                };
-
-                return (
-                  <button
-                    key={venueId}
-                    onClick={() => navigate(`/nps-report/${venueId}`)}
-                    className="w-full bg-white border border-gray-200 rounded-lg p-6 hover:border-blue-500 hover:shadow-md transition-all duration-200 group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Building2 className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div className="text-left">
-                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                            {data.name}
-                          </h3>
-                          <p className="text-sm text-gray-600 mt-0.5">
-                            {data.responses} responses · {data.sent} emails sent
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-6">
-                        {/* NPS Score */}
-                        <div className="text-center">
-                          {data.npsScore !== null ? (
-                            <div className={`text-3xl font-bold mb-1 ${data.npsScore >= 50 ? 'text-green-600' : data.npsScore >= 0 ? 'text-yellow-600' : 'text-red-600'}`}>
-                              {data.npsScore}
-                            </div>
-                          ) : (
-                            <div className="text-3xl font-bold text-gray-400 mb-1">—</div>
-                          )}
-                          <div className="text-xs text-gray-600 font-medium">NPS Score</div>
-                        </div>
-
-                        {/* Breakdown */}
-                        <div className="flex gap-4">
-                          <div className="text-center">
-                            <div className="text-xl font-bold text-green-600">{data.promoters}</div>
-                            <div className="text-xs text-gray-600">Promoters</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-xl font-bold text-yellow-600">{data.passives}</div>
-                            <div className="text-xs text-gray-600">Passives</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-xl font-bold text-red-600">{data.detractors}</div>
-                            <div className="text-xs text-gray-600">Detractors</div>
-                          </div>
-                        </div>
-
-                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </ChartCard>
+          <ArrowLeft className="w-4 h-4" />
+          Back to NPS Reports
+        </button>
+        <div className="text-gray-500">No NPS data available for this venue</div>
       </div>
     );
   }
 
-  // Single venue view
-  if (!npsData) {
-    return <div className="p-6 text-gray-500">No NPS data available</div>;
-  }
-
   return (
     <div className="space-y-6">
+      <button
+        onClick={() => navigate('/reports/nps')}
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to NPS Reports
+      </button>
+
       <ChartCard
-        title="NPS Reports"
+        title={`NPS Report - ${venueName}`}
         subtitle="Net Promoter Score analytics and customer sentiment"
         actions={
           <div className="flex items-center space-x-2">
@@ -687,4 +556,4 @@ const ReportsNPS = () => {
   );
 };
 
-export default ReportsNPS;
+export default NPSReportDetail;
