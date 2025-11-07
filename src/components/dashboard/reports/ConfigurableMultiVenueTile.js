@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useVenue } from '../../../context/VenueContext';
-import { Settings, X, BarChart3, TrendingUp, Star, AlertTriangle, Award, ThumbsUp } from 'lucide-react';
+import { Settings, X, BarChart3, TrendingUp, Star, AlertTriangle, Award, ThumbsUp, Activity } from 'lucide-react';
 
 const METRIC_CONFIG = {
   total_feedback: {
@@ -413,6 +413,67 @@ const METRIC_CONFIG = {
         };
       });
     }
+  },
+
+  venue_activity: {
+    title: 'Venue Activity Heatmap',
+    icon: Activity,
+    fetchData: async (venueIds, dateRange) => {
+      const { data } = await supabase
+        .from('feedback')
+        .select('session_id, venue_id')
+        .in('venue_id', venueIds)
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString());
+
+      // Group by venue and count unique sessions
+      const venueStats = {};
+      venueIds.forEach(id => venueStats[id] = new Set());
+
+      (data || []).forEach(item => {
+        if (venueStats[item.venue_id]) {
+          venueStats[item.venue_id].add(item.session_id);
+        }
+      });
+
+      // Convert to array with counts
+      const statsArray = Object.entries(venueStats).map(([venueId, sessions]) => ({
+        venueId,
+        value: sessions.size
+      }));
+
+      // Calculate activity levels (low, medium, high, very high)
+      const counts = statsArray.map(s => s.value);
+      const maxCount = Math.max(...counts, 1);
+
+      return statsArray.map(stat => {
+        const percentage = (stat.value / maxCount) * 100;
+        let activityLevel = 'Low';
+        let activityColor = 'bg-gray-100 text-gray-700';
+
+        if (percentage >= 75) {
+          activityLevel = 'Very High';
+          activityColor = 'bg-green-500 text-white';
+        } else if (percentage >= 50) {
+          activityLevel = 'High';
+          activityColor = 'bg-green-400 text-white';
+        } else if (percentage >= 25) {
+          activityLevel = 'Medium';
+          activityColor = 'bg-yellow-400 text-gray-900';
+        } else if (stat.value > 0) {
+          activityLevel = 'Low';
+          activityColor = 'bg-orange-400 text-white';
+        }
+
+        return {
+          venueId: stat.venueId,
+          value: stat.value,
+          displayValue: `${stat.value} sessions`,
+          activityLevel,
+          activityColor
+        };
+      });
+    }
   }
 };
 
@@ -548,7 +609,14 @@ const ConfigurableMultiVenueTile = ({ metricType, position, onRemove, onChangeMe
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <span className="text-sm font-medium text-gray-700">{stat.venueName}</span>
-                <span className="text-sm font-semibold text-gray-900">{stat.displayValue}</span>
+                <div className="flex items-center gap-2">
+                  {stat.activityLevel && (
+                    <span className={`px-2 py-1 text-xs font-medium rounded ${stat.activityColor}`}>
+                      {stat.activityLevel}
+                    </span>
+                  )}
+                  <span className="text-sm font-semibold text-gray-900">{stat.displayValue}</span>
+                </div>
               </div>
             ))
           )}
