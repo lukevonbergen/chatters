@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useVenue } from '../../../context/VenueContext';
-import { Settings, X, BarChart3, TrendingUp, Star, AlertTriangle, Award, ThumbsUp, Activity } from 'lucide-react';
+import { Settings, X, BarChart3, TrendingUp, Star, AlertTriangle, Award, ThumbsUp, Activity, Target } from 'lucide-react';
 
 const METRIC_CONFIG = {
   total_feedback: {
@@ -474,6 +474,73 @@ const METRIC_CONFIG = {
         };
       });
     }
+  },
+
+  resolution_rate: {
+    title: 'Resolution Rate',
+    icon: Target,
+    fetchData: async (venueIds, dateRange) => {
+      const { data } = await supabase
+        .from('feedback')
+        .select('session_id, venue_id, is_actioned, dismissed')
+        .in('venue_id', venueIds)
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString());
+
+      // Group by venue and session
+      const venueSessions = {};
+      venueIds.forEach(id => venueSessions[id] = {});
+
+      (data || []).forEach(item => {
+        if (!venueSessions[item.venue_id][item.session_id]) {
+          venueSessions[item.venue_id][item.session_id] = [];
+        }
+        venueSessions[item.venue_id][item.session_id].push(item);
+      });
+
+      return Object.entries(venueSessions).map(([venueId, sessions]) => {
+        const sessionArray = Object.values(sessions);
+        const total = sessionArray.length;
+        const resolved = sessionArray.filter(session =>
+          session.every(item => item.is_actioned === true || item.dismissed === true)
+        ).length;
+        const percentage = total > 0 ? Math.round((resolved / total) * 100) : 0;
+
+        // Determine performance level and color
+        let performanceLevel = 'Poor';
+        let performanceColor = 'bg-red-500 text-white';
+        let progressBarColor = 'bg-red-500';
+
+        if (percentage >= 90) {
+          performanceLevel = 'Excellent';
+          performanceColor = 'bg-green-500 text-white';
+          progressBarColor = 'bg-green-500';
+        } else if (percentage >= 75) {
+          performanceLevel = 'Good';
+          performanceColor = 'bg-blue-500 text-white';
+          progressBarColor = 'bg-blue-500';
+        } else if (percentage >= 60) {
+          performanceLevel = 'Fair';
+          performanceColor = 'bg-yellow-500 text-gray-900';
+          progressBarColor = 'bg-yellow-500';
+        } else if (percentage >= 40) {
+          performanceLevel = 'Below Average';
+          performanceColor = 'bg-orange-500 text-white';
+          progressBarColor = 'bg-orange-500';
+        }
+
+        return {
+          venueId,
+          value: percentage,
+          displayValue: `${percentage}%`,
+          resolvedCount: resolved,
+          totalCount: total,
+          performanceLevel,
+          performanceColor,
+          progressBarColor
+        };
+      });
+    }
   }
 };
 
@@ -603,22 +670,62 @@ const ConfigurableMultiVenueTile = ({ metricType, position, onRemove, onChangeMe
               <p className="text-sm">No data available</p>
             </div>
           ) : (
-            venueStats.map((stat) => (
-              <div
-                key={stat.venueId}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <span className="text-sm font-medium text-gray-700">{stat.venueName}</span>
-                <div className="flex items-center gap-2">
-                  {stat.activityLevel && (
-                    <span className={`px-2 py-1 text-xs font-medium rounded ${stat.activityColor}`}>
-                      {stat.activityLevel}
-                    </span>
-                  )}
-                  <span className="text-sm font-semibold text-gray-900">{stat.displayValue}</span>
+            venueStats.map((stat) => {
+              // Special rendering for resolution_rate with progress bar
+              if (metricType === 'resolution_rate') {
+                return (
+                  <div
+                    key={stat.venueId}
+                    className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">{stat.venueName}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 text-xs font-medium rounded ${stat.performanceColor}`}>
+                          {stat.performanceLevel}
+                        </span>
+                        <span className="text-lg font-bold text-gray-900">{stat.displayValue}</span>
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full ${stat.progressBarColor} transition-all duration-500`}
+                        style={{ width: `${stat.value}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-xs text-gray-500">
+                        {stat.resolvedCount} of {stat.totalCount} resolved
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Default rendering for other metrics
+              return (
+                <div
+                  key={stat.venueId}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <span className="text-sm font-medium text-gray-700">{stat.venueName}</span>
+                  <div className="flex items-center gap-2">
+                    {stat.activityLevel && (
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${stat.activityColor}`}>
+                        {stat.activityLevel}
+                      </span>
+                    )}
+                    {stat.performanceLevel && (
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${stat.performanceColor}`}>
+                        {stat.performanceLevel}
+                      </span>
+                    )}
+                    <span className="text-sm font-semibold text-gray-900">{stat.displayValue}</span>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
