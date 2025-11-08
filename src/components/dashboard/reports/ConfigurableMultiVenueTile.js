@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useVenue } from '../../../context/VenueContext';
-import { Settings, X, BarChart3, TrendingUp, Star, AlertTriangle, Award, ThumbsUp, Activity, Target } from 'lucide-react';
+import { Settings, X, BarChart3, Star, AlertTriangle, Award, ThumbsUp, Activity, Target } from 'lucide-react';
 
 const METRIC_CONFIG = {
   total_feedback: {
