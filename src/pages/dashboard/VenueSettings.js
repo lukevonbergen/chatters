@@ -41,7 +41,11 @@ const VenueSettingsPage = () => {
 
   // Fetch venue metrics (NPS, feedback count, resolution rate)
   useEffect(() => {
-    if (allVenues.length <= 1 || viewMode !== 'list') return;
+    console.log('Metrics useEffect triggered:', { venuesCount: allVenues.length, viewMode, isMultiVenueMode });
+    if (allVenues.length <= 1 || viewMode !== 'list') {
+      console.log('Skipping metrics fetch - condition not met');
+      return;
+    }
 
     const fetchVenueMetrics = async () => {
       setLoadingMetrics(true);
@@ -51,13 +55,20 @@ const VenueSettingsPage = () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+      console.log('Fetching metrics for venues:', allVenues.map(v => v.name));
+
       for (const venue of allVenues) {
         // Fetch all feedback for this venue in last 30 days
-        const { data: feedbackData } = await supabase
+        const { data: feedbackData, error } = await supabase
           .from('feedback')
           .select('session_id, nps_score, is_actioned, dismissed')
           .eq('venue_id', venue.id)
           .gte('created_at', thirtyDaysAgo.toISOString());
+
+        if (error) {
+          console.error(`Error fetching feedback for venue ${venue.name}:`, error);
+        }
+        console.log(`Venue ${venue.name} feedback count:`, feedbackData?.length || 0);
 
         // Calculate NPS
         const npsScores = (feedbackData || [])
@@ -101,6 +112,7 @@ const VenueSettingsPage = () => {
         };
       }
 
+      console.log('Final metrics:', metrics);
       setVenueMetrics(metrics);
       setLoadingMetrics(false);
     };
