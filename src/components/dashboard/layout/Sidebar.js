@@ -286,12 +286,29 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     navigate('/signin');
   };
 
+  // Close sidebar on mobile when clicking a link
+  const handleMobileLinkClick = () => {
+    if (window.innerWidth < 1024) {
+      setCollapsed(true);
+    }
+  };
+
   return (
     <>
+      {/* Mobile Backdrop */}
+      {!collapsed && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setCollapsed(true)}
+        />
+      )}
+
       {/* Sidebar */}
       <div
         className={`fixed left-0 top-0 z-40 h-screen bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${
-          collapsed ? 'w-16' : 'w-64'
+          collapsed
+            ? '-translate-x-full lg:translate-x-0 lg:w-16'
+            : 'translate-x-0 w-64'
         }`}
       >
         {/* Sidebar Header */}
@@ -396,6 +413,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                 ) : (
                   <Link
                     to={item.path}
+                    onClick={handleMobileLinkClick}
                     className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
                       itemActive
                         ? 'bg-gray-100 text-gray-900 shadow-sm'
@@ -426,6 +444,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         <Link
                           key={subItem.path}
                           to={subItem.path}
+                          onClick={handleMobileLinkClick}
                           className={`flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors group ${
                             isActive(subItem.path)
                               ? 'bg-blue-50 text-blue-700 font-medium'
@@ -496,6 +515,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                 ) : (
                   <Link
                     to={item.path}
+                    onClick={handleMobileLinkClick}
                     className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
                       itemActive
                         ? 'bg-gray-100 text-gray-900 shadow-sm'
@@ -521,6 +541,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         <Link
                           key={subItem.path}
                           to={subItem.path}
+                          onClick={handleMobileLinkClick}
                           className={`flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors group ${
                             isActive(subItem.path)
                               ? 'bg-blue-50 text-blue-700 font-medium'

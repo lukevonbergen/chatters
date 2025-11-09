@@ -66,16 +66,18 @@ const ModernDashboardFrame = ({ children }) => {
     loadUser();
   }, [navigate]);
 
-  // Handle responsive sidebar
+  // Handle responsive sidebar - start collapsed on mobile
   useEffect(() => {
     const handleResize = () => {
+      // On mobile, always start collapsed
+      // On desktop, use saved preference or default to expanded
       if (window.innerWidth < 1024) {
         setSidebarCollapsed(true);
       }
     };
 
-    window.addEventListener('resize', handleResize);
     handleResize(); // Check initial size
+    window.addEventListener('resize', handleResize);
 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -108,16 +110,17 @@ const ModernDashboardFrame = ({ children }) => {
       {/* Header */}
       <ModernHeader
         sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed}
         trialInfo={trialInfo}
       />
 
       {/* Main Content */}
       <main
         className={`transition-all duration-300 ${
-          sidebarCollapsed ? 'ml-16' : 'ml-64'
+          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
         } mt-16`}
       >
-        <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
           {children}
         </div>
       </main>
