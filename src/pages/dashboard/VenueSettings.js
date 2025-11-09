@@ -41,9 +41,7 @@ const VenueSettingsPage = () => {
 
   // Fetch venue metrics (NPS, feedback count, resolution rate)
   useEffect(() => {
-    console.log('Metrics useEffect triggered:', { venuesCount: allVenues.length, viewMode, isMultiVenueMode });
     if (allVenues.length <= 1 || viewMode !== 'list') {
-      console.log('Skipping metrics fetch - condition not met');
       return;
     }
 
@@ -55,24 +53,17 @@ const VenueSettingsPage = () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      console.log('Fetching metrics for venues:', allVenues.map(v => v.name));
-
       for (const venue of allVenues) {
-        // Fetch all feedback for this venue in last 30 days
-        const { data: feedbackData, error } = await supabase
-          .from('feedback')
-          .select('session_id, nps_score, is_actioned, dismissed')
+        // Fetch NPS submissions for this venue in last 30 days
+        const { data: npsSubmissions, error: npsError } = await supabase
+          .from('nps_submissions')
+          .select('score')
           .eq('venue_id', venue.id)
           .gte('created_at', thirtyDaysAgo.toISOString());
 
-        if (error) {
-          console.error(`Error fetching feedback for venue ${venue.name}:`, error);
-        }
-        console.log(`Venue ${venue.name} feedback count:`, feedbackData?.length || 0);
-
         // Calculate NPS
-        const npsScores = (feedbackData || [])
-          .map(f => f.nps_score)
+        const npsScores = (npsSubmissions || [])
+          .map(s => s.score)
           .filter(score => score !== null && score !== undefined);
 
         let nps = null;
@@ -81,6 +72,13 @@ const VenueSettingsPage = () => {
           const detractors = npsScores.filter(s => s <= 6).length;
           nps = Math.round(((promoters - detractors) / npsScores.length) * 100);
         }
+
+        // Fetch all feedback for this venue in last 30 days
+        const { data: feedbackData, error: feedbackError } = await supabase
+          .from('feedback')
+          .select('session_id, is_actioned, dismissed')
+          .eq('venue_id', venue.id)
+          .gte('created_at', thirtyDaysAgo.toISOString());
 
         // Calculate unique sessions (total feedback)
         const uniqueSessions = new Set(
@@ -112,7 +110,6 @@ const VenueSettingsPage = () => {
         };
       }
 
-      console.log('Final metrics:', metrics);
       setVenueMetrics(metrics);
       setLoadingMetrics(false);
     };
