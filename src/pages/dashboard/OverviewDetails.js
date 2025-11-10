@@ -104,6 +104,14 @@ const OverviewDetails = () => {
     );
   }
 
+  // Helper to get color based on NPS score
+  const getNPSColor = (nps) => {
+    if (nps === null || nps === undefined) return '#9CA3AF'; // gray-400
+    if (nps >= 50) return '#10B981'; // green-500
+    if (nps >= 0) return '#F59E0B'; // amber-500
+    return '#EF4444'; // red-500
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -114,46 +122,77 @@ const OverviewDetails = () => {
         </p>
       </div>
 
-      {/* NPS Scores Tile */}
+      {/* NPS Scores Grid */}
       <ChartCard className="shadow-sm">
-        <div className="p-8">
+        <div className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <Star className="w-6 h-6 text-blue-600" />
-            <h2 className="text-xl font-semibold text-gray-900">NPS Scores by Venue</h2>
+            <Star className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-semibold text-gray-900">NPS Scores by Venue</h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {allVenues.map((venue) => {
               const stats = venueStats[venue.id];
               if (!stats) return null;
 
-              const npsBadge = getNPSBadge(stats.nps);
+              const nps = stats.nps !== null ? stats.nps : 0;
+              const color = getNPSColor(stats.nps);
+
+              // Calculate percentage for donut (NPS ranges from -100 to 100, normalize to 0-100)
+              const normalizedNPS = stats.nps !== null ? ((stats.nps + 100) / 200) * 100 : 0;
+              const circumference = 2 * Math.PI * 45;
+              const strokeDashoffset = circumference - (normalizedNPS / 100) * circumference;
 
               return (
                 <div
                   key={venue.id}
-                  className={`flex items-center justify-between p-6 rounded-xl border-2 transition-all hover:shadow-md ${npsBadge.color}`}
+                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-semibold text-gray-900">{stats.name}</h3>
+                  {/* Donut Chart */}
+                  <div className="relative w-24 h-24 mx-auto mb-3">
+                    <svg className="transform -rotate-90 w-24 h-24">
+                      {/* Background circle */}
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="45"
+                        stroke="#E5E7EB"
+                        strokeWidth="8"
+                        fill="none"
+                      />
+                      {/* Progress circle */}
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="45"
+                        stroke={color}
+                        strokeWidth="8"
+                        fill="none"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        strokeLinecap="round"
+                        className="transition-all duration-500"
+                      />
+                    </svg>
+                    {/* Center text */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold" style={{ color }}>
+                          {stats.nps !== null ? stats.nps : '--'}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <div className="text-sm text-gray-600 mb-1">NPS Score</div>
-                      <div className={`text-4xl font-bold ${npsBadge.textColor}`}>
-                        {npsBadge.label}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-600 mb-1">Responses</div>
-                      <div className="text-2xl font-semibold text-gray-900">
-                        {stats.responseCount}
-                      </div>
-                    </div>
-                  </div>
+                  {/* Venue name */}
+                  <h3 className="text-sm font-semibold text-gray-900 text-center mb-1 truncate" title={stats.name}>
+                    {stats.name}
+                  </h3>
+
+                  {/* Response count */}
+                  <p className="text-xs text-gray-500 text-center">
+                    {stats.responseCount} responses
+                  </p>
                 </div>
               );
             })}
