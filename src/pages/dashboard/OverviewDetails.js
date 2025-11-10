@@ -84,21 +84,8 @@ const OverviewDetails = () => {
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Portfolio Overview</h1>
-          <p className="text-gray-600 text-lg">
-            Comprehensive performance metrics for <span className="font-semibold">all {allVenues.length} venues</span>
-          </p>
-        </div>
-        <div className="space-y-6">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl p-8 border border-gray-100 shadow-sm animate-pulse">
-              <div className="h-6 bg-gray-200 rounded w-48 mb-6"></div>
-              <div className="h-40 bg-gray-200 rounded"></div>
-            </div>
-          ))}
-        </div>
+      <div className="p-6 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -112,106 +99,94 @@ const OverviewDetails = () => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Portfolio Overview</h1>
-        <p className="text-gray-600 text-lg">
-          NPS scores for <span className="font-semibold">all {allVenues.length} venues</span> (Last 30 days)
-        </p>
-      </div>
+    <div className="space-y-6">
+      <ChartCard
+        title="Portfolio Overview"
+        subtitle={`NPS scores for all ${allVenues.length} venues (Last 30 days)`}
+      >
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          {allVenues
+            .map(venue => ({
+              ...venue,
+              stats: venueStats[venue.id]
+            }))
+            .filter(venue => venue.stats) // Only show venues with stats
+            .sort((a, b) => {
+              // Sort by NPS score: highest first, nulls last
+              const aNps = a.stats.nps;
+              const bNps = b.stats.nps;
 
-      {/* NPS Scores Grid */}
-      <ChartCard className="shadow-sm">
-        <div className="px-6 pb-6 pt-4">
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">NPS Scores by Venue</h2>
-          </div>
+              if (aNps === null && bNps === null) return 0;
+              if (aNps === null) return 1;
+              if (bNps === null) return -1;
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {allVenues
-              .map(venue => ({
-                ...venue,
-                stats: venueStats[venue.id]
-              }))
-              .filter(venue => venue.stats) // Only show venues with stats
-              .sort((a, b) => {
-                // Sort by NPS score: highest first, nulls last
-                const aNps = a.stats.nps;
-                const bNps = b.stats.nps;
+              return bNps - aNps; // Descending order
+            })
+            .map((venue) => {
+            const stats = venueStats[venue.id];
+            if (!stats) return null;
 
-                if (aNps === null && bNps === null) return 0;
-                if (aNps === null) return 1;
-                if (bNps === null) return -1;
+            const nps = stats.nps !== null ? stats.nps : 0;
+            const color = getNPSColor(stats.nps);
 
-                return bNps - aNps; // Descending order
-              })
-              .map((venue) => {
-              const stats = venueStats[venue.id];
-              if (!stats) return null;
+            // Calculate percentage for donut (NPS ranges from -100 to 100, normalize to 0-100)
+            const normalizedNPS = stats.nps !== null ? ((stats.nps + 100) / 200) * 100 : 0;
+            const circumference = 2 * Math.PI * 40;
+            const strokeDashoffset = circumference - (normalizedNPS / 100) * circumference;
 
-              const nps = stats.nps !== null ? stats.nps : 0;
-              const color = getNPSColor(stats.nps);
-
-              // Calculate percentage for donut (NPS ranges from -100 to 100, normalize to 0-100)
-              const normalizedNPS = stats.nps !== null ? ((stats.nps + 100) / 200) * 100 : 0;
-              const circumference = 2 * Math.PI * 40;
-              const strokeDashoffset = circumference - (normalizedNPS / 100) * circumference;
-
-              return (
-                <div
-                  key={venue.id}
-                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all"
-                >
-                  {/* Donut Chart */}
-                  <div className="relative w-24 h-24 mx-auto mb-3">
-                    <svg className="transform -rotate-90 w-24 h-24" viewBox="0 0 96 96">
-                      {/* Background circle */}
-                      <circle
-                        cx="48"
-                        cy="48"
-                        r="40"
-                        stroke="#E5E7EB"
-                        strokeWidth="8"
-                        fill="none"
-                      />
-                      {/* Progress circle */}
-                      <circle
-                        cx="48"
-                        cy="48"
-                        r="40"
-                        stroke={color}
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={strokeDashoffset}
-                        strokeLinecap="round"
-                        className="transition-all duration-500"
-                      />
-                    </svg>
-                    {/* Center text */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold" style={{ color }}>
-                          {stats.nps !== null ? stats.nps : '--'}
-                        </div>
+            return (
+              <div
+                key={venue.id}
+                className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all"
+              >
+                {/* Donut Chart */}
+                <div className="relative w-24 h-24 mx-auto mb-3">
+                  <svg className="transform -rotate-90 w-24 h-24" viewBox="0 0 96 96">
+                    {/* Background circle */}
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="40"
+                      stroke="#E5E7EB"
+                      strokeWidth="8"
+                      fill="none"
+                    />
+                    {/* Progress circle */}
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="40"
+                      stroke={color}
+                      strokeWidth="8"
+                      fill="none"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      className="transition-all duration-500"
+                    />
+                  </svg>
+                  {/* Center text */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold" style={{ color }}>
+                        {stats.nps !== null ? stats.nps : '--'}
                       </div>
                     </div>
                   </div>
-
-                  {/* Venue name */}
-                  <h3 className="text-sm font-semibold text-gray-900 text-center mb-1 truncate" title={stats.name}>
-                    {stats.name}
-                  </h3>
-
-                  {/* Response count */}
-                  <p className="text-xs text-gray-500 text-center">
-                    {stats.responseCount} responses
-                  </p>
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Venue name */}
+                <h3 className="text-sm font-semibold text-gray-900 text-center mb-1 truncate" title={stats.name}>
+                  {stats.name}
+                </h3>
+
+                {/* Response count */}
+                <p className="text-xs text-gray-500 text-center">
+                  {stats.responseCount} responses
+                </p>
+              </div>
+            );
+          })}
         </div>
       </ChartCard>
     </div>
