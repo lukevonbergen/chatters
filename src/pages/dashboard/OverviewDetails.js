@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Star } from 'lucide-react';
 import { useVenue } from '../../context/VenueContext';
 import { supabase } from '../../utils/supabase';
 import { ChartCard } from '../../components/dashboard/layout/ModernCard';
@@ -124,14 +123,30 @@ const OverviewDetails = () => {
 
       {/* NPS Scores Grid */}
       <ChartCard className="shadow-sm">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Star className="w-5 h-5 text-blue-600" />
+        <div className="px-6 pb-6 pt-4">
+          <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900">NPS Scores by Venue</h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {allVenues.map((venue) => {
+            {allVenues
+              .map(venue => ({
+                ...venue,
+                stats: venueStats[venue.id]
+              }))
+              .filter(venue => venue.stats) // Only show venues with stats
+              .sort((a, b) => {
+                // Sort by NPS score: highest first, nulls last
+                const aNps = a.stats.nps;
+                const bNps = b.stats.nps;
+
+                if (aNps === null && bNps === null) return 0;
+                if (aNps === null) return 1;
+                if (bNps === null) return -1;
+
+                return bNps - aNps; // Descending order
+              })
+              .map((venue) => {
               const stats = venueStats[venue.id];
               if (!stats) return null;
 
@@ -140,7 +155,7 @@ const OverviewDetails = () => {
 
               // Calculate percentage for donut (NPS ranges from -100 to 100, normalize to 0-100)
               const normalizedNPS = stats.nps !== null ? ((stats.nps + 100) / 200) * 100 : 0;
-              const circumference = 2 * Math.PI * 45;
+              const circumference = 2 * Math.PI * 40;
               const strokeDashoffset = circumference - (normalizedNPS / 100) * circumference;
 
               return (
@@ -150,12 +165,12 @@ const OverviewDetails = () => {
                 >
                   {/* Donut Chart */}
                   <div className="relative w-24 h-24 mx-auto mb-3">
-                    <svg className="transform -rotate-90 w-24 h-24">
+                    <svg className="transform -rotate-90 w-24 h-24" viewBox="0 0 96 96">
                       {/* Background circle */}
                       <circle
                         cx="48"
                         cy="48"
-                        r="45"
+                        r="40"
                         stroke="#E5E7EB"
                         strokeWidth="8"
                         fill="none"
@@ -164,7 +179,7 @@ const OverviewDetails = () => {
                       <circle
                         cx="48"
                         cy="48"
-                        r="45"
+                        r="40"
                         stroke={color}
                         strokeWidth="8"
                         fill="none"
