@@ -133,7 +133,7 @@ export const VenueProvider = ({ children }) => {
             'venues:impersonation',
             supabase
               .from('venues')
-              .select('id, name')
+              .select('id, name, address, phone, website')
               .eq('account_id', accountId)
               .order('name')
           );
@@ -205,7 +205,7 @@ export const VenueProvider = ({ children }) => {
             'venues:master',
             supabase
               .from('venues')
-              .select('id, name')
+              .select('id, name, address, phone, website')
               .eq('account_id', accountId)
           );
           const venues = venuesResult.data;
