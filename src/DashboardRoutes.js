@@ -110,8 +110,11 @@ const DashboardRoutes = () => {
       {/* Authenticated app: venue context + dashboard frame */}
       <Route element={<DashboardShell />}>
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/overview/details" element={<OverviewDetails />} />
-        <Route path="/custom" element={<CustomDashboard />} />
+
+        {/* Multi-Venue Section */}
+        <Route path="/multi-venue/venues" element={<VenueSettingsPage />} />
+        <Route path="/multi-venue/overview" element={<OverviewDetails />} />
+        <Route path="/multi-venue/dashboard" element={<CustomDashboard />} />
 
         {/* Feedback Section */}
         <Route path="/feedback/qr" element={<FeedbackQRPage />} />
@@ -153,14 +156,14 @@ const DashboardRoutes = () => {
         <Route path="/staff" element={<Navigate to="/staff/leaderboard" replace />} />
         
         {/* Settings Section */}
-        <Route path="/settings/venues" element={<VenueSettingsPage />} />
         <Route path="/settings/venue-details" element={<VenueSettingsPage />} />
         <Route path="/settings/feedback" element={<FeedbackSettings />} />
         <Route path="/settings/branding" element={<SettingsBrandingPage />} />
         <Route path="/settings/integrations" element={<IntegrationsSettingsPage />} />
         
         {/* Legacy settings routes */}
-        <Route path="/settings" element={<Navigate to="/settings/venues" replace />} />
+        <Route path="/settings" element={<Navigate to="/settings/venue-details" replace />} />
+        <Route path="/settings/venues" element={<Navigate to="/multi-venue/venues" replace />} />
         <Route path="/settings/billing" element={<Navigate to="/account/billing" replace />} />
         
         {/* Account Settings Section */}
@@ -170,6 +173,11 @@ const DashboardRoutes = () => {
         {/* Other */}
         <Route path="/floorplan" element={<Floorplan />} />
       </Route>
+
+      {/* Legacy multi-venue route redirects */}
+      <Route path="/overview/details" element={<Navigate to="/multi-venue/overview" replace />} />
+      <Route path="/custom" element={<Navigate to="/multi-venue/dashboard" replace />} />
+      <Route path="/venues" element={<Navigate to="/multi-venue/venues" replace />} />
 
       {/* Default / legacy */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

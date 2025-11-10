@@ -129,24 +129,24 @@ const multiVenueNavItems = [
     id: 'venues-management',
     label: 'Venues',
     icon: Building2,
-    path: '/settings/venues',
+    path: '/multi-venue/venues',
     color: 'text-indigo-600'
   },
   {
     id: 'multi-dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard,
-    path: '/custom',
+    path: '/multi-venue/dashboard',
     color: 'text-blue-600'
   },
   {
     id: 'multi-reporting',
     label: 'Reporting',
     icon: BarChart3,
-    path: '/reports/feedback',
+    path: '/multi-venue/overview',
     color: 'text-purple-600',
     subItems: [
-      { label: 'Portfolio Overview', path: '/overview/details', icon: TrendingUp },
+      { label: 'Portfolio Overview', path: '/multi-venue/overview', icon: TrendingUp },
       { label: 'Venue Comparison', path: '/reports/nps', icon: Building2 },
       { label: 'Custom Reports', path: '/reports/builder', icon: FileText }
     ]

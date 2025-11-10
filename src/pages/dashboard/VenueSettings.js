@@ -5,7 +5,7 @@ import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
 import VenueTab from '../../components/dashboard/settings/VenueTab';
-import { Building2, ChevronRight, MapPin, Phone, Globe, Edit2, ArrowLeft, TrendingUp, TrendingDown, MessageSquare, CheckCircle } from 'lucide-react';
+import { Building2, ChevronRight, MapPin, Phone, Globe, Edit2, TrendingUp, TrendingDown, MessageSquare, CheckCircle } from 'lucide-react';
 
 const VenueSettingsPage = () => {
   const location = useLocation();
@@ -13,12 +13,13 @@ const VenueSettingsPage = () => {
 
   // Determine if we're in multi-venue list mode (accessed from Multi Venue > Venues)
   // vs single-venue edit mode (accessed from Venue Settings submenu)
-  // /settings/venues = Multi Venue list view (only for multi-venue users)
+  // /multi-venue/venues = Multi Venue list view (only for multi-venue users)
   // /settings/venue-details = Single venue edit form (always)
   const isVenueDetailsRoute = location.pathname === '/settings/venue-details';
+  const isMultiVenueRoute = location.pathname === '/multi-venue/venues';
   const initialViewMode = isVenueDetailsRoute ? 'edit' : 'list';
   const [viewMode, setViewMode] = useState(initialViewMode);
-  const isMultiVenueMode = allVenues.length > 1 && viewMode === 'list' && !isVenueDetailsRoute;
+  const isMultiVenueMode = isMultiVenueRoute && allVenues.length > 1;
 
   usePageTitle(isMultiVenueMode ? 'Venues Management' : 'Venue Settings');
 
@@ -473,17 +474,6 @@ const VenueSettingsPage = () => {
   // Single-venue edit mode: Show edit form for current venue
   return (
     <div className="space-y-6">
-      {/* Back button for multi-venue users */}
-      {allVenues.length > 1 && (
-        <button
-          onClick={() => setViewMode('list')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Venues List
-        </button>
-      )}
-
       <ChartCard
         title="Venue Settings"
         subtitle="Configure your venue information and location details"

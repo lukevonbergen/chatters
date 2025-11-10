@@ -47,6 +47,19 @@ const ModernHeader = ({ sidebarCollapsed, setSidebarCollapsed, trialInfo }) => {
       return { id: 'account', label: 'Account Settings', icon: Settings, path: '/account' };
     }
 
+    // Multi-Venue Routes
+    if (currentPath === '/multi-venue/venues') {
+      return { id: 'venues-management', label: 'Venues', icon: Settings, path: '/multi-venue/venues' };
+    }
+
+    if (currentPath === '/multi-venue/overview') {
+      return { id: 'portfolio-overview', label: 'Portfolio Overview', icon: BarChart3, path: '/multi-venue/overview' };
+    }
+
+    if (currentPath === '/multi-venue/dashboard') {
+      return { id: 'custom-dashboard', label: 'Multi-Venue Dashboard', icon: BarChart3, path: '/multi-venue/dashboard' };
+    }
+
     // Special handling for different path patterns
     if (currentPath.startsWith('/settings/')) {
       return mainMenuItems.find(item => item.id === 'settings') || mainMenuItems[0];
@@ -56,12 +69,16 @@ const ModernHeader = ({ sidebarCollapsed, setSidebarCollapsed, trialInfo }) => {
       return mainMenuItems.find(item => item.id === 'feedback') || mainMenuItems[0];
     }
 
-    if (currentPath.startsWith('/reports/')) {
+    if (currentPath.startsWith('/reports/') || currentPath.startsWith('/nps-report/')) {
       return mainMenuItems.find(item => item.id === 'reports') || mainMenuItems[0];
     }
 
     if (currentPath.startsWith('/staff/')) {
       return mainMenuItems.find(item => item.id === 'staff') || mainMenuItems[0];
+    }
+
+    if (currentPath === '/reviews') {
+      return { id: 'reviews', label: 'Reviews', icon: MessageSquare, path: '/reviews' };
     }
 
     // Default path-based matching
@@ -79,6 +96,24 @@ const ModernHeader = ({ sidebarCollapsed, setSidebarCollapsed, trialInfo }) => {
   const getSubtitleForSection = () => {
     const currentPath = location.pathname;
     const currentSection = getCurrentSection();
+
+    // Multi-Venue Routes
+    if (currentPath === '/multi-venue/venues') {
+      return 'Manage all venues';
+    }
+
+    if (currentPath === '/multi-venue/overview') {
+      return 'Performance metrics across all your venues';
+    }
+
+    if (currentPath === '/multi-venue/dashboard') {
+      return 'Customizable multi-venue analytics';
+    }
+
+    // Reviews
+    if (currentPath === '/reviews') {
+      return 'Google reviews and ratings';
+    }
 
     // Settings subtitles
     if (currentPath.startsWith('/settings/') || currentPath.startsWith('/settings?')) {
@@ -105,22 +140,33 @@ const ModernHeader = ({ sidebarCollapsed, setSidebarCollapsed, trialInfo }) => {
       if (currentPath === '/questions' || currentPath === '/feedback/questions') return 'Manage feedback questions';
       if (currentPath === '/feedbackfeed') return 'Live feedback feed';
       if (currentPath === '/feedback/qr') return 'QR code configuration';
+      if (currentPath === '/feedback/all') return 'All feedback submissions';
       return 'Manage customer feedback';
     }
 
     // Reports subtitles
     if (currentSection.id === 'reports') {
-      if (currentPath === '/reports/ratings') return 'Rating trends and analysis';
-      if (currentPath === '/reports/nps') return 'Net Promoter Score';
-      if (currentPath === '/reports/sentiment') return 'Sentiment analysis';
-      if (currentPath === '/reports/questions') return 'Question performance';
+      if (currentPath === '/reports/feedback') return 'Feedback analytics and trends';
+      if (currentPath === '/reports/performance') return 'Venue performance metrics';
+      if (currentPath === '/reports/impact') return 'Business impact analysis';
+      if (currentPath === '/reports/insights') return 'Customer insights and patterns';
+      if (currentPath === '/reports/metrics') return 'Key performance indicators';
+      if (currentPath === '/reports/nps') return 'Net Promoter Score analytics';
+      if (currentPath.startsWith('/nps-report/')) return 'Detailed NPS report';
+      if (currentPath === '/reports/builder') return 'Custom report builder';
       return 'Analytics and insights';
     }
 
     // Staff subtitles
     if (currentSection.id === 'staff') {
       if (currentPath === '/staff/leaderboard') return 'Team performance rankings';
-      if (currentPath === '/staff') return 'Team management';
+      if (currentPath === '/staff/recognition') return 'Staff recognition history';
+      if (currentPath === '/staff/employees') return 'Employee management';
+      if (currentPath === '/staff/managers') return 'Manager management';
+      if (currentPath === '/staff/roles') return 'Role configuration';
+      if (currentPath === '/staff/locations') return 'Location management';
+      if (currentPath.startsWith('/staff/employees/')) return 'Employee details';
+      if (currentPath.startsWith('/staff-member/')) return 'Staff member details';
       return 'Team management';
     }
 
@@ -131,10 +177,10 @@ const ModernHeader = ({ sidebarCollapsed, setSidebarCollapsed, trialInfo }) => {
 
     // Overview
     if (currentSection.id === 'overview') {
-      return 'Welcome to your dashboard';
+      return 'Your performance at a glance';
     }
 
-    return 'Welcome to your dashboard';
+    return 'Your performance at a glance';
   };
 
   const handleNavigation = (path) => {

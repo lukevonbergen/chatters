@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useVenue } from '../../context/VenueContext';
 import { supabase } from '../../utils/supabase';
 import { ChartCard } from '../../components/dashboard/layout/ModernCard';
+import usePageTitle from '../../hooks/usePageTitle';
 
 const OverviewDetails = () => {
+  usePageTitle('Portfolio Overview');
   const { allVenues } = useVenue();
   const [venueStats, setVenueStats] = useState({});
   const [loading, setLoading] = useState(true);
