@@ -62,7 +62,7 @@ const VenueSettingsPage = () => {
 
   // Fetch venue metrics (NPS, feedback count, resolution rate)
   useEffect(() => {
-    if (allVenues.length <= 1 || viewMode !== 'list') {
+    if (!isMultiVenueMode) {
       return;
     }
 
@@ -136,7 +136,7 @@ const VenueSettingsPage = () => {
     };
 
     fetchVenueMetrics();
-  }, [allVenues, viewMode]);
+  }, [allVenues, isMultiVenueMode]);
 
   // Fetch venue data
   useEffect(() => {
