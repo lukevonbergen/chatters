@@ -164,22 +164,24 @@ const OverviewDetails = () => {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="mb-6">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-          <h1 className="text-2xl font-bold text-gray-900">Portfolio Overview</h1>
+      <div className="space-y-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Portfolio Overview</h1>
+          <p className="text-gray-600 text-lg">
+            {isAllVenuesMode ? (
+              <>Comprehensive performance metrics for <span className="font-semibold">all venues</span></>
+            ) : selectedVenueIds.length === 1 ? (
+              <>Performance metrics for <span className="font-semibold">your venue</span></>
+            ) : (
+              <>Comprehensive performance metrics for <span className="font-semibold">{selectedVenueIds.length} selected venues</span></>
+            )}
+          </p>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl p-6 border border-gray-100 animate-pulse">
-              <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
-              <div className="h-32 bg-gray-200 rounded"></div>
+            <div key={i} className="bg-white rounded-xl p-8 border border-gray-100 shadow-sm animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-48 mb-6"></div>
+              <div className="h-40 bg-gray-200 rounded"></div>
             </div>
           ))}
         </div>
@@ -188,39 +190,32 @@ const OverviewDetails = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
-        </button>
+      <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Portfolio Overview</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Portfolio Overview</h1>
+            <p className="text-gray-600 text-lg">
               {isAllVenuesMode ? (
-                <>Detailed breakdown for <span className="font-semibold">all venues</span></>
+                <>Comprehensive performance metrics for <span className="font-semibold">all venues</span></>
               ) : selectedVenueIds.length === 1 ? (
-                <>Detailed breakdown for <span className="font-semibold">your venue</span></>
+                <>Performance metrics for <span className="font-semibold">your venue</span></>
               ) : (
-                <>Detailed breakdown for <span className="font-semibold">{selectedVenueIds.length} selected venues</span></>
+                <>Comprehensive performance metrics for <span className="font-semibold">{selectedVenueIds.length} selected venues</span></>
               )}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               onClick={expandAll}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
             >
               Expand All
             </button>
             <button
               onClick={collapseAll}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
             >
               Collapse All
             </button>
@@ -229,7 +224,7 @@ const OverviewDetails = () => {
       </div>
 
       {/* Venue Breakdown */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {selectedVenueIds.map((venueId) => {
           const stats = venueStats[venueId];
           if (!stats) return null;
@@ -237,35 +232,35 @@ const OverviewDetails = () => {
           const isExpanded = expandedVenues.has(venueId);
 
           return (
-            <ChartCard key={venueId} className="overflow-hidden">
+            <ChartCard key={venueId} className="overflow-hidden shadow-sm">
               {/* Venue Header */}
               <button
                 onClick={() => toggleVenue(venueId)}
-                className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between p-8 hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 text-blue-600" />
+                <div className="flex items-center gap-5">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Users className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="text-left">
-                    <h2 className="text-lg font-semibold text-gray-900">{stats.name}</h2>
-                    <p className="text-sm text-gray-600">
+                    <h2 className="text-xl font-semibold text-gray-900">{stats.name}</h2>
+                    <p className="text-sm text-gray-600 mt-1">
                       {stats.todaySessions} sessions · {stats.totalFeedback} feedback items
                     </p>
                   </div>
                 </div>
                 {isExpanded ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                  <ChevronUp className="w-6 h-6 text-gray-400" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                  <ChevronDown className="w-6 h-6 text-gray-400" />
                 )}
               </button>
 
               {/* Venue Details */}
               {isExpanded && (
-                <div className="px-6 pb-6 border-t border-gray-100">
+                <div className="px-8 pb-8 border-t border-gray-100">
                   {/* Quick Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-8">
                     <MetricCard
                       icon={Users}
                       title="Today's Sessions"
@@ -335,9 +330,9 @@ const OverviewDetails = () => {
 
                   {/* Rating Breakdown */}
                   {stats.avgSatisfaction && (
-                    <div className="mt-6">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Rating Breakdown</h3>
-                      <div className="space-y-2">
+                    <div className="mt-8 p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-100">
+                      <h3 className="text-base font-semibold text-gray-900 mb-4">Rating Breakdown</h3>
+                      <div className="space-y-3">
                         {[5, 4, 3, 2, 1].map((rating) => {
                           const count = stats.ratingBreakdown[rating];
                           const percentage = stats.totalFeedback > 0
@@ -345,19 +340,19 @@ const OverviewDetails = () => {
                             : 0;
 
                           return (
-                            <div key={rating} className="flex items-center gap-3">
-                              <div className="flex items-center gap-1 w-16">
+                            <div key={rating} className="flex items-center gap-4">
+                              <div className="flex items-center gap-1.5 w-20">
                                 <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                                <span className="text-sm font-medium text-gray-700">{rating}</span>
+                                <span className="text-sm font-semibold text-gray-700">{rating} Star</span>
                               </div>
-                              <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="flex-1 h-7 bg-white rounded-full overflow-hidden shadow-sm">
                                 <div
                                   className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
                                   style={{ width: `${percentage}%` }}
                                 />
                               </div>
-                              <div className="w-16 text-right">
-                                <span className="text-sm font-medium text-gray-900">{count}</span>
+                              <div className="w-24 text-right">
+                                <span className="text-sm font-semibold text-gray-900">{count}</span>
                                 <span className="text-xs text-gray-500 ml-1">({percentage}%)</span>
                               </div>
                             </div>
