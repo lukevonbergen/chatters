@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Users, Star, Clock, Target, AlertTriangle, CheckCircle, Activity, TrendingUp, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, Users, Star, Clock, Target, AlertTriangle, CheckCircle, Activity, TrendingUp } from 'lucide-react';
 import { useVenue } from '../../context/VenueContext';
 import { supabase } from '../../utils/supabase';
 import { MetricCard, ChartCard } from '../../components/dashboard/layout/ModernCard';
 
 const OverviewDetails = () => {
-  const navigate = useNavigate();
-  const { selectedVenueIds, isAllVenuesMode, allVenues } = useVenue();
+  const { allVenues } = useVenue();
   const [venueStats, setVenueStats] = useState({});
   const [expandedVenues, setExpandedVenues] = useState(new Set());
   const [loading, setLoading] = useState(true);
@@ -15,10 +13,11 @@ const OverviewDetails = () => {
   // Allow access regardless of number of venues selected
   // (This page can show portfolio overview for single or multiple venues)
 
-  // Fetch detailed stats for each venue
+  // Fetch detailed stats for each venue the user has access to
   useEffect(() => {
     const fetchVenueStats = async () => {
-      if (selectedVenueIds.length === 0) return;
+      // Use allVenues instead of selectedVenueIds to show ALL venues user has access to
+      if (allVenues.length === 0) return;
 
       setLoading(true);
       const stats = {};
@@ -29,8 +28,9 @@ const OverviewDetails = () => {
         const yesterdayStart = new Date(todayStart);
         yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
-        // Fetch stats for each venue
-        for (const venueId of selectedVenueIds) {
+        // Fetch stats for each venue the user has access to
+        for (const venue of allVenues) {
+          const venueId = venue.id;
           // Today's feedback
           const { data: todayFeedback } = await supabase
             .from('feedback')
@@ -109,9 +109,8 @@ const OverviewDetails = () => {
             : null;
           const peakHourDisplay = peakHour ? `${peakHour}:00` : '--';
 
-          const venue = allVenues.find(v => v.id === venueId);
           stats[venueId] = {
-            name: venue?.name || 'Unknown Venue',
+            name: venue.name,
             todaySessions,
             avgSatisfaction,
             avgResponseTime,
@@ -142,7 +141,7 @@ const OverviewDetails = () => {
     };
 
     fetchVenueStats();
-  }, [selectedVenueIds, allVenues]);
+  }, [allVenues]);
 
   const toggleVenue = (venueId) => {
     const newExpanded = new Set(expandedVenues);
@@ -155,7 +154,7 @@ const OverviewDetails = () => {
   };
 
   const expandAll = () => {
-    setExpandedVenues(new Set(selectedVenueIds));
+    setExpandedVenues(new Set(allVenues.map(v => v.id)));
   };
 
   const collapseAll = () => {
@@ -168,13 +167,7 @@ const OverviewDetails = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Portfolio Overview</h1>
           <p className="text-gray-600 text-lg">
-            {isAllVenuesMode ? (
-              <>Comprehensive performance metrics for <span className="font-semibold">all venues</span></>
-            ) : selectedVenueIds.length === 1 ? (
-              <>Performance metrics for <span className="font-semibold">your venue</span></>
-            ) : (
-              <>Comprehensive performance metrics for <span className="font-semibold">{selectedVenueIds.length} selected venues</span></>
-            )}
+            Comprehensive performance metrics for <span className="font-semibold">all {allVenues.length} venues</span>
           </p>
         </div>
         <div className="space-y-6">
@@ -197,13 +190,7 @@ const OverviewDetails = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Portfolio Overview</h1>
             <p className="text-gray-600 text-lg">
-              {isAllVenuesMode ? (
-                <>Comprehensive performance metrics for <span className="font-semibold">all venues</span></>
-              ) : selectedVenueIds.length === 1 ? (
-                <>Performance metrics for <span className="font-semibold">your venue</span></>
-              ) : (
-                <>Comprehensive performance metrics for <span className="font-semibold">{selectedVenueIds.length} selected venues</span></>
-              )}
+              Comprehensive performance metrics for <span className="font-semibold">all {allVenues.length} venues</span>
             </p>
           </div>
           <div className="flex gap-3">
@@ -225,17 +212,17 @@ const OverviewDetails = () => {
 
       {/* Venue Breakdown */}
       <div className="space-y-6">
-        {selectedVenueIds.map((venueId) => {
-          const stats = venueStats[venueId];
+        {allVenues.map((venue) => {
+          const stats = venueStats[venue.id];
           if (!stats) return null;
 
-          const isExpanded = expandedVenues.has(venueId);
+          const isExpanded = expandedVenues.has(venue.id);
 
           return (
-            <ChartCard key={venueId} className="overflow-hidden shadow-sm">
+            <ChartCard key={venue.id} className="overflow-hidden shadow-sm">
               {/* Venue Header */}
               <button
-                onClick={() => toggleVenue(venueId)}
+                onClick={() => toggleVenue(venue.id)}
                 className="w-full flex items-center justify-between p-8 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-5">
