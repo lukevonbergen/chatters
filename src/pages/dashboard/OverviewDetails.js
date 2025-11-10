@@ -12,17 +12,13 @@ const OverviewDetails = () => {
   const [expandedVenues, setExpandedVenues] = useState(new Set());
   const [loading, setLoading] = useState(true);
 
-  // If not in multi-venue mode, redirect to main overview
-  useEffect(() => {
-    if (selectedVenueIds.length <= 1) {
-      navigate('/overview');
-    }
-  }, [selectedVenueIds, navigate]);
+  // Allow access regardless of number of venues selected
+  // (This page can show portfolio overview for single or multiple venues)
 
   // Fetch detailed stats for each venue
   useEffect(() => {
     const fetchVenueStats = async () => {
-      if (selectedVenueIds.length <= 1) return;
+      if (selectedVenueIds.length === 0) return;
 
       setLoading(true);
       const stats = {};
@@ -171,13 +167,13 @@ const OverviewDetails = () => {
       <div className="p-8">
         <div className="mb-6">
           <button
-            onClick={() => navigate('/overview')}
+            onClick={() => navigate('/dashboard')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Overview
+            Back to Dashboard
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">Venue Details</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Portfolio Overview</h1>
         </div>
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -196,18 +192,20 @@ const OverviewDetails = () => {
       {/* Header */}
       <div className="mb-6">
         <button
-          onClick={() => navigate('/overview')}
+          onClick={() => navigate('/dashboard')}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Overview
+          Back to Dashboard
         </button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Venue Details</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Portfolio Overview</h1>
             <p className="text-gray-600 mt-1">
               {isAllVenuesMode ? (
                 <>Detailed breakdown for <span className="font-semibold">all venues</span></>
+              ) : selectedVenueIds.length === 1 ? (
+                <>Detailed breakdown for <span className="font-semibold">your venue</span></>
               ) : (
                 <>Detailed breakdown for <span className="font-semibold">{selectedVenueIds.length} selected venues</span></>
               )}
