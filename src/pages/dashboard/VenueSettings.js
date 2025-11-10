@@ -5,7 +5,7 @@ import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
 import VenueTab from '../../components/dashboard/settings/VenueTab';
-import { Building2, ChevronRight, MapPin, Phone, Globe, Edit2, TrendingUp, TrendingDown, MessageSquare, CheckCircle } from 'lucide-react';
+import { Building2, ChevronRight, MapPin, Phone, Globe, Edit2, TrendingUp, TrendingDown, MessageSquare, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
 
 const VenueSettingsPage = () => {
   const location = useLocation();
@@ -39,6 +39,26 @@ const VenueSettingsPage = () => {
   const [message, setMessage] = useState('');
   const [venueMetrics, setVenueMetrics] = useState({});
   const [loadingMetrics, setLoadingMetrics] = useState(false);
+
+  // Venue management state (for multi-venue mode)
+  const [newVenue, setNewVenue] = useState({
+    name: '',
+    address: {
+      line1: '',
+      line2: '',
+      city: '',
+      county: '',
+      postalCode: '',
+      country: '',
+    },
+  });
+  const [venueLoading, setVenueLoading] = useState(false);
+  const [venueMessage, setVenueMessage] = useState('');
+  const [accountId, setAccountId] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { venueId, venueName }
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showCreateWarning, setShowCreateWarning] = useState(false);
 
   // Fetch venue metrics (NPS, feedback count, resolution rate)
   useEffect(() => {
@@ -189,6 +209,171 @@ const VenueSettingsPage = () => {
     }
   };
 
+  // Fetch account ID and user ID for venue management
+  useEffect(() => {
+    const fetchAccountInfo = async () => {
+      if (!isMultiVenueMode || !userRole || userRole !== 'master') return;
+
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth?.user;
+      if (!user) return;
+
+      setUserId(user.id);
+
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('account_id')
+        .eq('id', user.id)
+        .single();
+
+      if (userRow) {
+        setAccountId(userRow.account_id);
+      }
+    };
+
+    fetchAccountInfo();
+  }, [isMultiVenueMode, userRole]);
+
+  // Update Stripe subscription quantity
+  const updateStripeQuantity = async () => {
+    try {
+      const response = await fetch('/api/update-subscription-quantity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId }),
+      });
+
+      const data = await response.json();
+
+      if (data.updated) {
+        console.log('Stripe subscription updated:', data);
+      } else {
+        console.log('Stripe subscription not updated:', data.message);
+      }
+    } catch (error) {
+      console.error('Error updating Stripe subscription:', error);
+    }
+  };
+
+  // Handle create venue form submit
+  const handleCreateVenueSubmit = (e) => {
+    e.preventDefault();
+    if (!newVenue.name || !accountId || !userId) {
+      setVenueMessage('Please fill in the venue name');
+      return;
+    }
+    setShowCreateWarning(true);
+  };
+
+  // Create new venue
+  const handleCreateVenue = async () => {
+    setShowCreateWarning(false);
+    setVenueLoading(true);
+    setVenueMessage('');
+
+    try {
+      const { data: venueData, error: venueError } = await supabase
+        .from('venues')
+        .insert([
+          {
+            name: newVenue.name,
+            account_id: accountId,
+            logo: null,
+            address: newVenue.address,
+            primary_color: '#16A34A',
+            background_color: '#ffffff',
+            text_color: '#111827',
+            button_text_color: '#ffffff',
+          },
+        ])
+        .select()
+        .single();
+
+      if (venueError) {
+        throw new Error(venueError.message);
+      }
+
+      await updateStripeQuantity();
+
+      setVenueMessage('Venue created successfully! This venue will be added to your next billing cycle.');
+      setNewVenue({
+        name: '',
+        address: {
+          line1: '',
+          line2: '',
+          city: '',
+          county: '',
+          postalCode: '',
+          country: '',
+        },
+      });
+
+      // Refresh the page or context to show new venue
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Error creating venue:', error);
+      const errorDetails = error.code ? `Error ${error.code}: ${error.message}` : error.message;
+      setVenueMessage(`Failed to create venue: ${errorDetails}. Please contact support.`);
+    } finally {
+      setVenueLoading(false);
+    }
+  };
+
+  // Handle delete venue
+  const handleDeleteVenue = async () => {
+    if (!deleteConfirm) return;
+
+    setDeleteLoading(true);
+    setVenueMessage('');
+
+    try {
+      const { venueId: venueToDelete, venueName } = deleteConfirm;
+
+      if (venueToDelete === venueId) {
+        setVenueMessage('Cannot delete the venue you are currently viewing. Please switch to another venue first.');
+        setDeleteConfirm(null);
+        setDeleteLoading(false);
+        return;
+      }
+
+      // Delete associated staff records first
+      const { error: staffError } = await supabase
+        .from('staff')
+        .delete()
+        .eq('venue_id', venueToDelete);
+
+      if (staffError) {
+        throw new Error(`Failed to delete staff records: ${staffError.message}`);
+      }
+
+      // Delete the venue
+      const { error: venueError } = await supabase
+        .from('venues')
+        .delete()
+        .eq('id', venueToDelete)
+        .eq('account_id', accountId);
+
+      if (venueError) {
+        throw new Error(`Failed to delete venue: ${venueError.message}`);
+      }
+
+      await updateStripeQuantity();
+
+      setVenueMessage(`Venue "${venueName}" deleted successfully! This venue will be removed from your next billing cycle.`);
+      setDeleteConfirm(null);
+
+      // Refresh the page to update the venue list
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Error deleting venue:', error);
+      setVenueMessage(`Failed to delete venue: ${error.message}`);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
 
   if (!venueId) {
     return null;
@@ -327,18 +512,6 @@ const VenueSettingsPage = () => {
                           {/* Actions */}
                           <td className="py-4 px-4">
                             <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => {
-                                  if (!isActive) {
-                                    setCurrentVenue(venue.id);
-                                  }
-                                  setViewMode('edit');
-                                }}
-                                className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1.5 border border-gray-300"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                                Edit
-                              </button>
                               {!isActive && (
                                 <button
                                   onClick={() => setCurrentVenue(venue.id)}
@@ -346,6 +519,15 @@ const VenueSettingsPage = () => {
                                 >
                                   Switch
                                   <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {!isActive && allVenues.length > 1 && (
+                                <button
+                                  onClick={() => setDeleteConfirm({ venueId: venue.id, venueName: venue.name })}
+                                  className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                                  title="Delete venue"
+                                >
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               )}
                             </div>
@@ -423,18 +605,6 @@ const VenueSettingsPage = () => {
 
                       {/* Actions */}
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            if (!isActive) {
-                              setCurrentVenue(venue.id);
-                            }
-                            setViewMode('edit');
-                          }}
-                          className="flex-1 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-1.5 border border-gray-300"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          Edit Details
-                        </button>
                         {!isActive && (
                           <button
                             onClick={() => setCurrentVenue(venue.id)}
@@ -442,6 +612,16 @@ const VenueSettingsPage = () => {
                           >
                             Switch
                             <ChevronRight className="w-4 h-4" />
+                          </button>
+                        )}
+                        {!isActive && allVenues.length > 1 && (
+                          <button
+                            onClick={() => setDeleteConfirm({ venueId: venue.id, venueName: venue.name })}
+                            className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                            title="Delete venue"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
                           </button>
                         )}
                       </div>
@@ -459,7 +639,7 @@ const VenueSettingsPage = () => {
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-1">Performance Metrics</h4>
                     <p className="text-sm text-gray-600">
-                      All metrics shown are based on the last 30 days of activity. Click <strong>Edit</strong> to update venue details or <strong>Switch</strong> to change your active venue.
+                      All metrics shown are based on the last 30 days of activity. Click <strong>Switch</strong> to change your active venue.
                     </p>
                   </div>
                 </div>
@@ -467,6 +647,184 @@ const VenueSettingsPage = () => {
             </>
           )}
         </ChartCard>
+
+        {/* Create Additional Venue */}
+        {userRole === 'master' && (
+          <ChartCard
+            title="Create Additional Venue"
+            subtitle="Expand your business by adding more venues to your account. New venues are added to your next billing cycle."
+          >
+            <form onSubmit={handleCreateVenueSubmit} className="space-y-6">
+              {/* Venue Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Venue Name *</label>
+                <input
+                  type="text"
+                  value={newVenue.name}
+                  onChange={(e) => setNewVenue(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                  placeholder="Enter the new venue name"
+                  required
+                />
+              </div>
+
+              {/* Simplified Address for New Venue */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address (Optional)</label>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Address Line 1"
+                    value={newVenue.address.line1}
+                    onChange={(e) => setNewVenue(prev => ({
+                      ...prev,
+                      address: { ...prev.address, line1: e.target.value }
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="City"
+                      value={newVenue.address.city}
+                      onChange={(e) => setNewVenue(prev => ({
+                        ...prev,
+                        address: { ...prev.address, city: e.target.value }
+                      }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Postal Code"
+                      value={newVenue.address.postalCode}
+                      onChange={(e) => setNewVenue(prev => ({
+                        ...prev,
+                        address: { ...prev.address, postalCode: e.target.value }
+                      }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Create Button */}
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  type="submit"
+                  disabled={venueLoading}
+                  className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {venueLoading ? 'Creating Venue...' : 'Create New Venue'}
+                </button>
+              </div>
+
+              {/* Venue Creation Message */}
+              {venueMessage && (
+                <div className={`text-sm p-3 rounded-lg ${
+                  venueMessage.includes('success')
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-red-700 bg-red-50 border border-red-200'
+                }`}>
+                  {venueMessage}
+                </div>
+              )}
+            </form>
+          </ChartCard>
+        )}
+
+        {/* Create Venue Confirmation Modal */}
+        {showCreateWarning && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Add New Venue?</h3>
+              </div>
+
+              <p className="text-gray-600 mb-4 leading-relaxed">
+                You're about to create <strong>"{newVenue.name}"</strong>.
+              </p>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                <p className="text-sm text-blue-800">
+                  <strong>Billing Information:</strong>
+                </p>
+                <ul className="text-sm text-blue-700 mt-2 space-y-1 ml-4">
+                  <li>• This venue will be added to your subscription</li>
+                  <li>• You'll be charged on your next billing date</li>
+                  <li>• Cost: £149/month or £1,430/year per venue</li>
+                  <li>• Prorated amount will apply for partial months</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCreateVenue}
+                  disabled={venueLoading}
+                  className="flex-1 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {venueLoading ? 'Creating...' : 'Yes, Create Venue'}
+                </button>
+                <button
+                  onClick={() => setShowCreateWarning(false)}
+                  disabled={venueLoading}
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Delete Venue?</h3>
+              </div>
+
+              <p className="text-gray-600 mb-4 leading-relaxed">
+                Are you sure you want to delete <strong>"{deleteConfirm.venueName}"</strong>?
+              </p>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+                <p className="text-sm text-yellow-800">
+                  <strong>Important:</strong> This will:
+                </p>
+                <ul className="text-sm text-yellow-700 mt-2 space-y-1 ml-4">
+                  <li>• Permanently delete all venue data</li>
+                  <li>• Remove all staff assignments</li>
+                  <li>• Delete all feedback and analytics</li>
+                  <li>• Reduce your next billing cycle amount</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDeleteVenue}
+                  disabled={deleteLoading}
+                  className="flex-1 bg-red-600 text-white px-6 py-2.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Yes, Delete Venue'}
+                </button>
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  disabled={deleteLoading}
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -490,8 +848,6 @@ const VenueSettingsPage = () => {
           saveSettings={saveSettings}
           loading={loading}
           message={message}
-          userRole={userRole}
-          currentVenueId={venueId}
         />
       </ChartCard>
     </div>
