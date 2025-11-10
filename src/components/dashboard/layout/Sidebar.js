@@ -126,6 +126,13 @@ const venueNavItems = [
 // Multi-Venue Section - Cross-venue analysis
 const multiVenueNavItems = [
   {
+    id: 'venues-management',
+    label: 'Venues',
+    icon: Building2,
+    path: '/settings/venues',
+    color: 'text-indigo-600'
+  },
+  {
     id: 'multi-dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard,
@@ -143,13 +150,6 @@ const multiVenueNavItems = [
       { label: 'Venue Comparison', path: '/reports/nps', icon: Building2 },
       { label: 'Custom Reports', path: '/reports/builder', icon: FileText }
     ]
-  },
-  {
-    id: 'venues-management',
-    label: 'Venues',
-    icon: Building2,
-    path: '/settings/venues',
-    color: 'text-indigo-600'
   }
 ];
 

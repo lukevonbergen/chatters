@@ -223,8 +223,8 @@ const VenueSettingsPage = () => {
     return (
       <div className="space-y-6">
         <ChartCard
-          title="Venues Performance Overview"
-          subtitle="Track and manage all your venues with key performance metrics (Last 30 days)"
+          title="Venues Quick Glance"
+          subtitle="A quick glance at your venues. Click to switch primary venue and edit venue details."
         >
           {loadingMetrics ? (
             <div className="flex items-center justify-center py-12">
