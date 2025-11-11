@@ -99,6 +99,7 @@ const AIInsights = () => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('[AI Insights] API error response:', errorData);
+        console.error('[AI Insights] Error details:', JSON.stringify(errorData.details, null, 2));
         throw new Error(errorData.error || 'Failed to generate insights');
       }
 
