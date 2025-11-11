@@ -1,7 +1,7 @@
 // components/marketing/layout/Navbar.jsx
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, BarChart3, Utensils, Building, ShoppingBag, Calendar, BookOpen, HelpCircle, FileText, GraduationCap, Trophy, Globe, Monitor, Bell, TrendingUp } from 'lucide-react';
+import { Menu, X, ChevronDown, BarChart3, Utensils, Building, ShoppingBag, Calendar, BookOpen, HelpCircle, FileText, GraduationCap, Trophy, Globe, Monitor, Bell, TrendingUp, Sparkles, Brain, Zap } from 'lucide-react';
 import PrimaryButton from '../common/buttons/PrimaryButton';
 import { getDashboardUrl, isDevSite } from '../../../utils/domainUtils';
 
@@ -13,16 +13,35 @@ const Navbar = ({ overlay = false }) => {
 
   const isActive = (path) => location.pathname === path;
 
-  const productLinks = [
+  // Core Features Column
+  const coreProductLinks = [
     { name: 'Question Management', path: '/product/question-management', description: 'Custom feedback forms and intelligent question flows', icon: <HelpCircle className="w-5 h-5" /> },
     { name: 'Business Intelligence', path: '/product/business-intelligence', description: 'Advanced analytics and performance insights', icon: <BarChart3 className="w-5 h-5" /> },
-    { name: 'Staff Leaderboard', path: '/product/staff-leaderboard', description: 'Track and celebrate team performance achievements', icon: <Trophy className="w-5 h-5" /> },
-    { name: 'Staff Recognition', path: '/product/staff-recognition', description: 'Reward top performers with automated recognition emails', icon: <Trophy className="w-5 h-5" /> },
     { name: 'NPS Scoring', path: '/product/nps-scoring', description: 'Track Net Promoter Score and customer loyalty metrics', icon: <TrendingUp className="w-5 h-5" /> },
-    { name: 'Multi-Location Control', path: '/product/multi-location-control', description: 'Centralised management for restaurant/hotel chains', icon: <Globe className="w-5 h-5" /> },
-    { name: 'Kiosk Mode', path: '/product/kiosk-mode', description: 'Tablet-based feedback stations and self-service', icon: <Monitor className="w-5 h-5" /> },
     { name: 'Real-Time Alerts', path: '/product/real-time-alerts', description: 'Instant notifications and emergency escalation', icon: <Bell className="w-5 h-5" /> },
   ];
+
+  // Team & Growth Column
+  const teamProductLinks = [
+    { name: 'Staff Leaderboard', path: '/product/staff-leaderboard', description: 'Track and celebrate team performance achievements', icon: <Trophy className="w-5 h-5" /> },
+    { name: 'Staff Recognition', path: '/product/staff-recognition', description: 'Reward top performers with automated recognition emails', icon: <Trophy className="w-5 h-5" /> },
+    { name: 'Multi-Location Control', path: '/product/multi-location-control', description: 'Centralised management for restaurant/hotel chains', icon: <Globe className="w-5 h-5" /> },
+    { name: 'Kiosk Mode', path: '/product/kiosk-mode', description: 'Tablet-based feedback stations and self-service', icon: <Monitor className="w-5 h-5" /> },
+  ];
+
+  // Chatters Intelligence Column (Full Height)
+  const intelligenceLink = {
+    name: 'Chatters Intelligence',
+    path: '/product/intelligence',
+    description: 'AI-powered insights from your customer feedback',
+    longDescription: 'Harness the power of AI to transform customer feedback into actionable intelligence. Get instant insights, identify trends, and make data-driven decisions with confidence.',
+    icon: <Sparkles className="w-6 h-6" />,
+    features: [
+      { icon: <Brain className="w-4 h-4" />, text: 'AI-Powered Analysis' },
+      { icon: <TrendingUp className="w-4 h-4" />, text: 'Predictive Insights' },
+      { icon: <Zap className="w-4 h-4" />, text: 'Instant Recommendations' },
+    ]
+  };
 
   const solutionsLinks = [
     { name: 'Restaurants', path: '/solutions/restaurants', description: 'Optimise dining experiences', icon: <Utensils className="w-5 h-5" /> },
@@ -60,6 +79,124 @@ const Navbar = ({ overlay = false }) => {
   const handleDropdownContentLeave = () => {
     const timer = setTimeout(() => setActiveDropdown(null), 150);
     setDropdownTimer(timer);
+  };
+
+  // Product Dropdown with Three Columns
+  const ProductDropdown = ({ isVisible }) => {
+    return (
+      <div
+        className={`fixed left-4 right-4 top-20 z-[60] transition-all duration-400 ease-out transform ${
+          isVisible ? 'opacity-100 visible translate-y-0 scale-100' : 'opacity-0 invisible -translate-y-4 scale-95'
+        }`}
+        onMouseEnter={handleDropdownContentEnter}
+        onMouseLeave={handleDropdownContentLeave}
+      >
+        <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 py-4 px-4">
+          <div className="grid grid-cols-3 gap-4">
+            {/* Column 1: Core Features */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-2.5">Core Features</h3>
+              <div className="space-y-1">
+                {coreProductLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    to={link.path}
+                    className="group flex items-start space-x-2.5 p-2.5 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+                    onClick={() => setActiveDropdown(null)}
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600 group-hover:bg-green-600 group-hover:text-white transition-all duration-200">
+                      {link.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-satoshi font-semibold text-black transition-colors duration-200 text-sm">
+                        {link.name}
+                      </div>
+                      <div className="mt-0.5 text-xs text-gray-600 font-satoshi leading-snug">
+                        {link.description}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Column 2: Team & Growth */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-2.5">Team & Growth</h3>
+              <div className="space-y-1">
+                {teamProductLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    to={link.path}
+                    className="group flex items-start space-x-2.5 p-2.5 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+                    onClick={() => setActiveDropdown(null)}
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600 group-hover:bg-green-600 group-hover:text-white transition-all duration-200">
+                      {link.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-satoshi font-semibold text-black transition-colors duration-200 text-sm">
+                        {link.name}
+                      </div>
+                      <div className="mt-0.5 text-xs text-gray-600 font-satoshi leading-snug">
+                        {link.description}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Column 3: Chatters Intelligence (Full Height) */}
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-200">
+              <Link
+                to={intelligenceLink.path}
+                onClick={() => setActiveDropdown(null)}
+                className="group block h-full"
+              >
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    {intelligenceLink.icon}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-satoshi font-bold text-gray-900 text-base mb-1 group-hover:text-purple-600 transition-colors">
+                      {intelligenceLink.name}
+                    </h3>
+                    <p className="text-xs text-gray-600 font-satoshi">
+                      {intelligenceLink.description}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-700 font-satoshi leading-relaxed mb-4">
+                  {intelligenceLink.longDescription}
+                </p>
+
+                <div className="space-y-2">
+                  {intelligenceLink.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs text-gray-700">
+                      <div className="flex-shrink-0 w-5 h-5 bg-white/60 rounded-md flex items-center justify-center text-purple-600">
+                        {feature.icon}
+                      </div>
+                      <span className="font-satoshi font-medium">{feature.text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-purple-200">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-600 group-hover:text-purple-700 transition-colors">
+                    Learn more
+                    <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const DropdownContent = ({ links, isVisible, colorScheme = 'green' }) => {
@@ -154,7 +291,7 @@ const Navbar = ({ overlay = false }) => {
                   <div className="text-sm font-semibold text-black hover:text-green-600 flex items-center cursor-pointer transition-colors duration-200 font-satoshi">
                     Product <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${activeDropdown === 'product' ? 'rotate-180' : ''}`} />
                   </div>
-                  <DropdownContent links={productLinks} isVisible={activeDropdown === 'product'} colorScheme="green" />
+                  <ProductDropdown isVisible={activeDropdown === 'product'} />
                 </div>
 
                 <div
@@ -217,9 +354,9 @@ const Navbar = ({ overlay = false }) => {
         <div className="lg:hidden bg-white mt-2 rounded-2xl border border-gray-200 shadow-2xl mx-4 max-h-[80vh] overflow-y-auto">
           <div className="px-4 pt-4 pb-6 space-y-4 font-satoshi">
             <div>
-              <p className="text-sm font-semibold text-green-600 mb-2">Product</p>
+              <p className="text-sm font-semibold text-green-600 mb-2">Product - Core Features</p>
               <div className="grid grid-cols-2 gap-2">
-                {productLinks.map((link) => (
+                {coreProductLinks.map((link) => (
                   <Link
                     key={link.name}
                     to={link.path}
@@ -233,6 +370,47 @@ const Navbar = ({ overlay = false }) => {
                   </Link>
                 ))}
               </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-green-600 mb-2">Product - Team & Growth</p>
+              <div className="grid grid-cols-2 gap-2">
+                {teamProductLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    to={link.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex flex-col items-start space-y-2 p-3 rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
+                      {link.icon}
+                    </div>
+                    <div className="text-xs font-medium text-black text-left">{link.name}</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-200">
+              <Link
+                to={intelligenceLink.path}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center text-white">
+                    {intelligenceLink.icon}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-satoshi font-bold text-gray-900 text-sm">
+                      {intelligenceLink.name}
+                    </h3>
+                    <p className="text-xs text-gray-600 font-satoshi">
+                      {intelligenceLink.description}
+                    </p>
+                  </div>
+                </div>
+              </Link>
             </div>
 
             <div>

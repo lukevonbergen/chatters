@@ -22,6 +22,7 @@ import BlogPost from './pages/marketing/BlogPost';
 
 import QuestionManagementProduct from './pages/marketing/product/QuestionManagement';
 import BusinessIntelligenceProduct from './pages/marketing/product/BusinessIntelligence';
+import IntelligenceProduct from './pages/marketing/product/Intelligence';
 import StaffLeaderboardPage from './pages/marketing/product/StaffLeaderboardPage';
 import StaffRecognitionPage from './pages/marketing/product/StaffRecognition';
 import NPSScoringPage from './pages/marketing/product/NPSScoring';
@@ -61,6 +62,7 @@ const MarketingRoutes = () => {
       {/* 🏢 Product Pages */}
       <Route path="/product/question-management" element={<QuestionManagementProduct />} />
       <Route path="/product/business-intelligence" element={<BusinessIntelligenceProduct />} />
+      <Route path="/product/intelligence" element={<IntelligenceProduct />} />
       <Route path="/product/multi-location-control" element={<MultiLocationControlProduct />} />
       <Route path="/product/kiosk-mode" element={<KioskModeProduct />} />
       <Route path="/product/real-time-alerts" element={<RealTimeAlertsProduct />} />
