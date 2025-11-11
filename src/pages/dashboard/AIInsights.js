@@ -134,44 +134,41 @@ const AIInsights = () => {
     return { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', icon: TrendingDown };
   };
 
-  // Render AI Score Circle
-  const AIScoreCircle = ({ score }) => {
-    const { color, bg, border, icon: Icon } = getScoreColor(score);
-    const percentage = (score / 10) * 100;
-    const circumference = 2 * Math.PI * 70;
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  // Render AI Score Segmented Bar
+  const AIScoreBar = ({ score }) => {
+    const { color, icon: Icon } = getScoreColor(score);
+
+    // Define color for each segment (1-10)
+    const getSegmentColor = (segmentIndex) => {
+      if (segmentIndex <= score) {
+        // Filled segments - gradient from red to green
+        if (segmentIndex <= 2) return 'bg-red-500';
+        if (segmentIndex <= 4) return 'bg-orange-500';
+        if (segmentIndex <= 6) return 'bg-yellow-500';
+        if (segmentIndex <= 8) return 'bg-blue-500';
+        return 'bg-green-500';
+      }
+      return 'bg-gray-200'; // Unfilled segments
+    };
 
     return (
-      <div className={`relative inline-flex items-center justify-center ${bg} ${border} border-2 rounded-full p-6`}>
-        <svg className="transform -rotate-90 w-40 h-40">
-          {/* Background circle */}
-          <circle
-            cx="80"
-            cy="80"
-            r="70"
-            stroke="#E5E7EB"
-            strokeWidth="12"
-            fill="none"
-          />
-          {/* Progress circle */}
-          <circle
-            cx="80"
-            cy="80"
-            r="70"
-            stroke="currentColor"
-            strokeWidth="12"
-            fill="none"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            className={`${color} transition-all duration-1000 ease-out`}
-          />
-        </svg>
-        {/* Center content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className={`text-5xl font-bold ${color} mb-1`}>{score}</div>
-          <div className="text-sm text-gray-600 font-medium">out of 10</div>
-          <Icon className={`w-6 h-6 ${color} mt-2`} />
+      <div className="w-full">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold text-gray-700">Overall Performance Score</span>
+          <div className="flex items-center gap-2">
+            <span className={`text-2xl font-bold ${color}`}>{score}</span>
+            <span className="text-sm text-gray-500">/ 10</span>
+            {Icon && <Icon className={`w-5 h-5 ${color}`} />}
+          </div>
+        </div>
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((segment) => (
+            <div
+              key={segment}
+              className={`flex-1 h-4 rounded-sm ${getSegmentColor(segment)} transition-all duration-500`}
+              style={{ transitionDelay: `${segment * 50}ms` }}
+            />
+          ))}
         </div>
       </div>
     );
