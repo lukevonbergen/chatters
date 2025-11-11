@@ -110,12 +110,12 @@ function prepareFeedbackSummary(feedbackData, npsData, venueName, dateFrom, date
     }
   });
 
-  // Collect NPS comments
-  const npsComments = npsData
-    .filter(item => item.comment && item.comment.trim() !== '')
+  // Collect NPS scores (no comments in nps_submissions table)
+  const npsScoresWithDates = npsData
+    .filter(item => item.score !== null)
     .map(item => ({
       score: item.score,
-      comment: item.comment,
+      date: item.created_at,
     }));
 
   // Build the prompt for Claude
@@ -130,11 +130,6 @@ function prepareFeedbackSummary(feedbackData, npsData, venueName, dateFrom, date
 ${feedbackTexts.slice(0, 50).map((item, idx) =>
   `${idx + 1}. ${item.question} (Rating: ${item.rating}/5)${item.feedback ? `\n   Response: "${item.feedback}"` : ''}`
 ).join('\n\n')}
-
-${npsComments.length > 0 ? `\n## NPS Comments:
-${npsComments.slice(0, 20).map((item, idx) =>
-  `${idx + 1}. Score: ${item.score}/10\n   Comment: "${item.comment}"`
-).join('\n\n')}` : ''}
 
 Please analyze this feedback and provide 2-3 concise, actionable insights. Focus on:
 1. The most critical area needing improvement (if any)

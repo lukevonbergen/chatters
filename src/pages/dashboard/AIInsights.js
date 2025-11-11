@@ -55,7 +55,7 @@ const AIInsights = () => {
       // Fetch NPS submissions
       const { data: npsData, error: npsError } = await supabase
         .from('nps_submissions')
-        .select('score, comment, created_at')
+        .select('score, created_at')
         .eq('venue_id', venueId)
         .gte('created_at', startDate)
         .lte('created_at', endDate)
