@@ -149,7 +149,7 @@ export default async function handler(req, res) {
 
       // Validate the structure
       if (!parsedInsight.ai_score || !parsedInsight.critical_insights || !parsedInsight.strengths ||
-          !parsedInsight.areas_for_improvement || !parsedInsight.actionable_recommendation) {
+          !parsedInsight.areas_for_improvement || !parsedInsight.actionable_recommendation || !parsedInsight.improvement_tips) {
         throw new Error('Missing required fields in AI response');
       }
 
@@ -182,6 +182,7 @@ export default async function handler(req, res) {
       strengths: parsedInsight.strengths,
       areas_for_improvement: parsedInsight.areas_for_improvement,
       actionable_recommendation: parsedInsight.actionable_recommendation,
+      improvement_tips: parsedInsight.improvement_tips,
       feedback_count: feedbackData.length,
       nps_count: npsData.length,
       nps_score: npsScore
@@ -363,19 +364,24 @@ Analyse this feedback data and provide a comprehensive, actionable report in **U
   "ai_score": <number 0-10>,
   "critical_insights": [
     {
-      "title": "Brief title (UK English)",
-      "content": "Detailed explanation with specific data points and evidence (UK English)"
+      "title": "4-6 word title",
+      "content": "1-2 concise sentences under 30 words"
     }
   ],
   "strengths": [
-    "Specific strength with supporting evidence (UK English)",
-    "Another strength (UK English)"
+    "One sentence under 20 words",
+    "Another sentence under 20 words"
   ],
   "areas_for_improvement": [
-    "Specific area with data and reasoning (UK English)",
-    "Another area (UK English)"
+    "One sentence under 20 words",
+    "Another sentence under 20 words"
   ],
-  "actionable_recommendation": "One clear, specific, time-bound recommendation that addresses the most critical issue. Include what to do, who should do it, and when. (UK English)"
+  "actionable_recommendation": "One clear action sentence under 35 words",
+  "improvement_tips": [
+    "Tip 1: One actionable sentence under 20 words",
+    "Tip 2: One actionable sentence under 20 words",
+    "Tip 3: One actionable sentence under 20 words"
+  ]
 }
 \`\`\`
 
@@ -387,19 +393,21 @@ Analyse this feedback data and provide a comprehensive, actionable report in **U
 - **0-2:** Critical issues, urgent action needed, NPS <0, avg rating <3.0
 
 **Analysis Requirements:**
-1. **critical_insights:** Identify 2-4 key insights. Focus on critical issues first, then positive patterns. Use specific data from the feedback.
-2. **strengths:** List 2-3 areas where the venue excels. Be specific and evidence-based.
-3. **areas_for_improvement:** Identify 2-3 specific areas needing attention, ranked by urgency.
-4. **actionable_recommendation:** ONE clear action that will have the biggest impact. Must be specific, measurable, and time-bound.
+1. **critical_insights:** Identify 2-3 key insights. Each insight should have:
+   - title: 4-6 words max
+   - content: 1-2 sentences max (under 30 words each)
+2. **strengths:** List 2-3 strengths. Each should be ONE sentence (under 20 words).
+3. **areas_for_improvement:** List 2-3 areas. Each should be ONE sentence (under 20 words).
+4. **actionable_recommendation:** ONE clear sentence with a specific action (under 35 words).
+5. **improvement_tips:** Provide 3-4 specific, actionable tips to improve the AI score. Each tip should be ONE sentence (under 20 words).
 
 **Quality Standards:**
-- Use specific numbers and percentages from the data
-- Reference actual customer quotes when relevant
-- Identify patterns across multiple feedback items
-- Be honest and direct about issues whilst remaining constructive
-- If historical data shows recurring issues, explicitly mention this
+- BE CONCISE - use bullet-point style, not paragraphs
+- Use specific numbers from the data
+- Reference actual customer feedback when critical
+- Be direct and constructive
 - Use UK English spelling throughout (organisation, analyse, colour, etc.)
-- Keep content professional but personable
+- Keep everything brief and scannable
 
 **IMPORTANT:** Return ONLY the JSON object. No additional text before or after.`;
 

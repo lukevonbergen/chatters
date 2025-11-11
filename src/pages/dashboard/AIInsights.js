@@ -256,83 +256,103 @@ const AIInsights = () => {
         {/* Insight Display */}
         {insight && !loading && (
           <div className="space-y-6">
-            {/* AI Score Section */}
-            <div className="flex flex-col items-center justify-center py-8 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border-2 border-gray-200">
-              <AIScoreCircle score={insight.ai_score} />
-              <div className="mt-4 text-center">
-                <h3 className="text-xl font-bold text-gray-900">Overall Performance Score</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Based on {insight.feedback_count} feedback submissions and {insight.nps_count} NPS responses
-                </p>
-                {insight.cached && (
-                  <span className="inline-block mt-2 px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                    Cached result
-                  </span>
-                )}
+            {/* AI Score Section with Improvement Tips */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* AI Score */}
+              <div className="flex flex-col items-center justify-center py-8 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border-2 border-gray-200">
+                <AIScoreCircle score={insight.ai_score} />
+                <div className="mt-4 text-center px-4">
+                  <h3 className="text-xl font-bold text-gray-900">Overall Performance Score</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Based on {insight.feedback_count} feedback submissions and {insight.nps_count} NPS responses
+                  </p>
+                  {insight.cached && (
+                    <span className="inline-block mt-2 px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                      Cached result
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {/* How to Improve */}
+              {insight.improvement_tips && insight.improvement_tips.length > 0 && (
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-indigo-600 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">How to Improve Your Score</h3>
+                  </div>
+                  <ul className="space-y-3">
+                    {insight.improvement_tips.map((tip, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold text-white">
+                          {idx + 1}
+                        </div>
+                        <span className="text-gray-800 leading-relaxed text-sm">{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
-            {/* Critical Insights */}
-            {insight.critical_insights && insight.critical_insights.length > 0 && (
-              <div className="bg-white border-2 border-orange-200 rounded-xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-orange-100 rounded-lg">
+            {/* Three Column Grid for Insights */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Critical Insights */}
+              {insight.critical_insights && insight.critical_insights.length > 0 && (
+                <div className="bg-white border-2 border-orange-200 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
                     <AlertTriangle className="w-5 h-5 text-orange-600" />
+                    <h3 className="text-base font-bold text-gray-900">Critical Insights</h3>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">Critical Insights</h3>
-                </div>
-                <div className="space-y-4">
-                  {insight.critical_insights.map((item, idx) => (
-                    <div key={idx} className="border-l-4 border-orange-400 pl-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">{item.title}</h4>
-                      <p className="text-gray-700 leading-relaxed">{item.content}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Strengths */}
-            {insight.strengths && insight.strengths.length > 0 && (
-              <div className="bg-white border-2 border-green-200 rounded-xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">Strengths</h3>
-                </div>
-                <ul className="space-y-3">
-                  {insight.strengths.map((strength, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 leading-relaxed">{strength}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Areas for Improvement */}
-            {insight.areas_for_improvement && insight.areas_for_improvement.length > 0 && (
-              <div className="bg-white border-2 border-yellow-200 rounded-xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-yellow-100 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-yellow-600" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">Areas for Improvement</h3>
-                </div>
-                <ul className="space-y-3">
-                  {insight.areas_for_improvement.map((area, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center text-sm font-bold text-yellow-700">
-                        {idx + 1}
+                  <div className="space-y-3">
+                    {insight.critical_insights.map((item, idx) => (
+                      <div key={idx}>
+                        <h4 className="font-semibold text-gray-900 text-sm mb-1">{item.title}</h4>
+                        <p className="text-gray-700 text-sm leading-snug">{item.content}</p>
                       </div>
-                      <span className="text-gray-700 leading-relaxed">{area}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Strengths */}
+              {insight.strengths && insight.strengths.length > 0 && (
+                <div className="bg-white border-2 border-green-200 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <h3 className="text-base font-bold text-gray-900">Strengths</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {insight.strengths.map((strength, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-green-600 flex-shrink-0 mt-0.5">•</span>
+                        <span className="text-gray-700 text-sm leading-snug">{strength}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Areas for Improvement */}
+              {insight.areas_for_improvement && insight.areas_for_improvement.length > 0 && (
+                <div className="bg-white border-2 border-yellow-200 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                    <h3 className="text-base font-bold text-gray-900">Areas to Improve</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {insight.areas_for_improvement.map((area, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-yellow-600 flex-shrink-0">•</span>
+                        <span className="text-gray-700 text-sm leading-snug">{area}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
 
             {/* Actionable Recommendation */}
             {insight.actionable_recommendation && (
