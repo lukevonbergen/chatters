@@ -6,8 +6,8 @@ import PrimaryButton from "../../common/buttons/PrimaryButton";
 
 const Hero = ({
   eyebrow = "Chatters for Hospitality",
-  title = "Prevent Negative Restaurant Reviews with Real-Time Guest Feedback Software",
-  subtitle = "Stop negative TripAdvisor reviews before they happen. Get instant guest feedback alerts, resolve issues on-site, and protect your restaurant's reputation across the UK.",
+  title = "AI-Powered Intelligence That Transforms Feedback Into Action",
+  subtitle = "Stop drowning in data. Let AI analyse thousands of customer responses instantly, identify critical trends, and deliver actionable recommendations that drive real business results.",
   primaryCta = { label: "Book a demo", to: "/demo" },
   secondaryCta = { label: "Pricing", to: "/pricing" },
   bullets = [
