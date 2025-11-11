@@ -10,7 +10,8 @@ import {
   Map,
   Home,
   Clock,
-  Menu
+  Menu,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '../../ui/button';
 
@@ -81,6 +82,10 @@ const ModernHeader = ({ sidebarCollapsed, setSidebarCollapsed, trialInfo }) => {
       return { id: 'reviews', label: 'Reviews', icon: MessageSquare, path: '/reviews' };
     }
 
+    if (currentPath === '/ai-insights') {
+      return { id: 'ai-insights', label: 'AI Insights', icon: Sparkles, path: '/ai-insights' };
+    }
+
     // Default path-based matching
     const currentItem = mainMenuItems.find(item =>
       currentPath === item.path || currentPath.startsWith(item.path + '/')
@@ -113,6 +118,11 @@ const ModernHeader = ({ sidebarCollapsed, setSidebarCollapsed, trialInfo }) => {
     // Reviews
     if (currentPath === '/reviews') {
       return 'Google reviews and ratings';
+    }
+
+    // AI Insights
+    if (currentPath === '/ai-insights') {
+      return 'AI-powered insights from customer feedback';
     }
 
     // Settings subtitles
