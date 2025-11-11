@@ -203,21 +203,10 @@ const AIInsights = () => {
 
   return (
     <div className="space-y-6">
-      {/* Custom Header with Controls */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* Title and Subtitle */}
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-violet-600" />
-              AI Insights
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Get AI-powered insights based on your customer feedback and reviews
-            </p>
-          </div>
-
-          {/* Date Selector and Generate Button */}
+      <ChartCard
+        title="AI Insights"
+        subtitle="AI-powered insights based on your customer feedback and reviews"
+        actions={
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             {/* Date Range Selector */}
             <div className="flex items-center gap-2">
@@ -226,7 +215,7 @@ const AIInsights = () => {
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 max={dateTo}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <span className="text-gray-500 text-sm">to</span>
               <input
@@ -235,7 +224,7 @@ const AIInsights = () => {
                 onChange={(e) => setDateTo(e.target.value)}
                 min={dateFrom}
                 max={dayjs().format('YYYY-MM-DD')}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -243,7 +232,7 @@ const AIInsights = () => {
             <button
               onClick={generateInsights}
               disabled={loading}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg text-sm whitespace-nowrap"
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm text-sm whitespace-nowrap"
             >
               {loading ? (
                 <>
@@ -258,26 +247,25 @@ const AIInsights = () => {
               )}
             </button>
           </div>
-        </div>
-      </div>
+        }
+      >
 
-      {/* Error Message */}
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <h4 className="font-semibold text-red-900 mb-1">Error</h4>
-            <p className="text-sm text-red-700">{error}</p>
+        {/* Error Message */}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="font-semibold text-red-900 mb-1">Error</h4>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Insight Display */}
-      {insight && !loading && (
-        <div className="space-y-6">
-          {/* AI Score Bar - Full Width */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="max-w-5xl mx-auto">
+        {/* Insight Display */}
+        {insight && !loading && (
+          <div className="space-y-6">
+            {/* AI Score Bar - Full Width */}
+            <div>
               <AIScoreBar score={insight.ai_score} />
               <div className="mt-3 flex items-center justify-between">
                 <p className="text-sm text-gray-600">
@@ -290,78 +278,62 @@ const AIInsights = () => {
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Improvement Tips and Other Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* How to Improve */}
+            {/* How to Improve Tips */}
             {insight.improvement_tips && insight.improvement_tips.length > 0 && (
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-6">
+              <div className="bg-gray-50 rounded-lg p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-indigo-600 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">How to Improve Your Score</h3>
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">How to Improve Your Score</h3>
                 </div>
                 <ul className="space-y-3">
                   {insight.improvement_tips.map((tip, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold text-white">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">
                         {idx + 1}
                       </div>
-                      <span className="text-gray-800 leading-relaxed text-sm">{tip}</span>
+                      <span className="text-gray-700 leading-relaxed text-sm">{tip}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {/* Recommended Action */}
-            {insight.actionable_recommendation && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-blue-600 rounded-lg">
-                    <Target className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">Recommended Action</h3>
-                </div>
-                <p className="text-gray-800 leading-relaxed">{insight.actionable_recommendation}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Three Column Grid for Insights */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Three Column Grid for Insights */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Critical Insights */}
               {insight.critical_insights && insight.critical_insights.length > 0 && (
-                <div className="bg-white border-2 border-orange-200 rounded-xl p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
                     <AlertTriangle className="w-5 h-5 text-orange-600" />
-                    <h3 className="text-base font-bold text-gray-900">Critical Insights</h3>
+                    <h3 className="text-sm font-semibold text-gray-900">Critical Insights</h3>
                   </div>
-                  <div className="space-y-3">
+                  <ul className="space-y-2">
                     {insight.critical_insights.map((item, idx) => (
-                      <div key={idx}>
-                        <h4 className="font-semibold text-gray-900 text-sm mb-1">{item.title}</h4>
-                        <p className="text-gray-700 text-sm leading-snug">{item.content}</p>
-                      </div>
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-orange-600 flex-shrink-0 mt-0.5">•</span>
+                        <div>
+                          <span className="font-medium text-gray-900 text-sm">{item.title}: </span>
+                          <span className="text-gray-700 text-sm">{item.content}</span>
+                        </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
               {/* Strengths */}
               {insight.strengths && insight.strengths.length > 0 && (
-                <div className="bg-white border-2 border-green-200 rounded-xl p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
                     <CheckCircle className="w-5 h-5 text-green-600" />
-                    <h3 className="text-base font-bold text-gray-900">Strengths</h3>
+                    <h3 className="text-sm font-semibold text-gray-900">Strengths</h3>
                   </div>
                   <ul className="space-y-2">
                     {insight.strengths.map((strength, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <span className="text-green-600 flex-shrink-0 mt-0.5">•</span>
-                        <span className="text-gray-700 text-sm leading-snug">{strength}</span>
+                        <span className="text-gray-700 text-sm">{strength}</span>
                       </li>
                     ))}
                   </ul>
@@ -370,16 +342,16 @@ const AIInsights = () => {
 
               {/* Areas for Improvement */}
               {insight.areas_for_improvement && insight.areas_for_improvement.length > 0 && (
-                <div className="bg-white border-2 border-yellow-200 rounded-xl p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
                     <AlertCircle className="w-5 h-5 text-yellow-600" />
-                    <h3 className="text-base font-bold text-gray-900">Areas to Improve</h3>
+                    <h3 className="text-sm font-semibold text-gray-900">Areas to Improve</h3>
                   </div>
                   <ul className="space-y-2">
                     {insight.areas_for_improvement.map((area, idx) => (
                       <li key={idx} className="flex items-start gap-2">
-                        <span className="text-yellow-600 flex-shrink-0">•</span>
-                        <span className="text-gray-700 text-sm leading-snug">{area}</span>
+                        <span className="text-yellow-600 flex-shrink-0 mt-0.5">•</span>
+                        <span className="text-gray-700 text-sm">{area}</span>
                       </li>
                     ))}
                   </ul>
@@ -387,7 +359,18 @@ const AIInsights = () => {
               )}
             </div>
 
-          {/* Metadata Footer */}
+            {/* Recommended Action - Full Width */}
+            {insight.actionable_recommendation && (
+              <div className="bg-gray-50 rounded-lg p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Target className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Recommended Action</h3>
+                </div>
+                <p className="text-gray-700 leading-relaxed">{insight.actionable_recommendation}</p>
+              </div>
+            )}
+
+            {/* Metadata Footer */}
             {lastGenerated && (
               <div className="pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between text-xs text-gray-500">
@@ -404,39 +387,54 @@ const AIInsights = () => {
                 </div>
               </div>
             )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Empty State */}
-      {!insight && !loading && !error && (
-        <div className="bg-white rounded-xl border border-gray-200 p-12">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-10 h-10 text-blue-600" />
+        {/* Empty State */}
+        {!insight && !loading && !error && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Insights Generated Yet</h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Click "Generate Insights" to analyse your customer feedback and discover actionable insights powered by AI.
+            <p className="text-gray-600 max-w-md mx-auto">
+              Select a date range and click "Generate Insights" to analyse your customer feedback and discover actionable insights powered by AI.
             </p>
           </div>
-        </div>
-      )}
+        )}
+      </ChartCard>
 
       {/* Info Box */}
-      <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-        <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-blue-600" />
-          How it works
-        </h4>
-        <ul className="text-sm text-gray-600 space-y-1 ml-6 list-disc">
-          <li>AI analyses all feedback submissions and NPS responses for the selected date range</li>
-          <li>Identifies patterns, trends, and common themes in customer feedback</li>
-          <li>Generates an overall performance score (0-10) based on multiple factors</li>
-          <li>Provides specific, actionable insights to improve customer experience</li>
-          <li>Results are cached - re-running the same date range returns instant results</li>
-          <li>Each new analysis costs approximately £0.002-£0.003 (charged to your Anthropic API usage)</li>
-        </ul>
-      </div>
+      {!loading && (
+        <ChartCard title="How it works">
+          <ul className="text-sm text-gray-600 space-y-2">
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 mt-0.5">•</span>
+              <span>AI analyses all feedback submissions and NPS responses for the selected date range</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 mt-0.5">•</span>
+              <span>Identifies patterns, trends, and common themes in customer feedback</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 mt-0.5">•</span>
+              <span>Generates an overall performance score (0-10) based on multiple factors</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 mt-0.5">•</span>
+              <span>Provides specific, actionable insights to improve customer experience</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 mt-0.5">•</span>
+              <span>Results are cached - re-running the same date range returns instant results</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 mt-0.5">•</span>
+              <span>Each new analysis costs approximately £0.002-£0.003 (charged to your Anthropic API usage)</span>
+            </li>
+          </ul>
+        </ChartCard>
+      )}
     </div>
   );
 };
