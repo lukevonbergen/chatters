@@ -1,6 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { Sparkles, Brain, TrendingUp, Zap, BarChart3, Target, AlertCircle, CheckCircle, Lightbulb, Clock } from 'lucide-react';
+import { Sparkles, Brain, TrendingUp, BarChart3, Target, AlertCircle, CheckCircle, Lightbulb, Clock } from 'lucide-react';
 import Navbar from '../../../components/marketing/layout/Navbar';
 import PageHeader from '../../../components/marketing/common/sections/PageHeader';
 import ContentSplit from '../../../components/marketing/common/sections/ContentSplit';
@@ -17,7 +17,7 @@ const IntelligenceProduct = () => {
         <title>Chatters Intelligence | AI-Powered Customer Insights</title>
         <meta
           name="description"
-          content="Transform customer feedback into actionable intelligence with AI. Get instant insights, predictive analytics, and data-driven recommendations powered by Claude AI."
+          content="Transform customer feedback into actionable intelligence with AI. Get instant insights, predictive analytics, and data-driven recommendations powered by Chatters Intelligence."
         />
         <meta
           name="keywords"
@@ -41,7 +41,7 @@ const IntelligenceProduct = () => {
       />
 
       <ContentSplit reversed
-        eyebrow="Powered by Claude AI"
+        eyebrow="Advanced AI Analytics"
         eyebrowColour='text-purple-600'
         title="Your AI analyst, working 24/7 to understand your customers."
         description="Chatters Intelligence uses advanced AI to analyse customer feedback in seconds, not hours. Get comprehensive insights with AI-generated scores, critical alerts, strengths, areas for improvement, and specific action plans—all tailored to your business."
@@ -60,7 +60,7 @@ const IntelligenceProduct = () => {
         eyebrow="AI Features"
         eyebrowColour='text-purple-600'
         title="Intelligent insights, delivered instantly."
-        description="Our AI doesn't just collect data—it thinks. Powered by Claude, the most advanced AI model, Chatters Intelligence analyses feedback context, sentiment, and patterns to deliver insights that feel human-crafted but are available in seconds."
+        description="Our AI doesn't just collect data—it thinks. Chatters Intelligence analyses feedback context, sentiment, and patterns to deliver insights that feel human-crafted but are available in seconds."
         primaryCta={{ label: "Book a demo", to: "/demo" }}
         secondaryCta={{ label: "View pricing", to: "/pricing" }}
         features={[
@@ -136,7 +136,7 @@ const IntelligenceProduct = () => {
             icon: <Lightbulb className="w-6 h-6 text-purple-600" />,
             title: "Smart caching",
             description:
-              "Results are cached for instant retrieval. Run the same analysis again without additional cost or wait time.",
+              "Results are cached for instant retrieval. Run the same analysis again with no wait time.",
           },
         ]}
         wavyBottom={true}
@@ -171,7 +171,7 @@ const IntelligenceProduct = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">AI Analyses Everything</h3>
               <p className="text-gray-600 leading-relaxed">
-                Claude AI processes all feedback, NPS scores, ratings, and historical data to identify patterns, sentiment, and critical issues.
+                Chatters Intelligence processes all feedback, NPS scores, ratings, and historical data to identify patterns, sentiment, and critical issues.
               </p>
             </div>
 
@@ -183,21 +183,6 @@ const IntelligenceProduct = () => {
               <p className="text-gray-600 leading-relaxed">
                 Receive a comprehensive report with scores, critical alerts, strengths, areas for improvement, and specific recommendations.
               </p>
-            </div>
-          </div>
-
-          <div className="mt-12 bg-blue-50 border border-blue-200 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900 mb-1">Cost-Effective Intelligence</h4>
-                <p className="text-sm text-gray-700">
-                  Each AI analysis costs approximately £0.002-£0.003, and results are cached for instant re-access.
-                  Get enterprise-level insights at a fraction of the traditional cost.
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -217,19 +202,19 @@ const IntelligenceProduct = () => {
         faqs={[
           {
             q: "How does the AI generate insights?",
-            a: "Chatters Intelligence uses Claude AI by Anthropic to analyse all your feedback data, NPS scores, and ratings. It identifies patterns, sentiment, and context to deliver comprehensive insights including performance scores, critical issues, strengths, weaknesses, and specific recommendations tailored to your business."
+            a: "Chatters Intelligence uses advanced AI to analyse all your feedback data, NPS scores, and ratings. It identifies patterns, sentiment, and context to deliver comprehensive insights including performance scores, critical issues, strengths, weaknesses, and specific recommendations tailored to your business."
           },
           {
             q: "How long does analysis take?",
             a: "AI analysis typically completes in 5-15 seconds, regardless of data volume. Analysing months of feedback takes the same time as a single day. Once generated, insights are cached for instant retrieval."
           },
           {
-            q: "How much does it cost?",
-            a: "Each AI analysis costs approximately £0.002-£0.003 (less than a penny), charged to your Anthropic API usage. Results are cached, so re-running the same date range is instant and free. This gives you enterprise-level intelligence at a fraction of traditional consulting costs."
+            q: "Is this included in my plan?",
+            a: "Yes, Chatters Intelligence is included with your Chatters subscription. There are no additional charges for generating AI insights. Results are cached, so re-running the same date range is instant."
           },
           {
             q: "Can I trust the AI's recommendations?",
-            a: "Yes. Claude AI is trained to provide accurate, context-aware analysis. It considers your specific data, historical trends, and industry best practices. The AI highlights its confidence level and always bases recommendations on actual customer feedback, not assumptions."
+            a: "Yes. Chatters Intelligence is trained to provide accurate, context-aware analysis. It considers your specific data, historical trends, and industry best practices. The AI always bases recommendations on actual customer feedback, not assumptions."
           },
           {
             q: "Does it replace human analysis?",
