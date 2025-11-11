@@ -22,6 +22,33 @@ const AIInsights = () => {
   const currentVenue = allVenues.find(v => v.id === venueId);
   const venueName = currentVenue?.name || 'your venue';
 
+  // Load previously saved insight for current date range on mount
+  useEffect(() => {
+    if (!venueId) return;
+
+    const loadExistingInsight = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('ai_insights')
+          .select('*')
+          .eq('venue_id', venueId)
+          .eq('date_from', dateFrom)
+          .eq('date_to', dateTo)
+          .single();
+
+        if (!error && data) {
+          setInsight({ ...data, cached: true });
+          setLastGenerated(new Date(data.created_at));
+        }
+      } catch (err) {
+        // No existing insight found - this is fine
+        console.log('[AI Insights] No existing insight found for this date range');
+      }
+    };
+
+    loadExistingInsight();
+  }, [venueId, dateFrom, dateTo]);
+
   // Generate AI Insights
   const generateInsights = async () => {
     if (!venueId) return;
@@ -176,124 +203,134 @@ const AIInsights = () => {
 
   return (
     <div className="space-y-6">
-      <ChartCard
-        title="AI Insights"
-        subtitle="Get AI-powered insights based on your customer feedback and reviews"
-      >
-        {/* Date Range Selector */}
-        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Calendar className="w-5 h-5 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-900 mb-3">Select Time Period</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    max={dateTo}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-                  <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    min={dateFrom}
-                    max={dayjs().format('YYYY-MM-DD')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 mt-2">
-                Analysing: <span className="font-semibold">{getDateRangeText()}</span>
-              </p>
-            </div>
+      {/* Custom Header with Controls */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* Title and Subtitle */}
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-violet-600" />
+              AI Insights
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Get AI-powered insights based on your customer feedback and reviews
+            </p>
           </div>
-        </div>
 
-        {/* Generate Button */}
-        <div className="mb-6">
-          <button
-            onClick={generateInsights}
-            disabled={loading}
-            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
-          >
-            {loading ? (
-              <>
-                <RefreshCw className="w-5 h-5 animate-spin" />
-                Generating Insights...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                Generate AI Insights
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h4 className="font-semibold text-red-900 mb-1">Error</h4>
-              <p className="text-sm text-red-700">{error}</p>
+          {/* Date Selector and Generate Button */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            {/* Date Range Selector */}
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                max={dateTo}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+              <span className="text-gray-500 text-sm">to</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                min={dateFrom}
+                max={dayjs().format('YYYY-MM-DD')}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
             </div>
-          </div>
-        )}
 
-        {/* Insight Display */}
-        {insight && !loading && (
-          <div className="space-y-6">
-            {/* AI Score Section with Improvement Tips */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* AI Score */}
-              <div className="flex flex-col items-center justify-center py-8 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border-2 border-gray-200">
-                <AIScoreBar score={insight.ai_score} />
-                <div className="mt-4 text-center px-4">
-                  <p className="text-sm text-gray-600 mt-1">
-                    Based on {insight.feedback_count} feedback submissions and {insight.nps_count} NPS responses
-                  </p>
-                  {insight.cached && (
-                    <span className="inline-block mt-2 px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                      Cached result
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* How to Improve */}
-              {insight.improvement_tips && insight.improvement_tips.length > 0 && (
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-indigo-600 rounded-lg">
-                      <TrendingUp className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900">How to Improve Your Score</h3>
-                  </div>
-                  <ul className="space-y-3">
-                    {insight.improvement_tips.map((tip, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold text-white">
-                          {idx + 1}
-                        </div>
-                        <span className="text-gray-800 leading-relaxed text-sm">{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+            {/* Generate Button */}
+            <button
+              onClick={generateInsights}
+              disabled={loading}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg text-sm whitespace-nowrap"
+            >
+              {loading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Generate Insights
+                </>
               )}
-            </div>
+            </button>
+          </div>
+        </div>
+      </div>
 
-            {/* Three Column Grid for Insights */}
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h4 className="font-semibold text-red-900 mb-1">Error</h4>
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Insight Display */}
+      {insight && !loading && (
+        <div className="space-y-6">
+          {/* AI Score Bar - Full Width */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="max-w-5xl mx-auto">
+              <AIScoreBar score={insight.ai_score} />
+              <div className="mt-3 flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  Based on {insight.feedback_count} feedback submissions and {insight.nps_count} NPS responses
+                </p>
+                {insight.cached && (
+                  <span className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                    Cached result
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Improvement Tips and Other Sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* How to Improve */}
+            {insight.improvement_tips && insight.improvement_tips.length > 0 && (
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-indigo-600 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">How to Improve Your Score</h3>
+                </div>
+                <ul className="space-y-3">
+                  {insight.improvement_tips.map((tip, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold text-white">
+                        {idx + 1}
+                      </div>
+                      <span className="text-gray-800 leading-relaxed text-sm">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Recommended Action */}
+            {insight.actionable_recommendation && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-blue-600 rounded-lg">
+                    <Target className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">Recommended Action</h3>
+                </div>
+                <p className="text-gray-800 leading-relaxed">{insight.actionable_recommendation}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Three Column Grid for Insights */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Critical Insights */}
               {insight.critical_insights && insight.critical_insights.length > 0 && (
@@ -350,22 +387,7 @@ const AIInsights = () => {
               )}
             </div>
 
-            {/* Actionable Recommendation */}
-            {insight.actionable_recommendation && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-6 shadow-lg">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-blue-600 rounded-lg">
-                    <Target className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">Recommended Action</h3>
-                </div>
-                <div className="bg-white rounded-lg p-4 border border-blue-200">
-                  <p className="text-gray-800 leading-relaxed font-medium">{insight.actionable_recommendation}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Metadata Footer */}
+          {/* Metadata Footer */}
             {lastGenerated && (
               <div className="pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between text-xs text-gray-500">
@@ -382,38 +404,39 @@ const AIInsights = () => {
                 </div>
               </div>
             )}
-          </div>
-        )}
+        </div>
+      )}
 
-        {/* Empty State */}
-        {!insight && !loading && !error && (
-          <div className="text-center py-12">
+      {/* Empty State */}
+      {!insight && !loading && !error && (
+        <div className="bg-white rounded-xl border border-gray-200 p-12">
+          <div className="text-center">
             <div className="w-20 h-20 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-10 h-10 text-blue-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Insights Generated Yet</h3>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Click "Generate AI Insights" to analyse your customer feedback and discover actionable insights powered by AI.
+              Click "Generate Insights" to analyse your customer feedback and discover actionable insights powered by AI.
             </p>
           </div>
-        )}
-
-        {/* Info Box */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4 text-blue-600" />
-            How it works
-          </h4>
-          <ul className="text-sm text-gray-600 space-y-1 ml-6 list-disc">
-            <li>AI analyses all feedback submissions and NPS responses for the selected date range</li>
-            <li>Identifies patterns, trends, and common themes in customer feedback</li>
-            <li>Generates an overall performance score (0-10) based on multiple factors</li>
-            <li>Provides specific, actionable insights to improve customer experience</li>
-            <li>Results are cached - re-running the same date range returns instant results</li>
-            <li>Each new analysis costs approximately £0.002-£0.003 (charged to your Anthropic API usage)</li>
-          </ul>
         </div>
-      </ChartCard>
+      )}
+
+      {/* Info Box */}
+      <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+        <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+          <Lightbulb className="w-4 h-4 text-blue-600" />
+          How it works
+        </h4>
+        <ul className="text-sm text-gray-600 space-y-1 ml-6 list-disc">
+          <li>AI analyses all feedback submissions and NPS responses for the selected date range</li>
+          <li>Identifies patterns, trends, and common themes in customer feedback</li>
+          <li>Generates an overall performance score (0-10) based on multiple factors</li>
+          <li>Provides specific, actionable insights to improve customer experience</li>
+          <li>Results are cached - re-running the same date range returns instant results</li>
+          <li>Each new analysis costs approximately £0.002-£0.003 (charged to your Anthropic API usage)</li>
+        </ul>
+      </div>
     </div>
   );
 };
