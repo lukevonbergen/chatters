@@ -124,16 +124,42 @@ export default async function handler(req, res) {
     const rawInsight = result.content[0].text;
 
     console.log('[AI Insights] Successfully generated insight, length:', rawInsight.length, 'characters');
+    console.log('[AI Insights] Raw AI response:', rawInsight);
 
     // Parse the JSON response from Claude
+    // Claude sometimes wraps JSON in markdown code blocks, so we need to extract it
     let parsedInsight;
     try {
-      parsedInsight = JSON.parse(rawInsight);
+      let jsonText = rawInsight.trim();
+
+      // Remove markdown code block if present
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/^```json\s*\n/, '').replace(/\n```\s*$/, '');
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```\s*\n/, '').replace(/\n```\s*$/, '');
+      }
+
+      // Try to find JSON object if there's additional text
+      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[0];
+      }
+
+      parsedInsight = JSON.parse(jsonText);
+
+      // Validate the structure
+      if (!parsedInsight.ai_score || !parsedInsight.critical_insights || !parsedInsight.strengths ||
+          !parsedInsight.areas_for_improvement || !parsedInsight.actionable_recommendation) {
+        throw new Error('Missing required fields in AI response');
+      }
+
     } catch (parseError) {
       console.error('[AI Insights] Failed to parse AI response as JSON:', parseError);
+      console.error('[AI Insights] Raw response that failed to parse:', rawInsight);
       return res.status(500).json({
         error: 'Failed to parse AI insights. Please try again.',
-        details: 'Invalid JSON response from AI'
+        details: parseError.message,
+        rawResponse: rawInsight.substring(0, 500) // Include first 500 chars for debugging
       });
     }
 
