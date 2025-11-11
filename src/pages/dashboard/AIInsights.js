@@ -3,7 +3,7 @@ import { useVenue } from '../../context/VenueContext';
 import { supabase } from '../../utils/supabase';
 import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
-import { Sparkles, RefreshCw, Calendar, AlertCircle } from 'lucide-react';
+import { Sparkles, RefreshCw, Calendar, AlertCircle, TrendingUp, TrendingDown, CheckCircle, AlertTriangle, Lightbulb, Target } from 'lucide-react';
 import dayjs from 'dayjs';
 
 const AIInsights = () => {
@@ -89,6 +89,7 @@ const AIInsights = () => {
           feedbackData: feedbackData || [],
           npsData: npsData || [],
           venueName,
+          venueId,
           dateFrom,
           dateTo,
         }),
@@ -104,8 +105,8 @@ const AIInsights = () => {
       }
 
       const result = await response.json();
-      console.log('[AI Insights] Successfully received insight');
-      setInsight(result.insight);
+      console.log('[AI Insights] Successfully received insight', result);
+      setInsight(result);
       setLastGenerated(new Date());
 
     } catch (err) {
@@ -122,6 +123,58 @@ const AIInsights = () => {
     const to = dayjs(dateTo);
     const days = to.diff(from, 'day') + 1;
     return `${days} day${days !== 1 ? 's' : ''} (${from.format('MMM D')} - ${to.format('MMM D, YYYY')})`;
+  };
+
+  // Get AI Score color and icon
+  const getScoreColor = (score) => {
+    if (score >= 9) return { color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', icon: TrendingUp };
+    if (score >= 7) return { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', icon: CheckCircle };
+    if (score >= 5) return { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', icon: AlertTriangle };
+    if (score >= 3) return { color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', icon: AlertCircle };
+    return { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', icon: TrendingDown };
+  };
+
+  // Render AI Score Circle
+  const AIScoreCircle = ({ score }) => {
+    const { color, bg, border, icon: Icon } = getScoreColor(score);
+    const percentage = (score / 10) * 100;
+    const circumference = 2 * Math.PI * 70;
+    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+    return (
+      <div className={`relative inline-flex items-center justify-center ${bg} ${border} border-2 rounded-full p-6`}>
+        <svg className="transform -rotate-90 w-40 h-40">
+          {/* Background circle */}
+          <circle
+            cx="80"
+            cy="80"
+            r="70"
+            stroke="#E5E7EB"
+            strokeWidth="12"
+            fill="none"
+          />
+          {/* Progress circle */}
+          <circle
+            cx="80"
+            cy="80"
+            r="70"
+            stroke="currentColor"
+            strokeWidth="12"
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            className={`${color} transition-all duration-1000 ease-out`}
+          />
+        </svg>
+        {/* Center content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className={`text-5xl font-bold ${color} mb-1`}>{score}</div>
+          <div className="text-sm text-gray-600 font-medium">out of 10</div>
+          <Icon className={`w-6 h-6 ${color} mt-2`} />
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -162,7 +215,7 @@ const AIInsights = () => {
                 </div>
               </div>
               <p className="text-sm text-gray-600 mt-2">
-                Analyzing: <span className="font-semibold">{getDateRangeText()}</span>
+                Analysing: <span className="font-semibold">{getDateRangeText()}</span>
               </p>
             </div>
           </div>
@@ -202,21 +255,115 @@ const AIInsights = () => {
 
         {/* Insight Display */}
         {insight && !loading && (
-          <div className="p-6 bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-xl shadow-lg">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">Key Insights</h3>
-            </div>
-            <div className="prose prose-blue max-w-none">
-              <p className="text-gray-800 leading-relaxed whitespace-pre-line">{insight}</p>
-            </div>
-            {lastGenerated && (
-              <div className="mt-4 pt-4 border-t border-blue-200">
-                <p className="text-xs text-gray-500">
-                  Generated {dayjs(lastGenerated).format('MMM D, YYYY [at] h:mm A')}
+          <div className="space-y-6">
+            {/* AI Score Section */}
+            <div className="flex flex-col items-center justify-center py-8 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border-2 border-gray-200">
+              <AIScoreCircle score={insight.ai_score} />
+              <div className="mt-4 text-center">
+                <h3 className="text-xl font-bold text-gray-900">Overall Performance Score</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Based on {insight.feedback_count} feedback submissions and {insight.nps_count} NPS responses
                 </p>
+                {insight.cached && (
+                  <span className="inline-block mt-2 px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                    Cached result
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Critical Insights */}
+            {insight.critical_insights && insight.critical_insights.length > 0 && (
+              <div className="bg-white border-2 border-orange-200 rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <AlertTriangle className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">Critical Insights</h3>
+                </div>
+                <div className="space-y-4">
+                  {insight.critical_insights.map((item, idx) => (
+                    <div key={idx} className="border-l-4 border-orange-400 pl-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">{item.title}</h4>
+                      <p className="text-gray-700 leading-relaxed">{item.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Strengths */}
+            {insight.strengths && insight.strengths.length > 0 && (
+              <div className="bg-white border-2 border-green-200 rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">Strengths</h3>
+                </div>
+                <ul className="space-y-3">
+                  {insight.strengths.map((strength, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700 leading-relaxed">{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Areas for Improvement */}
+            {insight.areas_for_improvement && insight.areas_for_improvement.length > 0 && (
+              <div className="bg-white border-2 border-yellow-200 rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">Areas for Improvement</h3>
+                </div>
+                <ul className="space-y-3">
+                  {insight.areas_for_improvement.map((area, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center text-sm font-bold text-yellow-700">
+                        {idx + 1}
+                      </div>
+                      <span className="text-gray-700 leading-relaxed">{area}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Actionable Recommendation */}
+            {insight.actionable_recommendation && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-6 shadow-lg">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-blue-600 rounded-lg">
+                    <Target className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">Recommended Action</h3>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-blue-200">
+                  <p className="text-gray-800 leading-relaxed font-medium">{insight.actionable_recommendation}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Metadata Footer */}
+            {lastGenerated && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>
+                    Generated {dayjs(lastGenerated).format('MMM D, YYYY [at] h:mm A')}
+                  </span>
+                  {insight.nps_score !== null && (
+                    <span className="font-medium">
+                      NPS Score: <span className={insight.nps_score >= 50 ? 'text-green-600' : insight.nps_score >= 0 ? 'text-yellow-600' : 'text-red-600'}>
+                        {insight.nps_score}
+                      </span>
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -230,7 +377,7 @@ const AIInsights = () => {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Insights Generated Yet</h3>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Click "Generate AI Insights" to analyze your customer feedback and discover actionable insights powered by AI.
+              Click "Generate AI Insights" to analyse your customer feedback and discover actionable insights powered by AI.
             </p>
           </div>
         )}
@@ -238,14 +385,16 @@ const AIInsights = () => {
         {/* Info Box */}
         <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-600" />
+            <Lightbulb className="w-4 h-4 text-blue-600" />
             How it works
           </h4>
           <ul className="text-sm text-gray-600 space-y-1 ml-6 list-disc">
-            <li>AI analyzes all feedback submissions and NPS responses for the selected date range</li>
+            <li>AI analyses all feedback submissions and NPS responses for the selected date range</li>
             <li>Identifies patterns, trends, and common themes in customer feedback</li>
-            <li>Provides actionable insights to improve customer experience</li>
-            <li>Each analysis costs approximately £0.05-£0.10 (charged to your Anthropic API usage)</li>
+            <li>Generates an overall performance score (0-10) based on multiple factors</li>
+            <li>Provides specific, actionable insights to improve customer experience</li>
+            <li>Results are cached - re-running the same date range returns instant results</li>
+            <li>Each new analysis costs approximately £0.002-£0.003 (charged to your Anthropic API usage)</li>
           </ul>
         </div>
       </ChartCard>

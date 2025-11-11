@@ -5,6 +5,8 @@
  * using the Anthropic Claude API. It keeps the API key secure on the server side.
  */
 
+import { createClient } from '@supabase/supabase-js';
+
 export default async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
@@ -12,20 +14,59 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { feedbackData, npsData, venueName, dateFrom, dateTo } = req.body;
+    const { feedbackData, npsData, venueName, venueId, dateFrom, dateTo } = req.body;
 
     console.log('[AI Insights] Request received:', {
       feedbackCount: feedbackData?.length || 0,
       npsCount: npsData?.length || 0,
       venueName,
+      venueId,
       dateRange: `${dateFrom} to ${dateTo}`
     });
 
     // Validate required fields
-    if (!feedbackData || !npsData || !venueName) {
-      console.error('[AI Insights] Missing required fields:', { feedbackData: !!feedbackData, npsData: !!npsData, venueName: !!venueName });
+    if (!feedbackData || !npsData || !venueName || !venueId || !dateFrom || !dateTo) {
+      console.error('[AI Insights] Missing required fields:', {
+        feedbackData: !!feedbackData,
+        npsData: !!npsData,
+        venueName: !!venueName,
+        venueId: !!venueId,
+        dateFrom: !!dateFrom,
+        dateTo: !!dateTo
+      });
       return res.status(400).json({ error: 'Missing required fields' });
     }
+
+    // Initialize Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    // Check if we already have an insight for this exact date range
+    const { data: existingInsight } = await supabase
+      .from('ai_insights')
+      .select('*')
+      .eq('venue_id', venueId)
+      .eq('date_from', dateFrom)
+      .eq('date_to', dateTo)
+      .single();
+
+    if (existingInsight) {
+      console.log('[AI Insights] Returning cached insight for this date range');
+      return res.status(200).json({
+        ...existingInsight,
+        cached: true
+      });
+    }
+
+    // Fetch previous insights for historical context (last 3 insights)
+    const { data: previousInsights } = await supabase
+      .from('ai_insights')
+      .select('date_from, date_to, ai_score, actionable_recommendation, critical_insights')
+      .eq('venue_id', venueId)
+      .order('created_at', { ascending: false })
+      .limit(3);
 
     // Get Anthropic API key from environment
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
@@ -36,7 +77,14 @@ export default async function handler(req, res) {
     }
 
     // Prepare feedback summary for AI
-    const feedbackSummary = prepareFeedbackSummary(feedbackData, npsData, venueName, dateFrom, dateTo);
+    const feedbackSummary = prepareFeedbackSummary(
+      feedbackData,
+      npsData,
+      venueName,
+      dateFrom,
+      dateTo,
+      previousInsights
+    );
 
     console.log('[AI Insights] Prompt length:', feedbackSummary.length, 'characters');
 
@@ -51,7 +99,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
+        max_tokens: 2048,
         messages: [
           {
             role: 'user',
@@ -73,10 +121,69 @@ export default async function handler(req, res) {
     }
 
     const result = await response.json();
-    const insight = result.content[0].text;
+    const rawInsight = result.content[0].text;
 
-    console.log('[AI Insights] Successfully generated insight, length:', insight.length, 'characters');
-    return res.status(200).json({ insight });
+    console.log('[AI Insights] Successfully generated insight, length:', rawInsight.length, 'characters');
+
+    // Parse the JSON response from Claude
+    let parsedInsight;
+    try {
+      parsedInsight = JSON.parse(rawInsight);
+    } catch (parseError) {
+      console.error('[AI Insights] Failed to parse AI response as JSON:', parseError);
+      return res.status(500).json({
+        error: 'Failed to parse AI insights. Please try again.',
+        details: 'Invalid JSON response from AI'
+      });
+    }
+
+    // Calculate NPS score for metadata
+    const npsScores = npsData.map(item => item.score).filter(score => score !== null);
+    let npsScore = null;
+    if (npsScores.length > 0) {
+      const promoters = npsScores.filter(s => s >= 9).length;
+      const detractors = npsScores.filter(s => s <= 6).length;
+      npsScore = Math.round(((promoters - detractors) / npsScores.length) * 100);
+    }
+
+    // Store the insight in Supabase
+    const insightRecord = {
+      venue_id: venueId,
+      date_from: dateFrom,
+      date_to: dateTo,
+      ai_score: parsedInsight.ai_score,
+      critical_insights: parsedInsight.critical_insights,
+      strengths: parsedInsight.strengths,
+      areas_for_improvement: parsedInsight.areas_for_improvement,
+      actionable_recommendation: parsedInsight.actionable_recommendation,
+      feedback_count: feedbackData.length,
+      nps_count: npsData.length,
+      nps_score: npsScore
+    };
+
+    const { data: savedInsight, error: saveError } = await supabase
+      .from('ai_insights')
+      .insert([insightRecord])
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error('[AI Insights] Failed to save insight to database:', saveError);
+      // Still return the insight even if save fails
+      return res.status(200).json({
+        ...insightRecord,
+        id: null,
+        created_at: new Date().toISOString(),
+        saved: false
+      });
+    }
+
+    console.log('[AI Insights] Successfully saved insight to database');
+    return res.status(200).json({
+      ...savedInsight,
+      saved: true,
+      cached: false
+    });
 
   } catch (error) {
     console.error('[AI Insights] Error in AI insights endpoint:', error);
@@ -90,7 +197,7 @@ export default async function handler(req, res) {
 /**
  * Prepare feedback data summary for AI analysis
  */
-function prepareFeedbackSummary(feedbackData, npsData, venueName, dateFrom, dateTo) {
+function prepareFeedbackSummary(feedbackData, npsData, venueName, dateFrom, dateTo, previousInsights = []) {
   // Count feedback by rating
   const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   feedbackData.forEach(item => {
@@ -99,60 +206,176 @@ function prepareFeedbackSummary(feedbackData, npsData, venueName, dateFrom, date
     }
   });
 
+  // Calculate average rating
+  let totalRating = 0;
+  let totalRatingCount = 0;
+  Object.entries(ratingCounts).forEach(([rating, count]) => {
+    totalRating += parseInt(rating) * count;
+    totalRatingCount += count;
+  });
+  const avgRating = totalRatingCount > 0 ? (totalRating / totalRatingCount).toFixed(1) : 0;
+
   // Calculate NPS score
   const npsScores = npsData.map(item => item.score).filter(score => score !== null);
   let npsScore = null;
+  let promoters = 0;
+  let passives = 0;
+  let detractors = 0;
+
   if (npsScores.length > 0) {
-    const promoters = npsScores.filter(s => s >= 9).length;
-    const detractors = npsScores.filter(s => s <= 6).length;
+    promoters = npsScores.filter(s => s >= 9).length;
+    passives = npsScores.filter(s => s >= 7 && s <= 8).length;
+    detractors = npsScores.filter(s => s <= 6).length;
     npsScore = Math.round(((promoters - detractors) / npsScores.length) * 100);
   }
 
-  // Collect all text feedback
-  const feedbackTexts = [];
+  // Group feedback by question to identify patterns
+  const feedbackByQuestion = {};
   feedbackData.forEach(item => {
-    if (item.questions && item.questions.question) {
-      feedbackTexts.push({
-        question: item.questions.question,
+    const question = item.questions?.question || 'General feedback';
+    if (!feedbackByQuestion[question]) {
+      feedbackByQuestion[question] = {
+        question,
+        ratings: [],
+        comments: []
+      };
+    }
+    feedbackByQuestion[question].ratings.push(item.rating);
+    if (item.additional_feedback) {
+      feedbackByQuestion[question].comments.push({
         rating: item.rating,
-        feedback: item.additional_feedback || null,
-      });
-    } else if (item.additional_feedback) {
-      feedbackTexts.push({
-        question: 'General feedback',
-        rating: item.rating,
-        feedback: item.additional_feedback,
+        text: item.additional_feedback
       });
     }
   });
 
-  // Collect NPS scores (no comments in nps_submissions table)
-  const npsScoresWithDates = npsData
-    .filter(item => item.score !== null)
-    .map(item => ({
-      score: item.score,
-      date: item.created_at,
-    }));
+  // Calculate average rating per question
+  const questionAnalysis = Object.values(feedbackByQuestion).map(q => {
+    const avgQuestionRating = q.ratings.reduce((a, b) => a + b, 0) / q.ratings.length;
+    return {
+      question: q.question,
+      avgRating: avgQuestionRating.toFixed(1),
+      responseCount: q.ratings.length,
+      comments: q.comments
+    };
+  }).sort((a, b) => parseFloat(a.avgRating) - parseFloat(b.avgRating)); // Lowest rated first
 
-  // Build the prompt for Claude
-  const prompt = `You are an expert restaurant/hospitality consultant analyzing customer feedback for "${venueName}" from ${dateFrom} to ${dateTo}.
+  // Collect all text feedback, prioritising low ratings
+  const allComments = [];
+  feedbackData.forEach(item => {
+    if (item.additional_feedback) {
+      allComments.push({
+        question: item.questions?.question || 'General feedback',
+        rating: item.rating,
+        text: item.additional_feedback
+      });
+    }
+  });
 
-## Feedback Summary:
-- Total feedback submissions: ${feedbackData.length}
-- Rating distribution: 5★ (${ratingCounts[5]}), 4★ (${ratingCounts[4]}), 3★ (${ratingCounts[3]}), 2★ (${ratingCounts[2]}), 1★ (${ratingCounts[1]})
-- NPS responses: ${npsData.length}${npsScore !== null ? ` (NPS Score: ${npsScore})` : ''}
+  // Sort comments: low ratings first (most critical)
+  allComments.sort((a, b) => a.rating - b.rating);
 
-## Detailed Feedback:
-${feedbackTexts.slice(0, 50).map((item, idx) =>
-  `${idx + 1}. ${item.question} (Rating: ${item.rating}/5)${item.feedback ? `\n   Response: "${item.feedback}"` : ''}`
+  // Build historical context section
+  let historicalContext = '';
+  if (previousInsights && previousInsights.length > 0) {
+    historicalContext = `\n## Historical Context (Previous Analyses):
+${previousInsights.map((insight, idx) => {
+  const insights = insight.critical_insights || [];
+  const insightTitles = insights.map(i => i.title).join(', ');
+  return `${idx + 1}. Period: ${insight.date_from} to ${insight.date_to}
+   - AI Score: ${insight.ai_score}/10
+   - Key Issues: ${insightTitles || 'N/A'}
+   - Recommendation: ${insight.actionable_recommendation?.substring(0, 150) || 'N/A'}...`;
+}).join('\n\n')}
+
+**Important:** Consider whether issues from previous analyses have improved, worsened, or remained the same. Acknowledge progress where visible and flag persistent problems.
+`;
+  }
+
+  // Build the comprehensive prompt for Claude
+  const prompt = `You are an expert hospitality consultant analysing customer feedback for "${venueName}" from ${dateFrom} to ${dateTo}.
+
+## Overall Performance Summary:
+- **Total feedback submissions:** ${feedbackData.length}
+- **Average rating:** ${avgRating}/5 ⭐
+- **Rating distribution:**
+  • 5★: ${ratingCounts[5]} (${Math.round((ratingCounts[5] / totalRatingCount) * 100)}%)
+  • 4★: ${ratingCounts[4]} (${Math.round((ratingCounts[4] / totalRatingCount) * 100)}%)
+  • 3★: ${ratingCounts[3]} (${Math.round((ratingCounts[3] / totalRatingCount) * 100)}%)
+  • 2★: ${ratingCounts[2]} (${Math.round((ratingCounts[2] / totalRatingCount) * 100)}%)
+  • 1★: ${ratingCounts[1]} (${Math.round((ratingCounts[1] / totalRatingCount) * 100)}%)
+- **NPS responses:** ${npsData.length}${npsScore !== null ? `
+  • Promoters (9-10): ${promoters} (${Math.round((promoters / npsScores.length) * 100)}%)
+  • Passives (7-8): ${passives} (${Math.round((passives / npsScores.length) * 100)}%)
+  • Detractors (0-6): ${detractors} (${Math.round((detractors / npsScores.length) * 100)}%)
+  • **NPS Score: ${npsScore}**` : ''}
+
+## Performance by Category:
+${questionAnalysis.map((q, idx) =>
+  `${idx + 1}. **${q.question}**
+   - Average rating: ${q.avgRating}/5 (${q.responseCount} responses)
+   - Status: ${parseFloat(q.avgRating) >= 4.0 ? '✅ Strong' : parseFloat(q.avgRating) >= 3.0 ? '⚠️ Needs attention' : '🚨 Critical'}`
 ).join('\n\n')}
 
-Please analyze this feedback and provide 2-3 concise, actionable insights. Focus on:
-1. The most critical area needing improvement (if any)
-2. What customers appreciate most
-3. One specific, actionable recommendation
+## Detailed Customer Feedback (Priority: Critical Issues First):
+${allComments.slice(0, 60).map((comment, idx) =>
+  `${idx + 1}. [${comment.rating}★] ${comment.question}
+   "${comment.text}"`
+).join('\n\n')}
+${historicalContext}
 
-Keep your response under 200 words and in a friendly, professional tone. Start directly with the insights without preamble.`;
+---
+
+## YOUR TASK:
+
+Analyse this feedback data and provide a comprehensive, actionable report in **UK English** (British spelling: organisation, analyse, realise, colour, etc.).
+
+**CRITICAL:** Your response MUST be valid JSON in this exact format:
+
+\`\`\`json
+{
+  "ai_score": <number 0-10>,
+  "critical_insights": [
+    {
+      "title": "Brief title (UK English)",
+      "content": "Detailed explanation with specific data points and evidence (UK English)"
+    }
+  ],
+  "strengths": [
+    "Specific strength with supporting evidence (UK English)",
+    "Another strength (UK English)"
+  ],
+  "areas_for_improvement": [
+    "Specific area with data and reasoning (UK English)",
+    "Another area (UK English)"
+  ],
+  "actionable_recommendation": "One clear, specific, time-bound recommendation that addresses the most critical issue. Include what to do, who should do it, and when. (UK English)"
+}
+\`\`\`
+
+**Scoring Guidelines for ai_score (0-10):**
+- **9-10:** Exceptional performance, minimal issues, NPS >70, avg rating >4.5
+- **7-8:** Strong performance, minor issues, NPS 50-70, avg rating 4.0-4.5
+- **5-6:** Good but room for improvement, NPS 20-50, avg rating 3.5-4.0
+- **3-4:** Significant issues present, NPS 0-20, avg rating 3.0-3.5
+- **0-2:** Critical issues, urgent action needed, NPS <0, avg rating <3.0
+
+**Analysis Requirements:**
+1. **critical_insights:** Identify 2-4 key insights. Focus on critical issues first, then positive patterns. Use specific data from the feedback.
+2. **strengths:** List 2-3 areas where the venue excels. Be specific and evidence-based.
+3. **areas_for_improvement:** Identify 2-3 specific areas needing attention, ranked by urgency.
+4. **actionable_recommendation:** ONE clear action that will have the biggest impact. Must be specific, measurable, and time-bound.
+
+**Quality Standards:**
+- Use specific numbers and percentages from the data
+- Reference actual customer quotes when relevant
+- Identify patterns across multiple feedback items
+- Be honest and direct about issues whilst remaining constructive
+- If historical data shows recurring issues, explicitly mention this
+- Use UK English spelling throughout (organisation, analyse, colour, etc.)
+- Keep content professional but personable
+
+**IMPORTANT:** Return ONLY the JSON object. No additional text before or after.`;
 
   return prompt;
 }
