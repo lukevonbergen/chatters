@@ -14,8 +14,16 @@ export default async function handler(req, res) {
   try {
     const { feedbackData, npsData, venueName, dateFrom, dateTo } = req.body;
 
+    console.log('[AI Insights] Request received:', {
+      feedbackCount: feedbackData?.length || 0,
+      npsCount: npsData?.length || 0,
+      venueName,
+      dateRange: `${dateFrom} to ${dateTo}`
+    });
+
     // Validate required fields
     if (!feedbackData || !npsData || !venueName) {
+      console.error('[AI Insights] Missing required fields:', { feedbackData: !!feedbackData, npsData: !!npsData, venueName: !!venueName });
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -23,14 +31,17 @@ export default async function handler(req, res) {
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!anthropicApiKey) {
-      console.error('ANTHROPIC_API_KEY not configured');
+      console.error('[AI Insights] ANTHROPIC_API_KEY not configured');
       return res.status(500).json({ error: 'AI service not configured. Please contact support.' });
     }
 
     // Prepare feedback summary for AI
     const feedbackSummary = prepareFeedbackSummary(feedbackData, npsData, venueName, dateFrom, dateTo);
 
+    console.log('[AI Insights] Prompt length:', feedbackSummary.length, 'characters');
+
     // Call Anthropic Claude API
+    console.log('[AI Insights] Calling Anthropic API...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -50,23 +61,28 @@ export default async function handler(req, res) {
       }),
     });
 
+    console.log('[AI Insights] Anthropic API response status:', response.status);
+
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Anthropic API error:', errorData);
+      console.error('[AI Insights] Anthropic API error:', errorData);
       return res.status(500).json({
-        error: 'Failed to generate insights. Please try again.'
+        error: 'Failed to generate insights. Please try again.',
+        details: errorData
       });
     }
 
     const result = await response.json();
     const insight = result.content[0].text;
 
+    console.log('[AI Insights] Successfully generated insight, length:', insight.length, 'characters');
     return res.status(200).json({ insight });
 
   } catch (error) {
-    console.error('Error in AI insights endpoint:', error);
+    console.error('[AI Insights] Error in AI insights endpoint:', error);
     return res.status(500).json({
-      error: 'An error occurred while generating insights. Please try again.'
+      error: 'An error occurred while generating insights. Please try again.',
+      details: error.message
     });
   }
 }

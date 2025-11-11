@@ -74,6 +74,12 @@ const AIInsights = () => {
       }
 
       // Call our secure API endpoint
+      console.log('[AI Insights] Sending request to API...', {
+        feedbackCount: feedbackData?.length || 0,
+        npsCount: npsData?.length || 0,
+        venueName
+      });
+
       const response = await fetch('/api/ai-insights', {
         method: 'POST',
         headers: {
@@ -88,17 +94,21 @@ const AIInsights = () => {
         }),
       });
 
+      console.log('[AI Insights] API response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('[AI Insights] API error response:', errorData);
         throw new Error(errorData.error || 'Failed to generate insights');
       }
 
       const result = await response.json();
+      console.log('[AI Insights] Successfully received insight');
       setInsight(result.insight);
       setLastGenerated(new Date());
 
     } catch (err) {
-      console.error('Error generating insights:', err);
+      console.error('[AI Insights] Error generating insights:', err);
       setError(err.message || 'Failed to generate insights. Please try again.');
     } finally {
       setLoading(false);
