@@ -364,23 +364,27 @@ Analyse this feedback data and provide a comprehensive, actionable report in **U
   "ai_score": <number 0-10>,
   "critical_insights": [
     {
-      "title": "4-6 word title",
-      "content": "1-2 concise sentences under 30 words"
+      "title": "Cleanliness Issues",
+      "content": "Hygiene rated 2.9/5, 41% below average, needs immediate attention."
+    },
+    {
+      "title": "Menu Quality Low",
+      "content": "Menu scored 3.0/5 with 20% negative feedback, requires urgent review."
     }
   ],
   "strengths": [
-    "One sentence under 20 words",
-    "Another sentence under 20 words"
+    "Music creates appropriate atmosphere with 3.3/5 rating from customers.",
+    "Service staff show genuine engagement despite operational constraints."
   ],
   "areas_for_improvement": [
-    "One sentence under 20 words",
-    "Another sentence under 20 words"
+    "Implement daily hygiene checklists and deep-cleaning protocols immediately.",
+    "Conduct menu audit and redesign based on customer feedback surveys."
   ],
-  "actionable_recommendation": "One clear action sentence under 35 words",
+  "actionable_recommendation": "Prioritise immediate deep-cleaning and hygiene training to address critical 2.9/5 cleanliness rating.",
   "improvement_tips": [
-    "Tip 1: One actionable sentence under 20 words",
-    "Tip 2: One actionable sentence under 20 words",
-    "Tip 3: One actionable sentence under 20 words"
+    "Create documented daily cleaning checklists for all staff to follow.",
+    "Conduct weekly menu reviews and remove underperforming dishes.",
+    "Implement mystery shopper program to identify service inconsistencies."
   ]
 }
 \`\`\`
@@ -395,7 +399,7 @@ Analyse this feedback data and provide a comprehensive, actionable report in **U
 **Analysis Requirements:**
 1. **critical_insights:** Identify 2-3 key insights. Each insight should have:
    - title: 4-6 words max
-   - content: 1-2 sentences max (under 30 words each)
+   - content: ONE sentence (under 20 words)
 2. **strengths:** List 2-3 strengths. Each should be ONE sentence (under 20 words).
 3. **areas_for_improvement:** List 2-3 areas. Each should be ONE sentence (under 20 words).
 4. **actionable_recommendation:** ONE clear sentence with a specific action (under 35 words).
