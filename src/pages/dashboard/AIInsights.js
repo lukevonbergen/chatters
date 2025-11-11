@@ -257,9 +257,8 @@ const AIInsights = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* AI Score */}
               <div className="flex flex-col items-center justify-center py-8 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border-2 border-gray-200">
-                <AIScoreCircle score={insight.ai_score} />
+                <AIScoreBar score={insight.ai_score} />
                 <div className="mt-4 text-center px-4">
-                  <h3 className="text-xl font-bold text-gray-900">Overall Performance Score</h3>
                   <p className="text-sm text-gray-600 mt-1">
                     Based on {insight.feedback_count} feedback submissions and {insight.nps_count} NPS responses
                   </p>
