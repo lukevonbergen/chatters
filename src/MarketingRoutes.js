@@ -35,6 +35,8 @@ import HotelSolution from './pages/marketing/solutions/HotelSolution';
 import RetailSolution from './pages/marketing/solutions/RetailSolution';
 import EventSolution from './pages/marketing/solutions/EventSolution';
 
+import NewSite from './pages/marketing/NewSite';
+
 const MarketingRoutes = () => {
   return (
     <>
@@ -75,6 +77,9 @@ const MarketingRoutes = () => {
       <Route path="/solutions/hotels" element={<HotelSolution />} />
       <Route path="/solutions/retail" element={<RetailSolution />} />
       <Route path="/solutions/events" element={<EventSolution />} />
+
+      {/* 🆕 New Site (Rebrand Test) */}
+      <Route path="/new-site" element={<NewSite />} />
 
       </Routes>
 
