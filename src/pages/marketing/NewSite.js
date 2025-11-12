@@ -19,55 +19,54 @@ const NewSite = () => {
 
       {/* Sticky Navbar */}
       <nav className="sticky top-0 z-50 bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="w-full px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center">
-              <div className="bg-black text-white px-3 py-1.5 rounded font-bold text-sm" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                CHATTERS
+            {/* Left side: Logo + Nav Links */}
+            <div className="flex items-center space-x-8">
+              {/* Logo */}
+              <img src="/img/Logo.svg" alt="Chatters" className="h-8" />
+
+              {/* Desktop Navigation */}
+              <div className="hidden lg:flex items-center space-x-6">
+                <a
+                  href="#"
+                  className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  Product
+                </a>
+                <a
+                  href="#"
+                  className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  Solutions
+                </a>
+                <a
+                  href="#"
+                  className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  Resources
+                </a>
+                <a
+                  href="#"
+                  className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  Pricing
+                </a>
+                <a
+                  href="#"
+                  className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  Help
+                </a>
               </div>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-8">
-              <a
-                href="#"
-                className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-              >
-                Product
-              </a>
-              <a
-                href="#"
-                className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-              >
-                Solutions
-              </a>
-              <a
-                href="#"
-                className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-              >
-                Resources
-              </a>
-              <a
-                href="#"
-                className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-              >
-                Pricing
-              </a>
-              <a
-                href="#"
-                className="text-black hover:text-gray-600 transition-colors text-sm font-medium"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-              >
-                Help
-              </a>
-            </div>
-
-            {/* Desktop CTA Buttons */}
+            {/* Right side: CTA Buttons */}
             <div className="hidden lg:flex items-center space-x-3">
               <a
                 href="#"
@@ -78,13 +77,16 @@ const NewSite = () => {
               </a>
               <a
                 href="#"
-                className="px-5 py-2.5 rounded-lg text-black text-sm font-medium transition-all hover:opacity-80"
+                className="px-5 py-2.5 rounded-lg text-black text-sm font-medium transition-all hover:opacity-80 flex items-center gap-1"
                 style={{
                   backgroundColor: '#EEECED',
                   fontFamily: "'Plus Jakarta Sans', sans-serif"
                 }}
               >
-                Take a tour →
+                Take a tour
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </a>
             </div>
 
@@ -149,13 +151,16 @@ const NewSite = () => {
                 </a>
                 <a
                   href="#"
-                  className="block px-5 py-2.5 rounded-lg text-black text-sm font-medium text-center transition-all hover:opacity-80"
+                  className="flex items-center justify-center gap-1 px-5 py-2.5 rounded-lg text-black text-sm font-medium transition-all hover:opacity-80"
                   style={{
                     backgroundColor: '#EEECED',
                     fontFamily: "'Plus Jakarta Sans', sans-serif"
                   }}
                 >
-                  Take a tour →
+                  Take a tour
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </a>
               </div>
             </div>
@@ -167,7 +172,7 @@ const NewSite = () => {
       <section className="max-w-7xl mx-auto px-6 pt-20 pb-16">
         <div className="text-center max-w-4xl mx-auto">
           <h1
-            className="text-5xl md:text-6xl lg:text-7xl font-bold text-black mb-6 leading-tight"
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-6 leading-tight"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             AI-Powered intelligence that transforms feedback into action
@@ -181,23 +186,29 @@ const NewSite = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="#"
-              className="px-6 py-3 rounded-lg text-black text-base font-medium transition-all hover:opacity-80"
+              className="px-6 py-3 rounded-lg text-black text-base font-medium transition-all hover:opacity-80 flex items-center gap-1"
               style={{
                 backgroundColor: '#EEECED',
                 fontFamily: "'Plus Jakarta Sans', sans-serif"
               }}
             >
               Pricing
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </a>
             <a
               href="#"
-              className="px-6 py-3 rounded-lg text-black text-base font-medium transition-all hover:opacity-80"
+              className="px-6 py-3 rounded-lg text-black text-base font-medium transition-all hover:opacity-80 flex items-center gap-1"
               style={{
                 backgroundColor: '#EEECED',
                 fontFamily: "'Plus Jakarta Sans', sans-serif"
               }}
             >
               Take a tour
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </a>
           </div>
         </div>
@@ -208,12 +219,12 @@ const NewSite = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Chatters Intelligence Card */}
           <div
-            className="rounded-2xl p-8 md:p-10"
+            className="rounded-2xl p-8 md:p-10 text-center"
             style={{ backgroundColor: '#EEECED' }}
           >
             <h3
-              className="text-2xl md:text-3xl font-bold text-black mb-4"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              className="text-2xl md:text-3xl text-black mb-4"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}
             >
               Chatters Intelligence
             </h3>
@@ -227,12 +238,12 @@ const NewSite = () => {
 
           {/* Instant Alerting Card */}
           <div
-            className="rounded-2xl p-8 md:p-10"
+            className="rounded-2xl p-8 md:p-10 text-center"
             style={{ backgroundColor: '#EEECED' }}
           >
             <h3
-              className="text-2xl md:text-3xl font-bold text-black mb-4"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              className="text-2xl md:text-3xl text-black mb-4"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}
             >
               Instant Alerting
             </h3>
@@ -246,12 +257,12 @@ const NewSite = () => {
 
           {/* Employee Performance Reports Card */}
           <div
-            className="rounded-2xl p-8 md:p-10"
+            className="rounded-2xl p-8 md:p-10 text-center"
             style={{ backgroundColor: '#EEECED' }}
           >
             <h3
-              className="text-2xl md:text-3xl font-bold text-black mb-4"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              className="text-2xl md:text-3xl text-black mb-4"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}
             >
               Employee Performance Reports
             </h3>
@@ -265,12 +276,12 @@ const NewSite = () => {
 
           {/* Operation Management Card */}
           <div
-            className="rounded-2xl p-8 md:p-10"
+            className="rounded-2xl p-8 md:p-10 text-center"
             style={{ backgroundColor: '#EEECED' }}
           >
             <h3
-              className="text-2xl md:text-3xl font-bold text-black mb-4"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              className="text-2xl md:text-3xl text-black mb-4"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}
             >
               Operation Management
             </h3>
