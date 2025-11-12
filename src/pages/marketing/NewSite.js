@@ -172,7 +172,7 @@ const NewSite = () => {
       <section className="max-w-7xl mx-auto px-6 pt-20 pb-16">
         <div className="text-center max-w-4xl mx-auto">
           <h1
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-6 leading-tight"
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-6 leading-tight"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             AI-Powered intelligence that transforms feedback into action
@@ -215,21 +215,21 @@ const NewSite = () => {
       </section>
 
       {/* Feature Cards Section */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section className="w-full px-6 py-16">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Chatters Intelligence Card */}
           <div
             className="rounded-2xl p-8 md:p-10 text-center"
             style={{ backgroundColor: '#EEECED' }}
           >
             <h3
-              className="text-2xl md:text-3xl text-black mb-4"
+              className="text-xl md:text-2xl text-black mb-3"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}
             >
               Chatters Intelligence
             </h3>
             <p
-              className="text-base md:text-lg text-black leading-relaxed"
+              className="text-sm md:text-base text-black leading-relaxed"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 400 }}
             >
               Find out in real time, what's wrong mid-service, and fix it.
@@ -242,13 +242,13 @@ const NewSite = () => {
             style={{ backgroundColor: '#EEECED' }}
           >
             <h3
-              className="text-2xl md:text-3xl text-black mb-4"
+              className="text-xl md:text-2xl text-black mb-3"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}
             >
               Instant Alerting
             </h3>
             <p
-              className="text-base md:text-lg text-black leading-relaxed"
+              className="text-sm md:text-base text-black leading-relaxed"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 400 }}
             >
               Alert staff immediately as soon as something's wrong.
@@ -261,13 +261,13 @@ const NewSite = () => {
             style={{ backgroundColor: '#EEECED' }}
           >
             <h3
-              className="text-2xl md:text-3xl text-black mb-4"
+              className="text-xl md:text-2xl text-black mb-3"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}
             >
               Employee Performance Reports
             </h3>
             <p
-              className="text-base md:text-lg text-black leading-relaxed"
+              className="text-sm md:text-base text-black leading-relaxed"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 400 }}
             >
               Know how your staff are performing, and when.
@@ -280,13 +280,13 @@ const NewSite = () => {
             style={{ backgroundColor: '#EEECED' }}
           >
             <h3
-              className="text-2xl md:text-3xl text-black mb-4"
+              className="text-xl md:text-2xl text-black mb-3"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}
             >
               Operation Management
             </h3>
             <p
-              className="text-base md:text-lg text-black leading-relaxed"
+              className="text-sm md:text-base text-black leading-relaxed"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 400 }}
             >
               Manage your real-time operations using smart tools, built for anyone.
