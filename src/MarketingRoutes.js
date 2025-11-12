@@ -22,6 +22,7 @@ import BlogPost from './pages/marketing/BlogPost';
 
 import QuestionManagementProduct from './pages/marketing/product/QuestionManagement';
 import BusinessIntelligenceProduct from './pages/marketing/product/BusinessIntelligence';
+import IntelligenceProduct from './pages/marketing/product/Intelligence';
 import StaffLeaderboardPage from './pages/marketing/product/StaffLeaderboardPage';
 import StaffRecognitionPage from './pages/marketing/product/StaffRecognition';
 import NPSScoringPage from './pages/marketing/product/NPSScoring';
@@ -33,6 +34,8 @@ import RestaurantSolution from './pages/marketing/solutions/RestaurantSolution';
 import HotelSolution from './pages/marketing/solutions/HotelSolution';
 import RetailSolution from './pages/marketing/solutions/RetailSolution';
 import EventSolution from './pages/marketing/solutions/EventSolution';
+
+import NewSite from './pages/marketing/NewSite';
 
 const MarketingRoutes = () => {
   return (
@@ -61,6 +64,7 @@ const MarketingRoutes = () => {
       {/* 🏢 Product Pages */}
       <Route path="/product/question-management" element={<QuestionManagementProduct />} />
       <Route path="/product/business-intelligence" element={<BusinessIntelligenceProduct />} />
+      <Route path="/product/intelligence" element={<IntelligenceProduct />} />
       <Route path="/product/multi-location-control" element={<MultiLocationControlProduct />} />
       <Route path="/product/kiosk-mode" element={<KioskModeProduct />} />
       <Route path="/product/real-time-alerts" element={<RealTimeAlertsProduct />} />
@@ -73,6 +77,9 @@ const MarketingRoutes = () => {
       <Route path="/solutions/hotels" element={<HotelSolution />} />
       <Route path="/solutions/retail" element={<RetailSolution />} />
       <Route path="/solutions/events" element={<EventSolution />} />
+
+      {/* 🆕 New Site (Rebrand Test) */}
+      <Route path="/new-site" element={<NewSite />} />
 
       </Routes>
 

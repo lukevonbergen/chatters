@@ -55,6 +55,7 @@ import NPSReportDetail from './pages/dashboard/NPSReportDetail';
 
 // Simplified version (works without API quota)
 import GoogleReviewsPage from './pages/dashboard/GoogleReviewsSimple';
+import AIInsightsPage from './pages/dashboard/AIInsights';
 
 // Kiosk (venue‑aware, no dashboard frame)
 import KioskPage from './pages/dashboard/KioskPage';
@@ -110,6 +111,7 @@ const DashboardRoutes = () => {
       {/* Authenticated app: venue context + dashboard frame */}
       <Route element={<DashboardShell />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/ai-insights" element={<AIInsightsPage />} />
 
         {/* Multi-Venue Section */}
         <Route path="/multi-venue/venues" element={<VenueSettingsPage />} />

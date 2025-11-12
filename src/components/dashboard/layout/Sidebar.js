@@ -37,7 +37,8 @@ import {
   Award,
   MessageCircle,
   List,
-  LayoutDashboard
+  LayoutDashboard,
+  Sparkles
 } from 'lucide-react';
 
 // Venue Management Section - Single venue context
@@ -48,6 +49,13 @@ const venueNavItems = [
     icon: Home,
     path: '/dashboard',
     color: 'text-blue-600'
+  },
+  {
+    id: 'ai-insights',
+    label: 'AI Insights',
+    icon: Sparkles,
+    path: '/ai-insights',
+    color: 'text-violet-600'
   },
   {
     id: 'feedback',
