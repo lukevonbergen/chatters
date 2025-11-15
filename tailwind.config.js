@@ -6,7 +6,7 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-dashboard)', 'ui-sans-serif', 'system-ui'],
         'marketing': ['var(--font-marketing)', 'ui-sans-serif', 'system-ui'],
-        'satoshi': ['Satoshi', 'var(--font-dashboard)', 'ui-sans-serif', 'system-ui'],
+        'jakarta': ['Plus Jakarta Sans', 'var(--font-dashboard)', 'ui-sans-serif', 'system-ui'],
       },
       colors: {
         'custom': {
