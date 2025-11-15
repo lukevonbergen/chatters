@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import PrimaryButton from "../../common/buttons/PrimaryButton";
 
 const Hero = ({
-  eyebrow = "Chatters for Hospitality",
+  eyebrow = "Will for hospo",
   title = "AI-Powered Intelligence That Transforms Feedback Into Action",
   subtitle = "Stop drowning in data. Let AI analyse thousands of customer responses instantly, identify critical trends, and deliver actionable recommendations that drive real business results.",
   primaryCta = { label: "Book a demo", to: "/demo" },
