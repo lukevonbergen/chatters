@@ -5,6 +5,7 @@ import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { Sparkles, RefreshCw, Calendar, AlertCircle, TrendingUp, TrendingDown, CheckCircle, AlertTriangle, Lightbulb, Target } from 'lucide-react';
 import dayjs from 'dayjs';
+import DatePicker from '../../components/dashboard/inputs/DatePicker';
 
 const AIInsights = () => {
   usePageTitle('AI Insights');
@@ -210,21 +211,17 @@ const AIInsights = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             {/* Date Range Selector */}
             <div className="flex items-center gap-2">
-              <input
-                type="date"
+              <DatePicker
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 max={dateTo}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-              <span className="text-gray-500 text-sm">to</span>
-              <input
-                type="date"
+              <span className="text-gray-400 text-sm font-medium">to</span>
+              <DatePicker
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 min={dateFrom}
                 max={dayjs().format('YYYY-MM-DD')}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -232,7 +229,7 @@ const AIInsights = () => {
             <button
               onClick={generateInsights}
               disabled={loading}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm text-sm whitespace-nowrap"
+              className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm text-sm whitespace-nowrap"
             >
               {loading ? (
                 <>
