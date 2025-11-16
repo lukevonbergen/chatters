@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { TrendingUp, DollarSign, Users, Shield, Settings, MessageSquare } from 'lucide-react';
+import DatePicker from '../../inputs/DatePicker';
 
 const RevenueImpactAnalysis = ({ venueId }) => {
   const [data, setData] = useState({
@@ -235,18 +236,18 @@ const RevenueImpactAnalysis = ({ venueId }) => {
         {/* Custom Date Inputs */}
         {isCustom && (
           <div className="flex gap-2 mt-3 items-center">
-            <input
-              type="date"
+            <DatePicker
               value={customStartDate}
               onChange={(e) => setCustomStartDate(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-xs"
+              max={customEndDate}
+              className="flex-1"
             />
-            <span className="text-xs text-gray-500">to</span>
-            <input
-              type="date"
+            <span className="text-xs text-gray-400 font-medium">to</span>
+            <DatePicker
               value={customEndDate}
               onChange={(e) => setCustomEndDate(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-xs"
+              min={customStartDate}
+              className="flex-1"
             />
           </div>
         )}
