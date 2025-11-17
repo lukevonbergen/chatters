@@ -23,32 +23,36 @@ const AIInsights = () => {
   const currentVenue = allVenues.find(v => v.id === venueId);
   const venueName = currentVenue?.name || 'your venue';
 
-  // Load previously saved insight for current date range on mount
+  // Load most recent insight for this venue on mount
   useEffect(() => {
     if (!venueId) return;
 
-    const loadExistingInsight = async () => {
+    const loadLatestInsight = async () => {
       try {
         const { data, error } = await supabase
           .from('ai_insights')
           .select('*')
           .eq('venue_id', venueId)
-          .eq('date_from', dateFrom)
-          .eq('date_to', dateTo)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .single();
 
         if (!error && data) {
+          // Update the date range to match the loaded insight
+          setDateFrom(data.date_from);
+          setDateTo(data.date_to);
           setInsight({ ...data, cached: true });
           setLastGenerated(new Date(data.created_at));
+          console.log('[AI Insights] Loaded most recent insight:', data);
         }
       } catch (err) {
         // No existing insight found - this is fine
-        console.log('[AI Insights] No existing insight found for this date range');
+        console.log('[AI Insights] No existing insights found for this venue');
       }
     };
 
-    loadExistingInsight();
-  }, [venueId, dateFrom, dateTo]);
+    loadLatestInsight();
+  }, [venueId]); // Only run when venueId changes
 
   // Generate AI Insights
   const generateInsights = async () => {
