@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import CTAButton from '../../components/marketing/common/buttons/CTAButton';
 
 const NewSite = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -89,15 +90,9 @@ const NewSite = () => {
               >
                 Log in
               </Link>
-              <Link
-                to="/demo"
-                className="px-5 py-2.5 rounded-lg bg-[#2F5CFF] text-white text-sm font-medium transition-all hover:bg-[#2548CC] flex items-center gap-2"
-              >
+              <CTAButton to="/demo">
                 Take a tour
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3.33334 8H12.6667M12.6667 8L8.00001 3.33333M12.6667 8L8.00001 12.6667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </Link>
+              </CTAButton>
             </div>
 
             {/* Mobile Menu Button */}
@@ -146,15 +141,9 @@ const NewSite = () => {
                 >
                   Log in
                 </Link>
-                <Link
-                  to="/demo"
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#2F5CFF] text-white text-sm font-medium transition-all hover:bg-[#2548CC]"
-                >
+                <CTAButton to="/demo" className="w-full justify-center">
                   Take a tour
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3.33334 8H12.6667M12.6667 8L8.00001 3.33333M12.6667 8L8.00001 12.6667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </Link>
+                </CTAButton>
               </div>
             </div>
           )}
