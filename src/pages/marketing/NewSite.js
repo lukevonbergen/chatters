@@ -53,10 +53,12 @@ const NewSite = () => {
               {/* Desktop Navigation */}
               <div className="hidden lg:flex items-center space-x-8">
                 {/* Product Dropdown */}
-                <div className="relative">
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleMouseEnterNav('product')}
+                  onMouseLeave={handleMouseLeaveNav}
+                >
                   <button
-                    onMouseEnter={() => handleMouseEnterNav('product')}
-                    onMouseLeave={handleMouseLeaveNav}
                     className={`flex items-center gap-1 transition-colors text-sm font-medium ${
                       openDropdown === 'product' ? 'text-black' : 'text-gray-700 hover:text-black'
                     }`}
@@ -66,13 +68,19 @@ const NewSite = () => {
                       openDropdown === 'product' ? 'rotate-180' : ''
                     }`} />
                   </button>
+                  {/* Invisible hover bridge */}
+                  {openDropdown === 'product' && (
+                    <div className="absolute top-full left-0 right-0 h-4 bg-transparent" />
+                  )}
                 </div>
 
                 {/* Solutions Dropdown */}
-                <div className="relative">
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleMouseEnterNav('solutions')}
+                  onMouseLeave={handleMouseLeaveNav}
+                >
                   <button
-                    onMouseEnter={() => handleMouseEnterNav('solutions')}
-                    onMouseLeave={handleMouseLeaveNav}
                     className={`flex items-center gap-1 transition-colors text-sm font-medium ${
                       openDropdown === 'solutions' ? 'text-black' : 'text-gray-700 hover:text-black'
                     }`}
@@ -82,13 +90,19 @@ const NewSite = () => {
                       openDropdown === 'solutions' ? 'rotate-180' : ''
                     }`} />
                   </button>
+                  {/* Invisible hover bridge */}
+                  {openDropdown === 'solutions' && (
+                    <div className="absolute top-full left-0 right-0 h-4 bg-transparent" />
+                  )}
                 </div>
 
                 {/* Resources Dropdown */}
-                <div className="relative">
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleMouseEnterNav('resources')}
+                  onMouseLeave={handleMouseLeaveNav}
+                >
                   <button
-                    onMouseEnter={() => handleMouseEnterNav('resources')}
-                    onMouseLeave={handleMouseLeaveNav}
                     className={`flex items-center gap-1 transition-colors text-sm font-medium ${
                       openDropdown === 'resources' ? 'text-black' : 'text-gray-700 hover:text-black'
                     }`}
@@ -98,6 +112,10 @@ const NewSite = () => {
                       openDropdown === 'resources' ? 'rotate-180' : ''
                     }`} />
                   </button>
+                  {/* Invisible hover bridge */}
+                  {openDropdown === 'resources' && (
+                    <div className="absolute top-full left-0 right-0 h-4 bg-transparent" />
+                  )}
                 </div>
 
                 <Link
