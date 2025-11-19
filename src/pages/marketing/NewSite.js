@@ -223,22 +223,22 @@ const NewSite = () => {
               <div className="max-w-6xl mx-auto grid grid-cols-2 gap-8">
                 {/* Column 1 */}
                 <div className="space-y-6">
-                  <Link to="/product1" className="block group">
+                  <Link to="/product1" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Product 1</h3>
                     <p className="text-sm text-gray-600">Description for Product 1 goes here</p>
                   </Link>
-                  <Link to="/product2" className="block group">
+                  <Link to="/product2" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Product 2</h3>
                     <p className="text-sm text-gray-600">Description for Product 2 goes here</p>
                   </Link>
                 </div>
                 {/* Column 2 */}
                 <div className="space-y-6">
-                  <Link to="/product3" className="block group">
+                  <Link to="/product3" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Product 3</h3>
                     <p className="text-sm text-gray-600">Description for Product 3 goes here</p>
                   </Link>
-                  <Link to="/product4" className="block group">
+                  <Link to="/product4" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Product 4</h3>
                     <p className="text-sm text-gray-600">Description for Product 4 goes here</p>
                   </Link>
@@ -253,22 +253,22 @@ const NewSite = () => {
               <div className="max-w-6xl mx-auto grid grid-cols-2 gap-8">
                 {/* Column 1 */}
                 <div className="space-y-6">
-                  <Link to="/solution1" className="block group">
+                  <Link to="/solution1" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Solution 1</h3>
                     <p className="text-sm text-gray-600">Description for Solution 1 goes here</p>
                   </Link>
-                  <Link to="/solution2" className="block group">
+                  <Link to="/solution2" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Solution 2</h3>
                     <p className="text-sm text-gray-600">Description for Solution 2 goes here</p>
                   </Link>
                 </div>
                 {/* Column 2 */}
                 <div className="space-y-6">
-                  <Link to="/solution3" className="block group">
+                  <Link to="/solution3" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Solution 3</h3>
                     <p className="text-sm text-gray-600">Description for Solution 3 goes here</p>
                   </Link>
-                  <Link to="/solution4" className="block group">
+                  <Link to="/solution4" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Solution 4</h3>
                     <p className="text-sm text-gray-600">Description for Solution 4 goes here</p>
                   </Link>
@@ -283,22 +283,22 @@ const NewSite = () => {
               <div className="max-w-6xl mx-auto grid grid-cols-2 gap-8">
                 {/* Column 1 */}
                 <div className="space-y-6">
-                  <Link to="/resource1" className="block group">
+                  <Link to="/resource1" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Resource 1</h3>
                     <p className="text-sm text-gray-600">Description for Resource 1 goes here</p>
                   </Link>
-                  <Link to="/resource2" className="block group">
+                  <Link to="/resource2" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Resource 2</h3>
                     <p className="text-sm text-gray-600">Description for Resource 2 goes here</p>
                   </Link>
                 </div>
                 {/* Column 2 */}
                 <div className="space-y-6">
-                  <Link to="/resource3" className="block group">
+                  <Link to="/resource3" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Resource 3</h3>
                     <p className="text-sm text-gray-600">Description for Resource 3 goes here</p>
                   </Link>
-                  <Link to="/resource4" className="block group">
+                  <Link to="/resource4" className="block group dropdown-item">
                     <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Resource 4</h3>
                     <p className="text-sm text-gray-600">Description for Resource 4 goes here</p>
                   </Link>
