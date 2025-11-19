@@ -182,39 +182,40 @@ const NewSite = () => {
           )}
         </div>
 
-        {/* Full-Width Dropdown Panels */}
+        {/* Full-Width Dropdown Panels - Added padding-top as buffer zone */}
         <div
-          className={`absolute left-0 right-0 top-full bg-white border-b border-gray-200 overflow-hidden transition-all duration-300 ease-in-out ${
-            openDropdown ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+          className={`absolute left-0 right-0 top-full bg-white border-b border-gray-200 transition-all duration-300 ease-in-out ${
+            openDropdown ? 'translate-y-0 opacity-100 visible' : '-translate-y-4 opacity-0 invisible'
           }`}
+          style={{ paddingTop: '1px' }} // Invisible buffer to prevent gaps
           onMouseEnter={handleMouseEnterDropdown}
           onMouseLeave={handleMouseLeaveDropdown}
         >
           {/* Product Dropdown Content */}
           {openDropdown === 'product' && (
-            <div className="w-full px-[30px] py-12 animate-slideDown">
+            <div className="w-full px-[30px] py-12">
               <div className="max-w-6xl mx-auto grid grid-cols-2 gap-8">
                 {/* Column 1 */}
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
-                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
-                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
-                  </div>
+                  <Link to="/product1" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Product 1</h3>
+                    <p className="text-sm text-gray-600">Description for Product 1 goes here</p>
+                  </Link>
+                  <Link to="/product2" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Product 2</h3>
+                    <p className="text-sm text-gray-600">Description for Product 2 goes here</p>
+                  </Link>
                 </div>
                 {/* Column 2 */}
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
-                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
-                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
-                  </div>
+                  <Link to="/product3" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Product 3</h3>
+                    <p className="text-sm text-gray-600">Description for Product 3 goes here</p>
+                  </Link>
+                  <Link to="/product4" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Product 4</h3>
+                    <p className="text-sm text-gray-600">Description for Product 4 goes here</p>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -222,29 +223,29 @@ const NewSite = () => {
 
           {/* Solutions Dropdown Content */}
           {openDropdown === 'solutions' && (
-            <div className="w-full px-[30px] py-12 animate-slideDown">
+            <div className="w-full px-[30px] py-12">
               <div className="max-w-6xl mx-auto grid grid-cols-2 gap-8">
                 {/* Column 1 */}
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
-                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
-                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
-                  </div>
+                  <Link to="/solution1" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Solution 1</h3>
+                    <p className="text-sm text-gray-600">Description for Solution 1 goes here</p>
+                  </Link>
+                  <Link to="/solution2" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Solution 2</h3>
+                    <p className="text-sm text-gray-600">Description for Solution 2 goes here</p>
+                  </Link>
                 </div>
                 {/* Column 2 */}
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
-                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
-                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
-                  </div>
+                  <Link to="/solution3" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Solution 3</h3>
+                    <p className="text-sm text-gray-600">Description for Solution 3 goes here</p>
+                  </Link>
+                  <Link to="/solution4" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Solution 4</h3>
+                    <p className="text-sm text-gray-600">Description for Solution 4 goes here</p>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -252,29 +253,29 @@ const NewSite = () => {
 
           {/* Resources Dropdown Content */}
           {openDropdown === 'resources' && (
-            <div className="w-full px-[30px] py-12 animate-slideDown">
+            <div className="w-full px-[30px] py-12">
               <div className="max-w-6xl mx-auto grid grid-cols-2 gap-8">
                 {/* Column 1 */}
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
-                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
-                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
-                  </div>
+                  <Link to="/resource1" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Resource 1</h3>
+                    <p className="text-sm text-gray-600">Description for Resource 1 goes here</p>
+                  </Link>
+                  <Link to="/resource2" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Resource 2</h3>
+                    <p className="text-sm text-gray-600">Description for Resource 2 goes here</p>
+                  </Link>
                 </div>
                 {/* Column 2 */}
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
-                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
-                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
-                  </div>
+                  <Link to="/resource3" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Resource 3</h3>
+                    <p className="text-sm text-gray-600">Description for Resource 3 goes here</p>
+                  </Link>
+                  <Link to="/resource4" className="block group">
+                    <h3 className="text-lg font-semibold text-black mb-1 group-hover:text-[#2F5CFF] transition-colors">Resource 4</h3>
+                    <p className="text-sm text-gray-600">Description for Resource 4 goes here</p>
+                  </Link>
                 </div>
               </div>
             </div>
