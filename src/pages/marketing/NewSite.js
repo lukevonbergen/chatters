@@ -7,6 +7,27 @@ import CTAButton from '../../components/marketing/common/buttons/CTAButton';
 const NewSite = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [isDropdownHovered, setIsDropdownHovered] = useState(false);
+
+  const handleMouseEnterNav = (dropdown) => {
+    setOpenDropdown(dropdown);
+  };
+
+  const handleMouseLeaveNav = () => {
+    // Only close if dropdown content is also not hovered
+    if (!isDropdownHovered) {
+      setOpenDropdown(null);
+    }
+  };
+
+  const handleMouseEnterDropdown = () => {
+    setIsDropdownHovered(true);
+  };
+
+  const handleMouseLeaveDropdown = () => {
+    setIsDropdownHovered(false);
+    setOpenDropdown(null);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -15,7 +36,7 @@ const NewSite = () => {
       </Helmet>
 
       {/* Navbar */}
-      <nav className="w-full border-b border-gray-200 font-jakarta">
+      <nav className="w-full border-b border-gray-200 font-jakarta relative">
         <div className="w-full px-[30px] py-4">
           <div className="flex items-center justify-between">
             {/* Left side: Logo + Nav Links */}
@@ -30,40 +51,52 @@ const NewSite = () => {
               </Link>
 
               {/* Desktop Navigation */}
-              <div className="hidden lg:flex items-center space-x-6">
+              <div className="hidden lg:flex items-center space-x-8">
                 {/* Product Dropdown */}
                 <div className="relative">
                   <button
-                    onMouseEnter={() => setOpenDropdown('product')}
-                    onMouseLeave={() => setOpenDropdown(null)}
-                    className="flex items-center gap-1 text-gray-700 hover:text-black transition-colors text-sm font-medium"
+                    onMouseEnter={() => handleMouseEnterNav('product')}
+                    onMouseLeave={handleMouseLeaveNav}
+                    className={`flex items-center gap-1 transition-colors text-sm font-medium ${
+                      openDropdown === 'product' ? 'text-black' : 'text-gray-700 hover:text-black'
+                    }`}
                   >
                     Product
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
+                      openDropdown === 'product' ? 'rotate-180' : ''
+                    }`} />
                   </button>
                 </div>
 
                 {/* Solutions Dropdown */}
                 <div className="relative">
                   <button
-                    onMouseEnter={() => setOpenDropdown('solutions')}
-                    onMouseLeave={() => setOpenDropdown(null)}
-                    className="flex items-center gap-1 text-gray-700 hover:text-black transition-colors text-sm font-medium"
+                    onMouseEnter={() => handleMouseEnterNav('solutions')}
+                    onMouseLeave={handleMouseLeaveNav}
+                    className={`flex items-center gap-1 transition-colors text-sm font-medium ${
+                      openDropdown === 'solutions' ? 'text-black' : 'text-gray-700 hover:text-black'
+                    }`}
                   >
                     Solutions
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
+                      openDropdown === 'solutions' ? 'rotate-180' : ''
+                    }`} />
                   </button>
                 </div>
 
                 {/* Resources Dropdown */}
                 <div className="relative">
                   <button
-                    onMouseEnter={() => setOpenDropdown('resources')}
-                    onMouseLeave={() => setOpenDropdown(null)}
-                    className="flex items-center gap-1 text-gray-700 hover:text-black transition-colors text-sm font-medium"
+                    onMouseEnter={() => handleMouseEnterNav('resources')}
+                    onMouseLeave={handleMouseLeaveNav}
+                    className={`flex items-center gap-1 transition-colors text-sm font-medium ${
+                      openDropdown === 'resources' ? 'text-black' : 'text-gray-700 hover:text-black'
+                    }`}
                   >
                     Resources
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
+                      openDropdown === 'resources' ? 'rotate-180' : ''
+                    }`} />
                   </button>
                 </div>
 
@@ -86,7 +119,7 @@ const NewSite = () => {
             <div className="hidden lg:flex items-center space-x-3">
               <Link
                 to="/login"
-                className="text-gray-700 hover:text-black transition-colors text-sm font-medium px-4 py-2"
+                className="text-gray-700 hover:text-black transition-colors text-sm font-semibold px-4 py-2"
               >
                 Log in
               </Link>
@@ -137,13 +170,112 @@ const NewSite = () => {
               <div className="pt-3 space-y-2 border-t border-gray-200">
                 <Link
                   to="/login"
-                  className="block text-gray-700 hover:text-black transition-colors text-sm font-medium py-2"
+                  className="block text-gray-700 hover:text-black transition-colors text-sm font-semibold py-2"
                 >
                   Log in
                 </Link>
                 <CTAButton to="/demo" className="w-full justify-center">
                   Take a tour
                 </CTAButton>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Full-Width Dropdown Panels */}
+        <div
+          className={`absolute left-0 right-0 top-full bg-white border-b border-gray-200 overflow-hidden transition-all duration-300 ease-in-out ${
+            openDropdown ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+          onMouseEnter={handleMouseEnterDropdown}
+          onMouseLeave={handleMouseLeaveDropdown}
+        >
+          {/* Product Dropdown Content */}
+          {openDropdown === 'product' && (
+            <div className="w-full px-[30px] py-12 animate-slideDown">
+              <div className="max-w-6xl mx-auto grid grid-cols-2 gap-8">
+                {/* Column 1 */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
+                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
+                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
+                  </div>
+                </div>
+                {/* Column 2 */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
+                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
+                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Solutions Dropdown Content */}
+          {openDropdown === 'solutions' && (
+            <div className="w-full px-[30px] py-12 animate-slideDown">
+              <div className="max-w-6xl mx-auto grid grid-cols-2 gap-8">
+                {/* Column 1 */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
+                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
+                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
+                  </div>
+                </div>
+                {/* Column 2 */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
+                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
+                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Resources Dropdown Content */}
+          {openDropdown === 'resources' && (
+            <div className="w-full px-[30px] py-12 animate-slideDown">
+              <div className="max-w-6xl mx-auto grid grid-cols-2 gap-8">
+                {/* Column 1 */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
+                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
+                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
+                  </div>
+                </div>
+                {/* Column 2 */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 1</h3>
+                    <p className="text-sm text-gray-600">Description for link 1 goes here</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-black mb-1">Link 2</h3>
+                    <p className="text-sm text-gray-600">Description for link 2 goes here</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
