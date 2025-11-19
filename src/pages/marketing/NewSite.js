@@ -14,8 +14,8 @@ const NewSite = () => {
       </Helmet>
 
       {/* Navbar */}
-      <nav className="w-full border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <nav className="w-full border-b border-gray-200 font-jakarta">
+        <div className="w-full px-[30px] py-4">
           <div className="flex items-center justify-between">
             {/* Left side: Logo + Nav Links */}
             <div className="flex items-center space-x-8">
