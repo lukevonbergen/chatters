@@ -7,25 +7,33 @@ import CTAButton from '../../components/marketing/common/buttons/CTAButton';
 const NewSite = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [isDropdownHovered, setIsDropdownHovered] = useState(false);
+  const closeTimeoutRef = React.useRef(null);
 
   const handleMouseEnterNav = (dropdown) => {
+    // Clear any pending close timeout
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
     setOpenDropdown(dropdown);
   };
 
   const handleMouseLeaveNav = () => {
-    // Only close if dropdown content is also not hovered
-    if (!isDropdownHovered) {
+    // Set a small delay before closing
+    closeTimeoutRef.current = setTimeout(() => {
       setOpenDropdown(null);
-    }
+    }, 100);
   };
 
   const handleMouseEnterDropdown = () => {
-    setIsDropdownHovered(true);
+    // Clear any pending close timeout when entering dropdown
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
   };
 
   const handleMouseLeaveDropdown = () => {
-    setIsDropdownHovered(false);
     setOpenDropdown(null);
   };
 
