@@ -7,6 +7,7 @@ import CTAButton from '../../components/marketing/common/buttons/CTAButton';
 const NewSite = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [openMobileDropdown, setOpenMobileDropdown] = useState(null);
   const closeTimeoutRef = React.useRef(null);
 
   const handleMouseEnterNav = (dropdown) => {
@@ -171,15 +172,69 @@ const NewSite = () => {
           {isMobileMenuOpen && (
             <div className="lg:hidden mt-4 pb-4 space-y-3 border-t border-gray-200 pt-4">
               <div className="space-y-2">
-                <button className="w-full text-left text-gray-700 hover:text-black transition-colors text-sm font-medium py-2">
-                  Product
-                </button>
-                <button className="w-full text-left text-gray-700 hover:text-black transition-colors text-sm font-medium py-2">
-                  Solutions
-                </button>
-                <button className="w-full text-left text-gray-700 hover:text-black transition-colors text-sm font-medium py-2">
-                  Resources
-                </button>
+                {/* Product Dropdown */}
+                <div>
+                  <button
+                    onClick={() => setOpenMobileDropdown(openMobileDropdown === 'product' ? null : 'product')}
+                    className="w-full flex items-center justify-between text-gray-700 hover:text-black transition-colors text-sm font-medium py-2"
+                  >
+                    Product
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
+                      openMobileDropdown === 'product' ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+                  {openMobileDropdown === 'product' && (
+                    <div className="pl-4 space-y-2 mt-2">
+                      <Link to="/product1" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Product 1</Link>
+                      <Link to="/product2" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Product 2</Link>
+                      <Link to="/product3" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Product 3</Link>
+                      <Link to="/product4" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Product 4</Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* Solutions Dropdown */}
+                <div>
+                  <button
+                    onClick={() => setOpenMobileDropdown(openMobileDropdown === 'solutions' ? null : 'solutions')}
+                    className="w-full flex items-center justify-between text-gray-700 hover:text-black transition-colors text-sm font-medium py-2"
+                  >
+                    Solutions
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
+                      openMobileDropdown === 'solutions' ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+                  {openMobileDropdown === 'solutions' && (
+                    <div className="pl-4 space-y-2 mt-2">
+                      <Link to="/solution1" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Solution 1</Link>
+                      <Link to="/solution2" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Solution 2</Link>
+                      <Link to="/solution3" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Solution 3</Link>
+                      <Link to="/solution4" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Solution 4</Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* Resources Dropdown */}
+                <div>
+                  <button
+                    onClick={() => setOpenMobileDropdown(openMobileDropdown === 'resources' ? null : 'resources')}
+                    className="w-full flex items-center justify-between text-gray-700 hover:text-black transition-colors text-sm font-medium py-2"
+                  >
+                    Resources
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
+                      openMobileDropdown === 'resources' ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+                  {openMobileDropdown === 'resources' && (
+                    <div className="pl-4 space-y-2 mt-2">
+                      <Link to="/resource1" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Resource 1</Link>
+                      <Link to="/resource2" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Resource 2</Link>
+                      <Link to="/resource3" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Resource 3</Link>
+                      <Link to="/resource4" className="block text-sm text-gray-600 hover:text-[#2F5CFF] py-1.5">Resource 4</Link>
+                    </div>
+                  )}
+                </div>
+
                 <Link
                   to="/pricing"
                   className="block text-gray-700 hover:text-black transition-colors text-sm font-medium py-2"
