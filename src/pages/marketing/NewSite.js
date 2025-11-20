@@ -395,54 +395,106 @@ const NewSite = () => {
       <div className="py-20 px-[30px] bg-white">
         <div className="max-w-7xl mx-auto">
           {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1 - Large */}
-            <FeatureBlock
-              title="Real-time Analytics"
-              description="Monitor customer sentiment as it happens with live dashboards and instant alerts."
-              to="/features/analytics"
-              className="lg:col-span-2"
-            />
-
-            {/* Feature 2 - Small */}
-            <FeatureBlock
-              title="Smart Insights"
-              description="AI-powered recommendations that turn data into actionable strategies."
-              to="/features/insights"
-              highlighted={true}
-            />
-
-            {/* Feature 3 - Small */}
-            <FeatureBlock
-              title="Multi-channel"
-              description="Collect feedback across all touchpoints in one unified platform."
-              to="/features/channels"
-            />
-
-            {/* Feature 4 - Large */}
-            <FeatureBlock
-              title="Custom Reports"
-              description="Generate beautiful, shareable reports tailored to your business needs."
-              to="/features/reports"
-              className="lg:col-span-2"
-            />
-          </div>
+          <FeaturesGrid />
         </div>
       </div>
     </div>
   );
 };
 
-// Feature Block Component
-const FeatureBlock = ({ title, description, to, className = '', highlighted = false }) => {
-  const [isHovered, setIsHovered] = React.useState(false);
+// Features Grid Component with Shared Glow
+const FeaturesGrid = () => {
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
+  const [hoveredCard, setHoveredCard] = React.useState(null);
+  const gridRef = React.useRef(null);
+
+  const handleMouseMove = (e) => {
+    if (!gridRef.current) return;
+    const rect = gridRef.current.getBoundingClientRect();
+    setMousePosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  return (
+    <div
+      ref={gridRef}
+      className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setHoveredCard(null)}
+    >
+      {/* Shared Glow Effect Layer */}
+      {hoveredCard !== null && (
+        <>
+          {/* Background Fill Glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(300px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(47, 92, 255, 0.1), transparent 40%)`,
+            }}
+          />
+          {/* Border Glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(250px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(47, 92, 255, 0.4), transparent 100%)`,
+            }}
+          />
+        </>
+      )}
+
+      {/* Feature 1 - Large */}
+      <FeatureBlock
+        title="Real-time Analytics"
+        description="Monitor customer sentiment as it happens with live dashboards and instant alerts."
+        to="/features/analytics"
+        className="lg:col-span-2"
+        onHover={() => setHoveredCard(0)}
+        isHovered={hoveredCard === 0}
+      />
+
+      {/* Feature 2 - Small */}
+      <FeatureBlock
+        title="Smart Insights"
+        description="AI-powered recommendations that turn data into actionable strategies."
+        to="/features/insights"
+        highlighted={true}
+        onHover={() => setHoveredCard(1)}
+        isHovered={hoveredCard === 1}
+      />
+
+      {/* Feature 3 - Small */}
+      <FeatureBlock
+        title="Multi-channel"
+        description="Collect feedback across all touchpoints in one unified platform."
+        to="/features/channels"
+        onHover={() => setHoveredCard(2)}
+        isHovered={hoveredCard === 2}
+      />
+
+      {/* Feature 4 - Large */}
+      <FeatureBlock
+        title="Custom Reports"
+        description="Generate beautiful, shareable reports tailored to your business needs."
+        to="/features/reports"
+        className="lg:col-span-2"
+        onHover={() => setHoveredCard(3)}
+        isHovered={hoveredCard === 3}
+      />
+    </div>
+  );
+};
+
+// Feature Block Component
+const FeatureBlock = ({ title, description, to, className = '', highlighted = false, onHover, isHovered }) => {
+  const [localMousePosition, setLocalMousePosition] = React.useState({ x: 0, y: 0 });
   const cardRef = React.useRef(null);
 
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
-    setMousePosition({
+    setLocalMousePosition({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
     });
@@ -452,28 +504,16 @@ const FeatureBlock = ({ title, description, to, className = '', highlighted = fa
     <Link
       ref={cardRef}
       to={to}
-      className={`group relative bg-[#EEECED] rounded-2xl p-8 transition-all duration-300 overflow-hidden ${className}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className={`group relative bg-[#EEECED] rounded-2xl p-8 transition-all duration-300 ${className}`}
+      onMouseEnter={onHover}
       onMouseMove={handleMouseMove}
-      style={{
-        border: '2px solid transparent',
-      }}
     >
-      {/* Electric Glow Effect */}
-      {isHovered && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(47, 92, 255, 0.15), transparent 40%)`,
-          }}
-        />
-      )}
+      {/* Local Border Glow Effect */}
       <div
-        className="absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-300"
+        className="absolute -inset-[2px] rounded-2xl pointer-events-none transition-opacity duration-300"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(400px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(47, 92, 255, 0.8), transparent 100%)`,
+          background: `radial-gradient(250px circle at ${localMousePosition.x}px ${localMousePosition.y}px, rgba(47, 92, 255, 0.8), transparent 100%)`,
           padding: '2px',
           WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
           WebkitMaskComposite: 'xor',
