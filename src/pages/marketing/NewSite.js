@@ -409,6 +409,7 @@ const NewSite = () => {
               title="Smart Insights"
               description="AI-powered recommendations that turn data into actionable strategies."
               to="/features/insights"
+              highlighted={true}
             />
 
             {/* Feature 3 - Small */}
@@ -433,7 +434,7 @@ const NewSite = () => {
 };
 
 // Feature Block Component
-const FeatureBlock = ({ title, description, to, className = '' }) => {
+const FeatureBlock = ({ title, description, to, className = '', highlighted = false }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
   const cardRef = React.useRef(null);
@@ -484,7 +485,9 @@ const FeatureBlock = ({ title, description, to, className = '' }) => {
       <div className="relative z-10">
         {/* Title with Arrow */}
         <div className="flex items-center gap-3 mb-4">
-          <h3 className="text-2xl font-bold text-black group-hover:text-[#2F5CFF] transition-colors">
+          <h3 className={`text-2xl font-bold transition-colors ${
+            highlighted ? 'text-[#2F5CFF]' : 'text-black'
+          }`}>
             {title}
           </h3>
           {/* Sliding Arrow */}
