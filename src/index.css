@@ -50,7 +50,7 @@
 /* 🎨 FONT CONFIGURATION - Change fonts here! */
 :root {
   --font-dashboard: 'Plus Jakarta Sans', 'Geist', 'Gilroy', sans-serif;
-  --font-marketing: 'Geist', 'Gilroy', sans-serif;
+  --font-marketing: 'Plus Jakarta Sans', 'Geist', 'Gilroy', sans-serif;
 }
 
 /* Previous fonts: */
