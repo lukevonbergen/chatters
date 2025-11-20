@@ -392,7 +392,7 @@ const NewSite = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 px-[30px] bg-gray-50">
+      <div className="py-20 px-[30px] bg-white">
         <div className="max-w-7xl mx-auto">
           {/* Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -435,66 +435,106 @@ const NewSite = () => {
 // Feature Block Component
 const FeatureBlock = ({ title, description, to, className = '' }) => {
   const [isHovered, setIsHovered] = React.useState(false);
+  const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
+  const cardRef = React.useRef(null);
+
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setMousePosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
 
   return (
     <Link
+      ref={cardRef}
       to={to}
-      className={`group bg-white rounded-2xl p-8 transition-all duration-300 hover:shadow-xl border border-gray-200 hover:border-[#2F5CFF] ${className}`}
+      className={`group relative bg-[#EEECED] rounded-2xl p-8 transition-all duration-300 overflow-hidden ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onMouseMove={handleMouseMove}
+      style={{
+        border: '2px solid transparent',
+      }}
     >
-      {/* Title with Arrow */}
-      <div className="flex items-center gap-3 mb-4">
-        <h3 className="text-2xl font-bold text-black group-hover:text-[#2F5CFF] transition-colors">
-          {title}
-        </h3>
-        {/* Sliding Arrow */}
-        <div className="relative w-6 h-6 overflow-hidden">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`absolute transition-all duration-300 ease-in-out ${
-              isHovered ? 'translate-x-8 opacity-0' : 'translate-x-0 opacity-100'
-            }`}
-          >
-            <path
-              d="M5 12H19M19 12L12 5M19 12L12 19"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-[#2F5CFF]"
-            />
-          </svg>
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`absolute transition-all duration-300 ease-in-out ${
-              isHovered ? 'translate-x-0 opacity-100' : '-translate-x-8 opacity-0'
-            }`}
-          >
-            <path
-              d="M5 12H19M19 12L12 5M19 12L12 19"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-[#2F5CFF]"
-            />
-          </svg>
-        </div>
-      </div>
+      {/* Electric Glow Effect */}
+      {isHovered && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(47, 92, 255, 0.15), transparent 40%)`,
+          }}
+        />
+      )}
+      <div
+        className="absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-300"
+        style={{
+          opacity: isHovered ? 1 : 0,
+          background: `radial-gradient(400px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(47, 92, 255, 0.8), transparent 100%)`,
+          padding: '2px',
+          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          WebkitMaskComposite: 'xor',
+          maskComposite: 'exclude',
+        }}
+      />
 
-      {/* Description */}
-      <p className="text-gray-600 leading-relaxed">
-        {description}
-      </p>
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Title with Arrow */}
+        <div className="flex items-center gap-3 mb-4">
+          <h3 className="text-2xl font-bold text-black group-hover:text-[#2F5CFF] transition-colors">
+            {title}
+          </h3>
+          {/* Sliding Arrow */}
+          <div className="relative w-6 h-6 overflow-hidden">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className={`absolute transition-all duration-300 ease-in-out ${
+                isHovered ? 'translate-x-8 opacity-0' : 'translate-x-0 opacity-100'
+              }`}
+            >
+              <path
+                d="M5 12H19M19 12L12 5M19 12L12 19"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-[#2F5CFF]"
+              />
+            </svg>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className={`absolute transition-all duration-300 ease-in-out ${
+                isHovered ? 'translate-x-0 opacity-100' : '-translate-x-8 opacity-0'
+              }`}
+            >
+              <path
+                d="M5 12H19M19 12L12 5M19 12L12 19"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-[#2F5CFF]"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p className="text-gray-600 leading-relaxed">
+          {description}
+        </p>
+      </div>
     </Link>
   );
 };
