@@ -381,7 +381,7 @@ const NewSite = () => {
 
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <CTAButton to="/pricing" variant="secondary" className="bg-black text-white hover:bg-black/90 w-full sm:w-auto">
+            <CTAButton to="/pricing" variant="secondary" className="w-full sm:w-auto">
               Pricing
             </CTAButton>
             <CTAButton to="/demo" className="w-full sm:w-auto">

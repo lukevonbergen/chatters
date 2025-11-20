@@ -13,7 +13,7 @@ const CTAButton = ({
 
   const variantStyles = {
     primary: "bg-[#2F5CFF] text-white hover:bg-[#2548CC]",
-    secondary: "bg-gray-100 text-black hover:bg-gray-200"
+    secondary: "bg-black text-white hover:bg-black/90"
   };
 
   return (
