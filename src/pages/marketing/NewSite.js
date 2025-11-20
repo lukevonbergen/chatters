@@ -364,9 +364,30 @@ const NewSite = () => {
         </div>
       </nav>
 
-      {/* Empty content area */}
-      <div className="min-h-[calc(100vh-73px)]">
-        {/* Content will go here */}
+      {/* Hero Section */}
+      <div className="min-h-[calc(100vh-73px)] flex items-center justify-center px-[30px] py-12">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Title */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-black mb-6 leading-[1.1]">
+            <span className="text-[#2F5CFF]">AI-Powered intelligence</span> that transforms feedback into action
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
+            Stop drowning in data. Let AI analyse thousands of customer responses instantly,
+            identify critical trends, and deliver actionable recommendations that drive real business results.
+          </p>
+
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <CTAButton to="/pricing" variant="secondary" className="bg-black text-white hover:bg-gray-800 w-full sm:w-auto">
+              Pricing
+            </CTAButton>
+            <CTAButton to="/demo" className="w-full sm:w-auto">
+              Take a tour
+            </CTAButton>
+          </div>
+        </div>
       </div>
     </div>
   );
