@@ -365,7 +365,7 @@ const NewSite = () => {
       </nav>
 
       {/* Hero Section */}
-      <div className="h-[70vh] flex items-center justify-center px-[30px] py-12">
+      <div className="h-[50vh] flex items-center justify-center px-[30px] py-12">
         <div className="max-w-5xl mx-auto text-center">
           {/* Title */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-black mb-6 leading-[1.2]">
