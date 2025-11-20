@@ -366,14 +366,14 @@ const NewSite = () => {
 
       {/* Hero Section */}
       <div className="h-[70vh] flex items-center justify-center px-[30px] py-12">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-5xl mx-auto text-center">
           {/* Title */}
-          <h1 className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-bold text-black mb-6 leading-[1.15]">
+          <h1 className="text-4xl sm:text-5xl md:text-5xl lg:text-5xl font-bold text-black mb-6 leading-[1.15]">
             <span className="text-[#2F5CFF]">AI-Powered intelligence</span> that transforms feedback into action
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-base md:text-lg text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed px-4 sm:px-0">
+          <p className="text-base sm:text-base md:text-lg text-gray-600 mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
             Stop drowning in data. Let AI analyse thousands of customer responses instantly,
             identify critical trends, and deliver actionable recommendations that drive real business results.
           </p>
