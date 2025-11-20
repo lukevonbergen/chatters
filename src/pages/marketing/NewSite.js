@@ -368,8 +368,9 @@ const NewSite = () => {
       <div className="h-[70vh] flex items-center justify-center px-[30px] py-12">
         <div className="max-w-5xl mx-auto text-center">
           {/* Title */}
-          <h1 className="text-3xl sm:text-4xl md:text-4xl lg:text-4xl font-bold text-black mb-6 leading-[1.15]">
-            <span className="text-[#2F5CFF]">AI-Powered intelligence</span> that transforms feedback into action
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-black mb-6 leading-[1.2]">
+            <span className="text-[#2F5CFF]">AI-Powered intelligence</span> that<br />
+            transforms feedback into action
           </h1>
 
           {/* Subtitle */}
