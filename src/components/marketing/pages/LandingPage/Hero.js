@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import PrimaryButton from "../../common/buttons/PrimaryButton";
 
 const Hero = ({
-  eyebrow = "Chatters for Hospitality",
+  eyebrow = "Will for hospo",
   title = "AI-Powered Intelligence That Transforms Feedback Into Action",
   subtitle = "Stop drowning in data. Let AI analyse thousands of customer responses instantly, identify critical trends, and deliver actionable recommendations that drive real business results.",
   primaryCta = { label: "Book a demo", to: "/demo" },
@@ -167,158 +167,56 @@ const Hero = ({
 
       {/* Content */}
       <div className="relative max-w-[1200px] mx-auto px-6 pt-36 lg:pt-40 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          {/* Left: Copy */}
+        <div className="flex items-center justify-center">
+          {/* Centered Hero Content */}
           <motion.div
-            className="lg:col-span-6 text-left"
+            className="text-center max-w-5xl"
             variants={container}
             initial="hidden"
             animate="visible"
           >
-            <motion.p
-              className="text-xs tracking-widest uppercase font-semibold text-purple-600/80 mb-3"
-              variants={item}
-            >
-              {eyebrow}
-            </motion.p>
-
+            {/* Title */}
             <motion.h1
-              className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight font-satoshi mb-4"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-black mb-6 leading-[1.2]"
               variants={item}
             >
-              {title}
+              AI-Powered intelligence that<br />
+              transforms feedback into action
             </motion.h1>
 
+            {/* Subtitle */}
             <motion.p
-              className="text-lg lg:text-xl text-gray-700 leading-relaxed mb-8 max-w-xl"
+              className="text-base sm:text-base md:text-lg text-gray-600 mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0"
               variants={item}
             >
-              {subtitle}
+              Stop drowning in data. Let AI analyse thousands of customer responses instantly,
+              identify critical trends, and deliver actionable recommendations that drive real business results.
             </motion.p>
 
+            {/* Buttons */}
             <motion.div
-              className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-6"
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
               variants={item}
             >
-              <PrimaryButton text={primaryCta.label} to={primaryCta.to} size="sm" />
               <Link
                 to={secondaryCta.to}
-                className="group inline-flex items-center font-medium text-black hover:text-gray-900 transition-colors duration-200 font-satoshi"
+                className="px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 relative overflow-hidden bg-black text-white hover:bg-black/90"
               >
                 <span>{secondaryCta.label}</span>
-                <ArrowRight className="w-4 h-4 ml-1 transition-transform duration-200 group-hover:translate-x-1" />
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3.33334 8H12.6667M12.6667 8L8.00001 3.33333M12.6667 8L8.00001 12.6667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </Link>
+              <Link
+                to={primaryCta.to}
+                className="px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 relative overflow-hidden bg-[#2F5CFF] text-white hover:bg-[#2548CC]"
+              >
+                <span>{primaryCta.label}</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3.33334 8H12.6667M12.6667 8L8.00001 3.33333M12.6667 8L8.00001 12.6667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </Link>
             </motion.div>
-
-            <motion.ul
-              className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-700"
-              variants={item}
-            >
-              {bullets.map((b) => (
-                <li key={b} className="flex items-start gap-2">
-                  <span className="mt-0.5 inline-flex p-1 rounded-full bg-green-100 text-green-700">
-                    <Check className="w-4 h-4" />
-                  </span>
-                  <span>{b}</span>
-                </li>
-              ))}
-            </motion.ul>
-
-            {/* <motion.div className="mt-8" variants={item}>
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
-                Trusted by teams across hospitality & retail
-              </p>
-              <div className="flex flex-wrap items-center gap-x-8 gap-y-3 opacity-80">
-                <svg width="92" height="20" viewBox="0 0 92 20" className="text-gray-500">
-                  <rect width="92" height="20" rx="4" fill="currentColor" opacity="0.2" />
-                </svg>
-                <svg width="80" height="20" viewBox="0 0 80 20" className="text-gray-500">
-                  <rect width="80" height="20" rx="4" fill="currentColor" opacity="0.2" />
-                </svg>
-                <svg width="70" height="20" viewBox="0 0 70 20" className="text-gray-500">
-                  <rect width="70" height="20" rx="4" fill="currentColor" opacity="0.2" />
-                </svg>
-                <svg width="64" height="20" viewBox="0 0 64 20" className="text-gray-500">
-                  <rect width="64" height="20" rx="4" fill="currentColor" opacity="0.2" />
-                </svg>
-              </div>
-            </motion.div> */}
-          </motion.div>
-
-          {/* Right: Mock product card */}
-          <motion.div
-            className="lg:col-span-6"
-            initial={cardInitial}
-            animate={cardAnimate}
-            transition={cardTransition}
-          >
-            <div className="relative mx-auto w-full max-w-[560px]">
-              <div className="relative rounded-2xl border border-gray-200 bg-white shadow-[0_0_24px_rgba(17,24,39,0.06)]">
-                <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                  </div>
-                  <div className="text-xs text-gray-500">Live Feedback</div>
-                </div>
-
-                <div className="p-5">
-                  <div className="grid grid-cols-3 gap-4 mb-5">
-                    {[
-                      { label: "Today alerts", value: stats.alerts },
-                      { label: "Avg. response", value: stats.response },
-                      { label: "Resolution rate", value: `${stats.resolution}%` },
-                    ].map((s) => (
-                      <div key={s.label} className="rounded-xl border border-gray-200 p-4 text-center">
-                        <div className="text-2xl font-bold text-gray-900 transition-all duration-300">{s.value}</div>
-                        <div className="text-[11px] uppercase tracking-wider text-gray-500 mt-1">{s.label}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Smoothly-resizing list */}
-                  <motion.div layout className="space-y-3">
-                    <AnimatePresence initial={false} mode="popLayout">
-                      {feedbackItems.map((a) => (
-                        <motion.div
-                          key={a.id}
-                          layout
-                          initial={{ opacity: 0, y: -8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 8 }}
-                          transition={{ duration: 0.28, ease: "easeOut" }}
-                          className={`flex items-center justify-between rounded-xl border border-gray-200 p-3`}
-                          style={{ transformOrigin: "top left" }}
-                        >
-                          <div>
-                            <div className="text-sm font-semibold text-gray-900">{a.table}</div>
-                            <div className="text-sm text-gray-600">{a.msg}</div>
-                          </div>
-                          <span
-                            className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all duration-300 ${
-                              a.status === "Resolved"
-                                ? "bg-green-100 text-green-700"
-                                : a.status === "Assistance Request"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {a.status}
-                          </span>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </motion.div>
-                </div>
-              </div>
-
-              <div
-                aria-hidden="true"
-                className="absolute -inset-6 rounded-3xl blur-2xl"
-                style={{ background: "radial-gradient(closest-side, rgba(168,85,247,0.15), transparent 70%)" }}
-              />
-            </div>
           </motion.div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
 import { Sparkles, RefreshCw, Calendar, AlertCircle, TrendingUp, TrendingDown, CheckCircle, AlertTriangle, Lightbulb, Target } from 'lucide-react';
 import dayjs from 'dayjs';
+import DatePicker from '../../components/dashboard/inputs/DatePicker';
 
 const AIInsights = () => {
   usePageTitle('AI Insights');
@@ -22,32 +23,36 @@ const AIInsights = () => {
   const currentVenue = allVenues.find(v => v.id === venueId);
   const venueName = currentVenue?.name || 'your venue';
 
-  // Load previously saved insight for current date range on mount
+  // Load most recent insight for this venue on mount
   useEffect(() => {
     if (!venueId) return;
 
-    const loadExistingInsight = async () => {
+    const loadLatestInsight = async () => {
       try {
         const { data, error } = await supabase
           .from('ai_insights')
           .select('*')
           .eq('venue_id', venueId)
-          .eq('date_from', dateFrom)
-          .eq('date_to', dateTo)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .single();
 
         if (!error && data) {
+          // Update the date range to match the loaded insight
+          setDateFrom(data.date_from);
+          setDateTo(data.date_to);
           setInsight({ ...data, cached: true });
           setLastGenerated(new Date(data.created_at));
+          console.log('[AI Insights] Loaded most recent insight:', data);
         }
       } catch (err) {
         // No existing insight found - this is fine
-        console.log('[AI Insights] No existing insight found for this date range');
+        console.log('[AI Insights] No existing insights found for this venue');
       }
     };
 
-    loadExistingInsight();
-  }, [venueId, dateFrom, dateTo]);
+    loadLatestInsight();
+  }, [venueId]); // Only run when venueId changes
 
   // Generate AI Insights
   const generateInsights = async () => {
@@ -210,21 +215,17 @@ const AIInsights = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             {/* Date Range Selector */}
             <div className="flex items-center gap-2">
-              <input
-                type="date"
+              <DatePicker
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 max={dateTo}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-              <span className="text-gray-500 text-sm">to</span>
-              <input
-                type="date"
+              <span className="text-gray-400 text-sm font-medium">to</span>
+              <DatePicker
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 min={dateFrom}
                 max={dayjs().format('YYYY-MM-DD')}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -232,7 +233,7 @@ const AIInsights = () => {
             <button
               onClick={generateInsights}
               disabled={loading}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm text-sm whitespace-nowrap"
+              className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm text-sm whitespace-nowrap"
             >
               {loading ? (
                 <>

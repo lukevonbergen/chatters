@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { Search, Calendar, Filter, CheckSquare, Square, Eye } from 'lucide-react';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import AlertModal from '../../components/ui/AlertModal';
+import DatePicker from '../../components/dashboard/inputs/DatePicker';
 
 const AllFeedback = () => {
   usePageTitle('All Feedback');
@@ -273,35 +274,20 @@ const AllFeedback = () => {
         <div className="mb-6 space-y-4">
           {/* Date Range and Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                From Date
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
+            <DatePicker
+              label="From Date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              max={dateTo}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                To Date
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
+            <DatePicker
+              label="To Date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              min={dateFrom}
+              max={dayjs().format('YYYY-MM-DD')}
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

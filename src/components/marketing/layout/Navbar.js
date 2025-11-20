@@ -484,7 +484,7 @@ const Navbar = ({ overlay = false }) => {
                   Log in
                 </Link>
                 <div onClick={() => setIsMobileMenuOpen(false)}>
-                  <PrimaryButton text="Book Demo" to="/demo" size="sm" className="w-full justify-center" />
+                  <PrimaryButton text="Book a Demo" to="/demo" size="sm" className="w-full justify-center" />
                 </div>
               </div>
             </div>

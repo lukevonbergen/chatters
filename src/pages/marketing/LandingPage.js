@@ -129,19 +129,11 @@ const LandingPage = () => {
                 }
               },
               {
-                "@type": "Question", 
+                "@type": "Question",
                 "name": "What's the best customer feedback system for UK pub chains?",
                 "acceptedAnswer": {
                   "@type": "Answer",
                   "text": "Chatters is designed specifically for UK hospitality groups, offering multi-location management, role-based access for area managers, and real-time analytics across all venues from a single dashboard."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Can restaurant feedback software integrate with our existing POS system?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Yes, Chatters integrates with major UK POS systems including Epos Now, TouchBistro, and Square. Our QR code system works independently while syncing valuable guest data with your existing operations."
                 }
               },
               {
@@ -350,7 +342,6 @@ const LandingPage = () => {
         faqs={[
           { q: "How does restaurant feedback software prevent negative TripAdvisor reviews?", a: "Chatters captures guest concerns in real-time via QR codes at tables, alerting staff instantly so issues can be resolved before guests leave. This proactive approach prevents most negative reviews from ever being posted online." },
           { q: "What's the best customer feedback system for UK pub chains?", a: "Chatters is designed specifically for UK hospitality groups, offering multi-location management, role-based access for area managers, and real-time analytics across all venues from a single dashboard." },
-          { q: "Can restaurant feedback software integrate with our existing POS system?", a: "Yes, Chatters integrates with major UK POS systems including Epos Now, TouchBistro, and Square. Our QR code system works independently while syncing valuable guest data with your existing operations." },
           { q: "How quickly do staff receive feedback alerts in busy restaurants?", a: "Staff receive push notifications within 10 seconds of guest submission. Alerts are prioritised by severity, ensuring critical issues reach managers immediately whilst routine requests go to floor staff." },
           { q: "Does it work during busy service periods?", a: "Yes—alerts are designed for fast-paced restaurant environments with quick resolution flows and smart filtering to prevent alert fatigue." },
           { q: "What if we get too many feedback alerts?", a: "Smart filtering ensures only actionable issues reach staff, with automatic escalation for serious problems and customisable alert thresholds for different venue types." },
