@@ -424,24 +424,14 @@ const FeaturesGrid = () => {
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setHoveredCard(null)}
     >
-      {/* Shared Glow Effect Layer */}
+      {/* Shared Glow Effect Layer - behind the cards */}
       {hoveredCard !== null && (
-        <>
-          {/* Background Fill Glow */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: `radial-gradient(300px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(47, 92, 255, 0.1), transparent 40%)`,
-            }}
-          />
-          {/* Border Glow */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: `radial-gradient(250px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(47, 92, 255, 0.4), transparent 100%)`,
-            }}
-          />
-        </>
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `radial-gradient(300px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(47, 92, 255, 0.15), transparent 40%)`,
+          }}
+        />
       )}
 
       {/* Feature 1 - Large */}
@@ -504,10 +494,19 @@ const FeatureBlock = ({ title, description, to, className = '', highlighted = fa
     <Link
       ref={cardRef}
       to={to}
-      className={`group relative bg-[#EEECED] rounded-2xl p-8 transition-all duration-300 ${className}`}
+      className={`group relative bg-[#EEECED] rounded-2xl p-8 transition-all duration-300 overflow-hidden ${className}`}
       onMouseEnter={onHover}
       onMouseMove={handleMouseMove}
     >
+      {/* Local Fill Glow Effect - inside the card */}
+      {isHovered && (
+        <div
+          className="absolute inset-0 pointer-events-none rounded-2xl"
+          style={{
+            background: `radial-gradient(250px circle at ${localMousePosition.x}px ${localMousePosition.y}px, rgba(47, 92, 255, 0.08), transparent 40%)`,
+          }}
+        />
+      )}
       {/* Local Border Glow Effect */}
       <div
         className="absolute -inset-[2px] rounded-2xl pointer-events-none transition-opacity duration-300"
@@ -525,7 +524,7 @@ const FeatureBlock = ({ title, description, to, className = '', highlighted = fa
       <div className="relative z-10">
         {/* Title with Arrow */}
         <div className="flex items-center gap-3 mb-4">
-          <h3 className={`text-2xl font-bold transition-colors ${
+          <h3 className={`text-2xl font-medium transition-colors ${
             highlighted ? 'text-[#2F5CFF]' : 'text-black'
           }`}>
             {title}
