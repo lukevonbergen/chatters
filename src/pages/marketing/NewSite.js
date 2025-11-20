@@ -390,7 +390,112 @@ const NewSite = () => {
           </div>
         </div>
       </div>
+
+      {/* Features Section */}
+      <div className="py-20 px-[30px] bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          {/* Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Feature 1 - Large */}
+            <FeatureBlock
+              title="Real-time Analytics"
+              description="Monitor customer sentiment as it happens with live dashboards and instant alerts."
+              to="/features/analytics"
+              className="lg:col-span-2"
+            />
+
+            {/* Feature 2 - Small */}
+            <FeatureBlock
+              title="Smart Insights"
+              description="AI-powered recommendations that turn data into actionable strategies."
+              to="/features/insights"
+            />
+
+            {/* Feature 3 - Small */}
+            <FeatureBlock
+              title="Multi-channel"
+              description="Collect feedback across all touchpoints in one unified platform."
+              to="/features/channels"
+            />
+
+            {/* Feature 4 - Large */}
+            <FeatureBlock
+              title="Custom Reports"
+              description="Generate beautiful, shareable reports tailored to your business needs."
+              to="/features/reports"
+              className="lg:col-span-2"
+            />
+          </div>
+        </div>
+      </div>
     </div>
+  );
+};
+
+// Feature Block Component
+const FeatureBlock = ({ title, description, to, className = '' }) => {
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  return (
+    <Link
+      to={to}
+      className={`group bg-white rounded-2xl p-8 transition-all duration-300 hover:shadow-xl border border-gray-200 hover:border-[#2F5CFF] ${className}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Title with Arrow */}
+      <div className="flex items-center gap-3 mb-4">
+        <h3 className="text-2xl font-bold text-black group-hover:text-[#2F5CFF] transition-colors">
+          {title}
+        </h3>
+        {/* Sliding Arrow */}
+        <div className="relative w-6 h-6 overflow-hidden">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={`absolute transition-all duration-300 ease-in-out ${
+              isHovered ? 'translate-x-8 opacity-0' : 'translate-x-0 opacity-100'
+            }`}
+          >
+            <path
+              d="M5 12H19M19 12L12 5M19 12L12 19"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-[#2F5CFF]"
+            />
+          </svg>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={`absolute transition-all duration-300 ease-in-out ${
+              isHovered ? 'translate-x-0 opacity-100' : '-translate-x-8 opacity-0'
+            }`}
+          >
+            <path
+              d="M5 12H19M19 12L12 5M19 12L12 19"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-[#2F5CFF]"
+            />
+          </svg>
+        </div>
+      </div>
+
+      {/* Description */}
+      <p className="text-gray-600 leading-relaxed">
+        {description}
+      </p>
+    </Link>
   );
 };
 
