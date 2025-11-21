@@ -70,21 +70,30 @@ import TestDashboardPage from './pages/admin/TestDashboardPage';
 // Frames & context
 import ModernDashboardFrame from './components/dashboard/layout/ModernDashboardFrame';
 import { VenueProvider } from './context/VenueContext';
+import SubscriptionGuard from './components/guards/SubscriptionGuard';
 
-// Wrap all authenticated dashboard pages once: VenueProvider + ModernDashboardFrame
+// Trial expired page (outside subscription guard)
+import TrialExpired from './pages/dashboard/TrialExpired';
+
+// Wrap all authenticated dashboard pages once: SubscriptionGuard + VenueProvider + ModernDashboardFrame
 const DashboardShell = () => (
-  <VenueProvider>
-    <ModernDashboardFrame>
-      <Outlet />
-    </ModernDashboardFrame>
-  </VenueProvider>
+  <SubscriptionGuard>
+    <VenueProvider>
+      <ModernDashboardFrame>
+        <Outlet />
+      </ModernDashboardFrame>
+    </VenueProvider>
+  </SubscriptionGuard>
 );
 
 // Kiosk gets VenueProvider but intentionally no DashboardFrame
+// Also wrapped with SubscriptionGuard
 const KioskShell = () => (
-  <VenueProvider>
-    <Outlet />
-  </VenueProvider>
+  <SubscriptionGuard>
+    <VenueProvider>
+      <Outlet />
+    </VenueProvider>
+  </SubscriptionGuard>
 );
 
 const DashboardRoutes = () => {
@@ -97,6 +106,9 @@ const DashboardRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/set-password" element={<SetPasswordPage />} />
       <Route path="/verify-email-change" element={<VerifyEmailChange />} />
+
+      {/* Trial expired page (outside subscription guard) */}
+      <Route path="/trial-expired" element={<TrialExpired />} />
 
       {/* Public guest feedback (no venue context) */}
       <Route path="/feedback" element={<CustomerFeedbackPage />} />

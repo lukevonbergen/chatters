@@ -156,6 +156,10 @@ const UpdatePaymentMethodForm = ({ onSuccess, onCancel }) => {
   );
 };
 
+// Pricing configuration (must match BillingTab)
+const PRICE_PER_VENUE_MONTHLY = 149;
+const PRICE_PER_VENUE_YEARLY = 1430;
+
 const SubscriptionManagement = ({ accountId, userEmail }) => {
   const [subscription, setSubscription] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState(null);
@@ -165,6 +169,9 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
   const [setupSecret, setSetupSecret] = useState(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [showChangePlan, setShowChangePlan] = useState(false);
+  const [changePlanLoading, setChangePlanLoading] = useState(false);
+  const [venueCount, setVenueCount] = useState(1);
 
   useEffect(() => {
     loadSubscriptionData();
@@ -174,9 +181,26 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
     try {
       setLoading(true);
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found');
+        return;
+      }
+
+      // Get venue count for this account
+      const { count } = await supabase
+        .from('venues')
+        .select('id', { count: 'exact', head: true })
+        .eq('account_id', accountId);
+
+      setVenueCount(count || 1);
+
       const response = await fetch('/api/get-subscription-details', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ accountId }),
       });
 
@@ -191,9 +215,11 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
       }
 
       if (data.invoices) {
-        // Filter out void/draft invoices, only show paid ones
-        const paidInvoices = data.invoices.filter(invoice => invoice.status === 'paid');
-        setInvoices(paidInvoices);
+        // Filter out void/draft invoices, show paid and open (unpaid) invoices
+        const relevantInvoices = data.invoices.filter(
+          invoice => invoice.status === 'paid' || invoice.status === 'open'
+        );
+        setInvoices(relevantInvoices);
       }
 
     } catch (error) {
@@ -205,9 +231,18 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
 
   const handleUpdatePaymentMethod = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Please sign in again to update your payment method.');
+        return;
+      }
+
       const response = await fetch('/api/create-setup-intent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ accountId }),
       });
 
@@ -234,9 +269,19 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
     setCancelLoading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Please sign in again to cancel your subscription.');
+        setCancelLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/cancel-subscription', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ accountId }),
       });
 
@@ -257,11 +302,61 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
     }
   };
 
+  const handleChangePlan = async (newPlan) => {
+    setChangePlanLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Please sign in again to change your plan.');
+        setChangePlanLoading(false);
+        return;
+      }
+
+      const newPriceId = newPlan === 'yearly'
+        ? process.env.REACT_APP_STRIPE_PRICE_YEARLY
+        : process.env.REACT_APP_STRIPE_PRICE_MONTHLY;
+
+      const response = await fetch('/api/update-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ newPriceId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(`Successfully switched to ${newPlan} plan! Your next invoice will be prorated.`);
+        setShowChangePlan(false);
+        loadSubscriptionData();
+      } else {
+        alert(data.error || 'Failed to change plan');
+      }
+    } catch (error) {
+      console.error('Error changing plan:', error);
+      alert('Failed to change plan. Please try again.');
+    } finally {
+      setChangePlanLoading(false);
+    }
+  };
+
   const downloadInvoice = async (invoiceId) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Please sign in again to download invoices.');
+        return;
+      }
+
       const response = await fetch('/api/download-invoice', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ invoiceId }),
       });
 
@@ -285,8 +380,44 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
     );
   }
 
+  // Check for unpaid invoices
+  const unpaidInvoices = invoices.filter(inv => inv.status === 'open');
+  const hasUnpaidInvoices = unpaidInvoices.length > 0;
+
   return (
     <div className="space-y-6">
+      {/* Unpaid Invoice Warning Banner */}
+      {hasUnpaidInvoices && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-red-800">Payment Required</h3>
+              <p className="text-sm text-red-700 mt-1">
+                You have {unpaidInvoices.length} unpaid invoice{unpaidInvoices.length > 1 ? 's' : ''} totalling{' '}
+                <strong>
+                  £{(unpaidInvoices.reduce((sum, inv) => sum + inv.amount_due, 0) / 100).toFixed(2)}
+                </strong>
+                . Please pay to avoid service interruption.
+              </p>
+              {unpaidInvoices[0]?.hosted_invoice_url && (
+                <a
+                  href={unpaidInvoices[0].hosted_invoice_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  Pay Now
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Subscription & Payment Method - Side by Side */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Subscription Card */}
@@ -341,12 +472,20 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
               )}
 
               {!subscription.cancel_at_period_end && (
-                <button
-                  onClick={() => setShowCancelConfirm(true)}
-                  className="mt-4 w-full text-sm text-red-600 hover:text-red-700 font-medium py-2 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  Cancel Subscription
-                </button>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => setShowChangePlan(true)}
+                    className="flex-1 text-sm text-blue-600 hover:text-blue-700 font-medium py-2 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
+                  >
+                    Change Plan
+                  </button>
+                  <button
+                    onClick={() => setShowCancelConfirm(true)}
+                    className="flex-1 text-sm text-red-600 hover:text-red-700 font-medium py-2 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -408,44 +547,74 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {invoices.map((invoice) => (
-              <div
-                key={invoice.id}
-                className="px-6 py-4 hover:bg-gray-50 transition-colors group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3">
-                        <p className="text-lg font-semibold text-gray-900">
-                          £{(invoice.amount_paid / 100).toFixed(2)}
-                        </p>
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
-                          Paid
-                        </span>
+            {invoices.map((invoice) => {
+              const isUnpaid = invoice.status === 'open';
+              return (
+                <div
+                  key={invoice.id}
+                  className={`px-6 py-4 hover:bg-gray-50 transition-colors group ${isUnpaid ? 'bg-red-50' : ''}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isUnpaid ? 'bg-red-100' : 'bg-blue-50'}`}>
+                        {isUnpaid ? (
+                          <AlertCircle className="w-5 h-5 text-red-600" />
+                        ) : (
+                          <Check className="w-5 h-5 text-blue-600" />
+                        )}
                       </div>
-                      <p className="text-sm text-gray-500 mt-0.5">
-                        {new Date(invoice.created * 1000).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3">
+                          <p className="text-lg font-semibold text-gray-900">
+                            £{((isUnpaid ? invoice.amount_due : invoice.amount_paid) / 100).toFixed(2)}
+                          </p>
+                          {isUnpaid ? (
+                            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
+                              Payment Due
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
+                              Paid
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {new Date(invoice.created * 1000).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </p>
+                        {isUnpaid && (
+                          <p className="text-xs text-red-600 mt-1">
+                            Please pay this invoice to avoid service interruption
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isUnpaid && invoice.hosted_invoice_url && (
+                        <a
+                          href={invoice.hosted_invoice_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                        >
+                          Pay Now
+                        </a>
+                      )}
+                      <button
+                        onClick={() => downloadInvoice(invoice.id)}
+                        className={`ml-2 p-2 hover:bg-blue-50 rounded-lg transition-colors ${isUnpaid ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                        title="Download invoice"
+                      >
+                        <Download className="w-4 h-4 text-blue-600" />
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => downloadInvoice(invoice.id)}
-                    className="ml-4 p-2 hover:bg-blue-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                    title="Download invoice"
-                  >
-                    <Download className="w-4 h-4 text-blue-600" />
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -487,6 +656,108 @@ const SubscriptionManagement = ({ accountId, userEmail }) => {
                 Keep Plan
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Plan Modal */}
+      {showChangePlan && subscription && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-lg w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Change Your Plan</h3>
+              <button
+                onClick={() => setShowChangePlan(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <p className="text-gray-600 mb-6">
+              Switch between monthly and yearly billing. Changes are prorated automatically.
+            </p>
+
+            {/* Current Plan Info */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <p className="text-sm text-gray-500 mb-1">Current Plan</p>
+              <p className="font-semibold text-gray-900">
+                {subscription.interval === 'month' ? 'Monthly' : 'Yearly'} - £{(subscription.amount / 100).toFixed(2)}/{subscription.interval === 'month' ? 'mo' : 'yr'}
+              </p>
+            </div>
+
+            {/* Plan Options */}
+            <div className="space-y-3 mb-6">
+              {/* Monthly Option */}
+              <button
+                onClick={() => handleChangePlan('monthly')}
+                disabled={subscription.interval === 'month' || changePlanLoading}
+                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                  subscription.interval === 'month'
+                    ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                    : 'border-blue-200 hover:border-blue-400 hover:bg-blue-50'
+                }`}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-gray-900">Monthly Plan</p>
+                    <p className="text-sm text-gray-600">
+                      £{PRICE_PER_VENUE_MONTHLY} per venue/month
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">
+                      £{(venueCount * PRICE_PER_VENUE_MONTHLY).toLocaleString()}/mo
+                    </p>
+                    {subscription.interval === 'month' && (
+                      <span className="text-xs text-gray-500">Current</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              {/* Yearly Option */}
+              <button
+                onClick={() => handleChangePlan('yearly')}
+                disabled={subscription.interval === 'year' || changePlanLoading}
+                className={`w-full p-4 rounded-xl border-2 text-left transition-all relative ${
+                  subscription.interval === 'year'
+                    ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                    : 'border-green-200 hover:border-green-400 hover:bg-green-50'
+                }`}
+              >
+                <div className="absolute -top-2 left-4 bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  SAVE 20%
+                </div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-gray-900">Yearly Plan</p>
+                    <p className="text-sm text-gray-600">
+                      £{PRICE_PER_VENUE_YEARLY} per venue/year
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">
+                      £{(venueCount * PRICE_PER_VENUE_YEARLY).toLocaleString()}/yr
+                    </p>
+                    {subscription.interval === 'year' && (
+                      <span className="text-xs text-gray-500">Current</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {changePlanLoading && (
+              <div className="text-center py-4">
+                <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+                <p className="text-sm text-gray-600">Updating your plan...</p>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500 text-center">
+              Plan changes are prorated. You'll be charged or credited the difference.
+            </p>
           </div>
         </div>
       )}

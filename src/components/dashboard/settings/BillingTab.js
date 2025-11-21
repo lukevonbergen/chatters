@@ -97,20 +97,31 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         : process.env.REACT_APP_STRIPE_PRICE_YEARLY;
 
     try {
+      // Get auth session for API call
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Please sign in again to continue.');
+        setLoading(false);
+        return;
+      }
+
       // IMPORTANT: Different flow for trial vs expired trial
       const endpoint = !accountData?.isExpired
         ? '/api/setup-payment-method'  // Trial: Just save card, NO CHARGE
         : '/api/create-subscription-intent';  // Expired: Charge immediately
 
       const body = !accountData?.isExpired
-        ? { email: userEmail, accountId: accountId }  // Setup only needs email + accountId
-        : { email: userEmail, priceId, venueCount };  // Subscription needs pricing
+        ? {}  // Setup only needs auth token (backend gets account from token)
+        : { priceId };  // Subscription needs pricing (venueCount fetched from DB on backend)
 
-      console.log('Calling endpoint:', endpoint, 'with body:', body);
+      console.log('Calling endpoint:', endpoint);
 
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify(body),
       });
 
