@@ -97,7 +97,6 @@ const emptyVenue = () => ({
   addressLine2: '',
   city: '',
   postcode: '',
-  tableCount: '',
   questions: [],
   _expanded: true
 });
@@ -172,8 +171,6 @@ const AdminCreateAccount = () => {
     formData.venues.forEach((v, i) => {
       if (!v.name?.trim()) e[`venue_${i}_name`] = 'Venue name is required';
       if (!v.type) e[`venue_${i}_type`] = 'Venue type is required';
-      const t = parseInt(v.tableCount || '0', 10);
-      if (!Number.isFinite(t) || t < 1) e[`venue_${i}_tableCount`] = 'Table count must be at least 1';
       if (!v.postcode?.trim()) e[`venue_${i}_postcode`] = 'Postcode is required';
       if (!v.city?.trim()) e[`venue_${i}_city`] = 'City is required';
       if (!v.addressLine1?.trim()) e[`venue_${i}_addressLine1`] = 'Address is required';
@@ -205,7 +202,6 @@ const AdminCreateAccount = () => {
       const venuesPayload = formData.venues.map(venue => ({
         name: venue.name.trim(),
         type: venue.type,
-        table_count: parseInt(venue.tableCount, 10),
         address: {
           line1: venue.addressLine1.trim(),
           line2: venue.addressLine2?.trim() || '',
@@ -549,21 +545,6 @@ const AdminCreateAccount = () => {
                           {errors[`venue_${index}_type`] && <p className="text-xs text-red-600 mt-1">{errors[`venue_${index}_type`]}</p>}
                         </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Table Count *
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={venue.tableCount}
-                            onChange={(e) => setVenueField(index, 'tableCount', e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors[`venue_${index}_tableCount`] ? 'border-red-500' : 'border-gray-300'}`}
-                            data-error={!!errors[`venue_${index}_tableCount`]}
-                            placeholder="e.g. 20"
-                          />
-                          {errors[`venue_${index}_tableCount`] && <p className="text-xs text-red-600 mt-1">{errors[`venue_${index}_tableCount`]}</p>}
-                        </div>
                       </div>
 
                       {/* Address */}
@@ -660,23 +641,9 @@ const AdminCreateAccount = () => {
 
             {/* Summary */}
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-sm text-gray-500">Venues</p>
-                  <p className="text-lg font-semibold text-gray-900">{formData.venues.length}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Total Tables</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {formData.venues.reduce((acc, v) => acc + (parseInt(v.tableCount) || 0), 0)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">QR Codes</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {formData.venues.reduce((acc, v) => acc + (parseInt(v.tableCount) || 0), 0)}
-                  </p>
-                </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Venues</p>
+                <p className="text-lg font-semibold text-gray-900">{formData.venues.length}</p>
               </div>
             </div>
           </section>

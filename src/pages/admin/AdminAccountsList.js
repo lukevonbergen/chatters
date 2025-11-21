@@ -28,6 +28,7 @@ const AdminAccountsList = () => {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [mrrData, setMrrData] = useState({ mrrByAccount: {}, totalMRR: 0, loading: true });
   const [stats, setStats] = useState({
     totalAccounts: 0,
     paidAccounts: 0,
@@ -40,7 +41,33 @@ const AdminAccountsList = () => {
 
   useEffect(() => {
     loadAccounts();
+    loadMRRData();
   }, []);
+
+  const loadMRRData = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const response = await fetch('/api/admin-get-mrr', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMrrData({
+          mrrByAccount: data.mrrByAccount || {},
+          totalMRR: data.totalMRR || 0,
+          loading: false
+        });
+      }
+    } catch (error) {
+      console.error('Error loading MRR data:', error);
+      setMrrData(prev => ({ ...prev, loading: false }));
+    }
+  };
 
   const loadAccounts = async () => {
     try {
@@ -91,9 +118,11 @@ const AdminAccountsList = () => {
         // Calculate total tables
         const totalTables = account.venues?.reduce((sum, v) => sum + (v.table_count || 0), 0) || 0;
 
+        const venueCount = account.venues?.length || 0;
+
         return {
           ...account,
-          venueCount: account.venues?.length || 0,
+          venueCount,
           totalTables,
           feedbackCount: accountFeedback,
           masterUser
@@ -246,11 +275,11 @@ const AdminAccountsList = () => {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={loadAccounts}
-                disabled={loading}
+                onClick={() => { loadAccounts(); loadMRRData(); }}
+                disabled={loading || mrrData.loading}
                 className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${loading || mrrData.loading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
               <button
@@ -274,7 +303,7 @@ const AdminAccountsList = () => {
 
       <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8">
         {/* Statistics Cards - More Compact */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
           <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
             <div className="flex items-center gap-2 mb-1">
               <Building2 className="h-4 w-4 text-blue-600" />
@@ -321,6 +350,21 @@ const AdminAccountsList = () => {
               <p className="text-xs font-medium text-gray-500 uppercase">Feedback (30d)</p>
             </div>
             <p className="text-2xl font-semibold text-gray-900">{stats.totalFeedback}</p>
+          </div>
+
+          <div className="bg-white border border-green-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-green-50">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="h-4 w-4 text-green-600" />
+              <p className="text-xs font-medium text-green-700 uppercase">MRR</p>
+            </div>
+            {mrrData.loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+                <span className="text-sm text-green-600">Loading...</span>
+              </div>
+            ) : (
+              <p className="text-2xl font-semibold text-green-700">£{mrrData.totalMRR.toLocaleString()}</p>
+            )}
           </div>
         </div>
 
@@ -381,6 +425,9 @@ const AdminAccountsList = () => {
                   </th>
                   <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Trial/Billing
+                  </th>
+                  <th scope="col" className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    MRR
                   </th>
                   <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Created
@@ -448,6 +495,17 @@ const AdminAccountsList = () => {
                           formatDate(account.trial_ends_at)
                         ) : (
                           <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right">
+                        {mrrData.loading ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-gray-400 inline" />
+                        ) : mrrData.mrrByAccount[account.id] > 0 ? (
+                          <span className="text-sm font-medium text-green-600">
+                            £{mrrData.mrrByAccount[account.id].toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
