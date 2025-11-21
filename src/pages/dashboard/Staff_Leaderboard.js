@@ -429,7 +429,7 @@ const StaffLeaderboard = () => {
                         title="Send recognition email"
                       >
                         <Trophy className="w-4 h-4 mr-1" />
-                        Recognize
+                        Recognise
                       </button>
                     </td>
                   </tr>
