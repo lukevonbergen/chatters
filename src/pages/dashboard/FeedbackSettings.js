@@ -338,15 +338,7 @@ const FeedbackSettings = () => {
       </SettingsCard>
 
       {/* Feedback Collection Hours */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="text-base font-semibold text-gray-900">Feedback Collection Hours</h3>
-          <p className="text-sm text-gray-500 mt-1">Set when customers can leave feedback</p>
-        </div>
-        <div className="p-6">
-          <FeedbackTimeSelection currentVenueId={venueId} />
-        </div>
-      </div>
+      <FeedbackTimeSelection currentVenueId={venueId} />
 
       {/* NPS Settings */}
       <SettingsCard
