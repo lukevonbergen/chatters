@@ -16,15 +16,11 @@ const VenueTab = ({
       <div className="space-y-6">
         
         {/* Section 1: Basic Information Card */}
-        <div className="bg-white border border-gray-200 rounded-lg">
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
           {/* Section Header */}
-          <div className="border-b border-gray-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
-                <p className="text-sm text-gray-500 mt-1">Venue name, address, and location details</p>
-              </div>
-            </div>
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="text-base font-semibold text-gray-900">Basic Information</h3>
+            <p className="text-sm text-gray-500 mt-1">Venue name, address, and location details</p>
           </div>
 
           {/* Section Content */}
@@ -124,23 +120,23 @@ const VenueTab = ({
           </div>
 
           {/* Card Save Action */}
-          <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 rounded-b-lg">
+          <div className="px-6 py-4 border-t border-gray-100">
             <div className="flex items-center justify-between">
               <div className="text-xs text-gray-500">
-                Changes to basic information are saved immediately
+                Changes are saved per venue
               </div>
               <Button
                 variant="primary"
                 onClick={saveSettings}
                 loading={loading}
               >
-                {loading ? 'Saving...' : 'Save Changes'}
+                {loading ? 'Saving...' : 'Save'}
               </Button>
             </div>
             {message && (
               <div className={`text-xs p-2 rounded-lg mt-3 ${
-                message.includes('success') 
-                  ? 'text-green-700 bg-green-50 border border-green-200' 
+                message.includes('success')
+                  ? 'text-green-700 bg-green-50 border border-green-200'
                   : 'text-red-700 bg-red-50 border border-red-200'
               }`}>
                 {message}

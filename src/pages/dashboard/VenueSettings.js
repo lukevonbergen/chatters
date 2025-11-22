@@ -832,24 +832,25 @@ const VenueSettingsPage = () => {
   // Single-venue edit mode: Show edit form for current venue
   return (
     <div className="space-y-6">
-      <ChartCard
-        title="Venue Settings"
-        subtitle="Configure your venue information and location details"
-      >
-        <VenueTab
-          name={name}
-          setName={setName}
-          address={address}
-          setAddress={setAddress}
-          phone={phone}
-          setPhone={setPhone}
-          website={website}
-          setWebsite={setWebsite}
-          saveSettings={saveSettings}
-          loading={loading}
-          message={message}
-        />
-      </ChartCard>
+      {/* Page Header */}
+      <div className="mb-2">
+        <h1 className="text-2xl font-semibold text-gray-900">Venue Details</h1>
+        <p className="text-sm text-gray-500 mt-1">Configure your venue information and location details</p>
+      </div>
+
+      <VenueTab
+        name={name}
+        setName={setName}
+        address={address}
+        setAddress={setAddress}
+        phone={phone}
+        setPhone={setPhone}
+        website={website}
+        setWebsite={setWebsite}
+        saveSettings={saveSettings}
+        loading={loading}
+        message={message}
+      />
     </div>
   );
 };
