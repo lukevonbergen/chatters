@@ -27,17 +27,14 @@ const HighlightedInput = ({ value, onChange, placeholder, rows, className }) => 
   };
 
   if (rows) {
-    // Textarea version
     return (
       <div className="relative">
-        {/* Highlighted overlay */}
         <div
           className={`${className} absolute inset-0 pointer-events-none whitespace-pre-wrap break-words overflow-hidden`}
           style={{ color: '#111827' }}
         >
           {renderHighlightedText(value || '')}
         </div>
-        {/* Actual textarea - transparent text */}
         <textarea
           value={value}
           onChange={onChange}
@@ -49,17 +46,14 @@ const HighlightedInput = ({ value, onChange, placeholder, rows, className }) => 
       </div>
     );
   } else {
-    // Input version
     return (
       <div className="relative">
-        {/* Highlighted overlay */}
         <div
           className={`${className} absolute inset-0 pointer-events-none whitespace-pre overflow-hidden`}
           style={{ color: '#111827' }}
         >
           {renderHighlightedText(value || '')}
         </div>
-        {/* Actual input - transparent text */}
         <input
           type="text"
           value={value}
@@ -72,6 +66,42 @@ const HighlightedInput = ({ value, onChange, placeholder, rows, className }) => 
     );
   }
 };
+
+// Reusable SettingsCard component matching FeedbackSettings style
+const SettingsCard = ({ title, description, children, onSave, loading, message }) => (
+  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <div className="px-6 py-4 border-b border-gray-100">
+      <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+      <p className="text-sm text-gray-500 mt-1">{description}</p>
+    </div>
+    <div className="p-6">
+      {children}
+    </div>
+    <div className="px-6 py-4 border-t border-gray-100">
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-gray-500">
+          Changes are saved per venue
+        </div>
+        <Button
+          variant="primary"
+          onClick={onSave}
+          loading={loading}
+        >
+          {loading ? 'Saving...' : 'Save'}
+        </Button>
+      </div>
+      {message && (
+        <div className={`text-xs p-2 rounded-lg mt-3 ${
+          message.includes('success')
+            ? 'text-green-700 bg-green-50 border border-green-200'
+            : 'text-red-700 bg-red-50 border border-red-200'
+        }`}>
+          {message}
+        </div>
+      )}
+    </div>
+  </div>
+);
 
 const BrandingTab = ({
   logo, setLogo,
@@ -87,7 +117,6 @@ const BrandingTab = ({
   thankYouIcon, setThankYouIcon,
   venueId
 }) => {
-  // Separate loading and message states for each section
   const [logoLoading, setLogoLoading] = useState(false);
   const [logoMessage, setLogoMessage] = useState('');
   const [colorsLoading, setColorsLoading] = useState(false);
@@ -109,7 +138,6 @@ const BrandingTab = ({
       const fileName = `${venueId}-logo.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // Delete existing logo
       const { error: deleteError } = await supabase.storage
         .from('venue-logos')
         .remove([filePath]);
@@ -118,7 +146,6 @@ const BrandingTab = ({
         throw new Error('Failed to delete existing logo: ' + deleteError.message);
       }
 
-      // Upload new logo
       const { error: uploadError } = await supabase.storage
         .from('venue-logos')
         .upload(filePath, file);
@@ -127,12 +154,10 @@ const BrandingTab = ({
         throw new Error('Failed to upload logo: ' + uploadError.message);
       }
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('venue-logos')
         .getPublicUrl(filePath);
 
-      // Update database
       const { error: updateError } = await supabase
         .from('venues')
         .update({ logo: publicUrl })
@@ -265,432 +290,345 @@ const BrandingTab = ({
   };
 
   return (
-    <div className="w-full space-y-6">
-
-      {/* Combined Logo & Colors Card */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-          {/* Logo Section */}
-          <div>
-            <div className="mb-3">
-              <h3 className="text-base font-semibold text-gray-900">Logo</h3>
-              <p className="text-gray-600 text-xs">Upload your venue's logo</p>
+    <div className="space-y-6">
+      {/* Logo Upload */}
+      <SettingsCard
+        title="Logo"
+        description="Upload your venue's logo for branding"
+        onSave={() => {}}
+        loading={logoLoading}
+        message={logoMessage}
+      >
+        <div className="flex items-center space-x-4">
+          {logo && (
+            <div className="flex-shrink-0">
+              <img
+                src={logo}
+                alt="Logo"
+                className="w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm"
+              />
             </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center space-x-4">
-                {logo && (
-                  <div className="flex-shrink-0">
-                    <img
-                      src={logo}
-                      alt="Logo"
-                      className="w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm"
-                    />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    disabled={logoLoading}
-                    className="w-full text-xs text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer disabled:opacity-50"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Square, min 100x100px
-                  </p>
-                </div>
-              </div>
-
-              {/* Logo Message Display */}
-              {logoMessage && (
-                <div className={`text-xs p-2 rounded-md ${
-                  logoMessage.includes('success')
-                    ? 'text-green-700 bg-green-50 border border-green-200'
-                    : 'text-red-700 bg-red-50 border border-red-200'
-                }`}>
-                  {logoMessage}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Colors Section */}
-          <div>
-            <div className="mb-3">
-              <h3 className="text-base font-semibold text-gray-900">Brand Colors</h3>
-              <p className="text-gray-600 text-xs">Customize feedback page colors</p>
-            </div>
-
-              {/* 2x2 Color Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Primary Color */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Primary</label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="w-8 h-8 border border-gray-300 rounded-md cursor-pointer flex-shrink-0"
-                    />
-                    <input
-                      type="text"
-                      value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="#000000"
-                    />
-                  </div>
-                </div>
-
-                {/* Background Color */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Background</label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      value={backgroundColor}
-                      onChange={(e) => setBackgroundColor(e.target.value)}
-                      className="w-8 h-8 border border-gray-300 rounded-md cursor-pointer flex-shrink-0"
-                    />
-                    <input
-                      type="text"
-                      value={backgroundColor}
-                      onChange={(e) => setBackgroundColor(e.target.value)}
-                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="#ffffff"
-                    />
-                  </div>
-                </div>
-
-                {/* Text Color */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Text</label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
-                      className="w-8 h-8 border border-gray-300 rounded-md cursor-pointer flex-shrink-0"
-                    />
-                    <input
-                      type="text"
-                      value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
-                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="#111827"
-                    />
-                  </div>
-                </div>
-
-                {/* Button Text Color */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Button Text</label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      value={buttonTextColor}
-                      onChange={(e) => setButtonTextColor(e.target.value)}
-                      className="w-8 h-8 border border-gray-300 rounded-md cursor-pointer flex-shrink-0"
-                    />
-                    <input
-                      type="text"
-                      value={buttonTextColor}
-                      onChange={(e) => setButtonTextColor(e.target.value)}
-                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="#ffffff"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Color Preview & Save - Combined */}
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-medium text-gray-700">Preview</h4>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={saveColors}
-                    loading={colorsLoading}
-                  >
-                    {colorsLoading ? 'Saving...' : 'Save'}
-                  </Button>
-                </div>
-                <div className="p-3 rounded-lg border border-gray-200" style={{ backgroundColor: backgroundColor }}>
-                  <p className="text-xs font-medium mb-2" style={{ color: textColor }}>
-                    Feedback Page
-                  </p>
-                  <button
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                    style={{ backgroundColor: primaryColor, color: buttonTextColor }}
-                  >
-                    Sample Button
-                  </button>
-                </div>
-              </div>
-
-            {/* Colors Message Display */}
-            {colorsMessage && (
-              <div className={`text-xs p-2 rounded-md ${
-                colorsMessage.includes('success')
-                  ? 'text-green-700 bg-green-50 border border-green-200'
-                  : 'text-red-700 bg-red-50 border border-red-200'
-              }`}>
-                {colorsMessage}
-              </div>
-            )}
+          )}
+          <div className="flex-1">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              disabled={logoLoading}
+              className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#2548CC] file:text-white hover:file:bg-[#1e3ba8] cursor-pointer disabled:opacity-50"
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Square image, minimum 100x100px recommended
+            </p>
           </div>
         </div>
-      </div>
+      </SettingsCard>
 
-      {/* Assistance & Thank You Messages - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Assistance Message Customization Section */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="mb-4">
-            <h3 className="text-base font-semibold text-gray-900">Assistance Request Message</h3>
-            <p className="text-gray-600 text-xs">Customize the message customers see after requesting assistance</p>
-          </div>
-
-        <div className="space-y-6">
-            {/* Icon Selection */}
+      {/* Brand Colors */}
+      <SettingsCard
+        title="Brand Colors"
+        description="Customize the colors used on your feedback pages"
+        onSave={saveColors}
+        loading={colorsLoading}
+        message={colorsMessage}
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {/* Primary Color */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Icon</label>
-              <div className="grid grid-cols-2 gap-3">
-                {iconOptions.map((option) => {
-                  const IconComponent = option.icon;
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => setAssistanceIcon(option.value)}
-                      className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
-                        assistanceIcon === option.value
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <IconComponent className="w-8 h-8 mb-2" style={{ color: assistanceIcon === option.value ? primaryColor : '#6b7280' }} />
-                      <span className="text-xs font-medium text-gray-700">{option.label}</span>
-                    </button>
-                  );
-                })}
+              <label className="block text-sm font-medium text-gray-700 mb-2">Primary</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="w-10 h-10 border border-gray-300 rounded-lg cursor-pointer flex-shrink-0"
+                />
+                <input
+                  type="text"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="#000000"
+                />
               </div>
             </div>
 
-            {/* Title Input */}
+            {/* Background Color */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-              <HighlightedInput
-                value={assistanceTitle}
-                onChange={(e) => setAssistanceTitle(e.target.value)}
-                placeholder="Help is on the way!"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Background</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="w-10 h-10 border border-gray-300 rounded-lg cursor-pointer flex-shrink-0"
+                />
+                <input
+                  type="text"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="#ffffff"
+                />
+              </div>
             </div>
 
-            {/* Message Input */}
+            {/* Text Color */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
-              <HighlightedInput
-                value={assistanceMessage}
-                onChange={(e) => setAssistanceMessage(e.target.value)}
-                placeholder="We've notified our team that you need assistance. Someone will be with you shortly."
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Use {'{table}'} as a placeholder for the table number (e.g., "Table {'{table}'} needs assistance")
+              <label className="block text-sm font-medium text-gray-700 mb-2">Text</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  value={textColor}
+                  onChange={(e) => setTextColor(e.target.value)}
+                  className="w-10 h-10 border border-gray-300 rounded-lg cursor-pointer flex-shrink-0"
+                />
+                <input
+                  type="text"
+                  value={textColor}
+                  onChange={(e) => setTextColor(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="#111827"
+                />
+              </div>
+            </div>
+
+            {/* Button Text Color */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  value={buttonTextColor}
+                  onChange={(e) => setButtonTextColor(e.target.value)}
+                  className="w-10 h-10 border border-gray-300 rounded-lg cursor-pointer flex-shrink-0"
+                />
+                <input
+                  type="text"
+                  value={buttonTextColor}
+                  onChange={(e) => setButtonTextColor(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="#ffffff"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+            <div className="p-4 rounded-lg border border-gray-200" style={{ backgroundColor: backgroundColor }}>
+              <p className="text-sm font-medium mb-3" style={{ color: textColor }}>
+                Feedback Page Preview
               </p>
-            </div>
-
-            {/* Preview */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Preview</h4>
-              <div className="bg-white rounded-lg p-6 border border-gray-200" style={{ backgroundColor: backgroundColor }}>
-                <div className="flex flex-col items-center text-center">
-                  <div className="inline-block p-4 rounded-full mb-4" style={{ backgroundColor: `${primaryColor}20` }}>
-                    {React.createElement(getIconComponent(assistanceIcon), {
-                      className: "w-12 h-12",
-                      style: { color: primaryColor }
-                    })}
-                  </div>
-                  <h2 className="text-xl font-bold mb-2" style={{ color: textColor }}>
-                    {(assistanceTitle || 'Help is on the way!')
-                      .split(/(\{table\})/g)
-                      .map((part, index) =>
-                        part === '{table}' ? (
-                          <span
-                            key={index}
-                            className="inline-block px-2 py-0.5 rounded mx-1"
-                            style={{
-                              backgroundColor: '#fee2e2',
-                              color: '#991b1b',
-                              fontWeight: '600'
-                            }}
-                          >
-                            14
-                          </span>
-                        ) : part
-                      )
-                    }
-                  </h2>
-                  <p className="text-sm" style={{ color: textColor, opacity: 0.8 }}>
-                    {(assistanceMessage || 'We\'ve notified our team that you need assistance. Someone will be with you shortly.')
-                      .split(/(\{table\})/g)
-                      .map((part, index) =>
-                        part === '{table}' ? (
-                          <span
-                            key={index}
-                            className="inline-block px-2 py-0.5 rounded mx-1"
-                            style={{
-                              backgroundColor: '#fee2e2',
-                              color: '#991b1b',
-                              fontWeight: '600'
-                            }}
-                          >
-                            14
-                          </span>
-                        ) : part
-                      )
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="pt-2">
-              <Button
-                variant="primary"
-                onClick={saveAssistanceSettings}
-                loading={assistanceLoading}
-                className="w-full"
+              <button
+                className="px-4 py-2 rounded-lg text-sm font-semibold"
+                style={{ backgroundColor: primaryColor, color: buttonTextColor }}
               >
-                {assistanceLoading ? 'Saving...' : 'Save Settings'}
-              </Button>
+                Sample Button
+              </button>
             </div>
-
-          {/* Message Display */}
-          {assistanceUpdateMessage && (
-            <div className={`text-sm p-3 rounded-md ${
-              assistanceUpdateMessage.includes('success')
-                ? 'text-green-700 bg-green-50 border border-green-200'
-                : 'text-red-700 bg-red-50 border border-red-200'
-            }`}>
-              {assistanceUpdateMessage}
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      </SettingsCard>
 
-        {/* Thank You Message Customization Section */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="mb-4">
-            <h3 className="text-base font-semibold text-gray-900">Thank You Message</h3>
-            <p className="text-gray-600 text-xs">Customize the message customers see after submitting feedback</p>
+      {/* Assistance Request Message */}
+      <SettingsCard
+        title="Assistance Request Message"
+        description="Customize the message customers see after requesting assistance"
+        onSave={saveAssistanceSettings}
+        loading={assistanceLoading}
+        message={assistanceUpdateMessage}
+      >
+        <div className="space-y-6">
+          {/* Icon Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Icon</label>
+            <div className="grid grid-cols-4 gap-3">
+              {iconOptions.map((option) => {
+                const IconComponent = option.icon;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setAssistanceIcon(option.value)}
+                    className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all ${
+                      assistanceIcon === option.value
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <IconComponent className="w-6 h-6 mb-1" style={{ color: assistanceIcon === option.value ? primaryColor : '#6b7280' }} />
+                    <span className="text-xs font-medium text-gray-700">{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-        <div className="space-y-6">
-            {/* Icon Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Icon</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {thankYouIconOptions.map((option) => {
-                  const IconComponent = option.icon;
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => setThankYouIcon(option.value)}
-                      className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
-                        thankYouIcon === option.value
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <IconComponent className="w-8 h-8 mb-2" style={{ color: thankYouIcon === option.value ? primaryColor : '#6b7280' }} />
-                      <span className="text-xs font-medium text-gray-700">{option.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          {/* Title Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+            <HighlightedInput
+              value={assistanceTitle}
+              onChange={(e) => setAssistanceTitle(e.target.value)}
+              placeholder="Help is on the way!"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
 
-            {/* Title Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-              <input
-                type="text"
-                value={thankYouTitle}
-                onChange={(e) => setThankYouTitle(e.target.value)}
-                placeholder="Thanks for your feedback!"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+          {/* Message Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+            <HighlightedInput
+              value={assistanceMessage}
+              onChange={(e) => setAssistanceMessage(e.target.value)}
+              placeholder="We've notified our team that you need assistance. Someone will be with you shortly."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Use {'{table}'} as a placeholder for the table number
+            </p>
+          </div>
 
-            {/* Message Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
-              <textarea
-                value={thankYouMessage}
-                onChange={(e) => setThankYouMessage(e.target.value)}
-                placeholder="Your response has been submitted successfully."
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-              />
-            </div>
-
-            {/* Preview */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Preview</h4>
-              <div className="bg-white rounded-lg p-6 border border-gray-200" style={{ backgroundColor: backgroundColor }}>
-                <div className="flex flex-col items-center text-center">
-                  <div className="mb-4">
-                    {React.createElement(getThankYouIconComponent(thankYouIcon), {
-                      className: "w-16 h-16",
-                      style: { color: primaryColor },
-                      strokeWidth: 2
-                    })}
-                  </div>
-                  <h2 className="text-2xl font-bold mb-2" style={{ color: textColor }}>
-                    {thankYouTitle || 'Thanks for your feedback!'}
-                  </h2>
-                  <p className="text-base" style={{ color: textColor, opacity: 0.7 }}>
-                    {thankYouMessage || 'Your response has been submitted successfully.'}
-                  </p>
+          {/* Preview */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+            <div className="rounded-lg p-6 border border-gray-200" style={{ backgroundColor: backgroundColor }}>
+              <div className="flex flex-col items-center text-center">
+                <div className="inline-block p-4 rounded-full mb-4" style={{ backgroundColor: `${primaryColor}20` }}>
+                  {React.createElement(getIconComponent(assistanceIcon), {
+                    className: "w-10 h-10",
+                    style: { color: primaryColor }
+                  })}
                 </div>
+                <h2 className="text-lg font-bold mb-2" style={{ color: textColor }}>
+                  {(assistanceTitle || 'Help is on the way!')
+                    .split(/(\{table\})/g)
+                    .map((part, index) =>
+                      part === '{table}' ? (
+                        <span
+                          key={index}
+                          className="inline-block px-2 py-0.5 rounded mx-1"
+                          style={{
+                            backgroundColor: '#fee2e2',
+                            color: '#991b1b',
+                            fontWeight: '600'
+                          }}
+                        >
+                          14
+                        </span>
+                      ) : part
+                    )
+                  }
+                </h2>
+                <p className="text-sm" style={{ color: textColor, opacity: 0.8 }}>
+                  {(assistanceMessage || 'We\'ve notified our team that you need assistance. Someone will be with you shortly.')
+                    .split(/(\{table\})/g)
+                    .map((part, index) =>
+                      part === '{table}' ? (
+                        <span
+                          key={index}
+                          className="inline-block px-2 py-0.5 rounded mx-1"
+                          style={{
+                            backgroundColor: '#fee2e2',
+                            color: '#991b1b',
+                            fontWeight: '600'
+                          }}
+                        >
+                          14
+                        </span>
+                      ) : part
+                    )
+                  }
+                </p>
               </div>
             </div>
-
-            {/* Save Button */}
-            <div className="pt-2">
-              <Button
-                variant="primary"
-                onClick={saveThankYouSettings}
-                loading={thankYouLoading}
-                className="w-full"
-              >
-                {thankYouLoading ? 'Saving...' : 'Save Settings'}
-              </Button>
-            </div>
-
-          {/* Message Display */}
-          {thankYouUpdateMessage && (
-            <div className={`text-sm p-3 rounded-md ${
-              thankYouUpdateMessage.includes('success')
-                ? 'text-green-700 bg-green-50 border border-green-200'
-                : 'text-red-700 bg-red-50 border border-red-200'
-            }`}>
-              {thankYouUpdateMessage}
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      </SettingsCard>
 
-      </div>
+      {/* Thank You Message */}
+      <SettingsCard
+        title="Thank You Message"
+        description="Customize the message customers see after submitting feedback"
+        onSave={saveThankYouSettings}
+        loading={thankYouLoading}
+        message={thankYouUpdateMessage}
+      >
+        <div className="space-y-6">
+          {/* Icon Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Icon</label>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {thankYouIconOptions.map((option) => {
+                const IconComponent = option.icon;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setThankYouIcon(option.value)}
+                    className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all ${
+                      thankYouIcon === option.value
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <IconComponent className="w-6 h-6 mb-1" style={{ color: thankYouIcon === option.value ? primaryColor : '#6b7280' }} />
+                    <span className="text-xs font-medium text-gray-700">{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Title Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+            <input
+              type="text"
+              value={thankYouTitle}
+              onChange={(e) => setThankYouTitle(e.target.value)}
+              placeholder="Thanks for your feedback!"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Message Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+            <textarea
+              value={thankYouMessage}
+              onChange={(e) => setThankYouMessage(e.target.value)}
+              placeholder="Your response has been submitted successfully."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            />
+          </div>
+
+          {/* Preview */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+            <div className="rounded-lg p-6 border border-gray-200" style={{ backgroundColor: backgroundColor }}>
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4">
+                  {React.createElement(getThankYouIconComponent(thankYouIcon), {
+                    className: "w-14 h-14",
+                    style: { color: primaryColor },
+                    strokeWidth: 2
+                  })}
+                </div>
+                <h2 className="text-xl font-bold mb-2" style={{ color: textColor }}>
+                  {thankYouTitle || 'Thanks for your feedback!'}
+                </h2>
+                <p className="text-sm" style={{ color: textColor, opacity: 0.7 }}>
+                  {thankYouMessage || 'Your response has been submitted successfully.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SettingsCard>
     </div>
   );
 };

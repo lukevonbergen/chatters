@@ -328,13 +328,6 @@ const FeedbackSettings = () => {
             </label>
           ))}
         </div>
-        {selectedTimeoutHours !== sessionTimeoutHours && (
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-xs text-amber-700">
-              Unsaved changes: timeout will change from {sessionTimeoutHours}h to {selectedTimeoutHours}h
-            </p>
-          </div>
-        )}
       </SettingsCard>
 
       {/* Feedback Collection Hours */}
