@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabase';
-import { getDashboardUrl } from '../../../utils/domainUtils';
 import { Button } from '../../ui/button';
 
 const ProfileTab = ({
@@ -127,149 +126,174 @@ const ProfileTab = ({
   };
 
   return (
-    <div className="max-w-none lg:max-w-2xl">
-
-      <div className="space-y-4 lg:space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-          {/* Responsive grid - stacks on mobile, side-by-side on larger screens */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
-            <div>
-              <input
-                type="text"
-                placeholder="First"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-              />
-            </div>
-            <div>
-              <input
-                type="text"
-                placeholder="Last"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base"
-              />
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Personal Information Card */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-base font-semibold text-gray-900">Personal Information</h3>
+          <p className="text-sm text-gray-500 mt-1">Update your name and email address</p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-          <div className="flex gap-2">
-            <input
-              type="email"
-              placeholder="your@example.com"
-              value={email}
-              disabled
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed text-sm lg:text-base"
-            />
-            <button
-              onClick={() => setShowEmailChange(!showEmailChange)}
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm font-medium whitespace-nowrap"
-            >
-              Change Email
-            </button>
+        <div className="p-6 space-y-6">
+          {/* Name Fields */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <p className="text-xs text-gray-500">Your display name</p>
+            </div>
+            <div className="lg:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+            </div>
           </div>
 
-          {showEmailChange && (
-            <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-md space-y-3">
-              <p className="text-sm text-blue-900 font-medium">Enter your new email address</p>
-              <p className="text-xs text-blue-700">
-                We'll send a verification link to the new email address. Your current email will remain active until you verify the new one.
-              </p>
+          {/* Email Field */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <p className="text-xs text-gray-500">Your login email address</p>
+            </div>
+            <div className="lg:col-span-2">
               <div className="flex gap-2">
                 <input
                   type="email"
-                  placeholder="new@example.com"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="your@example.com"
+                  value={email}
+                  disabled
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed text-sm"
                 />
-                <Button
-                  variant="primary"
-                  onClick={sendEmailChangeVerification}
-                  loading={emailChangeLoading}
+                <button
+                  onClick={() => setShowEmailChange(!showEmailChange)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium whitespace-nowrap"
                 >
-                  {emailChangeLoading ? 'Sending...' : 'Send Verification'}
-                </Button>
+                  Change
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setShowEmailChange(false);
-                  setNewEmail('');
-                  setEmailChangeMessage('');
-                }}
-                className="text-sm text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
 
-          {emailChangeMessage && (
-            <div className={`text-sm mt-2 p-3 rounded-md ${
-              emailChangeMessage.includes('sent') || emailChangeMessage.includes('Verification')
+              {showEmailChange && (
+                <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+                  <p className="text-sm text-blue-900 font-medium">Enter your new email address</p>
+                  <p className="text-xs text-blue-700">
+                    We'll send a verification link to the new email address. Your current email will remain active until you verify the new one.
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      placeholder="new@example.com"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <Button
+                      variant="primary"
+                      onClick={sendEmailChangeVerification}
+                      loading={emailChangeLoading}
+                    >
+                      {emailChangeLoading ? 'Sending...' : 'Send Verification'}
+                    </Button>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowEmailChange(false);
+                      setNewEmail('');
+                      setEmailChangeMessage('');
+                    }}
+                    className="text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {emailChangeMessage && (
+                <div className={`text-xs mt-2 p-3 rounded-lg ${
+                  emailChangeMessage.includes('sent') || emailChangeMessage.includes('Verification')
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-red-700 bg-red-50 border border-red-200'
+                }`}>
+                  {emailChangeMessage}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-gray-500">
+              Changes are saved to your account
+            </div>
+            <Button
+              variant="primary"
+              onClick={saveSettings}
+              loading={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+          {message && (
+            <div className={`text-xs p-2 rounded-lg mt-3 ${
+              message.includes('success')
                 ? 'text-green-700 bg-green-50 border border-green-200'
                 : 'text-red-700 bg-red-50 border border-red-200'
             }`}>
-              {emailChangeMessage}
+              {message}
             </div>
           )}
         </div>
-
-        {/* Button with responsive sizing */}
-        <div className="pt-2">
-          <Button
-            variant="primary"
-            onClick={saveSettings}
-            loading={loading}
-            className="w-full sm:w-auto"
-          >
-            {loading ? 'Updating...' : 'Update profile'}
-          </Button>
-        </div>
-
-        {message && (
-          <div className={`text-sm mt-2 p-3 rounded-md ${
-            message.includes('success')
-              ? 'text-green-700 bg-green-50 border border-green-200'
-              : 'text-red-700 bg-red-50 border border-red-200'
-          }`}>
-            {message}
-          </div>
-        )}
       </div>
 
-      {/* Password Section */}
-      <div className="mt-8 pt-8 border-t border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Password & Security</h3>
+      {/* Password & Security Card */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-base font-semibold text-gray-900">Password & Security</h3>
+          <p className="text-sm text-gray-500 mt-1">Manage your password and security settings</p>
+        </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <p className="text-sm text-gray-600 mb-3">
-              For security reasons, we'll send you an email with a link to reset your password.
-            </p>
-            <button
-              onClick={sendPasswordResetEmail}
-              disabled={passwordResetLoading}
-              className="w-full sm:w-auto bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {passwordResetLoading ? 'Sending...' : 'Send password reset email'}
-            </button>
-          </div>
-
-          {passwordResetMessage && (
-            <div className={`text-sm p-3 rounded-md ${
-              passwordResetMessage.includes('sent')
-                ? 'text-green-700 bg-green-50 border border-green-200'
-                : 'text-red-700 bg-red-50 border border-red-200'
-            }`}>
-              {passwordResetMessage}
+        <div className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <p className="text-xs text-gray-500">Reset your account password</p>
             </div>
-          )}
+            <div className="lg:col-span-2">
+              <p className="text-sm text-gray-600 mb-3">
+                For security reasons, we'll send you an email with a link to reset your password.
+              </p>
+              <button
+                onClick={sendPasswordResetEmail}
+                disabled={passwordResetLoading}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {passwordResetLoading ? 'Sending...' : 'Send password reset email'}
+              </button>
+
+              {passwordResetMessage && (
+                <div className={`text-xs mt-3 p-3 rounded-lg ${
+                  passwordResetMessage.includes('sent')
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-red-700 bg-red-50 border border-red-200'
+                }`}>
+                  {passwordResetMessage}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
