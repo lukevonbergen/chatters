@@ -289,18 +289,21 @@ const FeedbackTimeSelection = ({ currentVenueId }) => {
 
       {/* Save button and messages */}
       <div className="pt-4 border-t border-gray-200 mt-4">
-        <Button
-          variant="primary"
-          onClick={saveFeedbackHours}
-          loading={loading}
-        >
-          {loading ? 'Saving...' : 'Save Feedback Hours'}
-        </Button>
-        
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-gray-500">Changes are saved per venue</div>
+          <Button
+            variant="primary"
+            onClick={saveFeedbackHours}
+            loading={loading}
+          >
+            {loading ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+
         {message && (
           <div className={`text-sm p-3 rounded-lg mt-3 ${
-            message.includes('success') 
-              ? 'text-green-700 bg-green-50 border border-green-200' 
+            message.includes('success')
+              ? 'text-green-700 bg-green-50 border border-green-200'
               : 'text-red-700 bg-red-50 border border-red-200'
           }`}>
             {message}
