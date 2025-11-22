@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../utils/supabase';
 import { ChevronDown, ChevronUp, Copy, Plus, X } from 'lucide-react';
+import { Button } from '../../../ui/button';
 
 const FeedbackTimeSelection = ({ currentVenueId }) => {
   // Feedback hours state
@@ -288,13 +289,13 @@ const FeedbackTimeSelection = ({ currentVenueId }) => {
 
       {/* Save button and messages */}
       <div className="pt-4 border-t border-gray-200 mt-4">
-        <button
+        <Button
+          variant="primary"
           onClick={saveFeedbackHours}
-          disabled={loading}
-          className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          loading={loading}
         >
           {loading ? 'Saving...' : 'Save Feedback Hours'}
-        </button>
+        </Button>
         
         {message && (
           <div className={`text-sm p-3 rounded-lg mt-3 ${

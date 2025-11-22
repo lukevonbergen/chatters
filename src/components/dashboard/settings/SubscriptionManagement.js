@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Button } from '../../ui/button';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
@@ -137,20 +138,22 @@ const UpdatePaymentMethodForm = ({ onSuccess, onCancel }) => {
       )}
 
       <div className="flex gap-3">
-        <button
+        <Button
           type="submit"
-          disabled={!stripe || isProcessing}
-          className="flex-1 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+          variant="primary"
+          disabled={!stripe}
+          loading={isProcessing}
+          className="flex-1"
         >
           {isProcessing ? 'Updating...' : 'Save Payment Method'}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="outline"
           onClick={onCancel}
-          className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

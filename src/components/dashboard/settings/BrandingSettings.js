@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ColorPicker, Tooltip } from 'antd';
+import { Button } from '../../ui/button';
 
 const BrandingSettings = ({ logo, onLogoUpload, primaryColor, secondaryColor, onColorChange, colorsUpdated, onSaveColors, colorsMessage, loading }) => {
   const [locked, setLocked] = useState(true);
@@ -83,13 +84,15 @@ const BrandingSettings = ({ logo, onLogoUpload, primaryColor, secondaryColor, on
         </div>
       </div>
       {colorsUpdated && (
-        <button
+        <Button
+          variant="primary"
           onClick={onSaveColors}
-          className="mt-4 bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={loading || locked}
+          loading={loading}
+          disabled={locked}
+          className="mt-4"
         >
           {loading ? 'Saving...' : 'Save Colors'}
-        </button>
+        </Button>
       )}
       {colorsMessage && <p className="text-sm text-red-500 mt-2">{colorsMessage}</p>}
     </div>

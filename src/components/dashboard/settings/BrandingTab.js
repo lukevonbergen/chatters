@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { HandHeart, Bell, UserCheck, Sparkles, CheckCircle, ThumbsUp, Heart, Smile, PartyPopper, Star } from 'lucide-react';
+import { Button } from '../../ui/button';
 
 // Helper component to render text with {table} highlighted
 const HighlightedInput = ({ value, onChange, placeholder, rows, className }) => {
@@ -409,13 +410,14 @@ const BrandingTab = ({
               <div className="bg-gray-50 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-medium text-gray-700">Preview</h4>
-                  <button
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={saveColors}
-                    disabled={colorsLoading}
-                    className="bg-custom-green text-white px-3 py-1 rounded-md hover:bg-custom-green-hover transition-colors duration-200 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    loading={colorsLoading}
                   >
                     {colorsLoading ? 'Saving...' : 'Save'}
-                  </button>
+                  </Button>
                 </div>
                 <div className="p-3 rounded-lg border border-gray-200" style={{ backgroundColor: backgroundColor }}>
                   <p className="text-xs font-medium mb-2" style={{ color: textColor }}>
@@ -562,13 +564,14 @@ const BrandingTab = ({
 
             {/* Save Button */}
             <div className="pt-2">
-              <button
+              <Button
+                variant="primary"
                 onClick={saveAssistanceSettings}
-                disabled={assistanceLoading}
-                className="w-full bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                loading={assistanceLoading}
+                className="w-full"
               >
                 {assistanceLoading ? 'Saving...' : 'Save Settings'}
-              </button>
+              </Button>
             </div>
 
           {/* Message Display */}
@@ -664,13 +667,14 @@ const BrandingTab = ({
 
             {/* Save Button */}
             <div className="pt-2">
-              <button
+              <Button
+                variant="primary"
                 onClick={saveThankYouSettings}
-                disabled={thankYouLoading}
-                className="w-full bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                loading={thankYouLoading}
+                className="w-full"
               >
                 {thankYouLoading ? 'Saving...' : 'Save Settings'}
-              </button>
+              </Button>
             </div>
 
           {/* Message Display */}

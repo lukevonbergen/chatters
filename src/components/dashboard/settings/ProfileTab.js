@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { getDashboardUrl } from '../../../utils/domainUtils';
+import { Button } from '../../ui/button';
 
 const ProfileTab = ({
   firstName, setFirstName,
@@ -186,13 +187,13 @@ const ProfileTab = ({
                   onChange={(e) => setNewEmail(e.target.value)}
                   className="flex-1 px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
-                <button
+                <Button
+                  variant="primary"
                   onClick={sendEmailChangeVerification}
-                  disabled={emailChangeLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  loading={emailChangeLoading}
                 >
                   {emailChangeLoading ? 'Sending...' : 'Send Verification'}
-                </button>
+                </Button>
               </div>
               <button
                 onClick={() => {

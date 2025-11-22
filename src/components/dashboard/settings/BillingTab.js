@@ -4,6 +4,7 @@ import { useVenue } from '../../../context/VenueContext';
 import { CreditCard, Building2, Calendar, Receipt, AlertCircle } from 'lucide-react';
 import StripeCheckoutModal from './StripeCheckoutModal';
 import SubscriptionManagement from './SubscriptionManagement';
+import { Button } from '../../ui/button';
 
 // Pricing configuration
 const PRICE_PER_VENUE_MONTHLY = 149; // £149 per venue per month
@@ -364,16 +365,18 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <button
+            <Button
+              variant="primary"
+              size="lg"
               onClick={handleCheckout}
-              disabled={loading}
-              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 font-semibold disabled:cursor-not-allowed"
+              loading={loading}
+              className="w-full sm:w-auto"
             >
               {loading ? 'Processing...' : !accountData?.isExpired
                 ? 'Add Payment Details (No Charge Today)'
                 : `Subscribe Now - £${subscriptionType === 'monthly' ? monthlyTotal.toLocaleString() : yearlyTotal.toLocaleString()}${subscriptionType === 'monthly' ? '/mo' : '/yr'}`
               }
-            </button>
+            </Button>
 
             <div className="text-sm text-gray-500">
               {!accountData?.isExpired ? (

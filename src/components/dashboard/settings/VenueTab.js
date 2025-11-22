@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '../../ui/button';
 
 const VenueTab = ({
   name, setName,
@@ -128,13 +129,13 @@ const VenueTab = ({
               <div className="text-xs text-gray-500">
                 Changes to basic information are saved immediately
               </div>
-              <button
+              <Button
+                variant="primary"
                 onClick={saveSettings}
-                disabled={loading}
-                className="bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                loading={loading}
               >
                 {loading ? 'Saving...' : 'Save Changes'}
-              </button>
+              </Button>
             </div>
             {message && (
               <div className={`text-xs p-2 rounded-lg mt-3 ${
