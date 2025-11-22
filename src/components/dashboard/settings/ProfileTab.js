@@ -221,13 +221,14 @@ const ProfileTab = ({
 
         {/* Button with responsive sizing */}
         <div className="pt-2">
-          <button
+          <Button
+            variant="primary"
             onClick={saveSettings}
-            disabled={loading}
-            className="w-full sm:w-auto bg-custom-green text-white px-6 py-2 rounded-lg hover:bg-custom-green-hover transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            loading={loading}
+            className="w-full sm:w-auto"
           >
             {loading ? 'Updating...' : 'Update profile'}
-          </button>
+          </Button>
         </div>
 
         {message && (
