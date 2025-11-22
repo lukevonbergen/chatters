@@ -4,7 +4,7 @@ import usePageTitle from '../../hooks/usePageTitle';
 import { useVenue } from '../../context/VenueContext';
 import FeedbackTimeSelection from '../../components/dashboard/settings/venuetabcomponents/FeedbackTimeSelection';
 import { Button } from '../../components/ui/button';
-import { Link2, Clock, MessageSquare, Users, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 const FeedbackSettings = () => {
   usePageTitle('Feedback Settings');
@@ -189,23 +189,16 @@ const FeedbackSettings = () => {
   if (!venueId) return null;
 
   // Reusable card component
-  const SettingsCard = ({ icon: Icon, title, description, children, onSave, loading, message, saveLabel = 'Save' }) => (
+  const SettingsCard = ({ title, description, children, onSave, loading, message, saveLabel = 'Save' }) => (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white rounded-lg border border-gray-200">
-            <Icon className="w-5 h-5 text-gray-600" />
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-            <p className="text-sm text-gray-500">{description}</p>
-          </div>
-        </div>
+      <div className="px-6 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+        <p className="text-sm text-gray-500 mt-1">{description}</p>
       </div>
       <div className="p-6">
         {children}
       </div>
-      <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+      <div className="px-6 py-4 border-t border-gray-100">
         <div className="flex items-center justify-between">
           <div className="text-xs text-gray-500">
             Changes are saved per venue
@@ -241,7 +234,6 @@ const FeedbackSettings = () => {
 
       {/* Review Platform Links */}
       <SettingsCard
-        icon={Link2}
         title="Review Platform Links"
         description="Direct satisfied customers to leave positive reviews"
         onSave={saveReviewLinks}
@@ -311,65 +303,53 @@ const FeedbackSettings = () => {
         </div>
       </SettingsCard>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Session Timeout */}
-        <SettingsCard
-          icon={Clock}
-          title="Session Timeout"
-          description="How long feedback stays visible in kiosk view"
-          onSave={saveSessionTimeout}
-          loading={sessionTimeoutLoading}
-          message={sessionTimeoutMessage}
-        >
-          <div className="space-y-3">
-            {[1, 2, 4, 6, 8, 12, 24].map((hours) => (
-              <label key={hours} className="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  name="sessionTimeout"
-                  value={hours}
-                  checked={selectedTimeoutHours === hours}
-                  onChange={() => setSelectedTimeoutHours(hours)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="ml-3 text-sm text-gray-700">
-                  {hours} hour{hours !== 1 ? 's' : ''}{hours === 2 ? ' (default)' : ''}
-                </span>
-              </label>
-            ))}
+      {/* Session Timeout */}
+      <SettingsCard
+        title="Session Timeout"
+        description="How long feedback stays visible in kiosk view"
+        onSave={saveSessionTimeout}
+        loading={sessionTimeoutLoading}
+        message={sessionTimeoutMessage}
+      >
+        <div className="space-y-3">
+          {[1, 2, 4, 6, 8, 12, 24].map((hours) => (
+            <label key={hours} className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="sessionTimeout"
+                value={hours}
+                checked={selectedTimeoutHours === hours}
+                onChange={() => setSelectedTimeoutHours(hours)}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="ml-3 text-sm text-gray-700">
+                {hours} hour{hours !== 1 ? 's' : ''}{hours === 2 ? ' (default)' : ''}
+              </span>
+            </label>
+          ))}
+        </div>
+        {selectedTimeoutHours !== sessionTimeoutHours && (
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-xs text-amber-700">
+              Unsaved changes: timeout will change from {sessionTimeoutHours}h to {selectedTimeoutHours}h
+            </p>
           </div>
-          {selectedTimeoutHours !== sessionTimeoutHours && (
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-xs text-amber-700">
-                Unsaved changes: timeout will change from {sessionTimeoutHours}h to {selectedTimeoutHours}h
-              </p>
-            </div>
-          )}
-        </SettingsCard>
+        )}
+      </SettingsCard>
 
-        {/* Feedback Collection Hours */}
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white rounded-lg border border-gray-200">
-                <Clock className="w-5 h-5 text-gray-600" />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-gray-900">Feedback Collection Hours</h3>
-                <p className="text-sm text-gray-500">Set when customers can leave feedback</p>
-              </div>
-            </div>
-          </div>
-          <div className="p-6">
-            <FeedbackTimeSelection currentVenueId={venueId} />
-          </div>
+      {/* Feedback Collection Hours */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-base font-semibold text-gray-900">Feedback Collection Hours</h3>
+          <p className="text-sm text-gray-500 mt-1">Set when customers can leave feedback</p>
+        </div>
+        <div className="p-6">
+          <FeedbackTimeSelection currentVenueId={venueId} />
         </div>
       </div>
 
       {/* NPS Settings */}
       <SettingsCard
-        icon={MessageSquare}
         title="Net Promoter Score (NPS)"
         description="Send automated follow-up emails to gather customer loyalty insights"
         onSave={saveNPSSettings}
@@ -442,7 +422,6 @@ const FeedbackSettings = () => {
 
       {/* Co-Resolver Settings */}
       <SettingsCard
-        icon={Users}
         title="Co-Resolver Feature"
         description="Allow staff to assign a secondary team member who helped resolve feedback"
         onSave={saveCoResolverSettings}
