@@ -176,12 +176,12 @@ const ProfileTab = ({
                   disabled
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed text-sm"
                 />
-                <button
+                <Button
+                  variant="primary"
                   onClick={() => setShowEmailChange(!showEmailChange)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium whitespace-nowrap"
                 >
                   Change
-                </button>
+                </Button>
               </div>
 
               {showEmailChange && (
@@ -275,13 +275,13 @@ const ProfileTab = ({
               <p className="text-sm text-gray-600 mb-3">
                 For security reasons, we'll send you an email with a link to reset your password.
               </p>
-              <button
+              <Button
+                variant="primary"
                 onClick={sendPasswordResetEmail}
-                disabled={passwordResetLoading}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                loading={passwordResetLoading}
               >
                 {passwordResetLoading ? 'Sending...' : 'Send password reset email'}
-              </button>
+              </Button>
 
               {passwordResetMessage && (
                 <div className={`text-xs mt-3 p-3 rounded-lg ${

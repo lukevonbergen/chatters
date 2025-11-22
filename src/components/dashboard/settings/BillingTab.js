@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useVenue } from '../../../context/VenueContext';
-import { CreditCard, Building2, Calendar, Receipt, AlertCircle } from 'lucide-react';
+import { Calendar, AlertCircle } from 'lucide-react';
 import StripeCheckoutModal from './StripeCheckoutModal';
 import SubscriptionManagement from './SubscriptionManagement';
 import { Button } from '../../ui/button';
@@ -187,10 +187,12 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
   // Show loading state while data is being fetched
   if (!accountData && userRole !== 'admin') {
     return (
-      <div className="max-w-5xl">
-        <div className="text-center py-12">
-          <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading billing information...</p>
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="p-6">
+          <div className="text-center py-12">
+            <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading billing information...</p>
+          </div>
         </div>
       </div>
     );
@@ -199,18 +201,20 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
   // Only masters can access
   if (userRole !== 'master' && !accountData?.isExpired) {
     return (
-      <div className="max-w-none lg:max-w-2xl">
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600" />
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="p-6">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Access Restricted</h3>
+            <p className="text-gray-600 mb-4">
+              Only account owners can view billing information.
+            </p>
+            <p className="text-sm text-gray-500">
+              Contact your account owner if you need access to billing details.
+            </p>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Access Restricted</h3>
-          <p className="text-gray-600 mb-4">
-            Only account owners can view billing information.
-          </p>
-          <p className="text-sm text-gray-500">
-            Contact your account owner if you need access to billing details.
-          </p>
         </div>
       </div>
     );
@@ -219,36 +223,33 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
   // Demo account - show special message and disable billing
   if (accountData?.demo_account) {
     return (
-      <div className="w-full">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white border border-gray-300 rounded-lg p-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Demo Account</h3>
-            <p className="text-gray-600 mb-6">
-              This is a demonstration account with full access to all features. Billing is disabled for demo accounts.
-            </p>
-            <div className="border-t border-gray-200 pt-4">
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>• Unlimited venue access</li>
-                <li>• All premium features enabled</li>
-                <li>• No billing or payment required</li>
-              </ul>
-            </div>
-            <p className="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-200">
-              For questions about your demo account, please contact support.
-            </p>
-          </div>
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-base font-semibold text-gray-900">Demo Account</h3>
+          <p className="text-sm text-gray-500 mt-1">This is a demonstration account</p>
+        </div>
+        <div className="p-6">
+          <p className="text-gray-600 mb-6">
+            This is a demonstration account with full access to all features. Billing is disabled for demo accounts.
+          </p>
+          <ul className="space-y-2 text-sm text-gray-600 mb-6">
+            <li>• Unlimited venue access</li>
+            <li>• All premium features enabled</li>
+            <li>• No billing or payment required</li>
+          </ul>
+          <p className="text-sm text-gray-500 pt-4 border-t border-gray-100">
+            For questions about your demo account, please contact support.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full">
-      {/* Account Overview - removed duplicate title */}
-
+    <div className="space-y-6">
       {/* Status Banners */}
       {accountData?.isExpired && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-red-800 font-medium">Your trial has expired</p>
@@ -260,7 +261,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
       )}
 
       {accountData && !accountData.isExpired && accountData.daysLeft !== null && !accountData.is_paid && (
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3">
           <Calendar className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-yellow-800 font-medium">
@@ -273,14 +274,24 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
         </div>
       )}
 
-
-      {/* Pricing Plans */}
+      {/* Pricing Plans Card */}
       {!accountData?.is_paid && (
-        <>
-          {/* Different heading based on trial status */}
-          {!accountData?.isExpired ? (
-            <>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Payment Details</h3>
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="text-base font-semibold text-gray-900">
+              {!accountData?.isExpired ? 'Add Payment Details' : 'Choose Your Plan'}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              {!accountData?.isExpired
+                ? 'Save your payment details for seamless access when your trial ends'
+                : 'Select a subscription plan to continue using Chatters'
+              }
+            </p>
+          </div>
+
+          <div className="p-6">
+            {/* No charge today notice */}
+            {!accountData?.isExpired && (
               <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-blue-900 font-medium">No charge today</p>
                 <p className="text-blue-800 text-sm mt-1">
@@ -288,118 +299,122 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
                   You won't be charged until your trial period expires.
                 </p>
               </div>
-            </>
-          ) : (
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Plan</h3>
-          )}
-          <div className="space-y-4 mb-8">
-            {/* Monthly Plan */}
-            <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border-2 rounded-xl p-5 cursor-pointer transition
-              ${subscriptionType === 'monthly' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-400'}`}>
-              <div className="flex-1 mb-3 sm:mb-0">
-                <h3 className="font-semibold text-gray-800 text-lg">Monthly Plan</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  £{PRICE_PER_VENUE_MONTHLY} per venue per month · Pay as you go · Cancel anytime
-                </p>
-                {!accountData?.isExpired && (
-                  <p className="text-xs text-blue-600 font-medium mt-1">
-                    Billing starts after your {accountData?.daysLeft}-day trial
+            )}
+
+            {/* Plan Options */}
+            <div className="space-y-4 mb-6">
+              {/* Monthly Plan */}
+              <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border-2 rounded-xl p-5 cursor-pointer transition
+                ${subscriptionType === 'monthly' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-400'}`}>
+                <div className="flex-1 mb-3 sm:mb-0">
+                  <h3 className="font-semibold text-gray-800 text-lg">Monthly Plan</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    £{PRICE_PER_VENUE_MONTHLY} per venue per month · Pay as you go · Cancel anytime
                   </p>
-                )}
-              </div>
-              <div className="flex items-center justify-between sm:justify-end sm:ml-4">
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">
-                    {!accountData?.isExpired ? 'After trial' : 'Total'} for {venueCount} venue{venueCount !== 1 ? 's' : ''}
-                  </div>
-                  <span className="text-2xl font-bold text-gray-800">£{monthlyTotal.toLocaleString()}</span>
-                  <span className="text-gray-600">/mo</span>
+                  {!accountData?.isExpired && (
+                    <p className="text-xs text-blue-600 font-medium mt-1">
+                      Billing starts after your {accountData?.daysLeft}-day trial
+                    </p>
+                  )}
                 </div>
-                <input
-                  type="radio"
-                  value="monthly"
-                  checked={subscriptionType === 'monthly'}
-                  onChange={() => setSubscriptionType('monthly')}
-                  className="ml-4 h-5 w-5 text-blue-600 focus:ring-blue-500"
-                />
-              </div>
-            </label>
-
-            {/* Yearly Plan */}
-            <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border-2 rounded-xl p-5 cursor-pointer transition relative
-              ${subscriptionType === 'yearly' ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-400'}`}>
-              <div className="absolute -top-3 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                SAVE {yearlyDiscount}%
-              </div>
-              <div className="flex-1 mb-3 sm:mb-0">
-                <h3 className="font-semibold text-gray-800 text-lg">Yearly Plan</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  £{PRICE_PER_VENUE_YEARLY} per venue per year · Best value · One payment
-                </p>
-                {!accountData?.isExpired && (
-                  <p className="text-xs text-green-600 font-medium mt-1">
-                    Billing starts after your {accountData?.daysLeft}-day trial
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center justify-between sm:justify-end sm:ml-4">
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">
-                    {!accountData?.isExpired ? 'After trial' : 'Total'} for {venueCount} venue{venueCount !== 1 ? 's' : ''}
+                <div className="flex items-center justify-between sm:justify-end sm:ml-4">
+                  <div className="text-right">
+                    <div className="text-sm text-gray-500">
+                      {!accountData?.isExpired ? 'After trial' : 'Total'} for {venueCount} venue{venueCount !== 1 ? 's' : ''}
+                    </div>
+                    <span className="text-2xl font-bold text-gray-800">£{monthlyTotal.toLocaleString()}</span>
+                    <span className="text-gray-600">/mo</span>
                   </div>
-                  <span className="text-2xl font-bold text-gray-800">£{yearlyTotal.toLocaleString()}</span>
-                  <span className="text-gray-600">/yr</span>
-                  <p className="text-xs text-green-600 font-medium mt-1">
-                    £{yearlyMonthlyEquivalent.toFixed(2)}/mo equivalent
-                  </p>
+                  <input
+                    type="radio"
+                    value="monthly"
+                    checked={subscriptionType === 'monthly'}
+                    onChange={() => setSubscriptionType('monthly')}
+                    className="ml-4 h-5 w-5 text-blue-600 focus:ring-blue-500"
+                  />
                 </div>
-                <input
-                  type="radio"
-                  value="yearly"
-                  checked={subscriptionType === 'yearly'}
-                  onChange={() => setSubscriptionType('yearly')}
-                  className="ml-4 h-5 w-5 text-green-600 focus:ring-green-500"
-                />
-              </div>
-            </label>
-          </div>
+              </label>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handleCheckout}
-              loading={loading}
-              className="w-full sm:w-auto"
-            >
-              {loading ? 'Processing...' : !accountData?.isExpired
-                ? 'Add Payment Details (No Charge Today)'
-                : `Subscribe Now - £${subscriptionType === 'monthly' ? monthlyTotal.toLocaleString() : yearlyTotal.toLocaleString()}${subscriptionType === 'monthly' ? '/mo' : '/yr'}`
-              }
-            </Button>
-
-            <div className="text-sm text-gray-500">
-              {!accountData?.isExpired ? (
-                <p>
-                  🔒 Secure · No charge until trial ends<br/>
-                  <span className="text-xs">Cancel anytime before {new Date(accountData?.trial_ends_at).toLocaleDateString()}</span>
-                </p>
-              ) : (
-                <p>Secured checkout powered by Stripe</p>
-              )}
+              {/* Yearly Plan */}
+              <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border-2 rounded-xl p-5 cursor-pointer transition relative
+                ${subscriptionType === 'yearly' ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-400'}`}>
+                <div className="absolute -top-3 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  SAVE {yearlyDiscount}%
+                </div>
+                <div className="flex-1 mb-3 sm:mb-0">
+                  <h3 className="font-semibold text-gray-800 text-lg">Yearly Plan</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    £{PRICE_PER_VENUE_YEARLY} per venue per year · Best value · One payment
+                  </p>
+                  {!accountData?.isExpired && (
+                    <p className="text-xs text-green-600 font-medium mt-1">
+                      Billing starts after your {accountData?.daysLeft}-day trial
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center justify-between sm:justify-end sm:ml-4">
+                  <div className="text-right">
+                    <div className="text-sm text-gray-500">
+                      {!accountData?.isExpired ? 'After trial' : 'Total'} for {venueCount} venue{venueCount !== 1 ? 's' : ''}
+                    </div>
+                    <span className="text-2xl font-bold text-gray-800">£{yearlyTotal.toLocaleString()}</span>
+                    <span className="text-gray-600">/yr</span>
+                    <p className="text-xs text-green-600 font-medium mt-1">
+                      £{yearlyMonthlyEquivalent.toFixed(2)}/mo equivalent
+                    </p>
+                  </div>
+                  <input
+                    type="radio"
+                    value="yearly"
+                    checked={subscriptionType === 'yearly'}
+                    onChange={() => setSubscriptionType('yearly')}
+                    className="ml-4 h-5 w-5 text-green-600 focus:ring-green-500"
+                  />
+                </div>
+              </label>
             </div>
           </div>
-        </>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-100">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="text-sm text-gray-500">
+                {!accountData?.isExpired ? (
+                  <>
+                    Secure · No charge until trial ends · Cancel anytime before {new Date(accountData?.trial_ends_at).toLocaleDateString()}
+                  </>
+                ) : (
+                  'Secured checkout powered by Stripe'
+                )}
+              </div>
+              <Button
+                variant="primary"
+                onClick={handleCheckout}
+                loading={loading}
+              >
+                {loading ? 'Processing...' : !accountData?.isExpired
+                  ? 'Add Payment Details'
+                  : `Subscribe Now - £${subscriptionType === 'monthly' ? monthlyTotal.toLocaleString() : yearlyTotal.toLocaleString()}${subscriptionType === 'monthly' ? '/mo' : '/yr'}`
+                }
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Active Subscription Management - In-App */}
+      {/* Active Subscription Management */}
       {accountData?.is_paid && accountData.stripe_customer_id && accountId && (
-        <div className="mt-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Subscription Details</h2>
-          <SubscriptionManagement
-            accountId={accountId}
-            userEmail={userEmail}
-          />
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="text-base font-semibold text-gray-900">Subscription Details</h3>
+            <p className="text-sm text-gray-500 mt-1">Manage your active subscription and billing</p>
+          </div>
+          <div className="p-6">
+            <SubscriptionManagement
+              accountId={accountId}
+              userEmail={userEmail}
+            />
+          </div>
         </div>
       )}
 
