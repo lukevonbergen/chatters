@@ -249,28 +249,20 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
     <div className="space-y-6">
       {/* Status Banners */}
       {accountData?.isExpired && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-red-800 font-medium">Your trial has expired</p>
-            <p className="text-red-700 text-sm mt-1">
-              Please upgrade to continue using Chatters for your {venueCount} venue{venueCount !== 1 ? 's' : ''}.
-            </p>
-          </div>
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+          <p className="text-red-800 text-sm">
+            <span className="font-medium">Trial expired.</span> Upgrade to continue using Chatters.
+          </p>
         </div>
       )}
 
       {accountData && !accountData.isExpired && accountData.daysLeft !== null && !accountData.is_paid && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3">
-          <Calendar className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-yellow-800 font-medium">
-              Your free trial ends in <strong>{accountData.daysLeft}</strong> day{accountData.daysLeft !== 1 ? 's' : ''}
-            </p>
-            <p className="text-yellow-700 text-sm mt-1">
-              Upgrade now to continue using Chatters without interruption.
-            </p>
-          </div>
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+          <p className="text-yellow-800 text-sm">
+            Trial ends in <strong>{accountData.daysLeft}</strong> day{accountData.daysLeft !== 1 ? 's' : ''}. Add payment details for uninterrupted access.
+          </p>
         </div>
       )}
 
@@ -283,109 +275,73 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
             </h3>
             <p className="text-sm text-gray-500 mt-1">
               {!accountData?.isExpired
-                ? 'Save your payment details for seamless access when your trial ends'
+                ? `No charge until your trial ends. Cancel anytime before ${new Date(accountData?.trial_ends_at).toLocaleDateString()}.`
                 : 'Select a subscription plan to continue using Chatters'
               }
             </p>
           </div>
 
           <div className="p-6">
-            {/* No charge today notice */}
-            {!accountData?.isExpired && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-blue-900 font-medium">No charge today</p>
-                <p className="text-blue-800 text-sm mt-1">
-                  Add your payment details now for seamless access when your trial ends in {accountData?.daysLeft} day{accountData?.daysLeft !== 1 ? 's' : ''}.
-                  You won't be charged until your trial period expires.
-                </p>
-              </div>
-            )}
-
             {/* Plan Options */}
-            <div className="space-y-4 mb-6">
+            <div className="space-y-3">
               {/* Monthly Plan */}
-              <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border-2 rounded-xl p-5 cursor-pointer transition
+              <label className={`flex items-center justify-between border rounded-lg p-4 cursor-pointer transition
                 ${subscriptionType === 'monthly' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-400'}`}>
-                <div className="flex-1 mb-3 sm:mb-0">
-                  <h3 className="font-semibold text-gray-800 text-lg">Monthly Plan</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    £{PRICE_PER_VENUE_MONTHLY} per venue per month · Pay as you go · Cancel anytime
-                  </p>
-                  {!accountData?.isExpired && (
-                    <p className="text-xs text-blue-600 font-medium mt-1">
-                      Billing starts after your {accountData?.daysLeft}-day trial
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center justify-between sm:justify-end sm:ml-4">
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500">
-                      {!accountData?.isExpired ? 'After trial' : 'Total'} for {venueCount} venue{venueCount !== 1 ? 's' : ''}
-                    </div>
-                    <span className="text-2xl font-bold text-gray-800">£{monthlyTotal.toLocaleString()}</span>
-                    <span className="text-gray-600">/mo</span>
-                  </div>
+                <div className="flex items-center gap-3">
                   <input
                     type="radio"
                     value="monthly"
                     checked={subscriptionType === 'monthly'}
                     onChange={() => setSubscriptionType('monthly')}
-                    className="ml-4 h-5 w-5 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                   />
+                  <div>
+                    <span className="font-medium text-gray-900">Monthly</span>
+                    <span className="text-gray-500 text-sm ml-2">£{PRICE_PER_VENUE_MONTHLY}/venue/mo</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-bold text-gray-900">£{monthlyTotal.toLocaleString()}</span>
+                  <span className="text-gray-500 text-sm">/mo</span>
                 </div>
               </label>
 
               {/* Yearly Plan */}
-              <label className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border-2 rounded-xl p-5 cursor-pointer transition relative
+              <label className={`flex items-center justify-between border rounded-lg p-4 cursor-pointer transition relative
                 ${subscriptionType === 'yearly' ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-400'}`}>
-                <div className="absolute -top-3 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  SAVE {yearlyDiscount}%
-                </div>
-                <div className="flex-1 mb-3 sm:mb-0">
-                  <h3 className="font-semibold text-gray-800 text-lg">Yearly Plan</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    £{PRICE_PER_VENUE_YEARLY} per venue per year · Best value · One payment
-                  </p>
-                  {!accountData?.isExpired && (
-                    <p className="text-xs text-green-600 font-medium mt-1">
-                      Billing starts after your {accountData?.daysLeft}-day trial
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center justify-between sm:justify-end sm:ml-4">
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500">
-                      {!accountData?.isExpired ? 'After trial' : 'Total'} for {venueCount} venue{venueCount !== 1 ? 's' : ''}
-                    </div>
-                    <span className="text-2xl font-bold text-gray-800">£{yearlyTotal.toLocaleString()}</span>
-                    <span className="text-gray-600">/yr</span>
-                    <p className="text-xs text-green-600 font-medium mt-1">
-                      £{yearlyMonthlyEquivalent.toFixed(2)}/mo equivalent
-                    </p>
-                  </div>
+                <span className="absolute -top-2 left-3 bg-green-600 text-white text-xs font-medium px-2 py-0.5 rounded">
+                  Save {yearlyDiscount}%
+                </span>
+                <div className="flex items-center gap-3">
                   <input
                     type="radio"
                     value="yearly"
                     checked={subscriptionType === 'yearly'}
                     onChange={() => setSubscriptionType('yearly')}
-                    className="ml-4 h-5 w-5 text-green-600 focus:ring-green-500"
+                    className="h-4 w-4 text-green-600 focus:ring-green-500"
                   />
+                  <div>
+                    <span className="font-medium text-gray-900">Yearly</span>
+                    <span className="text-gray-500 text-sm ml-2">£{PRICE_PER_VENUE_YEARLY}/venue/yr</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-bold text-gray-900">£{yearlyTotal.toLocaleString()}</span>
+                  <span className="text-gray-500 text-sm">/yr</span>
                 </div>
               </label>
             </div>
+
+            <p className="text-xs text-gray-500 mt-3">
+              {venueCount} venue{venueCount !== 1 ? 's' : ''} • Secured by Stripe
+            </p>
           </div>
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-gray-100">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div className="text-sm text-gray-500">
-                {!accountData?.isExpired ? (
-                  <>
-                    Secure · No charge until trial ends · Cancel anytime before {new Date(accountData?.trial_ends_at).toLocaleDateString()}
-                  </>
-                ) : (
-                  'Secured checkout powered by Stripe'
-                )}
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-gray-500">
+                {!accountData?.isExpired ? 'No charge today' : 'Billed immediately'}
               </div>
               <Button
                 variant="primary"
@@ -394,7 +350,7 @@ const BillingTab = ({ allowExpiredAccess = false }) => {
               >
                 {loading ? 'Processing...' : !accountData?.isExpired
                   ? 'Add Payment Details'
-                  : `Subscribe Now - £${subscriptionType === 'monthly' ? monthlyTotal.toLocaleString() : yearlyTotal.toLocaleString()}${subscriptionType === 'monthly' ? '/mo' : '/yr'}`
+                  : `Subscribe - £${subscriptionType === 'monthly' ? monthlyTotal.toLocaleString() : yearlyTotal.toLocaleString()}${subscriptionType === 'monthly' ? '/mo' : '/yr'}`
                 }
               </Button>
             </div>
