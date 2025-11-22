@@ -412,11 +412,10 @@ const StaffLeaderboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <Button
-                        variant="secondary"
+                        variant="primary"
                         size="sm"
                         onClick={() => setRecognitionModal(staff)}
                       >
-                        <Trophy className="w-4 h-4 mr-1" />
                         Recognise
                       </Button>
                     </td>
