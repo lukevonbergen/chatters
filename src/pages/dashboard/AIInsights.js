@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useVenue } from '../../context/VenueContext';
 import { supabase } from '../../utils/supabase';
-import { ChartCard } from '../../components/dashboard/layout/ModernCard';
 import usePageTitle from '../../hooks/usePageTitle';
-import { Sparkles, RefreshCw, Calendar, AlertCircle, TrendingUp, TrendingDown, CheckCircle, AlertTriangle, Lightbulb, Target } from 'lucide-react';
+import { Sparkles, RefreshCw, AlertCircle, TrendingUp, TrendingDown, CheckCircle, AlertTriangle, Target } from 'lucide-react';
 import dayjs from 'dayjs';
 import DatePicker from '../../components/dashboard/inputs/DatePicker';
+import { Button } from '../../components/ui/button';
 
 const AIInsights = () => {
   usePageTitle('AI Insights');
@@ -43,16 +43,14 @@ const AIInsights = () => {
           setDateTo(data.date_to);
           setInsight({ ...data, cached: true });
           setLastGenerated(new Date(data.created_at));
-          console.log('[AI Insights] Loaded most recent insight:', data);
         }
       } catch (err) {
         // No existing insight found - this is fine
-        console.log('[AI Insights] No existing insights found for this venue');
       }
     };
 
     loadLatestInsight();
-  }, [venueId]); // Only run when venueId changes
+  }, [venueId]);
 
   // Generate AI Insights
   const generateInsights = async () => {
@@ -106,12 +104,6 @@ const AIInsights = () => {
       }
 
       // Call our secure API endpoint
-      console.log('[AI Insights] Sending request to API...', {
-        feedbackCount: feedbackData?.length || 0,
-        npsCount: npsData?.length || 0,
-        venueName
-      });
-
       const response = await fetch('/api/ai-insights', {
         method: 'POST',
         headers: {
@@ -127,17 +119,12 @@ const AIInsights = () => {
         }),
       });
 
-      console.log('[AI Insights] API response status:', response.status);
-
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('[AI Insights] API error response:', errorData);
-        console.error('[AI Insights] Error details:', JSON.stringify(errorData.details, null, 2));
         throw new Error(errorData.error || 'Failed to generate insights');
       }
 
       const result = await response.json();
-      console.log('[AI Insights] Successfully received insight', result);
       setInsight(result);
       setLastGenerated(new Date());
 
@@ -147,14 +134,6 @@ const AIInsights = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Format date range for display
-  const getDateRangeText = () => {
-    const from = dayjs(dateFrom);
-    const to = dayjs(dateTo);
-    const days = to.diff(from, 'day') + 1;
-    return `${days} day${days !== 1 ? 's' : ''} (${from.format('MMM D')} - ${to.format('MMM D, YYYY')})`;
   };
 
   // Get AI Score color and icon
@@ -170,17 +149,15 @@ const AIInsights = () => {
   const AIScoreBar = ({ score }) => {
     const { color, icon: Icon } = getScoreColor(score);
 
-    // Define color for each segment (1-10)
     const getSegmentColor = (segmentIndex) => {
       if (segmentIndex <= score) {
-        // Filled segments - gradient from red to green
         if (segmentIndex <= 2) return 'bg-red-500';
         if (segmentIndex <= 4) return 'bg-orange-500';
         if (segmentIndex <= 6) return 'bg-yellow-500';
         if (segmentIndex <= 8) return 'bg-blue-500';
         return 'bg-green-500';
       }
-      return 'bg-gray-200'; // Unfilled segments
+      return 'bg-gray-200';
     };
 
     return (
@@ -208,52 +185,59 @@ const AIInsights = () => {
 
   return (
     <div className="space-y-6">
-      <ChartCard
-        title="AI Insights"
-        subtitle="AI-powered insights based on your customer feedback and reviews"
-        actions={
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            {/* Date Range Selector */}
-            <div className="flex items-center gap-2">
-              <DatePicker
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                max={dateTo}
-              />
-              <span className="text-gray-400 text-sm font-medium">to</span>
-              <DatePicker
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                min={dateFrom}
-                max={dayjs().format('YYYY-MM-DD')}
-              />
-            </div>
+      {/* Page Header */}
+      <div className="mb-2">
+        <h1 className="text-2xl font-semibold text-gray-900">AI Insights</h1>
+        <p className="text-sm text-gray-500 mt-1">AI-powered analysis of your customer feedback and reviews</p>
+      </div>
 
-            {/* Generate Button */}
-            <button
-              onClick={generateInsights}
-              disabled={loading}
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm text-sm whitespace-nowrap"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Generate Insights
-                </>
-              )}
-            </button>
+      {/* Controls Card */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">Generate Insights</h3>
+              <p className="text-sm text-gray-500 mt-1">Select a date range to analyse feedback</p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <DatePicker
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  max={dateTo}
+                />
+                <span className="text-gray-400 text-sm font-medium">to</span>
+                <DatePicker
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  min={dateFrom}
+                  max={dayjs().format('YYYY-MM-DD')}
+                />
+              </div>
+              <Button
+                variant="primary"
+                onClick={generateInsights}
+                loading={loading}
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate Insights
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        }
-      >
+        </div>
 
         {/* Error Message */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+          <div className="p-4 m-6 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h4 className="font-semibold text-red-900 mb-1">Error</h4>
@@ -262,179 +246,180 @@ const AIInsights = () => {
           </div>
         )}
 
-        {/* Insight Display */}
-        {insight && !loading && (
-          <div className="space-y-6">
-            {/* AI Score Bar - Full Width */}
-            <div>
+        {/* Empty State */}
+        {!insight && !loading && !error && (
+          <div className="text-center py-12 px-6">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Insights Generated Yet</h3>
+            <p className="text-gray-600 max-w-md mx-auto text-sm">
+              Select a date range and click "Generate Insights" to analyse your customer feedback and discover actionable insights powered by AI.
+            </p>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12 px-6">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Analysing Feedback...</h3>
+            <p className="text-gray-600 max-w-md mx-auto text-sm">
+              Our AI is reviewing your customer feedback. This usually takes a few seconds.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Insight Results */}
+      {insight && !loading && (
+        <>
+          {/* Score Card */}
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="p-6">
               <AIScoreBar score={insight.ai_score} />
               <div className="mt-3 flex items-center justify-between">
                 <p className="text-sm text-gray-600">
                   Based on {insight.feedback_count} feedback submissions and {insight.nps_count} NPS responses
                 </p>
-                {insight.cached && (
-                  <span className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                    Cached result
-                  </span>
-                )}
+                <div className="flex items-center gap-3">
+                  {insight.nps_score !== null && (
+                    <span className="text-sm font-medium text-gray-600">
+                      NPS: <span className={insight.nps_score >= 50 ? 'text-green-600' : insight.nps_score >= 0 ? 'text-yellow-600' : 'text-red-600'}>
+                        {insight.nps_score}
+                      </span>
+                    </span>
+                  )}
+                  {insight.cached && (
+                    <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                      Cached
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* How to Improve Tips */}
-            {insight.improvement_tips && insight.improvement_tips.length > 0 && (
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex items-center gap-2 mb-4">
+          {/* Improvement Tips */}
+          {insight.improvement_tips && insight.improvement_tips.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">How to Improve Your Score</h3>
+                  <h3 className="text-base font-semibold text-gray-900">How to Improve Your Score</h3>
                 </div>
-                <ul className="space-y-3">
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {insight.improvement_tips.map((tip, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
+                    <div key={idx} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
                       <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">
                         {idx + 1}
                       </div>
-                      <span className="text-gray-700 leading-relaxed text-sm">{tip}</span>
-                    </li>
+                      <span className="text-gray-700 text-sm leading-relaxed">{tip}</span>
+                    </div>
                   ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Three Column Grid for Insights */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Critical Insights */}
-              {insight.critical_insights && insight.critical_insights.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <AlertTriangle className="w-5 h-5 text-orange-600" />
-                    <h3 className="text-sm font-semibold text-gray-900">Critical Insights</h3>
-                  </div>
-                  <ul className="space-y-2">
-                    {insight.critical_insights.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="text-orange-600 flex-shrink-0 mt-0.5">•</span>
-                        <div>
-                          <span className="font-medium text-gray-900 text-sm">{item.title}: </span>
-                          <span className="text-gray-700 text-sm">{item.content}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
 
-              {/* Strengths */}
-              {insight.strengths && insight.strengths.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <div className="flex items-center gap-2 mb-4">
+          {/* Critical Insights Row */}
+          {insight.critical_insights && insight.critical_insights.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-orange-600" />
+                  <h3 className="text-base font-semibold text-gray-900">Critical Insights</h3>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {insight.critical_insights.map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-100 rounded-lg">
+                      <span className="text-orange-600 flex-shrink-0 mt-0.5 text-lg">!</span>
+                      <div>
+                        <span className="font-medium text-gray-900 text-sm">{item.title}</span>
+                        <p className="text-gray-700 text-sm mt-1">{item.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Strengths & Areas to Improve - Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Strengths */}
+            {insight.strengths && insight.strengths.length > 0 && (
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
                     <CheckCircle className="w-5 h-5 text-green-600" />
-                    <h3 className="text-sm font-semibold text-gray-900">Strengths</h3>
+                    <h3 className="text-base font-semibold text-gray-900">Strengths</h3>
                   </div>
-                  <ul className="space-y-2">
+                </div>
+                <div className="p-6">
+                  <ul className="space-y-3">
                     {insight.strengths.map((strength, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="text-green-600 flex-shrink-0 mt-0.5">•</span>
+                      <li key={idx} className="flex items-start gap-3 p-3 bg-green-50 border border-green-100 rounded-lg">
+                        <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-700 text-sm">{strength}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Areas for Improvement */}
-              {insight.areas_for_improvement && insight.areas_for_improvement.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <div className="flex items-center gap-2 mb-4">
+            {/* Areas for Improvement */}
+            {insight.areas_for_improvement && insight.areas_for_improvement.length > 0 && (
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
                     <AlertCircle className="w-5 h-5 text-yellow-600" />
-                    <h3 className="text-sm font-semibold text-gray-900">Areas to Improve</h3>
+                    <h3 className="text-base font-semibold text-gray-900">Areas to Improve</h3>
                   </div>
-                  <ul className="space-y-2">
+                </div>
+                <div className="p-6">
+                  <ul className="space-y-3">
                     {insight.areas_for_improvement.map((area, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="text-yellow-600 flex-shrink-0 mt-0.5">•</span>
+                      <li key={idx} className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-100 rounded-lg">
+                        <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-700 text-sm">{area}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
 
-            {/* Recommended Action - Full Width */}
-            {insight.actionable_recommendation && (
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex items-center gap-2 mb-3">
+          {/* Recommended Action */}
+          {insight.actionable_recommendation && (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
                   <Target className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Recommended Action</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Recommended Action</h3>
                 </div>
+              </div>
+              <div className="p-6">
                 <p className="text-gray-700 leading-relaxed">{insight.actionable_recommendation}</p>
               </div>
-            )}
-
-            {/* Metadata Footer */}
-            {lastGenerated && (
-              <div className="pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>
-                    Generated {dayjs(lastGenerated).format('MMM D, YYYY [at] h:mm A')}
-                  </span>
-                  {insight.nps_score !== null && (
-                    <span className="font-medium">
-                      NPS Score: <span className={insight.nps_score >= 50 ? 'text-green-600' : insight.nps_score >= 0 ? 'text-yellow-600' : 'text-red-600'}>
-                        {insight.nps_score}
-                      </span>
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!insight && !loading && !error && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Insights Generated Yet</h3>
-            <p className="text-gray-600 max-w-md mx-auto">
-              Select a date range and click "Generate Insights" to analyse your customer feedback and discover actionable insights powered by AI.
-            </p>
-          </div>
-        )}
-      </ChartCard>
+          )}
 
-      {/* Info Box */}
-      {!loading && (
-        <ChartCard title="How it works">
-          <ul className="text-sm text-gray-600 space-y-2">
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-0.5">•</span>
-              <span>AI analyses all feedback submissions and NPS responses for the selected date range</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-0.5">•</span>
-              <span>Identifies patterns, trends, and common themes in customer feedback</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-0.5">•</span>
-              <span>Generates an overall performance score (0-10) based on multiple factors</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-0.5">•</span>
-              <span>Provides specific, actionable insights to improve customer experience</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-0.5">•</span>
-              <span>Results are cached - re-running the same date range returns instant results</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-0.5">•</span>
-              <span>Each new analysis costs approximately £0.002-£0.003 (charged to your Anthropic API usage)</span>
-            </li>
-          </ul>
-        </ChartCard>
+          {/* Metadata Footer */}
+          {lastGenerated && (
+            <div className="text-center text-xs text-gray-500">
+              Generated {dayjs(lastGenerated).format('MMM D, YYYY [at] h:mm A')}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
